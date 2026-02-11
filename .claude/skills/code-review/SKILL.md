@@ -53,9 +53,12 @@ For each issue provide:
 - Memory leaks (unclosed resources)
 
 ### Architecture
-- Layer adherence: Controller → UseCase → Domain Service → Repository
-- Service split: Get/Save/Update/Delete
+- Layer adherence: Controller → UseCase → Repository (UseCase uses Repository directly)
+- Rich Domain Model: business logic in Entity, not UseCase
+- No thin wrapper services (GetService/SaveService) — Domain Service only for multi-entity logic
 - `@Transactional` only on UseCase methods
+- Port-Adapter: UseCase depends on Port interface, not infrastructure directly
+- Cross-domain read via Reader interface, cross-domain write via Repository directly
 - No layer skipping (Controller → Repository is forbidden)
 
 ### Kotlin-specific
@@ -96,7 +99,7 @@ val user = userRepository.findByIdOrNull(userId)
 **문제**: 반복문 내에서 `commentRepository.findByFeedId()`를 호출하여 N+1 쿼리가 발생합니다.
 **수정 전**:
 ```kotlin
-val feeds = feedGetService.findAll()
+val feeds = feedRepository.findAll()
 feeds.map { feed ->
     val comments = commentRepository.findByFeedId(feed.id)  // N+1
     feed to comments
@@ -104,7 +107,7 @@ feeds.map { feed ->
 ```
 **수정 후**:
 ```kotlin
-val feeds = feedGetService.findAll()
+val feeds = feedRepository.findAll()
 val comments = commentRepository.findByFeedIdIn(feeds.map { it.id })
 val commentMap = comments.groupBy { it.feedId }
 feeds.map { feed -> feed to (commentMap[feed.id] ?: emptyList()) }

@@ -26,16 +26,17 @@ fun uploadFeed(userId: Long, request: FeedUploadRequest) {
 
 ```kotlin
 @Service
-class FeedUsecase(
-    private val feedSaveService: FeedSaveService,
-    private val mediaSaveService: MediaSaveService,
+class CreateFeedUseCase(
+    private val feedRepository: FeedRepository,
+    private val mediaRepository: MediaRepository,
     private val feedMapper: FeedMapper
 ) {
     @Transactional
-    fun uploadFeed(userId: Long, request: FeedUploadRequest) {
-        val feed = feedMapper.toFeed(user, request.description)
-        feedSaveService.save(feed)
-        mediaSaveService.saveAll(feed, request.media)
+    fun execute(userId: Long, request: FeedUploadRequest) {
+        val feed = feedMapper.toEntity(user, request.description)
+        feedRepository.save(feed)
+        val mediaList = request.media.map { Media.create(feed, it) }
+        mediaRepository.saveAll(mediaList)
     }
 }
 ```

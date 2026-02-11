@@ -1,31 +1,34 @@
 # Kotlin Test Examples
 
-## DescribeSpec (Recommended for Services)
+## DescribeSpec (Recommended for UseCases)
 
 ```kotlin
-class UserGetServiceTest : DescribeSpec({
+class CreateUserUseCaseTest : DescribeSpec({
     val userRepository = mockk<UserRepository>()
-    val service = UserGetService(userRepository)
+    val userMapper = mockk<UserMapper>()
+    val useCase = CreateUserUseCase(userRepository, userMapper)
 
-    describe("findById") {
-        context("when user exists") {
-            it("should return user") {
+    describe("execute") {
+        context("with valid request") {
+            it("should create and save user") {
+                val request = UserTestFixture.createRequest()
                 val user = UserTestFixture.createUser()
-                every { userRepository.findByIdAndDeletedAtIsNull(1L) } returns user
+                every { userRepository.save(any()) } returns user
+                every { userMapper.toResponse(any()) } returns UserResponse(id = 1L, name = "Test User")
 
-                val result = service.findById(1L)
+                val result = useCase.execute(request)
 
-                result shouldBe user
-                verify { userRepository.findByIdAndDeletedAtIsNull(1L) }
+                result.id shouldBe 1L
+                verify { userRepository.save(any()) }
             }
         }
 
-        context("when user does not exist") {
-            it("should throw UserNotFoundException") {
-                every { userRepository.findByIdAndDeletedAtIsNull(999L) } returns null
+        context("when validation fails") {
+            it("should throw IllegalArgumentException") {
+                val request = UserTestFixture.createRequest(name = "")
 
-                shouldThrow<UserNotFoundException> {
-                    service.findById(999L)
+                shouldThrow<IllegalArgumentException> {
+                    useCase.execute(request)
                 }
             }
         }
@@ -36,28 +39,27 @@ class UserGetServiceTest : DescribeSpec({
 ## BehaviorSpec (BDD style for complex logic)
 
 ```kotlin
-class CreateUserUsecaseTest : BehaviorSpec({
-    val userSaveService = mockk<UserSaveService>()
+class CreateUserUseCaseBddTest : BehaviorSpec({
+    val userRepository = mockk<UserRepository>()
     val userMapper = mockk<UserMapper>()
-    val usecase = CreateUserUsecase(userSaveService, userMapper)
+    val useCase = CreateUserUseCase(userRepository, userMapper)
 
     Given("a valid create user request") {
         val request = CreateUserRequest(name = "John", email = "john@example.com")
         val user = UserTestFixture.createUser()
-        val savedUser = user.copy(id = 1L)
 
-        every { userMapper.toEntity(request) } returns user
-        every { userSaveService.save(any()) } returns savedUser
+        every { userRepository.save(any()) } returns user
+        every { userMapper.toResponse(any()) } returns UserResponse(id = 1L, name = "John")
 
         When("creating user") {
-            val result = usecase.execute(request)
+            val result = useCase.execute(request)
 
             Then("user should be created with ID") {
                 result.id shouldBe 1L
             }
 
-            Then("save service should be called") {
-                verify { userSaveService.save(any()) }
+            Then("repository save should be called") {
+                verify { userRepository.save(any()) }
             }
         }
     }
@@ -65,13 +67,12 @@ class CreateUserUsecaseTest : BehaviorSpec({
     Given("a request with duplicate email") {
         val request = CreateUserRequest(name = "John", email = "existing@example.com")
 
-        every { userMapper.toEntity(request) } returns UserTestFixture.createUser()
-        every { userSaveService.save(any()) } throws UserAlreadyExistsException()
+        every { userRepository.save(any()) } throws DataIntegrityViolationException("duplicate")
 
         When("creating user") {
-            Then("should throw UserAlreadyExistsException") {
-                shouldThrow<UserAlreadyExistsException> {
-                    usecase.execute(request)
+            Then("should throw exception") {
+                shouldThrow<DataIntegrityViolationException> {
+                    useCase.execute(request)
                 }
             }
         }

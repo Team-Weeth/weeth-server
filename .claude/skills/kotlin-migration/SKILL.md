@@ -16,7 +16,7 @@ For large-scale migrations, split work into manageable batches and get user conf
 ### Recommended Batch Units
 | Scope | Batch Size | Example |
 |-------|-----------|---------|
-| Single Domain | 3-5 files per batch | `FeedGetService`, `FeedSaveService`, `FeedDeleteService` |
+| Single Domain | 3-5 files per batch | `Feed`, `FeedRepository`, `CreateFeedUseCase` |
 | Cross-Domain | 1 domain at a time | Complete `feed` domain before `user` domain |
 | Entity + Dependencies | Entity → Repository → Services | Migrate in dependency order |
 
@@ -34,13 +34,9 @@ Batch 1: Feed Entity Layer
   - Feed.java → Feed.kt
   - FeedRepository.java → FeedRepository.kt
 
-Batch 2: Feed Service Layer
-  - FeedGetService.java → FeedGetService.kt
-  - FeedSaveService.java → FeedSaveService.kt
-  - FeedDeleteService.java → FeedDeleteService.kt
-
-Batch 3: Feed Application Layer
-  - FeedUsecase.java → FeedUsecase.kt
+Batch 2: Feed Application Layer
+  - CreateFeedUseCase.java → CreateFeedUseCase.kt
+  - GetFeedQueryService.java → GetFeedQueryService.kt
   - FeedMapper.java → FeedMapper.kt
 ```
 
@@ -104,15 +100,17 @@ Then convert content from Java → Kotlin syntax using Edit tool.
 ### Test Style (Kotest)
 **DescribeSpec** for business logic tests:
 ```kotlin
-class UserGetServiceTest : DescribeSpec({
-    val repository = mockk<UserRepository>()
-    val service = UserGetService(repository)
+class CreatePostUseCaseTest : DescribeSpec({
+    val postRepository = mockk<PostRepository>()
+    val userReader = mockk<UserReader>()
+    val postMapper = mockk<PostMapper>()
+    val useCase = CreatePostUseCase(postRepository, userReader, postMapper)
 
-    describe("findById") {
-        context("when user exists") {
-            it("should return user") { ... }
+    describe("execute") {
+        context("with valid request") {
+            it("should create and save post") { ... }
         }
-        context("when user does not exist") {
+        context("when user not found") {
             it("should throw UserNotFoundException") { ... }
         }
     }
@@ -140,13 +138,12 @@ Use the following Korean template for reporting:
 ## 대상 파일
 | 파일 | 상태 | 비고 |
 |------|------|------|
-| `FeedGetService.java` → `.kt` | ✅ 완료 | 테스트 3건 통과 |
-| `FeedSaveService.java` → `.kt` | ✅ 완료 | 테스트 1건 통과 |
-| `FeedDeleteService.java` → `.kt` | ✅ 완료 | 테스트 불필요 (단순 위임) |
+| `Feed.java` → `.kt` | ✅ 완료 | Rich Domain Model 적용 |
+| `FeedRepository.java` → `.kt` | ✅ 완료 | 테스트 불필요 |
+| `CreateFeedUseCase.java` → `.kt` | ✅ 완료 | 테스트 3건 통과 |
 
 ## 작성된 테스트
-- `FeedGetServiceTest.kt`: 3건 (존재하지 않는 피드 조회, 차단된 사용자 접근, 정상 조회)
-- `FeedSaveServiceTest.kt`: 1건 (중복 피드 생성 방지)
+- `CreateFeedUseCaseTest.kt`: 3건 (정상 생성, 사용자 미존재, 검증 실패)
 
 ## 주요 변환 사항
 - `Optional.orElseThrow()` → `?: throw` 패턴 적용
@@ -158,7 +155,7 @@ Use the following Korean template for reporting:
 - 전체 테스트: ✅ 통과 (N건)
 
 ## 다음 배치
-Batch 3: Feed Application Layer (FeedUsecase, FeedMapper) 진행할까요?
+Batch 3: Feed Presentation Layer (FeedController) 진행할까요?
 ```
 
 ## Rules

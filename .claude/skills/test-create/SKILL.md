@@ -80,10 +80,10 @@ See detailed examples:
 ./gradlew test
 
 # Run specific test class
-./gradlew test --tests "UserGetServiceTest"
+./gradlew test --tests "CreateUserUseCaseTest"
 
 # Run tests matching pattern
-./gradlew test --tests "*ServiceTest"
+./gradlew test --tests "*UseCaseTest"
 
 # Run with verbose output
 ./gradlew test --info

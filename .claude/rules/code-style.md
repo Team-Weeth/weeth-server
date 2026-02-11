@@ -14,7 +14,7 @@
 
 | Element | Convention | Example |
 |---------|-----------|---------|
-| Classes | PascalCase | `UserController`, `UserSaveService` |
+| Classes | PascalCase | `UserController`, `CreateUserUseCase` |
 | Methods | camelCase | `getUserDetail`, `createUser` |
 | Constants | SCREAMING_SNAKE_CASE | `MAX_PAGE_SIZE` |
 | Packages | lowercase | `com.example.domain.user` |
