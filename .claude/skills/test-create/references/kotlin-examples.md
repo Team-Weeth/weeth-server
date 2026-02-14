@@ -8,9 +8,9 @@ class CreateUserUseCaseTest : DescribeSpec({
     val userMapper = mockk<UserMapper>()
     val useCase = CreateUserUseCase(userRepository, userMapper)
 
-    describe("execute") {
-        context("with valid request") {
-            it("should create and save user") {
+    describe("execute 실행") {
+        context("유효한 요청이 주어졌을 때") {
+            it("사용자를 생성하고 저장한다") {
                 val request = UserTestFixture.createRequest()
                 val user = UserTestFixture.createUser()
                 every { userRepository.save(any()) } returns user
@@ -23,8 +23,8 @@ class CreateUserUseCaseTest : DescribeSpec({
             }
         }
 
-        context("when validation fails") {
-            it("should throw IllegalArgumentException") {
+        context("검증에 실패했을 때") {
+            it("IllegalArgumentException을 던진다") {
                 val request = UserTestFixture.createRequest(name = "")
 
                 shouldThrow<IllegalArgumentException> {
@@ -44,33 +44,33 @@ class CreateUserUseCaseBddTest : BehaviorSpec({
     val userMapper = mockk<UserMapper>()
     val useCase = CreateUserUseCase(userRepository, userMapper)
 
-    Given("a valid create user request") {
+    Given("유효한 사용자 생성 요청이 주어졌을 때") {
         val request = CreateUserRequest(name = "John", email = "john@example.com")
         val user = UserTestFixture.createUser()
 
         every { userRepository.save(any()) } returns user
         every { userMapper.toResponse(any()) } returns UserResponse(id = 1L, name = "John")
 
-        When("creating user") {
+        When("사용자를 생성하면") {
             val result = useCase.execute(request)
 
-            Then("user should be created with ID") {
+            Then("ID가 포함된 사용자 응답이 반환되어야 한다") {
                 result.id shouldBe 1L
             }
 
-            Then("repository save should be called") {
+            Then("repository의 save가 호출되어야 한다") {
                 verify { userRepository.save(any()) }
             }
         }
     }
 
-    Given("a request with duplicate email") {
+    Given("중복된 이메일 요청이 주어졌을 때") {
         val request = CreateUserRequest(name = "John", email = "existing@example.com")
 
         every { userRepository.save(any()) } throws DataIntegrityViolationException("duplicate")
 
-        When("creating user") {
-            Then("should throw exception") {
+        When("사용자를 생성하면") {
+            Then("예외가 발생해야 한다") {
                 shouldThrow<DataIntegrityViolationException> {
                     useCase.execute(request)
                 }
@@ -84,20 +84,20 @@ class CreateUserUseCaseBddTest : BehaviorSpec({
 
 ```kotlin
 class UserValidationTest : StringSpec({
-    "name longer than 100 characters should throw exception" {
+    "이름이 100자를 초과하면 예외가 발생한다" {
         val longName = "a".repeat(101)
         shouldThrow<IllegalArgumentException> {
             User.create(name = longName, email = "test@example.com")
         }
     }
 
-    "empty email should throw exception" {
+    "이메일이 비어 있으면 예외가 발생한다" {
         shouldThrow<IllegalArgumentException> {
             User.create(name = "John", email = "")
         }
     }
 
-    "valid user should be created successfully" {
+    "유효한 사용자면 정상 생성된다" {
         val user = User.create(name = "John", email = "john@example.com")
         user.name shouldBe "John"
         user.email shouldBe "john@example.com"
@@ -122,8 +122,8 @@ class UserControllerTest : DescribeSpec() {
 
     init {
         describe("POST /api/v1/users") {
-            context("with valid request") {
-                it("should return 200 OK with created user") {
+            context("유효한 요청이 주어졌을 때") {
+                it("생성된 사용자와 함께 200 OK를 반환한다") {
                     val request = CreateUserRequest(name = "John", email = "john@example.com")
                     val response = UserResponse(id = 1L, name = "John")
                     every { createUserUsecase.execute(any()) } returns response
