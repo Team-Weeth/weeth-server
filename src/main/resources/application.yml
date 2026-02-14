@@ -1,0 +1,63 @@
+spring:
+  profiles:
+    active: local
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB
+      max-request-size: 40MB
+  thymeleaf:
+    prefix: classpath:/templates/
+    suffix: .html
+
+springdoc:
+  use-fqn: true
+  swagger-ui:
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+
+auth:
+  issuer: ${AUTH_ISSUER}
+  providers:
+    kakao:
+      authorize_uri: https://kauth.kakao.com/oauth/authorize
+      client_id: ${KAKAO_CLIENT_ID}
+      redirect_uri: ${KAKAO_REDIRECT_URI}
+      grant_type: ${KAKAO_GRANT_TYPE}
+      token_uri: ${KAKAO_TOKEN_URI}
+      user_info_uri: ${KAKAO_USER_INFO_URI}
+    apple:
+      client_id: ${APPLE_CLIENT_ID}
+      team_id: ${APPLE_TEAM_ID}
+      key_id: ${APPLE_KEY_ID}
+      redirect_uri: ${APPLE_REDIRECT_URI}
+      token_uri: https://appleid.apple.com/auth/token
+      keys_uri: https://appleid.apple.com/auth/keys
+      private_key_path: ${APPLE_PRIVATE_KEY_PATH}
+      # 허용할 audience 목록 (웹 + Leenk 앱), 쉼표로 구분
+      allowed_audiences: ${APPLE_CLIENT_ID},${APPLE_ALLOWED_AUDIENCES}
+  jwt:
+    private-key: ${JWT_PRIVATE_KEY}
+    public-key: ${JWT_PUBLIC_KEY}
+  clients:
+    leenk:
+      registeredClientId: ${LEENK_REGISTERED_CLIENT_ID}
+      clientId: ${LEENK_CLIENT_ID}
+      clientSecret: ${LEENK_CLIENT_SECRET}
+      redirectUris: ${LEENK_REDIRECT_URIS}
+      scopes: ${LEENK_SCOPES}
+      accessTokenTtl: ${LEENK_ACCESS_TOKEN_TTL}
+      refreshTokenTtl: ${LEENK_REFRESH_TOKEN_TTL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
