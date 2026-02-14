@@ -13,27 +13,44 @@
 
 | Style | Use Case |
 |-------|----------|
-| `DescribeSpec` | Default for service/usecase tests (describe/context/it) |
+| `DescribeSpec` | Default for application tests (Command UseCase, QueryService) |
 | `BehaviorSpec` | Complex business logic requiring BDD (Given/When/Then) |
-| `StringSpec` | Simple validation, utility tests |
+| `StringSpec` | Simple validation and pure domain logic tests |
 
 ## Directory Structure
-todo: 아키텍처 변경시 동기화 필요
-```
-src/test/kotlin/com/example/app/domain/{domain}/
-├── application/usecase/       # UseCase unit tests
-├── domain/service/            # Domain service unit tests
-├── presentation/              # Controller tests (@WebMvcTest)
-└── fixture/                   # Test fixtures (shared test data)
+
+```text
+src/test/kotlin/weeth/domain/{domain-name}/
+├── application/usecase/command/   # Command UseCase tests
+├── application/usecase/query/     # QueryService tests
+├── domain/service/                # Domain service tests (multi-entity logic)
+├── domain/entity/                 # Entity behavior tests
+├── presentation/                  # Controller tests (@WebMvcTest)
+└── fixture/                       # Shared fixtures for the domain
 ```
 
 ## Naming Conventions
 
 | Element | Convention | Example |
 |---------|-----------|---------|
-| Test class | `{ClassName}Test` | `UserGetServiceTest` |
+| Test class | `{ClassName}Test` | `CreateUserUseCaseTest`, `GetUserQueryServiceTest` |
 | Test fixture | `{Entity}TestFixture` | `UserTestFixture` |
-| Test method (DescribeSpec) | describe: method name, context: condition, it: expected behavior | `describe("findById") { context("when user exists") { it("should return user") } }` |
+| DescribeSpec description | method/action + condition + behavior | `describe("execute") { context("with valid request") { it("creates user") } }` |
+
+## Architecture-aligned Unit Boundaries
+
+- Command UseCase test: mock Repository/Reader/Port, verify orchestration behavior.
+- QueryService test: verify read-only assembly (query/map/combine/paginate), no state mutation.
+- Entity test: verify `create/of`, state transitions, `require/check`, and business decisions.
+- Domain Service test: only for multi-entity logic/policy classes (not thin wrappers).
+- Controller test: verify request/response contract and serialization with `@WebMvcTest`.
+
+## Dependency Rules in Tests
+
+- Same-domain dependencies: UseCase mocks Repository directly.
+- Cross-domain read: mock target domain Reader interface (not target Repository directly).
+- Cross-domain write: mock target domain Repository directly when same-transaction write is required.
+- Port-Adapter: application tests mock Port interface, not infrastructure adapter implementations.
 
 ## Unit Test vs Integration Test
 
@@ -43,7 +60,7 @@ src/test/kotlin/com/example/app/domain/{domain}/
 | Dependencies | MockK mocks | Testcontainers (DB, Redis) |
 | Speed | Fast (ms) | Slow (seconds) |
 | Annotation | None | `@SpringBootTest`, `@WebMvcTest` |
-| When to use | Business logic, branching, calculations | DB queries, API endpoints, transaction behavior |
+| When to use | Orchestration, branching, entity/domain rules | DB queries, API endpoints, transaction behavior |
 
 ## Fixture Pattern
 
@@ -57,7 +74,7 @@ object UserTestFixture {
 }
 ```
 
-- Location: `src/test/kotlin/{domain}/fixture/`
+- Location: `src/test/kotlin/weeth/domain/{domain-name}/fixture/`
 - Use `object` with factory methods
 - Provide sensible defaults for all parameters
 - Reuse across test classes in the same domain
@@ -65,13 +82,14 @@ object UserTestFixture {
 ## What to Test / Skip
 
 **Write tests for:**
-- Business logic with conditions/branching
-- Exception scenarios
-- Complex transformations or calculations
-- Transaction boundaries
+- UseCase orchestration paths (success/failure/branching)
+- Reader/Repository/Port interaction contracts (`verify`)
+- QueryService data assembly and pagination mapping
+- Entity invariants and state transitions (`require`/`check`)
+- Exception scenarios and error-code mapping
 
 **Skip tests for:**
-- Simple CRUD delegation (findById, save, delete)
+- Thin wrapper methods that only delegate to Repository without logic
 - Getter/setter, trivial DTO mapping
 - Framework-provided functionality
 
@@ -79,6 +97,6 @@ object UserTestFixture {
 
 ```bash
 ./gradlew test                              # All tests
-./gradlew test --tests "*ServiceTest"       # Pattern match
-./gradlew test --tests "UserGetServiceTest" # Specific class
+./gradlew test --tests "*UseCaseTest"       # Pattern match
+./gradlew test --tests "CreateUserUseCaseTest" # Specific class
 ```
