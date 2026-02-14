@@ -21,6 +21,12 @@
 | DTOs | Suffix with purpose | `CreateUserRequest`, `UserResponse` |
 | Test Fixtures | `{Entity}TestFixture` | `UserTestFixture` |
 
+## Null Safety
+
+- Avoid using Kotlin non-null assertion operator `!!`.
+- Prefer safe call (`?.`), Elvis operator (`?:`), and `requireNotNull`/`checkNotNull` unless `!!` is truly unavoidable.
+- If `!!` must be used, add a short comment explaining why in that code block.
+
 ## Data Class vs Class
 
 ```kotlin
