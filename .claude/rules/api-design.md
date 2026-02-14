@@ -7,6 +7,7 @@
 @RestController
 @RequestMapping("/api/v1/users")
 @ApiErrorCodeExample(UserErrorCode::class, JwtErrorCode::class)
+@ApiSuccessCodeExample(UserResponseCode::class)
 class UserController(
     private val userUsecase: UserUsecase
 ) {
@@ -25,6 +26,46 @@ class UserController(
 | `@Operation(summary = "...")` | API description |
 | `@Parameter(hidden = true)` | Hide internal params from docs |
 | `@Valid` | Enable validation |
+| `@ApiErrorCodeExample(...)` | Auto-register error examples in Swagger |
+| `@ApiSuccessCodeExample(...)` | Auto-register success examples in Swagger |
+
+## Swagger Success Example Automation
+
+Use one global annotation strategy for success examples.
+
+- Use `@ApiSuccessCodeExample` (method or class level).
+- Method-level declaration overrides class-level declaration.
+- Pass enum classes directly; do not use string-based names.
+
+```kotlin
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.RUNTIME)
+annotation class ApiSuccessCodeExample(
+    vararg val value: KClass<out ResponseCodeInterface>
+)
+```
+
+```kotlin
+@PostMapping("/login")
+@ApiSuccessCodeExample(AuthResponseCode::class)
+fun login(@RequestBody request: LoginRequest): CommonResponse<LoginResponse>
+```
+
+### DTO Inference Convention
+
+- Generate success examples from controller return type.
+- Keep generics with `ResolvableType`.
+- Unwrap order:
+1. `ResponseEntity<CommonResponse<T>>` -> `T`
+2. `ResponseEntity<T>` -> `T`
+3. `CommonResponse<T>` -> `T`
+4. fallback -> return type itself
+
+### Example Generation Convention
+
+- Prefer `@Schema(example = "...")`; otherwise use type defaults.
+- Collections/maps/pages should use generic element types.
+- `Unit`/`Void` and HTTP `204/205`: description only, no body example.
 
 ## Response Format
 
@@ -65,6 +106,9 @@ enum class UserResponseCode(
     UPDATE_PROFILE_IMAGE(1102, HttpStatus.OK, "프로필 이미지 수정에 성공했습니다.")
 }
 ```
+
+- Success code enums must implement `ResponseCodeInterface`.
+- New API methods must include `@ApiSuccessCodeExample(...)`.
 
 ## Code Numbering
 
