@@ -41,7 +41,7 @@ class CreatePostUseCase(
 
 ### Query Service
 
-Query Service는 **조회 요청에 대한 데이터 조립** 계층이다. 비즈니스 로직이 아닌, 프레젠테이션을 위한 데이터 조합이 본질이다.
+Query Service is the layer for **assembling data for read requests**. Its core purpose is presentation-oriented data composition, not business logic.
 
 ```kotlin
 @Service
@@ -64,20 +64,20 @@ class GetPostQueryService(
 }
 ```
 
-| 항목 | 규칙 |
+| Item | Rule |
 |------|------|
-| 역할 | 데이터 조회, 매핑, 조합, 페이징 |
-| 트랜잭션 | `@Transactional(readOnly = true)` |
-| 반환 타입 | Response DTO |
-| 금지 사항 | 상태 변경, 비즈니스 로직 수행 |
+| Role | Data retrieval, mapping, composition, paging |
+| Transaction | `@Transactional(readOnly = true)` |
+| Return type | Response DTO |
+| Prohibited | State mutation, business logic execution |
 
-### Command UseCase에서 Query Service 의존
+### Query Service Dependency from Command UseCase
 
-| 상황 | 추천 |
+| Scenario | Recommendation |
 |------|------|
-| 단순 `findById` + 예외 | Repository 직접 호출 |
-| Query Service가 Entity를 반환하는 복잡한 조회 | 의존 OK |
-| Query Service가 Response DTO를 반환 | 의존하지 않음 |
+| Simple `findById` + exception | Call Repository directly |
+| Complex query where Query Service returns Entity | Dependency is acceptable |
+| Query Service returns Response DTO | Do not depend on it |
 
 ### UseCase Does / Does Not
 
@@ -92,24 +92,24 @@ class GetPostQueryService(
 
 ## Cross-domain Reference
 
-### 읽기: Reader 인터페이스
+### Read: Reader Interface
 
-타 도메인의 데이터를 조회할 때는 Repository 전체가 아닌 **읽기 전용 인터페이스**를 사용한다.
+When reading data from another domain, use a **read-only interface** instead of the full Repository.
 
 ```kotlin
-// user 도메인에 정의 (domain/repository/)
+// Defined in user domain (domain/repository/)
 interface UserReader {
     fun findById(id: Long): User?
     fun existsById(id: Long): Boolean
 }
 
-// UserRepository가 상속
+// UserRepository extends UserReader
 interface UserRepository : JpaRepository<User, Long>, UserReader
 ```
 
-### 쓰기: Repository 직접 의존
+### Write: Direct Repository Dependency
 
-타 도메인 쓰기가 필요한 경우 (같은 트랜잭션 필수):
+When cross-domain writes are required (same transaction is mandatory):
 
 ```kotlin
 @Service
@@ -129,12 +129,12 @@ class CreateOrderUseCase(
 }
 ```
 
-### Cross-domain 참조 요약
+### Cross-domain Reference Summary
 
-| 상황 | 방식 |
+| Scenario | Approach |
 |------|------|
-| 타 도메인 읽기 | Reader 인터페이스 |
-| 타 도메인 쓰기 (같은 트랜잭션 필수) | Repository 직접 의존 |
+| Cross-domain read | Reader interface |
+| Cross-domain write (same transaction required) | Direct Repository dependency |
 
 ---
 
