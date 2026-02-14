@@ -85,6 +85,12 @@ EOF
 | Hotfix | `hotfix/description` | `hotfix/critical-auth-bug`   |
 | Release | `release/version` | `release/v1.2.0`             |
 
+## Branch Update Policy
+
+- Update local branches from the latest target branch using **merge**.
+- Default command: `git merge origin/{target-branch}`.
+- Do not rewrite shared branch history with rebase when syncing latest changes.
+
 ## Pre-commit Checklist
 
 1. Run linter: `./gradlew ktlintFormat`
