@@ -48,11 +48,6 @@ data class CreateUserRequest(
     @field:NotBlank
     @field:Email
     val email: String,
-
-    @field:Schema(description = "Profile settings")
-    @field:Valid
-    @field:NotNull
-    val profile: ProfileRequest
 )
 ```
 
@@ -78,15 +73,6 @@ data class UserResponse(
 
     @Schema(description = "User name", example = "John Doe")
     val name: String,
-
-    @Schema(description = "Email address", example = "john@example.com")
-    val email: String,
-
-    @Schema(description = "Profile information")
-    val profile: ProfileResponse? = null,
-
-    @Schema(description = "Active status", example = "true")
-    val isActive: Boolean? = null
 )
 ```
 
@@ -136,23 +122,4 @@ class UserMapper(
     private val profileMapper: ProfileMapper,
     private val addressMapper: AddressMapper
 )
-```
-
-## Mapper Testing
-
-```kotlin
-class UserMapperTest : StringSpec({
-    val profileMapper = mockk<ProfileMapper>()
-    val userMapper = UserMapper(profileMapper)
-
-    "toResponse should map all fields" {
-        val user = UserTestFixture.createUser(1L, "test@example.com")
-        every { profileMapper.toResponse(any()) } returns ProfileResponse(id = 1L)
-
-        val response = userMapper.toResponse(user)
-
-        response.id shouldBe 1L
-        response.email shouldBe "test@example.com"
-    }
-})
 ```
