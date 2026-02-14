@@ -97,6 +97,21 @@ For each identified improvement, invoke the appropriate skill:
 - Already documented
 - Requires user decision (suggest instead)
 
+## Conflict Resolution Priority
+
+When a newly discovered pattern conflicts with existing guidance, apply this order:
+
+1. Follow higher-priority runtime instructions (system/developer/user for the current session).
+2. Prefer existing project rules in `.claude/rules/` over ad-hoc new patterns.
+3. If no rule exists, follow established skill workflows in `.claude/skills/*/SKILL.md`.
+4. Treat the new pattern as a candidate update, not an immediate override.
+5. If conflict remains ambiguous, do not auto-apply; add it to **Manual Follow-ups** for user decision.
+
+Implementation guidance:
+- For rule conflicts, invoke `rule-create` to update/clarify the rule with rationale.
+- For skill workflow conflicts, invoke `skill-create` only if the change is broadly reusable.
+- Always document why the existing guidance was kept or updated in the report.
+
 ## Example Session Analysis
 
 **Observed**: Created API endpoint 4 times with same structure.
