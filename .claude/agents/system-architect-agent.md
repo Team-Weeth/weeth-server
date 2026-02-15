@@ -2,7 +2,7 @@
 name: system-architect-agent
 description: "Restructure existing code to match architecture rules. Safely proceeds in order: impact analysis → test → refactor → verify."
 tools: Glob, Grep, Read, Edit, Write, Bash, Task
-model: sonnet
+model: opus
 color: blue
 ---
 
