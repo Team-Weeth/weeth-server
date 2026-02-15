@@ -19,8 +19,8 @@ public class CommonExceptionHandler {
     private static final String INPUT_FORMAT_ERROR_MESSAGE = "입력 포맷이 올바르지 않습니다.";
     private static final String LOG_FORMAT = "Class : {}, Code : {}, Message : {}";
 
-    @ExceptionHandler(BusinessLogicException.class)  // 커스텀 예외 처리
-    public ResponseEntity<CommonResponse<Void>> handle(BusinessLogicException ex) {
+    @ExceptionHandler(BaseException.class)  // 커스텀 예외 처리
+    public ResponseEntity<CommonResponse<Void>> handle(BaseException ex) {
         log.warn("구체로그: ", ex);
         log.warn(LOG_FORMAT, ex.getClass().getSimpleName(), ex.getStatusCode(), ex.getMessage());
 
