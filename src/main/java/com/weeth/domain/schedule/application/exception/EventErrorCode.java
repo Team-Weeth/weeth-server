@@ -1,6 +1,7 @@
 package com.weeth.domain.schedule.application.exception;
 
 import com.weeth.global.common.exception.ErrorCodeInterface;
+import com.weeth.global.common.exception.ExplainError;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.springframework.http.HttpStatus;

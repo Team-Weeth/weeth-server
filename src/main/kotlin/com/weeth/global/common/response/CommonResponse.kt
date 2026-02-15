@@ -38,7 +38,10 @@ data class CommonResponse<T>(
             )
 
         @JvmStatic
-        fun <T> success(message: String, data: T): CommonResponse<T> =
+        fun <T> success(
+            message: String,
+            data: T,
+        ): CommonResponse<T> =
             CommonResponse(
                 code = DEFAULT_SUCCESS_CODE,
                 message = message,
@@ -49,7 +52,10 @@ data class CommonResponse<T>(
         fun <T> createSuccess(message: String): CommonResponse<T> = success(message)
 
         @JvmStatic
-        fun <T> createSuccess(message: String, data: T): CommonResponse<T> = success(message, data)
+        fun <T> createSuccess(
+            message: String,
+            data: T,
+        ): CommonResponse<T> = success(message, data)
 
         @JvmStatic
         fun error(errorCode: ErrorCodeInterface): CommonResponse<Void?> =
@@ -82,7 +88,10 @@ data class CommonResponse<T>(
             )
 
         @JvmStatic
-        fun createFailure(code: Int, message: String): CommonResponse<Void?> =
+        fun createFailure(
+            code: Int,
+            message: String,
+        ): CommonResponse<Void?> =
             CommonResponse(
                 code = code,
                 message = message,
@@ -90,7 +99,11 @@ data class CommonResponse<T>(
             )
 
         @JvmStatic
-        fun <T> createFailure(code: Int, message: String, data: T): CommonResponse<T> =
+        fun <T> createFailure(
+            code: Int,
+            message: String,
+            data: T,
+        ): CommonResponse<T> =
             CommonResponse(
                 code = code,
                 message = message,
