@@ -2,12 +2,12 @@ package com.weeth.global.auth.jwt.service;
 
 import com.weeth.domain.user.domain.entity.enums.Role;
 import com.weeth.global.auth.jwt.exception.InvalidTokenException;
+import com.weeth.global.config.properties.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -28,14 +28,10 @@ public class JwtProvider {
     private final Long accessTokenExpirationPeriod;
     private final Long refreshTokenExpirationPeriod;
 
-    public JwtProvider(
-            @Value("${weeth.jwt.key}") String key,
-            @Value("${weeth.jwt.access.expiration}") Long accessTokenExpirationPeriod,
-            @Value("${weeth.jwt.refresh.expiration}") Long refreshTokenExpirationPeriod
-    ) {
-        this.secretKey = Keys.hmacShaKeyFor(key.getBytes(StandardCharsets.UTF_8));
-        this.accessTokenExpirationPeriod = accessTokenExpirationPeriod;
-        this.refreshTokenExpirationPeriod = refreshTokenExpirationPeriod;
+    public JwtProvider(JwtProperties jwtProperties) {
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getKey().getBytes(StandardCharsets.UTF_8));
+        this.accessTokenExpirationPeriod = jwtProperties.getAccess().getExpiration();
+        this.refreshTokenExpirationPeriod = jwtProperties.getRefresh().getExpiration();
     }
 
 

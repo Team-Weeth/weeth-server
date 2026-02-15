@@ -5,9 +5,9 @@ import com.weeth.domain.user.application.exception.RoleNotFoundException;
 import com.weeth.domain.user.domain.entity.enums.Role;
 import com.weeth.global.auth.jwt.exception.InvalidTokenException;
 import com.weeth.global.auth.jwt.exception.RedisTokenNotFoundException;
+import com.weeth.global.config.properties.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -19,14 +19,12 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class JwtRedisService {
 
-    @Value("${weeth.jwt.refresh.expiration}")
-    private Long expirationTime;
-
     private static final String PREFIX = "refreshToken:";
     private static final String TOKEN = "token";
     private static final String ROLE = "role";
     private static final String EMAIL = "email";
 
+    private final JwtProperties jwtProperties;
     private final RedisTemplate<String, String> redisTemplate;
 
     public void set(long userId, String refreshToken, Role role, String email) {
@@ -34,7 +32,7 @@ public class JwtRedisService {
         put(key, TOKEN, refreshToken);
         put(key, ROLE, role.toString());
         put(key, EMAIL, email);
-        redisTemplate.expire(key, expirationTime, TimeUnit.MINUTES);
+        redisTemplate.expire(key, jwtProperties.getRefresh().getExpiration(), TimeUnit.MINUTES);
         log.info("Refresh Token 저장/업데이트: {}", key);
     }
 

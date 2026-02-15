@@ -1,15 +1,15 @@
 package com.weeth.global.auth.jwt.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Claims;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import com.weeth.global.auth.jwt.application.dto.JwtDto;
 import com.weeth.global.auth.jwt.exception.TokenNotFoundException;
 import com.weeth.global.common.response.CommonResponse;
+import com.weeth.global.config.properties.JwtProperties;
+import io.jsonwebtoken.Claims;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -26,22 +26,18 @@ public class JwtService {
     private static final String BEARER = "Bearer ";
     private static final String LOGIN_SUCCESS_MESSAGE = "자체 로그인 성공.";
 
-    @Value("${weeth.jwt.access.header}")
-    private String accessHeader;
-    @Value("${weeth.jwt.refresh.header}")
-    private String refreshHeader;
-
+    private final JwtProperties jwtProperties;
     private final JwtProvider jwtProvider;
 
     public String extractRefreshToken(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader(refreshHeader))
+        return Optional.ofNullable(request.getHeader(jwtProperties.getRefresh().getHeader()))
                 .filter(refreshToken -> refreshToken.startsWith(BEARER))
                 .map(refreshToken -> refreshToken.replace(BEARER, ""))
                 .orElseThrow(TokenNotFoundException::new);
     }
 
     public Optional<String> extractAccessToken(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader(accessHeader))
+        return Optional.ofNullable(request.getHeader(jwtProperties.getAccess().getHeader()))
                 .filter(refreshToken -> refreshToken.startsWith(BEARER))
                 .map(refreshToken -> refreshToken.replace(BEARER, ""));
     }

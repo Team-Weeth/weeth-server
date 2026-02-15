@@ -8,8 +8,8 @@ server:
 spring:
   datasource:
     url: ${DB_URL}
-    username: ${RDS_USER_NAME}
-    password: ${RDS_USER_PW}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     show-sql: true

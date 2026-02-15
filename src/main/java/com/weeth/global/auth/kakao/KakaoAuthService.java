@@ -2,8 +2,8 @@ package com.weeth.global.auth.kakao;
 
 import com.weeth.global.auth.kakao.dto.KakaoTokenResponse;
 import com.weeth.global.auth.kakao.dto.KakaoUserInfoResponse;
+import com.weeth.global.config.properties.OAuthProperties;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -14,28 +14,22 @@ import org.springframework.web.client.RestClient;
 @Slf4j
 public class KakaoAuthService {
 
-    @Value("${auth.providers.kakao.client_id}")
-    private String kakaoClientId;
-    @Value("${auth.providers.kakao.redirect_uri}")
-    private String redirectUri;
-    @Value("${auth.providers.kakao.grant_type}")
-    private String grantType;
-    @Value("${auth.providers.kakao.token_uri}")
-    private String tokenUri;
-    @Value("${auth.providers.kakao.user_info_uri}")
-    private String userInfoUri;
-
+    private final OAuthProperties.KakaoProperties kakaoProperties;
     private final RestClient restClient = RestClient.create();
+
+    public KakaoAuthService(OAuthProperties oAuthProperties) {
+        this.kakaoProperties = oAuthProperties.getKakao();
+    }
 
     public KakaoTokenResponse getKakaoToken(String authCode) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", grantType);
-        body.add("client_id", kakaoClientId);
-        body.add("redirect_uri", redirectUri);
+        body.add("grant_type", kakaoProperties.getGrantType());
+        body.add("client_id", kakaoProperties.getClientId());
+        body.add("redirect_uri", kakaoProperties.getRedirectUri());
         body.add("code", authCode);
 
         return restClient.post()
-                .uri(tokenUri)
+                .uri(kakaoProperties.getTokenUri())
                 .body(body)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .retrieve()
@@ -44,7 +38,7 @@ public class KakaoAuthService {
 
     public KakaoUserInfoResponse getUserInfo(String accessToken) {
         return restClient.get()
-                .uri(userInfoUri)
+                .uri(kakaoProperties.getUserInfoUri())
                 .header("Authorization", "Bearer " + accessToken)
                 .retrieve()
                 .body(KakaoUserInfoResponse.class);

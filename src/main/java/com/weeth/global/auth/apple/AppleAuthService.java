@@ -1,15 +1,15 @@
 package com.weeth.global.auth.apple;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import com.weeth.global.auth.apple.dto.ApplePublicKey;
 import com.weeth.global.auth.apple.dto.ApplePublicKeys;
 import com.weeth.global.auth.apple.dto.AppleTokenResponse;
 import com.weeth.global.auth.apple.dto.AppleUserInfo;
 import com.weeth.global.auth.apple.exception.AppleAuthenticationException;
+import com.weeth.global.config.properties.OAuthProperties;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -36,31 +36,14 @@ import java.util.Map;
 @Slf4j
 public class AppleAuthService {
 
-    @Value("${auth.providers.apple.client_id}")
-    private String appleClientId;
-
-    @Value("${auth.providers.apple.team_id}")
-    private String appleTeamId;
-
-    @Value("${auth.providers.apple.key_id}")
-    private String appleKeyId;
-
-    @Value("${auth.providers.apple.redirect_uri}")
-    private String redirectUri;
-
-    @Value("${auth.providers.apple.token_uri}")
-    private String tokenUri;
-
-    @Value("${auth.providers.apple.keys_uri}")
-    private String keysUri;
-
-    @Value("${auth.providers.apple.private_key_path}")
-    private String privateKeyPath;
-
-    @Value("${auth.providers.apple.allowed_audiences}")
-    private java.util.List<String> allowedAudiences;
-
+    private final OAuthProperties.AppleProperties appleProperties;
     private final RestClient restClient = RestClient.create();
+
+    public AppleAuthService(OAuthProperties oAuthProperties) {
+        this.appleProperties = oAuthProperties.getApple();
+    }
+
+    // todo: 성능 개선 (캐싱 등)
 
     /**
      * Authorization code로 애플 토큰 요청
@@ -71,13 +54,13 @@ public class AppleAuthService {
 
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
-        body.add("client_id", appleClientId);
+        body.add("client_id", appleProperties.getClientId());
         body.add("client_secret", clientSecret);
         body.add("code", authCode);
-        body.add("redirect_uri", redirectUri);
+        body.add("redirect_uri", appleProperties.getRedirectUri());
 
         return restClient.post()
-                .uri(tokenUri)
+                .uri(appleProperties.getTokenUri())
                 .body(body)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                 .retrieve()
@@ -98,7 +81,7 @@ public class AppleAuthService {
 
             // 2. 애플 공개키 가져오기
             ApplePublicKeys publicKeys = restClient.get()
-                    .uri(keysUri)
+                    .uri(appleProperties.getKeysUri())
                     .retrieve()
                     .body(ApplePublicKeys.class);
 
@@ -142,7 +125,7 @@ public class AppleAuthService {
      * ES256 알고리즘으로 JWT 생성 (p8 키 파일 사용)
      */
     private String generateClientSecret() {
-        try (InputStream inputStream = getInputStream(privateKeyPath)) {
+        try (InputStream inputStream = getInputStream(appleProperties.getPrivateKeyPath())) {
             // p8 파일에서 Private Key 읽기
             String privateKeyContent = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -165,13 +148,13 @@ public class AppleAuthService {
             Date expiration = Date.from(now.plusMonths(5).atZone(ZoneId.systemDefault()).toInstant());
 
             return Jwts.builder()
-                    .setHeaderParam("kid", appleKeyId)
+                    .setHeaderParam("kid", appleProperties.getKeyId())
                     .setHeaderParam("alg", "ES256")
-                    .setIssuer(appleTeamId)
+                    .setIssuer(appleProperties.getTeamId())
                     .setIssuedAt(issuedAt)
                     .setExpiration(expiration)
                     .setAudience("https://appleid.apple.com")
-                    .setSubject(appleClientId)
+                    .setSubject(appleProperties.getClientId())
                     .signWith(privateKey, SignatureAlgorithm.ES256)
                     .compact();
 
@@ -228,9 +211,9 @@ public class AppleAuthService {
             throw new RuntimeException("유효하지 않은 발급자(issuer)입니다.");
         }
 
-        // 허용된 audience 목록에 포함되어 있는지 확인 (웹 + Leenk 앱)
-        if (aud == null || !allowedAudiences.contains(aud)) {
-            log.error("유효하지 않은 audience: {}. 허용된 목록: {}", aud, allowedAudiences);
+        // audience가 clientId와 일치하는지 확인
+        if (aud == null || !aud.equals(appleProperties.getClientId())) {
+            log.error("유효하지 않은 audience: {}. 기대값: {}", aud, appleProperties.getClientId());
             throw new RuntimeException("유효하지 않은 수신자(audience)입니다.");
         }
 

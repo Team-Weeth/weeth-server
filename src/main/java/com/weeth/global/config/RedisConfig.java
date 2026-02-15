@@ -1,6 +1,7 @@
 package com.weeth.global.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.weeth.global.config.properties.RedisProperties;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -12,25 +13,21 @@ import org.springframework.data.redis.repository.configuration.EnableRedisReposi
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
+@RequiredArgsConstructor
 @EnableRedisRepositories(enableKeyspaceEvents = RedisKeyValueAdapter.EnableKeyspaceEvents.ON_STARTUP) // redis index ttl 설정
 public class RedisConfig {
 
-    @Value("${spring.data.redis.port}")
-    private int port;
-
-    @Value("${spring.data.redis.host}")
-    private String host;
-
-    @Value("${spring.data.redis.password}")
-    private String password;
+    private final RedisProperties redisProperties;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisConfiguration = new RedisStandaloneConfiguration();
 
-        redisConfiguration.setHostName(host);
-        redisConfiguration.setPort(port);
-        redisConfiguration.setPassword(password);
+        redisConfiguration.setHostName(redisProperties.getHost());
+        redisConfiguration.setPort(redisProperties.getPort());
+        if (redisProperties.getPassword() != null && !redisProperties.getPassword().isEmpty()) {
+            redisConfiguration.setPassword(redisProperties.getPassword());
+        }
 
         return new LettuceConnectionFactory(redisConfiguration);
     }

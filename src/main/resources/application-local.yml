@@ -17,11 +17,6 @@ spring:
       port: ${REDIS_PORT}
       password: ${REDIS_PASSWORD}
 
-  servlet:
-    multipart:
-      max-file-size: 20MB
-      max-request-size: 40MB
-      resolve-lazily: true
 
 weeth:
   jwt:

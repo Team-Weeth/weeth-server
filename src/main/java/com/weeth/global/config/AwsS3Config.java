@@ -1,7 +1,7 @@
 package com.weeth.global.config;
 
+import com.weeth.global.config.properties.AwsS3Properties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -13,19 +13,16 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 @RequiredArgsConstructor
 public class AwsS3Config {
 
-    @Value("${cloud.aws.credentials.access-key}")
-    private String accessKey;
-
-    @Value("${cloud.aws.credentials.secret-key}")
-    private String accessSecret;
-    @Value("${cloud.aws.region.static}")
-    private String region;
+    private final AwsS3Properties awsS3Properties;
 
     @Bean
     public S3Presigner s3Presigner() {
-        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, accessSecret);
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(
+                awsS3Properties.getCredentials().getAccessKey(),
+                awsS3Properties.getCredentials().getSecretKey()
+        );
         return S3Presigner.builder()
-                .region(Region.of(region))
+                .region(Region.of(awsS3Properties.getRegion().getStatic()))
                 .credentialsProvider(StaticCredentialsProvider.create(credentials))
                 .build();
     }

@@ -2,8 +2,8 @@ package com.weeth.domain.file.domain.service;
 
 import com.weeth.domain.file.application.dto.response.UrlResponse;
 import com.weeth.domain.file.application.mapper.FileMapper;
+import com.weeth.global.config.properties.AwsS3Properties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -19,15 +19,13 @@ public class PreSignedService {
 
     private final S3Presigner s3Presigner;
     private final FileMapper fileMapper;
-
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
+    private final AwsS3Properties awsS3Properties;
 
     public UrlResponse generateUrl(String fileName) {
         String key = generateKey(fileName);
 
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                .bucket(bucket)
+                .bucket(awsS3Properties.getS3().getBucket())
                 .key(key)
                 .build();
 
