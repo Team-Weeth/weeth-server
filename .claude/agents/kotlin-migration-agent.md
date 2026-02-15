@@ -42,6 +42,8 @@ Split into batches, get user approval between each. **Never proceed without appr
 - If missing → notify user and stop
 
 ### 1. Write Tests → `test-create` skill [`testing.md`]
+- **Tests MUST be written in Kotlin**
+- **Tests MUST be placed under `src/test/kotlin`**
 - Test business logic with conditions/branching: "Can this test catch a behavior change after conversion?" → Yes: write, No: skip
 - Skip simple delegation (JPA basic methods, single `orElseThrow`)
 
