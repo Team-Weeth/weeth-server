@@ -53,6 +53,7 @@ Split into batches, get user approval between each. **Never proceed without appr
 ### 3. Move and Convert → `kotlin-migration` skill [`code-style.md`]
 - `git mv` to Kotlin path (separate commit for rename detection)
 - Convert Java → Kotlin syntax, preserve annotations (`@Transactional`, Swagger, `@field:`)
+- Convert MapStruct mappers to manual Mapper classes [`mapper-dto.md`]
 - Show Before/After summary for each conversion (required)
 
 ### 4. Verify Format — `./gradlew ktlintFormat && ./gradlew ktlintCheck`
