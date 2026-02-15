@@ -67,7 +67,6 @@ dependencies {
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
     // --- JWT ---
-    implementation("com.auth0:java-jwt:4.4.0") // Used by JwtProvider
     implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")

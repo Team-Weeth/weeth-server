@@ -1,21 +1,21 @@
 package com.weeth.global.auth.jwt.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.weeth.domain.user.domain.entity.enums.Role;
 import com.weeth.global.auth.jwt.exception.InvalidTokenException;
-import lombok.RequiredArgsConstructor;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class JwtProvider {
 
     private static final String ACCESS_TOKEN_SUBJECT = "AccessToken";
@@ -24,44 +24,68 @@ public class JwtProvider {
     private static final String ID_CLAIM = "id";
     private static final String ROLE_CLAIM = "role";
 
-    @Value("${weeth.jwt.key}")
-    private String key;
-    @Value("${weeth.jwt.access.expiration}")
-    private Long accessTokenExpirationPeriod;
-    @Value("${weeth.jwt.refresh.expiration}")
-    private Long refreshTokenExpirationPeriod;
+    private final SecretKey secretKey;
+    private final Long accessTokenExpirationPeriod;
+    private final Long refreshTokenExpirationPeriod;
 
-    private final RSAPublicKey publicKey;
-    private final RSAPrivateKey privateKey;
+    public JwtProvider(
+            @Value("${weeth.jwt.key}") String key,
+            @Value("${weeth.jwt.access.expiration}") Long accessTokenExpirationPeriod,
+            @Value("${weeth.jwt.refresh.expiration}") Long refreshTokenExpirationPeriod
+    ) {
+        this.secretKey = Keys.hmacShaKeyFor(key.getBytes(StandardCharsets.UTF_8));
+        this.accessTokenExpirationPeriod = accessTokenExpirationPeriod;
+        this.refreshTokenExpirationPeriod = refreshTokenExpirationPeriod;
+    }
+
 
     public String createAccessToken(Long id, String email, Role role) {
         Date now = new Date();
-        return JWT.create()
-                .withSubject(ACCESS_TOKEN_SUBJECT)
-                .withExpiresAt(new Date(now.getTime() + accessTokenExpirationPeriod))
-                .withClaim(ID_CLAIM, id)
-                .withClaim(EMAIL_CLAIM, email)
-                .withClaim(ROLE_CLAIM, role.toString())
-                .sign(Algorithm.RSA256(publicKey, privateKey));
+        return Jwts.builder()
+                .subject(ACCESS_TOKEN_SUBJECT)
+                .claim(ID_CLAIM, id)
+                .claim(EMAIL_CLAIM, email)
+                .claim(ROLE_CLAIM, role.toString())
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + accessTokenExpirationPeriod))
+                .signWith(secretKey)
+                .compact();
     }
 
     public String createRefreshToken(Long id) {
         Date now = new Date();
-        return JWT.create()
-                .withSubject(REFRESH_TOKEN_SUBJECT)
-                .withExpiresAt(new Date(now.getTime() + refreshTokenExpirationPeriod))
-                .withClaim(ID_CLAIM, id)
-                .sign(Algorithm.RSA256(publicKey, privateKey));
+        return Jwts.builder()
+                .subject(REFRESH_TOKEN_SUBJECT)
+                .claim(ID_CLAIM, id)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + refreshTokenExpirationPeriod))
+                .signWith(secretKey)
+                .compact();
     }
 
     public boolean validate(String token) {
         try {
-            JWT.require(Algorithm.RSA256(publicKey)).build().verify(token);
+            Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token);
             return true;
-        } catch (Exception e) {
+        } catch (JwtException | IllegalArgumentException e) {
             log.error("유효하지 않은 토큰입니다. {}", e.getMessage());
             throw new InvalidTokenException();
         }
     }
 
+    public Claims parseClaims(String token) {
+        try {
+            return Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException | IllegalArgumentException e) {
+            log.error("토큰 파싱 실패: {}", e.getMessage());
+            throw new InvalidTokenException();
+        }
+    }
 }

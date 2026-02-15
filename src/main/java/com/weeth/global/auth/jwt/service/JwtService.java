@@ -1,8 +1,7 @@
 package com.weeth.global.auth.jwt.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.weeth.global.auth.jwt.application.dto.JwtDto;
@@ -14,7 +13,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.security.interfaces.RSAPublicKey;
 import java.util.Optional;
 
 @Slf4j
@@ -28,14 +26,12 @@ public class JwtService {
     private static final String BEARER = "Bearer ";
     private static final String LOGIN_SUCCESS_MESSAGE = "자체 로그인 성공.";
 
-    @Value("${weeth.jwt.key}")
-    private String key;
     @Value("${weeth.jwt.access.header}")
     private String accessHeader;
     @Value("${weeth.jwt.refresh.header}")
     private String refreshHeader;
 
-    private final RSAPublicKey publicKey;
+    private final JwtProvider jwtProvider;
 
     public String extractRefreshToken(HttpServletRequest request) {
         return Optional.ofNullable(request.getHeader(refreshHeader))
@@ -52,11 +48,8 @@ public class JwtService {
 
     public Optional<String> extractEmail(String accessToken) {
         try {
-            return Optional.ofNullable(JWT.require(Algorithm.RSA256(publicKey))
-                    .build()
-                    .verify(accessToken)
-                    .getClaim(EMAIL_CLAIM)
-                    .asString());
+            Claims claims = jwtProvider.parseClaims(accessToken);
+            return Optional.ofNullable(claims.get(EMAIL_CLAIM, String.class));
         } catch (Exception e) {
             log.error("액세스 토큰이 유효하지 않습니다.");
             return Optional.empty();
@@ -65,11 +58,8 @@ public class JwtService {
 
     public Optional<Long> extractId(String token) {
         try {
-            return Optional.ofNullable(JWT.require(Algorithm.RSA256(publicKey))
-                    .build()
-                    .verify(token)
-                    .getClaim(ID_CLAIM)
-                    .asLong());
+            Claims claims = jwtProvider.parseClaims(token);
+            return Optional.ofNullable(claims.get(ID_CLAIM, Long.class));
         } catch (Exception e) {
             log.error("액세스 토큰이 유효하지 않습니다.");
             return Optional.empty();
@@ -78,11 +68,8 @@ public class JwtService {
 
     public Optional<String> extractRole(String token) {
         try {
-            return Optional.ofNullable(JWT.require(Algorithm.RSA256(publicKey))
-                    .build()
-                    .verify(token)
-                    .getClaim(ROLE_CLAIM)
-                    .asString());
+            Claims claims = jwtProvider.parseClaims(token);
+            return Optional.ofNullable(claims.get(ROLE_CLAIM, String.class));
         } catch (Exception e) {
             log.error("액세스 토큰이 유효하지 않습니다.");
             return Optional.empty();
