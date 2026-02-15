@@ -1,12 +1,13 @@
 package com.weeth.config;
 
-import static org.assertj.core.api.AssertionsForInterfaceTypes.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
-import org.testcontainers.mysql.MySQLContainer;
+import org.testcontainers.containers.MySQLContainer;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 @DataJpaTest
 @Import(TestContainersConfig.class)
