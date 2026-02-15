@@ -1,6 +1,6 @@
 # Weeth Server
 
-커뮤니티 플랫폼 백엔드 - Spring Boot + Kotlin
+동아리 관리 서비스 백엔드 저장소
 
 > **Java → Kotlin 마이그레이션 진행 중**
 > 새로운 코드는 Kotlin으로 작성되며, 기존 Java 코드(~271 파일)는 점진적으로 마이그레이션됩니다.
