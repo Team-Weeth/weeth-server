@@ -73,7 +73,7 @@ New files MUST follow `architecture.md` Package Structure. See the table there f
 
 ## Constraints
 
-- No business logic in Controller or UseCase (→ Entity)
+- UseCase = orchestration only; domain logic belongs in Entity
 - No wrapper services (GetService, SaveService)
 - No UseCase-to-UseCase calls (→ Domain Service)
 - `@Transactional` on UseCase only, forbidden on Domain Service
