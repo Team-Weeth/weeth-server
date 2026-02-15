@@ -40,5 +40,6 @@ out/
 
 ### Environment Variables ###
 src/main/resources/.env
+src/main/resources/*.p8
 .env.local
 .env.*.local
