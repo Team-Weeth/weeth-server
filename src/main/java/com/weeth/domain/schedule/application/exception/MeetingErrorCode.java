@@ -9,7 +9,8 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MeetingErrorCode implements ErrorCodeInterface {
 
-    MEETING_NOT_FOUND(404, HttpStatus.NOT_FOUND, "존재하지 않는 정기모임입니다.");
+    @ExplainError("요청한 정기모임 ID에 해당하는 정기모임이 존재하지 않을 때 발생합니다.")
+    MEETING_NOT_FOUND(2701, HttpStatus.NOT_FOUND, "존재하지 않는 정기모임입니다.");
 
     private final int code;
     private final HttpStatus status;

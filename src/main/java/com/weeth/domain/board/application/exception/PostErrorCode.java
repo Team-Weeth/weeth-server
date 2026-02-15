@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 public enum PostErrorCode implements ErrorCodeInterface {
 
     @ExplainError("요청한 게시글 ID에 해당하는 게시글이 없을 때 발생합니다.")
-    POST_NOT_FOUND(404, HttpStatus.NOT_FOUND, "존재하지 않는 게시물입니다.");
+    POST_NOT_FOUND(2305, HttpStatus.NOT_FOUND, "존재하지 않는 게시물입니다.");
 
     private final int code;
     private final HttpStatus status;
