@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.weeth.domain.account.presentation.ResponseMessage.ACCOUNT_FIND_SUCCESS;
+import static com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_FIND_SUCCESS;
 @Tag(name = "ACCOUNT", description = "회비 API")
 @RestController
 @RequiredArgsConstructor
@@ -26,6 +26,6 @@ public class AccountController {
     @GetMapping("/{cardinal}")
     @Operation(summary="회비 내역 조회")
     public CommonResponse<AccountDTO.Response> find(@PathVariable Integer cardinal) {
-        return CommonResponse.createSuccess(ACCOUNT_FIND_SUCCESS.getMessage(),accountUseCase.find(cardinal));
+        return CommonResponse.success(ACCOUNT_FIND_SUCCESS,accountUseCase.find(cardinal));
     }
 }

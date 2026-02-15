@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.weeth.domain.penalty.presentation.ResponseMessage.*;
+import static com.weeth.domain.penalty.presentation.PenaltyResponseCode.*;
 
 @Tag(name = "PENALTY ADMIN", description = "[ADMIN] 패널티 어드민 API")
 @RestController
@@ -28,27 +28,27 @@ public class PenaltyAdminController {
     @Operation(summary="패널티 부여")
     public CommonResponse<String> assignPenalty(@Valid @RequestBody PenaltyDTO.Save dto){
         penaltyUsecase.save(dto);
-        return CommonResponse.createSuccess(PENALTY_ASSIGN_SUCCESS.getMessage());
+        return CommonResponse.success(PENALTY_ASSIGN_SUCCESS);
     }
 
     @PatchMapping
     @Operation(summary = "패널티 수정")
     public CommonResponse<String> update(@Valid @RequestBody PenaltyDTO.Update dto){
         penaltyUsecase.update(dto);
-        return CommonResponse.createSuccess(PENALTY_UPDATE_SUCCESS.getMessage());
+        return CommonResponse.success(PENALTY_UPDATE_SUCCESS);
     }
 
     @GetMapping
     @Operation(summary="전체 패널티 조회")
     public CommonResponse<List<PenaltyDTO.ResponseAll>> findAll(@RequestParam(required = false) Integer cardinal){
-        return CommonResponse.createSuccess(PENALTY_FIND_ALL_SUCCESS.getMessage(), penaltyUsecase.findAll(cardinal));
+        return CommonResponse.success(PENALTY_FIND_ALL_SUCCESS, penaltyUsecase.findAll(cardinal));
     }
 
     @DeleteMapping
     @Operation(summary="패널티 삭제")
     public CommonResponse<String> delete(@RequestParam Long penaltyId){
         penaltyUsecase.delete(penaltyId);
-        return CommonResponse.createSuccess(PENALTY_DELETE_SUCCESS.getMessage());
+        return CommonResponse.success(PENALTY_DELETE_SUCCESS);
     }
 
 }

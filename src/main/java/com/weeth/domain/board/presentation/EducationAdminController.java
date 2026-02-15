@@ -15,8 +15,8 @@ import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import static com.weeth.domain.board.presentation.ResponseMessage.EDUCATION_UPDATED_SUCCESS;
-import static com.weeth.domain.board.presentation.ResponseMessage.POST_CREATED_SUCCESS;
+import static com.weeth.domain.board.presentation.BoardResponseCode.EDUCATION_UPDATED_SUCCESS;
+import static com.weeth.domain.board.presentation.BoardResponseCode.POST_CREATED_SUCCESS;
 
 @Tag(name = "EDUCATION ADMIN", description = "[ADMIN] 공지사항 교육자료 API")
 @RestController
@@ -31,7 +31,7 @@ public class EducationAdminController {
     public CommonResponse<PostDTO.SaveResponse> saveEducation(@RequestBody @Valid PostDTO.SaveEducation dto, @Parameter(hidden = true) @CurrentUser Long userId) {
         PostDTO.SaveResponse response = postUsecase.saveEducation(dto, userId);
 
-        return CommonResponse.createSuccess(POST_CREATED_SUCCESS.getMessage(), response);
+        return CommonResponse.success(POST_CREATED_SUCCESS, response);
     }
 
     @PatchMapping(value = "/{boardId}")
@@ -41,6 +41,6 @@ public class EducationAdminController {
                                          @Parameter(hidden = true) @CurrentUser Long userId) throws UserNotMatchException {
         PostDTO.SaveResponse response = postUsecase.updateEducation(boardId, dto, userId);
 
-        return CommonResponse.createSuccess(EDUCATION_UPDATED_SUCCESS.getMessage(), response);
+        return CommonResponse.success(EDUCATION_UPDATED_SUCCESS, response);
     }
 }

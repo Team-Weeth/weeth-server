@@ -24,6 +24,6 @@ public class FileController {
     @GetMapping("/")
     @Operation(summary = "파일 업로드를 위한 presigned url을 요청하는 API 입니다.")
     public CommonResponse<List<UrlResponse>> getUrl(@RequestParam(required = false) List<String> fileName) {
-        return CommonResponse.createSuccess(ResponseMessage.PRESIGNED_URL_GET_SUCCESS.getMessage(), fileManageUseCase.getUrl(fileName));
+        return CommonResponse.success(FileResponseCode.PRESIGNED_URL_GET_SUCCESS, fileManageUseCase.getUrl(fileName));
     }
 }

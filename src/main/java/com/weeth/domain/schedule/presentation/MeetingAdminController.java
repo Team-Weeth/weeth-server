@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.weeth.domain.schedule.presentation.ResponseMessage.MEETING_DELETE_SUCCESS;
+import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.MEETING_DELETE_SUCCESS;
 
 @Tag(name = "MEETING ADMIN", description = "[ADMIN] 정기모임 어드민 API")
 @RestController
@@ -27,6 +27,6 @@ public class MeetingAdminController {
     @Operation(summary = "정기모임 삭제")
     public CommonResponse<Void> delete(@PathVariable Long meetingId) {
         meetingUseCase.delete(meetingId);
-        return CommonResponse.createSuccess(MEETING_DELETE_SUCCESS.getMessage());
+        return CommonResponse.success(MEETING_DELETE_SUCCESS);
     }
 }

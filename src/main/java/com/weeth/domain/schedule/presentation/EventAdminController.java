@@ -15,7 +15,7 @@ import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import static com.weeth.domain.schedule.presentation.ResponseMessage.*;
+import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.*;
 
 @Tag(name = "EVENT ADMIN", description = "[ADMIN] 일정 어드민 API")
 @RestController
@@ -37,7 +37,7 @@ public class EventAdminController {
             meetingUseCase.save(dto, userId);
         }
 
-        return CommonResponse.createSuccess(EVENT_SAVE_SUCCESS.getMessage());
+        return CommonResponse.success(EVENT_SAVE_SUCCESS);
     }
 
     @PatchMapping("/{eventId}")
@@ -50,7 +50,7 @@ public class EventAdminController {
             meetingUseCase.update(dto, userId, eventId);
         }
 
-        return CommonResponse.createSuccess(EVENT_UPDATE_SUCCESS.getMessage());
+        return CommonResponse.success(EVENT_UPDATE_SUCCESS);
     }
 
     @DeleteMapping("/{eventId}")
@@ -58,6 +58,6 @@ public class EventAdminController {
     public CommonResponse<Void> delete(@PathVariable Long eventId) {
         eventUseCase.delete(eventId);
 
-        return CommonResponse.createSuccess(EVENT_DELETE_SUCCESS.getMessage());
+        return CommonResponse.success(EVENT_DELETE_SUCCESS);
     }
 }

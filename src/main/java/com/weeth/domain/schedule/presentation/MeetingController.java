@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.weeth.domain.schedule.presentation.ResponseMessage.MEETING_FIND_SUCCESS;
+import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.MEETING_FIND_SUCCESS;
 
 @Tag(name = "MEETING", description = "정기모임 API")
 @RestController
@@ -30,6 +30,6 @@ public class MeetingController {
     @Operation(summary="정기모임 상세 조회")
     public CommonResponse<MeetingDTO.Response> find(@Parameter(hidden = true) @CurrentUser Long userId,
                                                     @PathVariable Long meetingId) {
-        return CommonResponse.createSuccess(MEETING_FIND_SUCCESS.getMessage(), meetingUseCase.find(userId, meetingId));
+        return CommonResponse.success(MEETING_FIND_SUCCESS, meetingUseCase.find(userId, meetingId));
     }
 }

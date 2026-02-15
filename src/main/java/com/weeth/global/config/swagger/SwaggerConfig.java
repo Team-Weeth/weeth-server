@@ -1,5 +1,9 @@
 package com.weeth.global.config.swagger;
 
+import com.weeth.global.common.exception.ApiErrorCodeExample;
+import com.weeth.global.common.exception.ErrorCodeInterface;
+import com.weeth.global.common.exception.ExampleHolder;
+import com.weeth.global.common.response.CommonResponse;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.models.Components;
@@ -12,13 +16,8 @@ import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
-import com.weeth.global.common.exception.ApiErrorCodeExample;
-import com.weeth.global.common.exception.ErrorCodeInterface;
-import com.weeth.global.common.exception.ExampleHolder;
-import com.weeth.global.common.response.CommonResponse;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -44,9 +43,6 @@ public class SwaggerConfig {
     @Value("${weeth.jwt.refresh.header}")
     private String refreshHeader;
 
-    public SwaggerConfig(ApplicationContext applicationContext) {
-    }
-
     @Bean
     public OpenAPI openAPI() {
         SecurityScheme accessSecurityScheme = getAccessSecurityScheme();
@@ -63,16 +59,10 @@ public class SwaggerConfig {
                 ));
     }
 
-    // 스웨거 문서를 커스텀하기 위한 설정
     @Bean
     public OperationCustomizer operationCustomizer() {
         return (operation, handlerMethod) -> {
-            // 메서드 레벨 어노테이션이 존재하는지 확인, 없으면 클래스 레벨 체크
-            ApiErrorCodeExample apiErrorCodeExample = handlerMethod.getMethodAnnotation(ApiErrorCodeExample.class);
-            if (apiErrorCodeExample == null) {
-                apiErrorCodeExample = handlerMethod.getBeanType().getAnnotation(ApiErrorCodeExample.class);
-            }
-
+            ApiErrorCodeExample apiErrorCodeExample = findAnnotation(handlerMethod, ApiErrorCodeExample.class);
             if (apiErrorCodeExample != null) {
                 for (Class<? extends ErrorCodeInterface> type : apiErrorCodeExample.value()) {
                     generateErrorCodeResponseExample(operation.getResponses(), type);
@@ -83,7 +73,6 @@ public class SwaggerConfig {
         };
     }
 
-    // 예외 예시를 스웨거 문서에 추가하기 위한 객체를 생성하는 메서드
     private void generateErrorCodeResponseExample(ApiResponses responses, Class<? extends ErrorCodeInterface> type) {
         ErrorCodeInterface[] errorCodes = type.getEnumConstants();
 
@@ -96,7 +85,7 @@ public class SwaggerConfig {
                                 return ExampleHolder.builder()
                                         .holder(getSwaggerExample(errorCode.getExplainError(), errorCode))
                                         .code(errorCode.getStatus().value())
-                                        .name("[" + enumName + "] " + errorCode.getMessage()) // 한글로된 드롭다운을 만들기 위해 예외 메시지를 이름으로 사용
+                                        .name("[" + enumName + "] " + errorCode.getMessage())
                                         .build();
                             } catch (NoSuchFieldException e) {
                                 throw new RuntimeException(e);
@@ -107,7 +96,6 @@ public class SwaggerConfig {
         addExamplesToResponses(responses, statusWithExampleHolders);
     }
 
-    // ExplainError 설명과 에러코드 객체를 받아 Swagger의 Example 객체를 생성하는 메서드
     private Example getSwaggerExample(String description, ErrorCodeInterface errorCode) {
         CommonResponse<Void> errorResponse = CommonResponse.createFailure(errorCode.getCode(), errorCode.getMessage());
         Example example = new Example();
@@ -117,20 +105,20 @@ public class SwaggerConfig {
         return example;
     }
 
-    // 스웨거의 Example 객체를 만들어 Operation.Responses에 예시 데이터를 추가하는 메서드
     private void addExamplesToResponses(ApiResponses responses, Map<Integer, List<ExampleHolder>> statusWithExampleHolders) {
         statusWithExampleHolders.forEach((status, exampleHolders) -> {
-            // ApiResponse가 없으면 생성
             ApiResponse apiResponse = responses.computeIfAbsent(String.valueOf(status), k -> new ApiResponse());
-
-            // application/json 타입의 MediaType 가져오기 (없으면 생성)
             MediaType mediaType = getOrCreateMediaType(apiResponse);
-
-            // 예시 데이터 추가
-            exampleHolders.forEach(holder ->
-                    mediaType.addExamples(holder.getName(), holder.getHolder())
-            );
+            exampleHolders.forEach(holder -> mediaType.addExamples(holder.getName(), holder.getHolder()));
         });
+    }
+
+    private <A extends java.lang.annotation.Annotation> A findAnnotation(org.springframework.web.method.HandlerMethod handlerMethod, Class<A> annotationType) {
+        A annotation = handlerMethod.getMethodAnnotation(annotationType);
+        if (annotation != null) {
+            return annotation;
+        }
+        return handlerMethod.getBeanType().getAnnotation(annotationType);
     }
 
     private MediaType getOrCreateMediaType(ApiResponse apiResponse) {

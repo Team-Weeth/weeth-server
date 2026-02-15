@@ -19,8 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.weeth.domain.schedule.application.dto.ScheduleDTO.Response;
-import static com.weeth.domain.schedule.presentation.ResponseMessage.SCHEDULE_MONTHLY_FIND_SUCCESS;
-import static com.weeth.domain.schedule.presentation.ResponseMessage.SCHEDULE_YEARLY_FIND_SUCCESS;
+import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.SCHEDULE_MONTHLY_FIND_SUCCESS;
+import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.SCHEDULE_YEARLY_FIND_SUCCESS;
 
 @Tag(name = "SCHEDULE", description = "캘린더 조회 API")
 @RestController
@@ -35,13 +35,13 @@ public class ScheduleController {
     @Operation(summary="월별 일정 조회")
     public CommonResponse<List<Response>> findByMonthly(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
                                                         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        return CommonResponse.createSuccess(SCHEDULE_MONTHLY_FIND_SUCCESS.getMessage(),scheduleUseCase.findByMonthly(start, end));
+        return CommonResponse.success(SCHEDULE_MONTHLY_FIND_SUCCESS,scheduleUseCase.findByMonthly(start, end));
     }
 
     @GetMapping("/yearly")
     @Operation(summary="연도별 일정 조회")
     public CommonResponse<Map<Integer, List<Response>>> findByYearly(@RequestParam Integer year,
                                                                      @RequestParam Integer semester) {
-        return CommonResponse.createSuccess(SCHEDULE_YEARLY_FIND_SUCCESS.getMessage(),scheduleUseCase.findByYearly(year, semester));
+        return CommonResponse.success(SCHEDULE_YEARLY_FIND_SUCCESS,scheduleUseCase.findByYearly(year, semester));
     }
 }

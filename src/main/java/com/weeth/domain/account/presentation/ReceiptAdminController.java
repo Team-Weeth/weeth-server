@@ -10,7 +10,7 @@ import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import static com.weeth.domain.account.presentation.ResponseMessage.*;
+import static com.weeth.domain.account.presentation.AccountResponseCode.*;
 
 @Tag(name = "RECEIPT ADMIN", description = "[ADMIN] 회비 어드민 API")
 @RestController
@@ -25,20 +25,20 @@ public class ReceiptAdminController {
     @Operation(summary="회비 사용 내역 기입")
     public CommonResponse<Void> save(@RequestBody @Valid ReceiptDTO.Save dto) {
         receiptUseCase.save(dto);
-        return CommonResponse.createSuccess(RECEIPT_SAVE_SUCCESS.getMessage());
+        return CommonResponse.success(RECEIPT_SAVE_SUCCESS);
     }
 
     @DeleteMapping("/{receiptId}")
     @Operation(summary="회비 사용 내역 취소")
     public CommonResponse<Void> delete(@PathVariable Long receiptId) {
         receiptUseCase.delete(receiptId);
-        return CommonResponse.createSuccess(RECEIPT_DELETE_SUCCESS.getMessage());
+        return CommonResponse.success(RECEIPT_DELETE_SUCCESS);
     }
 
     @PatchMapping("/{receiptId}")
     @Operation(summary="회비 사용 내역 수정")
     public CommonResponse<Void> update(@PathVariable Long receiptId, @RequestBody @Valid ReceiptDTO.Update dto) {
         receiptUseCase.update(receiptId, dto);
-        return CommonResponse.createSuccess(RECEIPT_UPDATE_SUCCESS.getMessage());
+        return CommonResponse.success(RECEIPT_UPDATE_SUCCESS);
     }
 }

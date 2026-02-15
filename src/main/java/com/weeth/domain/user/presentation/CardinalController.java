@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.weeth.domain.user.presentation.ResponseMessage.*;
+import static com.weeth.domain.user.presentation.UserResponseCode.*;
 
 @Tag(name = "CARDINAL")
 @RestController
@@ -32,7 +32,7 @@ public class CardinalController {
     public CommonResponse<List<CardinalResponse>> findAllCardinals() {
         List<CardinalResponse> response = cardinalUseCase.findAll();
 
-        return CommonResponse.createSuccess(CARDINAL_FIND_ALL_SUCCESS.getMessage(), response);
+        return CommonResponse.success(CARDINAL_FIND_ALL_SUCCESS, response);
     }
 
     @PatchMapping("/admin/cardinals")
@@ -40,7 +40,7 @@ public class CardinalController {
     public CommonResponse<Void> updateCardinals(@RequestBody CardinalUpdateRequest dto) {
         cardinalUseCase.update(dto);
 
-        return CommonResponse.createSuccess(CARDINAL_UPDATE_SUCCESS.getMessage());
+        return CommonResponse.success(CARDINAL_UPDATE_SUCCESS);
     }
 
     @PostMapping("/admin/cardinals")
@@ -48,7 +48,7 @@ public class CardinalController {
     public CommonResponse<Void> save(@RequestBody @Valid CardinalSaveRequest dto) {
         cardinalUseCase.save(dto);
 
-        return CommonResponse.createSuccess(CARDINAL_SAVE_SUCCESS.getMessage());
+        return CommonResponse.success(CARDINAL_SAVE_SUCCESS);
     }
 
 }

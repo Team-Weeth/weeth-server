@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.weeth.domain.schedule.application.dto.EventDTO.Response;
-import static com.weeth.domain.schedule.presentation.ResponseMessage.EVENT_FIND_SUCCESS;
+import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.EVENT_FIND_SUCCESS;
 
 @Tag(name = "EVENT", description = "일정 API")
 @RestController
@@ -27,7 +27,7 @@ public class EventController {
     @GetMapping("/{eventId}")
     @Operation(summary="일정 상세 조회")
     public CommonResponse<Response> find(@PathVariable Long eventId) {
-        return CommonResponse.createSuccess(EVENT_FIND_SUCCESS.getMessage(),
+        return CommonResponse.success(EVENT_FIND_SUCCESS,
                 eventUseCase.find(eventId));
     }
 

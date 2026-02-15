@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import static com.weeth.domain.penalty.presentation.ResponseMessage.PENALTY_USER_FIND_SUCCESS;
+import static com.weeth.domain.penalty.presentation.PenaltyResponseCode.PENALTY_USER_FIND_SUCCESS;
 
 @Tag(name = "PENALTY", description = "패널티 API")
 @RestController
@@ -29,7 +29,7 @@ public class PenaltyUserController {
     @Operation(summary="본인 패널티 조회")
     public CommonResponse<PenaltyDTO.Response> findAllPenalties(@Parameter(hidden = true) @CurrentUser Long userId) {
         PenaltyDTO.Response penalties = penaltyUsecase.find(userId);
-        return CommonResponse.createSuccess(PENALTY_USER_FIND_SUCCESS.getMessage(),penalties);
+        return CommonResponse.success(PENALTY_USER_FIND_SUCCESS,penalties);
     }
 
 }

@@ -15,7 +15,7 @@ import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import static com.weeth.domain.board.presentation.ResponseMessage.*;
+import static com.weeth.domain.board.presentation.BoardResponseCode.*;
 
 @Tag(name = "NOTICE ADMIN", description = "[ADMIN] 공지사항 어드민 API")
 @RestController
@@ -32,7 +32,7 @@ public class NoticeAdminController {
                                        @Parameter(hidden = true) @CurrentUser Long userId) {
         NoticeDTO.SaveResponse response  = noticeUsecase.save(dto, userId);
 
-        return CommonResponse.createSuccess(NOTICE_CREATED_SUCCESS.getMessage(), response);
+        return CommonResponse.success(NOTICE_CREATED_SUCCESS, response);
     }
 
     @PatchMapping(value = "/{noticeId}")
@@ -42,14 +42,14 @@ public class NoticeAdminController {
                                          @Parameter(hidden = true) @CurrentUser Long userId) throws UserNotMatchException {
         NoticeDTO.SaveResponse response = noticeUsecase.update(noticeId, dto, userId);
 
-        return CommonResponse.createSuccess(NOTICE_UPDATED_SUCCESS.getMessage(), response);
+        return CommonResponse.success(NOTICE_UPDATED_SUCCESS, response);
     }
 
     @DeleteMapping("/{noticeId}")
     @Operation(summary="특정 공지사항 삭제")
     public CommonResponse<String> delete(@PathVariable Long noticeId, @Parameter(hidden = true) @CurrentUser Long userId) throws UserNotMatchException {
         noticeUsecase.delete(noticeId, userId);
-        return CommonResponse.createSuccess(NOTICE_DELETED_SUCCESS.getMessage());
+        return CommonResponse.success(NOTICE_DELETED_SUCCESS);
     }
 
 }
