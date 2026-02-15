@@ -58,7 +58,7 @@ public class UserUseCaseImpl implements UserUseCase {
     @Transactional(readOnly = true)
     public SocialLoginResponse login(Login dto) {
         long kakaoId = getKakaoId(dto);
-        Optional<User> optionalUser = userGetService.find(kakaoId);
+        Optional<User> optionalUser = userGetService.findByKakaoId(kakaoId);
 
         if (optionalUser.isEmpty()) {
             return mapper.toIntegrateResponse(kakaoId);

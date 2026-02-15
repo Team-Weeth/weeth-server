@@ -29,7 +29,7 @@ public class UserGetService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
-    public Optional<User> find(long kakaoId){
+    public Optional<User> findByKakaoId(long kakaoId){
         return userRepository.findByKakaoId(kakaoId);
     }
 
