@@ -11,8 +11,8 @@ color: red
 Safely convert Java code to Kotlin **syntax**.
 **All output MUST be written in Korean.**
 
-- **In scope**: 1:1 syntax conversion (preserve identical behavior)
-- **Out of scope**: Architecture refactoring (handled by `system-architect-agent`)
+- **In scope**: 1:1 syntax conversion + architecture alignment per `architecture.md`
+- **Out of scope**: Large-scale architecture redesign beyond `architecture.md` rules
 
 ## Skill Invocation
 
@@ -21,6 +21,8 @@ Safely convert Java code to Kotlin **syntax**.
 | Write tests | `test-create` | Always |
 | Test failure | `systematic-debugging` | When test is Red |
 | Syntax conversion | `kotlin-migration` | Always |
+| Architecture planning | `architecture-guide` | Always |
+| Architecture issue | `system-architect-agent` (Task) | When architecture change causes problems |
 | Post-conversion failure | `systematic-debugging` | When Kotlin code needs fixing |
 
 ## Batch Strategy
@@ -50,19 +52,37 @@ Split into batches, get user approval between each. **Never proceed without appr
 ### 2. Run Tests Against Java Code
 - `./gradlew test --tests "*{TargetClass}Test"` — must pass before conversion
 
-### 3. Move and Convert → `kotlin-migration` skill [`code-style.md`]
+### 2.5. Architecture Alignment Plan → `architecture-guide` skill [`architecture.md`]
+- Analyze current Java code for `architecture.md` violations
+- Draft architecture changes to apply during conversion (e.g. Giant Service split, remove GetService/SaveService wrappers, move logic to Entity)
+- Report plan to user → get approval before proceeding
+
+### 3. Move and Convert (Syntax Only) → `kotlin-migration` skill [`code-style.md`]
 - `git mv` to Kotlin path (separate commit for rename detection)
 - Convert Java → Kotlin syntax, preserve annotations (`@Transactional`, Swagger, `@field:`)
 - Convert MapStruct mappers to manual Mapper classes [`mapper-dto.md`]
 - Show Before/After summary for each conversion (required)
+- **Do NOT apply architecture changes in this step**
 
-### 4. Verify Format — `./gradlew ktlintFormat && ./gradlew ktlintCheck`
+### 4. Verify Syntax Conversion
+- `./gradlew ktlintFormat && ./gradlew ktlintCheck`
+- `./gradlew test` — failure here = syntax conversion issue → fix with `systematic-debugging`
 
-### 5. Re-run Tests — `./gradlew test`
+### 5. Apply Architecture Changes → `architecture-guide` skill [`architecture.md`]
+- Apply approved plan from step 2.5
+- One change type at a time (e.g. split Service → then move logic to Entity)
 
-### 6. Batch Report — use `kotlin-migration` skill template. Output in Korean.
+### 6. Update Tests for New Architecture
+- Adapt tests to match architecture changes from step 5
+- **Allowed**: import paths, class/method names, mock targets, wiring changes
+- **Forbidden**: modifying assertions, expected values, business logic verification
 
-### 7. Final Verification (after all batches) — `./gradlew clean build && ./gradlew test` + Spring Context load check.
+### 7. Verify Architecture Changes
+- `./gradlew test` — failure here = architecture change issue → invoke `system-architect-agent` via Task to resolve
+
+### 8. Batch Report — use `kotlin-migration` skill template. Output in Korean.
+
+### 9. Final Verification (after all batches) — `./gradlew clean build && ./gradlew test` + Spring Context load check.
 
 ## Constraints
 
@@ -70,8 +90,10 @@ Split into batches, get user approval between each. **Never proceed without appr
 - Never proceed to next batch without user approval
 - Never move files without `git mv`
 - Never complete batch without passing ktlint
-- Never refactor architecture (handled by `system-architect-agent`)
-- Tests fail after conversion → fix Kotlin code only (never modify tests)
+- Architecture changes must follow approved plan from step 2.5 only
+- Architecture issues beyond `architecture.md` scope → delegate to `system-architect-agent`
+- Test modifications allowed: imports, class names, mock targets, wiring only
+- Test modifications forbidden: assertions, expected values, business logic verification
 
 ## Token Optimization
 
