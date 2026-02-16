@@ -7,9 +7,8 @@ import com.weeth.domain.board.domain.service.NoticeDeleteService
 import com.weeth.domain.board.domain.service.NoticeFindService
 import com.weeth.domain.board.domain.service.NoticeSaveService
 import com.weeth.domain.board.domain.service.NoticeUpdateService
-import com.weeth.domain.comment.application.mapper.CommentMapper
-import com.weeth.domain.user.domain.service.UserGetService
 import com.weeth.domain.board.fixture.NoticeTestFixture
+import com.weeth.domain.comment.application.mapper.CommentMapper
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
@@ -21,6 +20,7 @@ import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Department
 import com.weeth.domain.user.domain.entity.enums.Position
 import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.service.UserGetService
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
