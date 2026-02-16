@@ -1,0 +1,84 @@
+name: weeth-dev
+
+services:
+  caddy:
+    image: caddy:2.8
+    container_name: weeth-dev-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/upstream.conf:/etc/caddy/upstream.conf
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+    networks:
+      - web
+
+  mysql:
+    image: mysql:8.0
+    container_name: weeth-dev-mysql
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      TZ: Asia/Seoul
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - web
+
+  app-blue:
+    image: ${APP_IMAGE}
+    container_name: weeth-dev-app-blue
+    restart: unless-stopped
+    profiles: ["blue"]
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Seoul
+    volumes:
+      - ~/keys:/app/keys:ro
+    ports:
+      - "127.0.0.1:18081:8080"
+    depends_on:
+      mysql:
+        condition: service_started
+    networks:
+      - web
+
+  app-green:
+    image: ${APP_IMAGE}
+    container_name: weeth-dev-app-green
+    restart: unless-stopped
+    profiles: ["green"]
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      TZ: Asia/Seoul
+    volumes:
+      - ~/keys:/app/keys:ro
+    ports:
+      - "127.0.0.1:18082:8080"
+    depends_on:
+      mysql:
+        condition: service_started
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  mysql_data:

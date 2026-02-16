@@ -1,0 +1,28 @@
+# {$DOMAIN} 은 Github Action에서 주입한다.
+{$DOMAIN} {
+
+    # 응답 압축 활성화
+    # zstd: 최신 브라우저에서 더 효율적인 압축
+    # gzip: 대부분 클라이언트와 호환되는 기본 압축
+    encode zstd gzip
+
+    # 보안 관련 HTTP 헤더 설정
+    header {
+
+        # HSTS (HTTP Strict Transport Security)
+        Strict-Transport-Security "max-age=31536000"
+
+        # MIME 타입 스니핑 방지
+        # 브라우저가 응답 타입을 추측하지 못하도록 하여 XSS 위험 감소
+        X-Content-Type-Options "nosniff"
+
+        # 클릭재킹 방지
+        X-Frame-Options "DENY"
+
+        # Referrer 정책 설정
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # 실제 reverse_proxy 설정은 upstream.conf 파일에서 불러옴
+    import /etc/caddy/upstream.conf
+}
