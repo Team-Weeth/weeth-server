@@ -1,0 +1,40 @@
+spring:
+  profiles:
+    active: local
+
+springdoc:
+  use-fqn: true
+  swagger-ui:
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+
+auth:
+  providers:
+    kakao:
+      authorize_uri: https://kauth.kakao.com/oauth/authorize
+      client_id: ${KAKAO_CLIENT_ID}
+      redirect_uri: ${KAKAO_REDIRECT_URI}
+      grant_type: ${KAKAO_GRANT_TYPE}
+      token_uri: ${KAKAO_TOKEN_URI}
+      user_info_uri: ${KAKAO_USER_INFO_URI}
+    apple:
+      client_id: ${APPLE_CLIENT_ID}
+      team_id: ${APPLE_TEAM_ID}
+      key_id: ${APPLE_KEY_ID}
+      redirect_uri: ${APPLE_REDIRECT_URI}
+      token_uri: https://appleid.apple.com/auth/token
+      keys_uri: https://appleid.apple.com/auth/keys
+      private_key_path: ${APPLE_PRIVATE_KEY_PATH}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true

@@ -7,7 +7,6 @@
 @RestController
 @RequestMapping("/api/v1/users")
 @ApiErrorCodeExample(UserErrorCode::class, JwtErrorCode::class)
-@ApiSuccessCodeExample(UserResponseCode::class)
 class UserController(
     private val userUsecase: UserUsecase
 ) {
@@ -27,45 +26,6 @@ class UserController(
 | `@Parameter(hidden = true)` | Hide internal params from docs |
 | `@Valid` | Enable validation |
 | `@ApiErrorCodeExample(...)` | Auto-register error examples in Swagger |
-| `@ApiSuccessCodeExample(...)` | Auto-register success examples in Swagger |
-
-## Swagger Success Example Automation
-
-Use one global annotation strategy for success examples.
-
-- Use `@ApiSuccessCodeExample` (method or class level).
-- Method-level declaration overrides class-level declaration.
-- Pass enum classes directly; do not use string-based names.
-
-```kotlin
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class ApiSuccessCodeExample(
-    vararg val value: KClass<out ResponseCodeInterface>
-)
-```
-
-```kotlin
-@PostMapping("/login")
-@ApiSuccessCodeExample(AuthResponseCode::class)
-fun login(@RequestBody request: LoginRequest): CommonResponse<LoginResponse>
-```
-
-### DTO Inference Convention
-
-- Generate success examples from controller return type.
-- Keep generics with `ResolvableType`.
-- Unwrap order:
-1. `ResponseEntity<CommonResponse<T>>` -> `T`
-2. `ResponseEntity<T>` -> `T`
-3. `CommonResponse<T>` -> `T`
-4. fallback -> return type itself
-
-### Example Generation Convention
-
-- Prefer `@Schema(example = "...")`; otherwise use type defaults.
-- Collections/maps/pages should use generic element types.
-- `Unit`/`Void` and HTTP `204/205`: description only, no body example.
 
 ## Response Format
 
@@ -108,7 +68,39 @@ enum class UserResponseCode(
 ```
 
 - Success code enums must implement `ResponseCodeInterface`.
-- New API methods must include `@ApiSuccessCodeExample(...)`.
+- Controllers should return success responses with enum directly:
+  - `CommonResponse.success(USER_FIND_BY_ID_SUCCESS, data)`
+  - `CommonResponse.success(USER_UPDATE_SUCCESS)`
+
+## Domain Success Codes
+
+Current project uses domain-specific success enums under `src/main/java/com/weeth/domain/*/presentation/*ResponseCode.java`.
+
+| Domain | ResponseCode Enum | Code Range | Location |
+|--------|------------------|------------|----------|
+| Account | `AccountResponseCode` | `11xx` | `domain/account/presentation/` |
+| Attendance | `AttendanceResponseCode` | `12xx` | `domain/attendance/presentation/` |
+| Board | `BoardResponseCode` | `13xx` | `domain/board/presentation/` |
+| Comment | `CommentResponseCode` | `140xx` | `domain/comment/presentation/` |
+| File | `FileResponseCode` | `15xx` | `domain/file/presentation/` |
+| Penalty | `PenaltyResponseCode` | `160xx` | `domain/penalty/presentation/` |
+| Schedule | `ScheduleResponseCode` | `17xx` | `domain/schedule/presentation/` |
+| User | `UserResponseCode` | `18xx` | `domain/user/presentation/` |
+
+## Domain Error Codes
+
+Domain-specific error enums under `src/main/java/com/weeth/domain/*/application/exception/*ErrorCode.java`.
+
+| Domain | ErrorCode Enum | Code Range | Location |
+|--------|---------------|------------|----------|
+| Account | `AccountErrorCode` | `21xx` | `domain/account/application/exception/` |
+| Attendance | `AttendanceErrorCode` | `22xx` | `domain/attendance/application/exception/` |
+| Board | `BoardErrorCode`, `NoticeErrorCode`, `PostErrorCode` | `23xx` | `domain/board/application/exception/` |
+| Comment | `CommentErrorCode` | `240x` | `domain/comment/application/exception/` |
+| Penalty | `PenaltyErrorCode` | `260x` | `domain/penalty/application/exception/` |
+| Schedule | `EventErrorCode`, `MeetingErrorCode` | `27xx` | `domain/schedule/application/exception/` |
+| User | `UserErrorCode` | `28xx` | `domain/user/application/exception/` |
+| JWT (Global) | `JwtErrorCode` | `29xx` | `global/auth/jwt/exception/` |
 
 ## Code Numbering
 
