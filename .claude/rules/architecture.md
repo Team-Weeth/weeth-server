@@ -154,8 +154,8 @@ class User(
 
 ## Port-Adapter Pattern
 
-- **Port** (`domain/port/`): interface in domain language, no tech names → `FileStorage`, `PushNotificationSender`
-- **Adapter** (`infrastructure/`): implementation with tech prefix → `S3FileStorage`, `FcmPushNotificationSender`
+- **Port** (`domain/port/`): interface in domain language → `FileStoragePort`, `PushNotificationSenderPort`
+- **Adapter** (`infrastructure/`): implementation with tech prefix → `S3FileStorageAdapter`, `FcmPushNotificationSenderAdapter`
 - UseCase depends on Port interface only → swappable, testable
 
 ## Core Principles
