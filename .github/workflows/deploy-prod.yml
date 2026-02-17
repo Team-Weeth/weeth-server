@@ -11,7 +11,7 @@ env:
   IMAGE_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,6 +54,15 @@ jobs:
           tags: |
             ${{ env.IMAGE_REPOSITORY }}:${{ github.event.release.tag_name }}
             ${{ env.IMAGE_REPOSITORY }}:prod-latest
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: needs.build.result == 'success'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
 
       # /infra/prod 하위 파일 EC2로 복사
       - name: Upload deployment files to EC2
