@@ -30,7 +30,7 @@ class AttendanceMapperTest :
                 val main = mapper.toMainResponse(user, attendance)
 
                 main.shouldNotBeNull()
-                main.title shouldBe "Today"
+                main.title shouldBe meeting.title
                 main.status shouldBe attendance.status
                 main.start shouldBe meeting.start
                 main.end shouldBe meeting.end
@@ -59,7 +59,7 @@ class AttendanceMapperTest :
 
                 main.shouldNotBeNull()
                 main.code.shouldBeNull()
-                main.title shouldBe "Today"
+                main.title shouldBe meeting.title
                 main.status shouldBe attendance.status
             }
         }
@@ -73,7 +73,7 @@ class AttendanceMapperTest :
                 val response = mapper.toResponse(attendance)
 
                 response.shouldNotBeNull()
-                response.title shouldBe "D-1"
+                response.title shouldBe meeting.title
                 response.start shouldBe meeting.start
                 response.end shouldBe meeting.end
                 response.location shouldBe meeting.location
@@ -98,7 +98,7 @@ class AttendanceMapperTest :
 
                 detail.shouldNotBeNull()
                 detail.attendances shouldBe listOf(r1, r2)
-                detail.total shouldBe 5
+                detail.total shouldBe user.attendanceCount + user.absenceCount
             }
         }
 
@@ -114,9 +114,9 @@ class AttendanceMapperTest :
                 val info = mapper.toInfoResponse(attendance)
 
                 info.shouldNotBeNull()
-                info.id shouldBe 10L
+                info.id shouldBe attendance.id
                 info.status shouldBe attendance.status
-                info.name shouldBe "유저B"
+                info.name shouldBe user.name
             }
         }
 
@@ -132,7 +132,7 @@ class AttendanceMapperTest :
 
                 main.shouldNotBeNull()
                 main.code shouldBe expectedCode
-                main.title shouldBe "Today"
+                main.title shouldBe meeting.title
                 main.start shouldBe meeting.start
                 main.end shouldBe meeting.end
                 main.location shouldBe meeting.location
