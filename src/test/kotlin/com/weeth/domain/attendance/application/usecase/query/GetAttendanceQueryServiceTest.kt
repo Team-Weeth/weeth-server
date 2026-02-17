@@ -5,6 +5,7 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceInfoRespon
 import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
+import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUserWithAttendances
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDayMeeting
@@ -57,7 +58,7 @@ class GetAttendanceQueryServiceTest :
 
                 val expectedTodayAttendance =
                     user.attendances.first {
-                        it.meeting.title == "Today"
+                        it.meeting == meetingToday
                     }
 
                 val mapped = mockk<AttendanceMainResponse>()
@@ -134,8 +135,8 @@ class GetAttendanceQueryServiceTest :
             it("해당 정기모임의 출석 정보를 조회") {
                 val meetingId = 1L
                 val meeting = mockk<Meeting>()
-                val attendance1 = mockk<com.weeth.domain.attendance.domain.entity.Attendance>()
-                val attendance2 = mockk<com.weeth.domain.attendance.domain.entity.Attendance>()
+                val attendance1 = mockk<Attendance>()
+                val attendance2 = mockk<Attendance>()
                 val response1 = mockk<AttendanceInfoResponse>()
                 val response2 = mockk<AttendanceInfoResponse>()
 

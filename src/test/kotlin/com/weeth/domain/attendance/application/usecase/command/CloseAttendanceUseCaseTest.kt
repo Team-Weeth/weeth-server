@@ -5,6 +5,7 @@ import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDayMeeting
 import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
 import com.weeth.domain.schedule.domain.service.MeetingGetService
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Status
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -29,7 +30,7 @@ class CloseAttendanceUseCaseTest :
 
                 val pendingAttendance = mockk<Attendance>(relaxUnitFun = true)
                 val attendedAttendance = mockk<Attendance>(relaxUnitFun = true)
-                val pendingUser = mockk<com.weeth.domain.user.domain.entity.User>(relaxUnitFun = true)
+                val pendingUser = mockk<User>(relaxUnitFun = true)
 
                 every { pendingAttendance.isPending } returns true
                 every { pendingAttendance.user } returns pendingUser
