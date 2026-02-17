@@ -70,11 +70,12 @@ class FileRepositoryTest(
                 fileRepository.save(createTestFile("index-target.png", FileOwnerType.RECEIPT, 55L, FileStatus.UPLOADED))
 
                 val explain =
-                    jdbcTemplate.queryForList(
-                        "EXPLAIN SELECT id FROM `file` WHERE owner_type = ? AND owner_id = ?",
-                        FileOwnerType.RECEIPT.name,
-                        55L,
-                    ).first()
+                    jdbcTemplate
+                        .queryForList(
+                            "EXPLAIN SELECT id FROM `file` WHERE owner_type = ? AND owner_id = ?",
+                            FileOwnerType.RECEIPT.name,
+                            55L,
+                        ).first()
 
                 val possibleKeys = explain.valueBy("possible_keys")
                 val selectedKey = explain.valueBy("key")
@@ -91,18 +92,18 @@ private fun createTestFile(
     ownerId: Long,
     status: FileStatus,
 ): File =
-    File.createUploaded(
-        fileName = fileName,
-        storageKey = "${ownerType.name}/2026-02/${UUID.randomUUID()}_$fileName",
-        fileSize = 1024L,
-        contentType = "image/png",
-        ownerType = ownerType,
-        ownerId = ownerId,
-    ).also {
-        if (status == FileStatus.DELETED) {
-            it.markDeleted()
+    File
+        .createUploaded(
+            fileName = fileName,
+            storageKey = "${ownerType.name}/2026-02/${UUID.randomUUID()}_$fileName",
+            fileSize = 1024L,
+            contentType = "image/png",
+            ownerType = ownerType,
+            ownerId = ownerId,
+        ).also {
+            if (status == FileStatus.DELETED) {
+                it.markDeleted()
+            }
         }
-    }
 
-private fun Map<String, Any?>.valueBy(key: String): String =
-    entries.first { it.key.equals(key, ignoreCase = true) }.value.toString()
+private fun Map<String, Any?>.valueBy(key: String): String = entries.first { it.key.equals(key, ignoreCase = true) }.value.toString()

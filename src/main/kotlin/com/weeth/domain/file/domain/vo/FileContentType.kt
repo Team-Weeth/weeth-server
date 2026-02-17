@@ -6,19 +6,15 @@ import com.weeth.domain.file.application.exception.UnsupportedFileContentTypeExc
 value class FileContentType(
     val value: String,
 ) {
+    val normalized: String
+        get() = value.lowercase()
+
+    val fileType: FileType
+        get() = FileType.fromContentType(normalized) ?: throw UnsupportedFileContentTypeException()
+
     init {
-        if (value !in ALLOWED_CONTENT_TYPES) {
+        if (FileType.fromContentType(normalized) == null) {
             throw UnsupportedFileContentTypeException()
         }
-    }
-
-    companion object {
-        private val ALLOWED_CONTENT_TYPES =
-            setOf(
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-                "application/pdf",
-            )
     }
 }

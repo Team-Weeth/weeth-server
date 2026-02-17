@@ -1,6 +1,7 @@
 package com.weeth.domain.file.infrastructure
 
 import com.weeth.domain.file.application.exception.PresignedUrlGenerationException
+import com.weeth.domain.file.application.exception.UnsupportedFileExtensionException
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.global.config.properties.AwsS3Properties
 import io.kotest.assertions.throwables.shouldThrow
@@ -49,6 +50,15 @@ class S3FileUploadUrlAdapterTest :
 
                 shouldThrow<PresignedUrlGenerationException> {
                     adapter.generateUploadUrl(FileOwnerType.POST, "file.png")
+                }
+            }
+
+            it("허용되지 않은 확장자는 URL 생성 전에 차단한다") {
+                val s3Presigner = mockk<S3Presigner>()
+                val adapter = S3FileUploadUrlAdapter(s3Presigner, awsS3Properties, 5)
+
+                shouldThrow<UnsupportedFileExtensionException> {
+                    adapter.generateUploadUrl(FileOwnerType.POST, "file.exe")
                 }
             }
         }

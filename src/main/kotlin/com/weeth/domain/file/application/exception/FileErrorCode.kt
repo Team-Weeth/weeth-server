@@ -17,6 +17,9 @@ enum class FileErrorCode(
 
     @ExplainError("허용되지 않은 Content-Type으로 파일 업로드를 시도했을 때 발생합니다.")
     UNSUPPORTED_CONTENT_TYPE(2502, HttpStatus.BAD_REQUEST, "지원하지 않는 파일 형식입니다."),
+
+    @ExplainError("허용되지 않은 확장자로 파일 업로드를 시도했을 때 발생합니다.")
+    UNSUPPORTED_FILE_EXTENSION(2503, HttpStatus.BAD_REQUEST, "지원하지 않는 파일 확장자입니다."),
     ;
 
     override fun getCode(): Int = code

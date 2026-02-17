@@ -4,6 +4,8 @@ import com.weeth.domain.file.application.exception.PresignedUrlGenerationExcepti
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.port.FileUploadUrl
 import com.weeth.domain.file.domain.port.FileUploadUrlPort
+import com.weeth.domain.file.domain.vo.FileName
+import com.weeth.global.common.exception.BaseException
 import com.weeth.global.config.properties.AwsS3Properties
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -28,7 +30,8 @@ class S3FileUploadUrlAdapter(
         fileName: String,
     ): FileUploadUrl =
         runCatching {
-            val storageKey = generateStorageKey(ownerType, fileName)
+            val validatedFileName = FileName(fileName)
+            val storageKey = generateStorageKey(ownerType, validatedFileName.sanitized)
             val putObjectRequest =
                 PutObjectRequest
                     .builder()
@@ -46,16 +49,18 @@ class S3FileUploadUrlAdapter(
             val presigned = s3Presigner.presignPutObject(request)
             FileUploadUrl(fileName = fileName, storageKey = storageKey, url = presigned.url().toString())
         }.getOrElse { e ->
+            if (e is BaseException) {
+                throw e
+            }
             throw PresignedUrlGenerationException(cause = e)
         }
 
     private fun generateStorageKey(
         ownerType: FileOwnerType,
-        fileName: String,
+        sanitizedFileName: String,
     ): String {
         val month = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"))
         val uuid = UUID.randomUUID().toString()
-        val sanitized = fileName.trim().replace(Regex("""[\\/:*?"<>|]"""), "_")
-        return "${ownerType.name}/$month/${uuid}_$sanitized"
+        return "${ownerType.name}/$month/${uuid}_$sanitizedFileName"
     }
 }
