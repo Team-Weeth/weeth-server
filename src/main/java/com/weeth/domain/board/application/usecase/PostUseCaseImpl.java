@@ -19,9 +19,9 @@ import com.weeth.domain.comment.domain.entity.Comment;
 import com.weeth.domain.file.application.dto.response.FileResponse;
 import com.weeth.domain.file.application.mapper.FileMapper;
 import com.weeth.domain.file.domain.entity.File;
-import com.weeth.domain.file.domain.service.FileDeleteService;
-import com.weeth.domain.file.domain.service.FileGetService;
-import com.weeth.domain.file.domain.service.FileSaveService;
+import com.weeth.domain.file.domain.entity.FileOwnerType;
+import com.weeth.domain.file.domain.repository.FileReader;
+import com.weeth.domain.file.domain.repository.FileRepository;
 import com.weeth.domain.user.application.exception.UserNotMatchException;
 import com.weeth.domain.user.domain.entity.User;
 import com.weeth.domain.user.domain.entity.enums.Role;
@@ -51,9 +51,8 @@ public class PostUseCaseImpl implements PostUsecase {
     private final UserCardinalGetService userCardinalGetService;
     private final CardinalGetService cardinalGetService;
 
-    private final FileSaveService fileSaveService;
-    private final FileGetService fileGetService;
-    private final FileDeleteService fileDeleteService;
+    private final FileRepository fileRepository;
+    private final FileReader fileReader;
 
     private final PostMapper mapper;
     private final FileMapper fileMapper;
@@ -73,8 +72,8 @@ public class PostUseCaseImpl implements PostUsecase {
         Post post = mapper.fromPostDto(request, user);
         Post savedPost = postSaveService.save(post);
 
-        List<File> files = fileMapper.toFileList(request.files(), post);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(request.files(), FileOwnerType.POST, savedPost.getId());
+        fileRepository.saveAll(files);
 
         return mapper.toSaveResponse(savedPost);
     }
@@ -87,8 +86,8 @@ public class PostUseCaseImpl implements PostUsecase {
         Post post = mapper.fromEducationDto(request, user);
         Post saverPost = postSaveService.save(post);
 
-        List<File> files = fileMapper.toFileList(request.files(), post);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(request.files(), FileOwnerType.POST, saverPost.getId());
+        fileRepository.saveAll(files);
 
         return mapper.toSaveResponse(saverPost);
     }
@@ -198,10 +197,10 @@ public class PostUseCaseImpl implements PostUsecase {
 
         if (dto.files() != null) {
             List<File> fileList = getFiles(postId);
-            fileDeleteService.delete(fileList);
+            fileRepository.deleteAll(fileList);
 
-            List<File> files = fileMapper.toFileList(dto.files(), post);
-            fileSaveService.save(files);
+            List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.POST, post.getId());
+            fileRepository.saveAll(files);
         }
 
         postUpdateService.update(post, dto);
@@ -216,10 +215,10 @@ public class PostUseCaseImpl implements PostUsecase {
 
         if (dto.files() != null) {
             List<File> fileList = getFiles(postId);
-            fileDeleteService.delete(fileList);
+            fileRepository.deleteAll(fileList);
 
-            List<File> files = fileMapper.toFileList(dto.files(), post);
-            fileSaveService.save(files);
+            List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.POST, post.getId());
+            fileRepository.saveAll(files);
         }
 
         postUpdateService.updateEducation(post, dto);
@@ -233,13 +232,13 @@ public class PostUseCaseImpl implements PostUsecase {
         validateOwner(postId, userId);
 
         List<File> fileList = getFiles(postId);
-        fileDeleteService.delete(fileList);
+        fileRepository.deleteAll(fileList);
 
         postDeleteService.delete(postId);
     }
 
     private List<File> getFiles(Long postId) {
-        return fileGetService.findAllByPost(postId);
+        return fileReader.findAll(FileOwnerType.POST, postId, null);
     }
 
     private Post validateOwner(Long postId, Long userId) {
@@ -252,7 +251,7 @@ public class PostUseCaseImpl implements PostUsecase {
     }
 
     public boolean checkFileExistsByPost(Long postId){
-        return !fileGetService.findAllByPost(postId).isEmpty();
+        return fileReader.exists(FileOwnerType.POST, postId, null);
     }
 
     private List<CommentDTO.Response> filterParentComments(List<Comment> comments) {
@@ -272,7 +271,7 @@ public class PostUseCaseImpl implements PostUsecase {
                 .map(child -> mapToDtoWithChildren(child, commentMap))
                 .collect(Collectors.toList());
 
-        List<FileResponse> files = fileGetService.findAllByComment(comment.getId()).stream()
+        List<FileResponse> files = fileReader.findAll(FileOwnerType.COMMENT, comment.getId(), null).stream()
                 .map(fileMapper::toFileResponse)
                 .toList();
 

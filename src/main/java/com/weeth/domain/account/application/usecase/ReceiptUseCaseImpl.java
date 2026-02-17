@@ -8,9 +8,9 @@ import com.weeth.domain.account.domain.entity.Receipt;
 import com.weeth.domain.account.domain.service.*;
 import com.weeth.domain.file.application.mapper.FileMapper;
 import com.weeth.domain.file.domain.entity.File;
-import com.weeth.domain.file.domain.service.FileDeleteService;
-import com.weeth.domain.file.domain.service.FileGetService;
-import com.weeth.domain.file.domain.service.FileSaveService;
+import com.weeth.domain.file.domain.entity.FileOwnerType;
+import com.weeth.domain.file.domain.repository.FileReader;
+import com.weeth.domain.file.domain.repository.FileRepository;
 import com.weeth.domain.user.domain.service.CardinalGetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,9 +27,8 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
     private final ReceiptUpdateService receiptUpdateService;
     private final AccountGetService accountGetService;
 
-    private final FileGetService fileGetService;
-    private final FileSaveService fileSaveService;
-    private final FileDeleteService fileDeleteService;
+    private final FileReader fileReader;
+    private final FileRepository fileRepository;
 
     private final CardinalGetService cardinalGetService;
 
@@ -46,8 +45,8 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
         Receipt receipt = receiptSaveService.save(mapper.from(dto, account));
         account.spend(receipt);
 
-        List<File> files = fileMapper.toFileList(dto.files(), receipt);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, receipt.getId());
+        fileRepository.saveAll(files);
     }
 
     @Override
@@ -59,28 +58,28 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
 
         if(!dto.files().isEmpty()){ // 업데이트하려는 파일이 있다면 파일을 전체 삭제한 뒤 저장
             List<File> fileList = getFiles(receiptId);
-            fileDeleteService.delete(fileList);
+            fileRepository.deleteAll(fileList);
 
-            List<File> files = fileMapper.toFileList(dto.files(), receipt);
-            fileSaveService.save(files);
+            List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, receipt.getId());
+            fileRepository.saveAll(files);
         }
         receiptUpdateService.update(receipt, dto);
         account.spend(receipt);
     }
 
     private List<File> getFiles(Long receiptId) {
-        return fileGetService.findAllByReceipt(receiptId);
+        return fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null);
     }
 
     @Override
     @Transactional
     public void delete(Long id) {
         Receipt receipt = receiptGetService.find(id);
-        List<File> fileList = fileGetService.findAllByReceipt(id);
+        List<File> fileList = fileReader.findAll(FileOwnerType.RECEIPT, id, null);
 
         receipt.getAccount().cancel(receipt);
 
-        fileDeleteService.delete(fileList);
+        fileRepository.deleteAll(fileList);
         receiptDeleteService.delete(receipt);
     }
 }

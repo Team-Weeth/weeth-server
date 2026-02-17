@@ -12,9 +12,9 @@ import com.weeth.domain.comment.application.mapper.CommentMapper
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
-import com.weeth.domain.file.domain.service.FileDeleteService
-import com.weeth.domain.file.domain.service.FileGetService
-import com.weeth.domain.file.domain.service.FileSaveService
+import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.file.fixture.FileTestFixture
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Department
@@ -45,9 +45,8 @@ class NoticeUsecaseImplTest :
         val noticeUpdateService = mockk<NoticeUpdateService>(relaxUnitFun = true)
         val noticeDeleteService = mockk<NoticeDeleteService>(relaxUnitFun = true)
         val userGetService = mockk<UserGetService>()
-        val fileSaveService = mockk<FileSaveService>(relaxUnitFun = true)
-        val fileGetService = mockk<FileGetService>()
-        val fileDeleteService = mockk<FileDeleteService>(relaxUnitFun = true)
+        val fileRepository = mockk<FileRepository>(relaxed = true)
+        val fileReader = mockk<FileReader>()
         val noticeMapper = mockk<NoticeMapper>()
         val commentMapper = mockk<CommentMapper>()
         val fileMapper = mockk<FileMapper>()
@@ -59,9 +58,8 @@ class NoticeUsecaseImplTest :
                 noticeUpdateService,
                 noticeDeleteService,
                 userGetService,
-                fileSaveService,
-                fileGetService,
-                fileDeleteService,
+                fileRepository,
+                fileReader,
                 noticeMapper,
                 commentMapper,
                 fileMapper,
@@ -90,7 +88,7 @@ class NoticeUsecaseImplTest :
                 val slice = SliceImpl(listOf(notices[4], notices[3], notices[2]), pageable, true)
 
                 every { noticeFindService.findRecentNotices(any()) } returns slice
-                every { fileGetService.findAllByNotice(any()) } returns listOf()
+                every { fileReader.exists(FileOwnerType.NOTICE, any(), null) } returns false
                 every { noticeMapper.toAll(any<Notice>(), any<Boolean>()) } answers {
                     val notice = firstArg<Notice>()
                     NoticeDTO.ResponseAll(
@@ -146,18 +144,9 @@ class NoticeUsecaseImplTest :
                 val slice = SliceImpl(listOf(notices[5], notices[4], notices[3]), pageable, false)
 
                 every { noticeFindService.search(any<String>(), any()) } returns slice
-                every { fileGetService.findAllByNotice(any()) } answers {
-                    val noticeId = firstArg<Long>()
-                    if (noticeId % 2 == 0L) {
-                        listOf(
-                            File
-                                .builder()
-                                .notice(notices[(noticeId - 1).toInt()])
-                                .build(),
-                        )
-                    } else {
-                        listOf()
-                    }
+                every { fileReader.exists(FileOwnerType.NOTICE, any(), null) } answers {
+                    val noticeId = secondArg<Long>()
+                    noticeId % 2 == 0L
                 }
                 every { noticeMapper.toAll(any<Notice>(), any<Boolean>()) } answers {
                     val notice = firstArg<Notice>()
@@ -198,24 +187,40 @@ class NoticeUsecaseImplTest :
                 val user = UserTestFixture.createActiveUser1(userId)
                 val notice = NoticeTestFixture.createNotice(id = noticeId, title = "기존 제목", user = user)
 
-                val oldFile = FileTestFixture.createFile(1L, "old.pdf", "https://example.com/old.pdf", notice)
+                val oldFile =
+                    FileTestFixture.createFile(
+                        1L,
+                        "old.pdf",
+                        storageKey = "NOTICE/2026-02/old.pdf",
+                        ownerType = FileOwnerType.NOTICE,
+                        ownerId = noticeId,
+                        contentType = "application/pdf",
+                    )
                 val oldFiles = listOf(oldFile)
 
                 val dto =
                     NoticeDTO.Update(
                         "수정된 제목",
                         "수정된 내용",
-                        listOf(FileSaveRequest("new.pdf", "https://example.com/new.pdf")),
+                        listOf(FileSaveRequest("new.pdf", "NOTICE/2026-02/new.pdf", 100L, "application/pdf")),
                     )
 
-                val newFile = FileTestFixture.createFile(2L, "new.pdf", "https://example.com/new.pdf", notice)
+                val newFile =
+                    FileTestFixture.createFile(
+                        2L,
+                        "new.pdf",
+                        storageKey = "NOTICE/2026-02/new.pdf",
+                        ownerType = FileOwnerType.NOTICE,
+                        ownerId = noticeId,
+                        contentType = "application/pdf",
+                    )
                 val newFiles = listOf(newFile)
 
                 val expectedResponse = NoticeDTO.SaveResponse(noticeId)
 
                 every { noticeFindService.find(noticeId) } returns notice
-                every { fileGetService.findAllByNotice(noticeId) } returns oldFiles
-                every { fileMapper.toFileList(dto.files(), notice) } returns newFiles
+                every { fileReader.findAll(FileOwnerType.NOTICE, noticeId, null) } returns oldFiles
+                every { fileMapper.toFileList(dto.files(), FileOwnerType.NOTICE, noticeId) } returns newFiles
                 every { noticeMapper.toSaveResponse(notice) } returns expectedResponse
 
                 val response = noticeUsecase.update(noticeId, dto, userId)
@@ -223,10 +228,10 @@ class NoticeUsecaseImplTest :
                 response shouldBe expectedResponse
 
                 verify { noticeFindService.find(noticeId) }
-                verify { fileGetService.findAllByNotice(noticeId) }
-                verify { fileDeleteService.delete(oldFiles) }
-                verify { fileMapper.toFileList(dto.files(), notice) }
-                verify { fileSaveService.save(newFiles) }
+                verify { fileReader.findAll(FileOwnerType.NOTICE, noticeId, null) }
+                verify { fileRepository.deleteAll(oldFiles) }
+                verify { fileMapper.toFileList(dto.files(), FileOwnerType.NOTICE, noticeId) }
+                verify { fileRepository.saveAll(newFiles) }
                 verify { noticeUpdateService.update(notice, dto) }
             }
 
