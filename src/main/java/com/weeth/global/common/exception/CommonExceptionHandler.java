@@ -24,7 +24,9 @@ public class CommonExceptionHandler {
         log.warn("구체로그: ", ex);
         log.warn(LOG_FORMAT, ex.getClass().getSimpleName(), ex.getStatusCode(), ex.getMessage());
 
-        CommonResponse<Void> response = CommonResponse.createFailure(ex.getStatusCode(), ex.getMessage());
+        CommonResponse<Void> response = ex.getErrorCode() != null
+                ? CommonResponse.error(ex.getErrorCode())
+                : CommonResponse.createFailure(ex.getStatusCode(), ex.getMessage());
 
         return ResponseEntity
                 .status(ex.getStatusCode())
