@@ -14,7 +14,7 @@ class FileTest :
                 val file =
                     File.createUploaded(
                         fileName = "image.png",
-                        storageKey = "POST/2026-02/uuid_image.png",
+                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_image.png",
                         fileSize = 1024,
                         contentType = "image/png",
                         ownerType = FileOwnerType.POST,
@@ -30,7 +30,7 @@ class FileTest :
                 shouldThrow<IllegalArgumentException> {
                     File.createUploaded(
                         fileName = " ",
-                        storageKey = "POST/2026-02/uuid_image.png",
+                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_image.png",
                         fileSize = 1024,
                         contentType = "image/png",
                         ownerType = FileOwnerType.POST,
@@ -52,11 +52,37 @@ class FileTest :
                 }
             }
 
+            it("storageKey ownerType 형식이 잘못되면 예외가 발생한다") {
+                shouldThrow<IllegalArgumentException> {
+                    File.createUploaded(
+                        fileName = "image.png",
+                        storageKey = "INVALID/2026-02/550e8400-e29b-41d4-a716-446655440000_image.png",
+                        fileSize = 1024,
+                        contentType = "image/png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 1L,
+                    )
+                }
+            }
+
+            it("storageKey uuid 형식이 잘못되면 예외가 발생한다") {
+                shouldThrow<IllegalArgumentException> {
+                    File.createUploaded(
+                        fileName = "image.png",
+                        storageKey = "POST/2026-02/not-uuid_image.png",
+                        fileSize = 1024,
+                        contentType = "image/png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 1L,
+                    )
+                }
+            }
+
             it("fileSize가 0 이하이면 예외가 발생한다") {
                 shouldThrow<IllegalArgumentException> {
                     File.createUploaded(
                         fileName = "image.png",
-                        storageKey = "POST/2026-02/uuid_image.png",
+                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_image.png",
                         fileSize = 0,
                         contentType = "image/png",
                         ownerType = FileOwnerType.POST,
@@ -69,7 +95,7 @@ class FileTest :
                 shouldThrow<IllegalArgumentException> {
                     File.createUploaded(
                         fileName = "image.png",
-                        storageKey = "POST/2026-02/uuid_image.png",
+                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_image.png",
                         fileSize = 1024,
                         contentType = "image/png",
                         ownerType = FileOwnerType.POST,
@@ -82,7 +108,7 @@ class FileTest :
                 shouldThrow<UnsupportedFileContentTypeException> {
                     File.createUploaded(
                         fileName = "file.exe",
-                        storageKey = "POST/2026-02/uuid_file.exe",
+                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_file.exe",
                         fileSize = 100,
                         contentType = "application/octet-stream",
                         ownerType = FileOwnerType.POST,
@@ -97,7 +123,7 @@ class FileTest :
                 val file =
                     File.createUploaded(
                         fileName = "doc.pdf",
-                        storageKey = "NOTICE/2026-02/uuid_doc.pdf",
+                        storageKey = "NOTICE/2026-02/550e8400-e29b-41d4-a716-446655440000_doc.pdf",
                         fileSize = 100,
                         contentType = "application/pdf",
                         ownerType = FileOwnerType.NOTICE,

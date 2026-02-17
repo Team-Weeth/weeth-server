@@ -1,6 +1,7 @@
 package com.weeth.domain.file.domain.entity
 
-import com.weeth.domain.file.application.exception.UnsupportedFileContentTypeException
+import com.weeth.domain.file.domain.vo.FileContentType
+import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -21,7 +22,7 @@ class File(
     @Column(nullable = false)
     var fileName: String,
     @Column(nullable = false, length = 500, unique = true)
-    val storageKey: String,
+    val storageKey: StorageKey,
     @Column(nullable = false)
     val fileSize: Long,
     @Enumerated(EnumType.STRING)
@@ -30,7 +31,7 @@ class File(
     @Column(nullable = false)
     val ownerId: Long,
     @Column(nullable = false, length = 100)
-    val contentType: String,
+    val contentType: FileContentType,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: FileStatus = FileStatus.UPLOADED,
@@ -40,14 +41,6 @@ class File(
     }
 
     companion object {
-        private val ALLOWED_CONTENT_TYPES =
-            setOf(
-                "image/jpeg",
-                "image/png",
-                "image/webp",
-                "application/pdf",
-            )
-
         fun createUploaded(
             fileName: String,
             storageKey: String,
@@ -57,18 +50,16 @@ class File(
             ownerId: Long,
         ): File {
             require(fileName.isNotBlank()) { "fileName은 비어 있을 수 없습니다." }
-            require(storageKey.isNotBlank()) { "storageKey는 비어 있을 수 없습니다." }
             require(fileSize > 0) { "fileSize는 0보다 커야 합니다." }
-            if (contentType !in ALLOWED_CONTENT_TYPES) {
-                throw UnsupportedFileContentTypeException()
-            }
             require(ownerId > 0) { "ownerId는 0보다 커야 합니다." }
+            val validatedStorageKey = StorageKey(storageKey)
+            val validatedContentType = FileContentType(contentType)
 
             return File(
                 fileName = fileName,
-                storageKey = storageKey,
+                storageKey = StorageKey(storageKey),
                 fileSize = fileSize,
-                contentType = contentType,
+                contentType = FileContentType(contentType),
                 ownerType = ownerType,
                 ownerId = ownerId,
                 status = FileStatus.UPLOADED,

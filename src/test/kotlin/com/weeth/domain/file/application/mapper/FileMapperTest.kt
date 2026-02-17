@@ -29,8 +29,8 @@ class FileMapperTest :
             it("요청 리스트를 ownerType/ownerId를 포함한 File 리스트로 매핑한다") {
                 val requests =
                     listOf(
-                        FileSaveRequest("a.png", "POST/2026-02/a.png", 100L, "image/png"),
-                        FileSaveRequest("b.pdf", "POST/2026-02/b.pdf", 200L, "application/pdf"),
+                        FileSaveRequest("a.png", "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_a.png", 100L, "image/png"),
+                        FileSaveRequest("b.pdf", "POST/2026-02/550e8400-e29b-41d4-a716-446655440001_b.pdf", 200L, "application/pdf"),
                     )
 
                 val result = fileMapper.toFileList(requests, FileOwnerType.POST, 99L)

@@ -37,10 +37,10 @@ class FileMapper(
         FileResponse(
             fileId = file.id,
             fileName = file.fileName,
-            fileUrl = fileAccessUrlPort.resolve(file.storageKey),
-            storageKey = file.storageKey,
+            fileUrl = fileAccessUrlPort.resolve(file.storageKey.value),
+            storageKey = file.storageKey.value,
             fileSize = file.fileSize,
-            contentType = file.contentType,
+            contentType = file.contentType.value,
             status = file.status,
         )
 

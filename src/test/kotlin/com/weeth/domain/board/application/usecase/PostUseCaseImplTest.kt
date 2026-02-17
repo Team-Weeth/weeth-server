@@ -16,6 +16,7 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.domain.file.fixture.FileTestFixture
 import com.weeth.domain.user.domain.service.CardinalGetService
 import com.weeth.domain.user.domain.service.UserCardinalGetService
@@ -271,7 +272,7 @@ class PostUseCaseImplTest :
                     FileTestFixture.createFile(
                         postId,
                         "파일1",
-                        storageKey = "POST/2026-02/url1",
+                        storageKey = StorageKey("POST/2026-02/url1"),
                         ownerType = FileOwnerType.POST,
                         ownerId = postId,
                     )

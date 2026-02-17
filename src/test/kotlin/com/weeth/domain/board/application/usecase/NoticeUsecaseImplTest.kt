@@ -15,6 +15,8 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.file.domain.vo.FileContentType
+import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.domain.file.fixture.FileTestFixture
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Department
@@ -191,10 +193,10 @@ class NoticeUsecaseImplTest :
                     FileTestFixture.createFile(
                         1L,
                         "old.pdf",
-                        storageKey = "NOTICE/2026-02/old.pdf",
+                        storageKey = StorageKey("NOTICE/2026-02/old.pdf"),
                         ownerType = FileOwnerType.NOTICE,
                         ownerId = noticeId,
-                        contentType = "application/pdf",
+                        contentType = FileContentType("application/pdf"),
                     )
                 val oldFiles = listOf(oldFile)
 
@@ -209,10 +211,10 @@ class NoticeUsecaseImplTest :
                     FileTestFixture.createFile(
                         2L,
                         "new.pdf",
-                        storageKey = "NOTICE/2026-02/new.pdf",
+                        storageKey = StorageKey("NOTICE/2026-02/old.pdf"),
                         ownerType = FileOwnerType.NOTICE,
                         ownerId = noticeId,
-                        contentType = "application/pdf",
+                        contentType = FileContentType("application/pdf"),
                     )
                 val newFiles = listOf(newFile)
 
