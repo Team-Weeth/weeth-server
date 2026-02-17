@@ -5,11 +5,12 @@ import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.application.dto.response.UrlResponse
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import org.springframework.stereotype.Component
 
 @Component
 class FileMapper(
-    private val fileUrlResolver: FileUrlResolver,
+    private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
     fun toFileList(
         requests: List<FileSaveRequest>?,
@@ -36,7 +37,7 @@ class FileMapper(
         FileResponse(
             fileId = file.id,
             fileName = file.fileName,
-            fileUrl = fileUrlResolver.resolve(file.storageKey),
+            fileUrl = fileAccessUrlPort.resolve(file.storageKey),
             storageKey = file.storageKey,
             fileSize = file.fileSize,
             contentType = file.contentType,
