@@ -3,17 +3,15 @@ package com.weeth.domain.file.domain.entity
 import com.weeth.domain.file.domain.vo.FileContentType
 import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.global.common.entity.BaseEntity
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.EnumType
-import jakarta.persistence.Enumerated
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.Table
+import jakarta.persistence.*
 
 @Entity
-@Table(name = "file")
+@Table(
+    name = "file",
+    indexes = [
+        Index(name = "idx_file_owner_type_owner_id", columnList = "owner_type, owner_id"),
+    ],
+)
 class File(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -52,8 +50,6 @@ class File(
             require(fileName.isNotBlank()) { "fileName은 비어 있을 수 없습니다." }
             require(fileSize > 0) { "fileSize는 0보다 커야 합니다." }
             require(ownerId > 0) { "ownerId는 0보다 커야 합니다." }
-            val validatedStorageKey = StorageKey(storageKey)
-            val validatedContentType = FileContentType(contentType)
 
             return File(
                 fileName = fileName,
