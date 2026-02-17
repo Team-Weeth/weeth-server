@@ -3,7 +3,15 @@ package com.weeth.domain.file.domain.entity
 import com.weeth.domain.file.domain.vo.FileContentType
 import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.global.common.entity.BaseEntity
-import jakarta.persistence.*
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.Index
+import jakarta.persistence.Table
 
 @Entity
 @Table(
