@@ -3,7 +3,8 @@ package com.weeth.domain.attendance.presentation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import com.weeth.domain.attendance.application.dto.AttendanceDTO;
+import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest;
+import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse;
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode;
 import com.weeth.domain.attendance.application.usecase.AttendanceUseCase;
 import com.weeth.domain.schedule.application.dto.MeetingDTO;
@@ -45,13 +46,13 @@ public class AttendanceAdminController {
 
     @GetMapping("/{meetingId}")
     @Operation(summary = "모든 인원 정기모임 출석 정보 조회")
-    public CommonResponse<List<AttendanceDTO.AttendanceInfo>> getAllAttendance(@PathVariable Long meetingId) {
+    public CommonResponse<List<AttendanceInfoResponse>> getAllAttendance(@PathVariable Long meetingId) {
         return CommonResponse.success(ATTENDANCE_FIND_DETAIL_SUCCESS, attendanceUseCase.findAllAttendanceByMeeting(meetingId));
     }
 
     @PatchMapping("/status")
     @Operation(summary = "모든 인원 정기모임 개별 출석 상태 수정")
-    public CommonResponse<Void> updateAttendanceStatus(@RequestBody @Valid List<AttendanceDTO.UpdateStatus> attendanceUpdates) {
+    public CommonResponse<Void> updateAttendanceStatus(@RequestBody @Valid List<UpdateAttendanceStatusRequest> attendanceUpdates) {
         attendanceUseCase.updateAttendanceStatus(attendanceUpdates);
         return CommonResponse.success(ATTENDANCE_UPDATED_SUCCESS);
     }

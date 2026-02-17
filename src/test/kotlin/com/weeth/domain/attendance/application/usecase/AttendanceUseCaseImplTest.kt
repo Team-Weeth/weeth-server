@@ -1,6 +1,8 @@
 package com.weeth.domain.attendance.application.usecase
 
-import com.weeth.domain.attendance.application.dto.AttendanceDTO
+import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
@@ -68,18 +70,18 @@ class AttendanceUseCaseImplTest :
                         it.meeting.title == "Today"
                     }
 
-                val mapped = mockk<AttendanceDTO.Main>()
+                val mapped = mockk<AttendanceMainResponse>()
 
                 every { userGetService.find(userId) } returns user
-                every { attendanceMapper.toMainDto(eq(user), eq(expectedTodayAttendance)) } returns mapped
+                every { attendanceMapper.toMainResponse(eq(user), eq(expectedTodayAttendance)) } returns mapped
 
                 val actual = attendanceUseCase.find(userId)
 
                 actual shouldBe mapped
-                verify { attendanceMapper.toMainDto(eq(user), eq(expectedTodayAttendance)) }
+                verify { attendanceMapper.toMainResponse(eq(user), eq(expectedTodayAttendance)) }
             }
 
-            it("시작/종료 날짜가 모두 오늘인 출석이 없다면 mapper.toMainDto(user, null)을 호출") {
+            it("시작/종료 날짜가 모두 오늘인 출석이 없다면 mapper.toMainResponse(user, null)을 호출") {
                 val today = LocalDate.now()
 
                 val yesterdayMeeting = createOneDayMeeting(today.minusDays(1), 1, 1111, "Yesterday")
@@ -91,14 +93,14 @@ class AttendanceUseCaseImplTest :
                         listOf(yesterdayMeeting, tomorrowMeeting),
                     )
 
-                val mapped = mockk<AttendanceDTO.Main>()
+                val mapped = mockk<AttendanceMainResponse>()
                 every { userGetService.find(userId) } returns user
-                every { attendanceMapper.toMainDto(user, null) } returns mapped
+                every { attendanceMapper.toMainResponse(user, null) } returns mapped
 
                 val actual = attendanceUseCase.find(userId)
 
                 actual shouldBe mapped
-                verify { attendanceMapper.toMainDto(user, null) }
+                verify { attendanceMapper.toMainResponse(user, null) }
             }
         }
 
@@ -232,19 +234,19 @@ class AttendanceUseCaseImplTest :
                 every { currentCardinal.cardinalNumber } returns 1
                 every { userCardinalGetService.getCurrentCardinal(user) } returns currentCardinal
 
-                val responseFirst = mockk<AttendanceDTO.Response>()
-                val responseSecond = mockk<AttendanceDTO.Response>()
-                every { attendanceMapper.toResponseDto(attendanceFirst) } returns responseFirst
-                every { attendanceMapper.toResponseDto(attendanceSecond) } returns responseSecond
+                val responseFirst = mockk<AttendanceResponse>()
+                val responseSecond = mockk<AttendanceResponse>()
+                every { attendanceMapper.toResponse(attendanceFirst) } returns responseFirst
+                every { attendanceMapper.toResponse(attendanceSecond) } returns responseSecond
 
-                val expectedDetail = mockk<AttendanceDTO.Detail>()
-                every { attendanceMapper.toDetailDto(eq(user), any()) } returns expectedDetail
+                val expectedDetail = mockk<AttendanceDetailResponse>()
+                every { attendanceMapper.toDetailResponse(eq(user), any()) } returns expectedDetail
 
                 val actualDetail = attendanceUseCase.findAllDetailsByCurrentCardinal(userId)
 
                 actualDetail shouldBe expectedDetail
                 verify {
-                    attendanceMapper.toDetailDto(
+                    attendanceMapper.toDetailResponse(
                         eq(user),
                         match { it.size == 2 },
                     )

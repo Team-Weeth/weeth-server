@@ -1,58 +1,71 @@
-package com.weeth.domain.attendance.application.mapper;
+package com.weeth.domain.attendance.application.mapper
 
-import com.weeth.domain.attendance.application.dto.AttendanceDTO;
-import com.weeth.domain.attendance.domain.entity.Attendance;
-import com.weeth.domain.user.domain.entity.User;
-import org.mapstruct.*;
+import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
+import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.user.domain.entity.User
+import org.springframework.stereotype.Component
 
-import java.util.List;
+@Component
+class AttendanceMapper {
+    fun toMainResponse(
+        user: User,
+        attendance: Attendance?,
+    ): AttendanceMainResponse =
+        AttendanceMainResponse(
+            attendanceRate = user.attendanceRate,
+            title = attendance?.meeting?.title,
+            status = attendance?.status,
+            code = null,
+            start = attendance?.meeting?.start,
+            end = attendance?.meeting?.end,
+            location = attendance?.meeting?.location,
+        )
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface AttendanceMapper {
+    fun toAdminResponse(
+        user: User,
+        attendance: Attendance?,
+    ): AttendanceMainResponse =
+        AttendanceMainResponse(
+            attendanceRate = user.attendanceRate,
+            title = attendance?.meeting?.title,
+            status = attendance?.status,
+            code = attendance?.meeting?.code,
+            start = attendance?.meeting?.start,
+            end = attendance?.meeting?.end,
+            location = attendance?.meeting?.location,
+        )
 
-    @Mappings({
-            @Mapping(target = "attendanceRate", source = "user.attendanceRate"),
-            @Mapping(target = "title", source = "attendance.meeting.title"),
-            @Mapping(target = "status", source = "attendance.status"),
-            @Mapping(target = "code", ignore = true),
-            @Mapping(target = "start", source = "attendance.meeting.start"),
-            @Mapping(target = "end", source = "attendance.meeting.end"),
-            @Mapping(target = "location", source = "attendance.meeting.location"),
-    })
-    AttendanceDTO.Main toMainDto(User user, Attendance attendance);
+    fun toDetailResponse(
+        user: User,
+        attendances: List<AttendanceResponse>,
+    ): AttendanceDetailResponse =
+        AttendanceDetailResponse(
+            attendanceCount = user.attendanceCount ?: 0,
+            total = (user.attendanceCount ?: 0) + (user.absenceCount ?: 0),
+            absenceCount = user.absenceCount ?: 0,
+            attendances = attendances,
+        )
 
-    @Mappings({
-            @Mapping(target = "attendanceRate", source = "user.attendanceRate"),
-            @Mapping(target = "title", source = "attendance.meeting.title"),
-            @Mapping(target = "status", source = "attendance.status"),
-            @Mapping(target = "code", source = "attendance.meeting.code"),
-            @Mapping(target = "start", source = "attendance.meeting.start"),
-            @Mapping(target = "end", source = "attendance.meeting.end"),
-            @Mapping(target = "location", source = "attendance.meeting.location"),
-    })
-    AttendanceDTO.Main toAdminResponse(User user, Attendance attendance);
+    fun toResponse(attendance: Attendance): AttendanceResponse =
+        AttendanceResponse(
+            id = attendance.id,
+            status = attendance.status,
+            title = attendance.meeting.title,
+            start = attendance.meeting.start,
+            end = attendance.meeting.end,
+            location = attendance.meeting.location,
+        )
 
-    @Mappings({
-            @Mapping(target = "attendances", source = "attendances"),
-            @Mapping(target = "total", expression = "java( user.getAttendanceCount() + user.getAbsenceCount() )")
-    })
-    AttendanceDTO.Detail toDetailDto(User user, List<AttendanceDTO.Response> attendances);
-
-    @Mappings({
-            @Mapping(target = "title", source = "attendance.meeting.title"),
-            @Mapping(target = "start", source = "attendance.meeting.start"),
-            @Mapping(target = "end", source = "attendance.meeting.end"),
-            @Mapping(target = "location", source = "attendance.meeting.location"),
-    })    AttendanceDTO.Response toResponseDto(Attendance attendance);
-
-    @Mappings({
-            @Mapping(target = "id", source = "attendance.id"),
-            @Mapping(target = "status", source = "attendance.status"),
-            @Mapping(target = "name", source = "attendance.user.name"),
-            @Mapping(target = "position", source = "attendance.user.position"),
-            @Mapping(target = "department", source = "attendance.user.department"),
-            @Mapping(target = "studentId", source = "attendance.user.studentId")
-    })
-    AttendanceDTO.AttendanceInfo toAttendanceInfoDto(Attendance attendance);
-
+    fun toInfoResponse(attendance: Attendance): AttendanceInfoResponse =
+        AttendanceInfoResponse(
+            id = attendance.id,
+            status = attendance.status,
+            name = attendance.user.name,
+            position = attendance.user.position?.name,
+            department = attendance.user.department?.name,
+            studentId = attendance.user.studentId,
+        )
 }

@@ -13,22 +13,21 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import org.mapstruct.factory.Mappers
 import java.time.LocalDate
 
 class AttendanceMapperTest :
     DescribeSpec({
 
-        val attendanceMapper = Mappers.getMapper(AttendanceMapper::class.java)
+        val mapper = AttendanceMapper()
 
-        describe("toMainDto") {
-            it("사용자 + 당일 출석 객체를 Main DTO로 매핑한다") {
+        describe("toMainResponse") {
+            it("사용자 + 당일 출석 객체를 MainResponse로 매핑한다") {
                 val today = LocalDate.now()
                 val meeting = createOneDayMeeting(today, 1, 1111, "Today")
                 val user = createActiveUserWithAttendances("이지훈", listOf(meeting))
                 val attendance = user.attendances[0]
 
-                val main = attendanceMapper.toMainDto(user, attendance)
+                val main = mapper.toMainResponse(user, attendance)
 
                 main.shouldNotBeNull()
                 main.title shouldBe "Today"
@@ -38,10 +37,10 @@ class AttendanceMapperTest :
                 main.location shouldBe meeting.location
             }
 
-            it("todayAttendance가 null이면 필드는 null로 매핑") {
+            it("attendance가 null이면 필드는 null로 매핑") {
                 val user = createActiveUser("이지훈")
 
-                val main = attendanceMapper.toMainDto(user, null)
+                val main = mapper.toMainResponse(user, null)
 
                 main.shouldNotBeNull()
                 main.title.shouldBeNull()
@@ -56,7 +55,7 @@ class AttendanceMapperTest :
                 val user = createActiveUserWithAttendances("일반유저", listOf(meeting))
                 val attendance = user.attendances[0]
 
-                val main = attendanceMapper.toMainDto(user, attendance)
+                val main = mapper.toMainResponse(user, attendance)
 
                 main.shouldNotBeNull()
                 main.code.shouldBeNull()
@@ -65,13 +64,13 @@ class AttendanceMapperTest :
             }
         }
 
-        describe("toResponseDto") {
-            it("단일 출석을 Response DTO로 매핑한다") {
+        describe("toResponse") {
+            it("단일 출석을 AttendanceResponse로 매핑한다") {
                 val meeting = createOneDayMeeting(LocalDate.now().minusDays(1), 1, 2222, "D-1")
                 val user = createActiveUser("사용자A")
                 val attendance = createAttendance(meeting, user)
 
-                val response = attendanceMapper.toResponseDto(attendance)
+                val response = mapper.toResponse(attendance)
 
                 response.shouldNotBeNull()
                 response.title shouldBe "D-1"
@@ -81,8 +80,8 @@ class AttendanceMapperTest :
             }
         }
 
-        describe("toDetailDto") {
-            it("사용자 + Response 리스트를 Detail DTO로 매핑(total = attend + absence)") {
+        describe("toDetailResponse") {
+            it("사용자 + Response 리스트를 DetailResponse로 매핑(total = attend + absence)") {
                 val base = LocalDate.now()
                 val m1 = createOneDayMeeting(base.minusDays(2), 1, 1000, "D-2")
                 val m2 = createOneDayMeeting(base.minusDays(1), 1, 1001, "D-1")
@@ -92,10 +91,10 @@ class AttendanceMapperTest :
                 val a1 = createAttendance(m1, user)
                 val a2 = createAttendance(m2, user)
 
-                val r1 = attendanceMapper.toResponseDto(a1)
-                val r2 = attendanceMapper.toResponseDto(a2)
+                val r1 = mapper.toResponse(a1)
+                val r2 = mapper.toResponse(a2)
 
-                val detail = attendanceMapper.toDetailDto(user, listOf(r1, r2))
+                val detail = mapper.toDetailResponse(user, listOf(r1, r2))
 
                 detail.shouldNotBeNull()
                 detail.attendances shouldBe listOf(r1, r2)
@@ -103,8 +102,8 @@ class AttendanceMapperTest :
             }
         }
 
-        describe("toAttendanceInfoDto") {
-            it("Attendance를 Info DTO로 매핑") {
+        describe("toInfoResponse") {
+            it("Attendance를 InfoResponse로 매핑") {
                 val meeting = createOneDayMeeting(LocalDate.now(), 1, 3333, "Info")
                 val user = createActiveUser("유저B")
                 enrichUserProfile(user, Position.BE, "컴퓨터공학과", "20201234")
@@ -112,7 +111,7 @@ class AttendanceMapperTest :
                 val attendance = createAttendance(meeting, user)
                 setAttendanceId(attendance, 10L)
 
-                val info = attendanceMapper.toAttendanceInfoDto(attendance)
+                val info = mapper.toInfoResponse(attendance)
 
                 info.shouldNotBeNull()
                 info.id shouldBe 10L
@@ -129,7 +128,7 @@ class AttendanceMapperTest :
                 val adminUser = createAdminUserWithAttendances("관리자", listOf(meeting))
                 val attendance = adminUser.attendances[0]
 
-                val main = attendanceMapper.toAdminResponse(adminUser, attendance)
+                val main = mapper.toAdminResponse(adminUser, attendance)
 
                 main.shouldNotBeNull()
                 main.code shouldBe expectedCode

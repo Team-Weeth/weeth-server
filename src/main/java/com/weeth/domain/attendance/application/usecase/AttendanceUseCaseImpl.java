@@ -1,6 +1,10 @@
 package com.weeth.domain.attendance.application.usecase;
 
-import com.weeth.domain.attendance.application.dto.AttendanceDTO;
+import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest;
+import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse;
+import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse;
+import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse;
+import com.weeth.domain.attendance.application.dto.response.AttendanceResponse;
 import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException;
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException;
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper;
@@ -58,7 +62,7 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
     }
 
     @Override
-    public AttendanceDTO.Main find(Long userId) {
+    public AttendanceMainResponse find(Long userId) {
         User user = userGetService.find(userId);
 
         Attendance todayMeeting = user.getAttendances().stream()
@@ -71,30 +75,30 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
             return mapper.toAdminResponse(user, todayMeeting);
         }
 
-        return mapper.toMainDto(user, todayMeeting);
+        return mapper.toMainResponse(user, todayMeeting);
     }
 
-    public AttendanceDTO.Detail findAllDetailsByCurrentCardinal(Long userId) {
+    public AttendanceDetailResponse findAllDetailsByCurrentCardinal(Long userId) {
         User user = userGetService.find(userId);
         Cardinal currentCardinal = userCardinalGetService.getCurrentCardinal(user);
 
-        List<AttendanceDTO.Response> responses = user.getAttendances().stream()
+        List<AttendanceResponse> responses = user.getAttendances().stream()
                 .filter(attendance -> attendance.getMeeting().getCardinal().equals(currentCardinal.getCardinalNumber()))
                 .sorted(Comparator.comparing(attendance -> attendance.getMeeting().getStart()))
-                .map(mapper::toResponseDto)
+                .map(mapper::toResponse)
                 .toList();
 
-        return mapper.toDetailDto(user, responses);
+        return mapper.toDetailResponse(user, responses);
     }
 
     @Override
-    public List<AttendanceDTO.AttendanceInfo> findAllAttendanceByMeeting(Long meetingId) {
+    public List<AttendanceInfoResponse> findAllAttendanceByMeeting(Long meetingId) {
         Meeting meeting = meetingGetService.find(meetingId);
 
         List<Attendance> attendances = attendanceGetService.findAllByMeeting(meeting);
 
         return attendances.stream()
-                .map(mapper::toAttendanceInfoDto)
+                .map(mapper::toInfoResponse)
                 .toList();
     }
 
@@ -118,7 +122,7 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
 
     @Override
     @Transactional
-    public void updateAttendanceStatus(List<AttendanceDTO.UpdateStatus> attendanceUpdates) {
+    public void updateAttendanceStatus(List<UpdateAttendanceStatusRequest> attendanceUpdates) {
         attendanceUpdates.forEach(update -> {
             Attendance attendance = attendanceGetService.findByAttendanceId(update.getAttendanceId());
             User user = attendance.getUser();
