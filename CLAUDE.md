@@ -19,7 +19,7 @@ Weeth Server is a community platform backend built with Spring Boot 3.5.10. The 
 ./gradlew bootRun --args='--spring.profiles.active=dev'  # Run with specific profile
 ```
 
-**Prerequisites:** JDK 17, MySQL 8.0, Redis 7.0+, environment variables configured in `.env`
+**Prerequisites:** JDK 21, MySQL 8.0, Redis 7.0+, environment variables configured in `.env`
 
 **Profiles:** `local` (default dev), `dev` (dev server, ddl-auto: update), `prod` (Swagger disabled, ddl-auto: validate), `test`
 

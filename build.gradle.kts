@@ -17,8 +17,12 @@ version = "0.0.1-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 repositories {
@@ -112,7 +116,7 @@ tasks.withType<KotlinCompile>().configureEach {
             "-Xjsr305=strict",
             "-Xjvm-default=all",
         )
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
