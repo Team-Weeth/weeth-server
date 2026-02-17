@@ -4,7 +4,8 @@ import com.weeth.domain.attendance.application.dto.request.CheckInRequest
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
-import com.weeth.domain.attendance.application.usecase.AttendanceUseCase
+import com.weeth.domain.attendance.application.usecase.command.CheckInAttendanceUseCase
+import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -22,7 +23,8 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/attendances")
 @ApiErrorCodeExample(AttendanceErrorCode::class)
 class AttendanceController(
-    private val attendanceUseCase: AttendanceUseCase,
+    private val checkInAttendanceUseCase: CheckInAttendanceUseCase,
+    private val getAttendanceQueryService: GetAttendanceQueryService,
 ) {
     @PatchMapping
     @Operation(summary = "출석체크")
@@ -30,7 +32,7 @@ class AttendanceController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestBody checkIn: CheckInRequest,
     ): CommonResponse<Void?> {
-        attendanceUseCase.checkIn(userId, checkIn.code)
+        checkInAttendanceUseCase.execute(userId, checkIn.code)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CHECKIN_SUCCESS)
     }
 
@@ -39,7 +41,7 @@ class AttendanceController(
     fun find(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<AttendanceMainResponse> =
-        CommonResponse.success(AttendanceResponseCode.ATTENDANCE_FIND_SUCCESS, attendanceUseCase.find(userId))
+        CommonResponse.success(AttendanceResponseCode.ATTENDANCE_FIND_SUCCESS, getAttendanceQueryService.find(userId))
 
     @GetMapping("/detail")
     @Operation(summary = "출석 내역 상세조회")
@@ -48,6 +50,6 @@ class AttendanceController(
     ): CommonResponse<AttendanceDetailResponse> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_ALL_SUCCESS,
-            attendanceUseCase.findAllDetailsByCurrentCardinal(userId),
+            getAttendanceQueryService.findAllDetailsByCurrentCardinal(userId),
         )
 }

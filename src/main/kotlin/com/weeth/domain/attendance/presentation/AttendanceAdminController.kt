@@ -3,7 +3,9 @@ package com.weeth.domain.attendance.presentation
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
-import com.weeth.domain.attendance.application.usecase.AttendanceUseCase
+import com.weeth.domain.attendance.application.usecase.command.CloseAttendanceUseCase
+import com.weeth.domain.attendance.application.usecase.command.UpdateAttendanceStatusUseCase
+import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
 import com.weeth.domain.schedule.application.dto.MeetingDTO
 import com.weeth.domain.schedule.application.usecase.MeetingUseCase
 import com.weeth.global.common.exception.ApiErrorCodeExample
@@ -25,7 +27,9 @@ import java.time.LocalDate
 @RequestMapping("/api/v1/admin/attendances")
 @ApiErrorCodeExample(AttendanceErrorCode::class)
 class AttendanceAdminController(
-    private val attendanceUseCase: AttendanceUseCase,
+    private val closeAttendanceUseCase: CloseAttendanceUseCase,
+    private val updateAttendanceStatusUseCase: UpdateAttendanceStatusUseCase,
+    private val getAttendanceQueryService: GetAttendanceQueryService,
     private val meetingUseCase: MeetingUseCase,
 ) {
     @PatchMapping
@@ -34,7 +38,7 @@ class AttendanceAdminController(
         @RequestParam now: LocalDate,
         @RequestParam cardinal: Int,
     ): CommonResponse<Void?> {
-        attendanceUseCase.close(now, cardinal)
+        closeAttendanceUseCase.execute(now, cardinal)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CLOSE_SUCCESS)
     }
 
@@ -54,7 +58,7 @@ class AttendanceAdminController(
     ): CommonResponse<List<AttendanceInfoResponse>> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_DETAIL_SUCCESS,
-            attendanceUseCase.findAllAttendanceByMeeting(meetingId),
+            getAttendanceQueryService.findAllAttendanceByMeeting(meetingId),
         )
 
     @PatchMapping("/status")
@@ -62,7 +66,7 @@ class AttendanceAdminController(
     fun updateAttendanceStatus(
         @RequestBody @Valid attendanceUpdates: List<UpdateAttendanceStatusRequest>,
     ): CommonResponse<Void?> {
-        attendanceUseCase.updateAttendanceStatus(attendanceUpdates)
+        updateAttendanceStatusUseCase.execute(attendanceUpdates)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_UPDATED_SUCCESS)
     }
 }
