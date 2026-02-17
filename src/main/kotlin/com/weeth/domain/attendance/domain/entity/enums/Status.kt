@@ -1,7 +1,7 @@
-package com.weeth.domain.attendance.domain.entity.enums;
+package com.weeth.domain.attendance.domain.entity.enums
 
-public enum Status {
+enum class Status {
     ATTEND,
     PENDING,
-    ABSENT
+    ABSENT,
 }
