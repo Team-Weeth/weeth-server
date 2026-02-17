@@ -1,143 +1,132 @@
-package com.weeth.domain.attendance.application.usecase;
+package com.weeth.domain.attendance.application.usecase
 
-import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest;
-import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse;
-import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse;
-import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse;
-import com.weeth.domain.attendance.application.dto.response.AttendanceResponse;
-import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException;
-import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException;
-import com.weeth.domain.attendance.application.mapper.AttendanceMapper;
-import com.weeth.domain.attendance.domain.entity.Attendance;
-import com.weeth.domain.attendance.domain.entity.enums.Status;
-import com.weeth.domain.attendance.domain.service.AttendanceGetService;
-import com.weeth.domain.attendance.domain.service.AttendanceUpdateService;
-import com.weeth.domain.schedule.application.exception.MeetingNotFoundException;
-import com.weeth.domain.schedule.domain.entity.Meeting;
-import com.weeth.domain.schedule.domain.service.MeetingGetService;
-import com.weeth.domain.user.domain.entity.Cardinal;
-import com.weeth.domain.user.domain.entity.User;
-import com.weeth.domain.user.domain.entity.enums.Role;
-import com.weeth.domain.user.domain.service.UserCardinalGetService;
-import com.weeth.domain.user.domain.service.UserGetService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.List;
+import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
+import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
+import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
+import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
+import com.weeth.domain.attendance.application.mapper.AttendanceMapper
+import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.service.AttendanceGetService
+import com.weeth.domain.attendance.domain.service.AttendanceUpdateService
+import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
+import com.weeth.domain.schedule.domain.service.MeetingGetService
+import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.service.UserCardinalGetService
+import com.weeth.domain.user.domain.service.UserGetService
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
-@RequiredArgsConstructor
-public class AttendanceUseCaseImpl implements AttendanceUseCase {
-
-    private final UserGetService userGetService;
-    private final UserCardinalGetService userCardinalGetService;
-
-    private final AttendanceGetService attendanceGetService;
-    private final AttendanceUpdateService attendanceUpdateService;
-    private final AttendanceMapper mapper;
-
-    private final MeetingGetService meetingGetService;
-
-    @Override
+class AttendanceUseCaseImpl(
+    private val userGetService: UserGetService,
+    private val userCardinalGetService: UserCardinalGetService,
+    private val attendanceGetService: AttendanceGetService,
+    private val attendanceUpdateService: AttendanceUpdateService,
+    private val mapper: AttendanceMapper,
+    private val meetingGetService: MeetingGetService,
+) : AttendanceUseCase {
     @Transactional
-    public void checkIn(Long userId, Integer code) throws AttendanceCodeMismatchException {
-        User user = userGetService.find(userId);
+    override fun checkIn(
+        userId: Long,
+        code: Int,
+    ) {
+        val user = userGetService.find(userId)
+        val now = LocalDateTime.now()
 
-        LocalDateTime now = LocalDateTime.now();
-        Attendance todayMeeting = user.getAttendances().stream()
-                .filter(attendance -> attendance.getMeeting().getStart().minusMinutes(10).isBefore(now)
-                        && attendance.getMeeting().getEnd().isAfter(now))
-                .findAny()
-                .orElseThrow(AttendanceNotFoundException::new);
+        val todayAttendance =
+            user.attendances.firstOrNull { attendance ->
+                attendance.meeting.start
+                    .minusMinutes(10)
+                    .isBefore(now) &&
+                    attendance.meeting.end.isAfter(now)
+            } ?: throw AttendanceNotFoundException()
 
-        if (todayMeeting.isWrong(code))
-            throw new AttendanceCodeMismatchException();
-
-        if (todayMeeting.getStatus() != Status.ATTEND)
-            attendanceUpdateService.attend(todayMeeting);
-    }
-
-    @Override
-    public AttendanceMainResponse find(Long userId) {
-        User user = userGetService.find(userId);
-
-        Attendance todayMeeting = user.getAttendances().stream()
-                .filter(attendance -> attendance.getMeeting().getStart().toLocalDate().isEqual(LocalDate.now())
-                        && attendance.getMeeting().getEnd().toLocalDate().isEqual(LocalDate.now()))
-                .findAny()
-                .orElse(null);
-
-        if (Role.ADMIN == user.getRole()) {
-            return mapper.toAdminResponse(user, todayMeeting);
+        if (todayAttendance.isWrong(code)) {
+            throw AttendanceCodeMismatchException()
         }
 
-        return mapper.toMainResponse(user, todayMeeting);
+        if (todayAttendance.status != Status.ATTEND) {
+            attendanceUpdateService.attend(todayAttendance)
+        }
     }
 
-    public AttendanceDetailResponse findAllDetailsByCurrentCardinal(Long userId) {
-        User user = userGetService.find(userId);
-        Cardinal currentCardinal = userCardinalGetService.getCurrentCardinal(user);
+    override fun find(userId: Long): AttendanceMainResponse {
+        val user = userGetService.find(userId)
+        val today = LocalDate.now()
 
-        List<AttendanceResponse> responses = user.getAttendances().stream()
-                .filter(attendance -> attendance.getMeeting().getCardinal().equals(currentCardinal.getCardinalNumber()))
-                .sorted(Comparator.comparing(attendance -> attendance.getMeeting().getStart()))
+        val todayAttendance =
+            user.attendances.firstOrNull { attendance ->
+                attendance.meeting.start
+                    .toLocalDate()
+                    .isEqual(today) &&
+                    attendance.meeting.end
+                        .toLocalDate()
+                        .isEqual(today)
+            }
+
+        return if (user.role == Role.ADMIN) {
+            mapper.toAdminResponse(user, todayAttendance)
+        } else {
+            mapper.toMainResponse(user, todayAttendance)
+        }
+    }
+
+    override fun findAllDetailsByCurrentCardinal(userId: Long): AttendanceDetailResponse {
+        val user = userGetService.find(userId)
+        val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
+
+        val responses =
+            user.attendances
+                .filter { it.meeting.cardinal == currentCardinal.cardinalNumber }
+                .sortedBy { it.meeting.start }
                 .map(mapper::toResponse)
-                .toList();
 
-        return mapper.toDetailResponse(user, responses);
+        return mapper.toDetailResponse(user, responses)
     }
 
-    @Override
-    public List<AttendanceInfoResponse> findAllAttendanceByMeeting(Long meetingId) {
-        Meeting meeting = meetingGetService.find(meetingId);
-
-        List<Attendance> attendances = attendanceGetService.findAllByMeeting(meeting);
-
-        return attendances.stream()
-                .map(mapper::toInfoResponse)
-                .toList();
+    override fun findAllAttendanceByMeeting(meetingId: Long): List<AttendanceInfoResponse> {
+        val meeting = meetingGetService.find(meetingId)
+        val attendances = attendanceGetService.findAllByMeeting(meeting)
+        return attendances.map(mapper::toInfoResponse)
     }
 
-    @Override
-    public void close(LocalDate now, Integer cardinal) {
-        List<Meeting> meetings = meetingGetService.find(cardinal);
+    // todo 차후 리팩토링 정기모임 id를 입력받아서 해당 정기모임의 출석을 마감하도록 수정
+    override fun close(
+        now: LocalDate,
+        cardinal: Int,
+    ) {
+        val meetings = meetingGetService.find(cardinal)
 
-        /*
-        todo 차후 리팩토링 정기모임 id를 입력받아서 해당 정기모임의 출석을 마감하도록 수정
-         */
-        Meeting targetMeeting = meetings.stream()
-                .filter(meeting -> meeting.getStart().toLocalDate().isEqual(now)
-                        && meeting.getEnd().toLocalDate().isEqual(now))
-                .findAny()
-                .orElseThrow(MeetingNotFoundException::new);
+        val targetMeeting =
+            meetings.firstOrNull { meeting ->
+                meeting.start.toLocalDate().isEqual(now) &&
+                    meeting.end.toLocalDate().isEqual(now)
+            } ?: throw MeetingNotFoundException()
 
-        List<Attendance> attendanceList = attendanceGetService.findAllByMeeting(targetMeeting);
-
-        attendanceUpdateService.close(attendanceList);
+        val attendanceList = attendanceGetService.findAllByMeeting(targetMeeting)
+        attendanceUpdateService.close(attendanceList)
     }
 
-    @Override
     @Transactional
-    public void updateAttendanceStatus(List<UpdateAttendanceStatusRequest> attendanceUpdates) {
-        attendanceUpdates.forEach(update -> {
-            Attendance attendance = attendanceGetService.findByAttendanceId(update.getAttendanceId());
-            User user = attendance.getUser();
-
-            Status newStatus = Status.valueOf(update.getStatus());
+    override fun updateAttendanceStatus(attendanceUpdates: List<UpdateAttendanceStatusRequest>) {
+        attendanceUpdates.forEach { update ->
+            val attendance = attendanceGetService.findByAttendanceId(update.attendanceId)
+            val user = attendance.user
+            val newStatus = Status.valueOf(update.status)
 
             if (newStatus == Status.ABSENT) {
-                attendance.close();
-                user.removeAttend();
-                user.absent();
+                attendance.close()
+                user.removeAttend()
+                user.absent()
             } else {
-                attendance.attend();
-                user.removeAbsent();
-                user.attend();
+                attendance.attend()
+                user.removeAbsent()
+                user.attend()
             }
-        });
+        }
     }
 }

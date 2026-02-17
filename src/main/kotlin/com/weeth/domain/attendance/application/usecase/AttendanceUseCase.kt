@@ -1,24 +1,27 @@
-package com.weeth.domain.attendance.application.usecase;
+package com.weeth.domain.attendance.application.usecase
 
-import java.util.List;
-import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest;
-import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse;
-import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse;
-import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse;
-import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException;
+import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
+import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
+import java.time.LocalDate
 
-import java.time.LocalDate;
+interface AttendanceUseCase {
+    fun checkIn(
+        userId: Long,
+        code: Int,
+    )
 
-public interface AttendanceUseCase {
-    void checkIn(Long userId, Integer code) throws AttendanceCodeMismatchException;
+    fun find(userId: Long): AttendanceMainResponse
 
-    AttendanceMainResponse find(Long userId);
+    fun findAllDetailsByCurrentCardinal(userId: Long): AttendanceDetailResponse
 
-    AttendanceDetailResponse findAllDetailsByCurrentCardinal(Long userId);
+    fun findAllAttendanceByMeeting(meetingId: Long): List<AttendanceInfoResponse>
 
-    List<AttendanceInfoResponse> findAllAttendanceByMeeting(Long meetingId);
+    fun close(
+        now: LocalDate,
+        cardinal: Int,
+    )
 
-    void close(LocalDate now, Integer cardinal);
-
-    void updateAttendanceStatus(List<UpdateAttendanceStatusRequest> attendanceUpdates);
+    fun updateAttendanceStatus(attendanceUpdates: List<UpdateAttendanceStatusRequest>)
 }
