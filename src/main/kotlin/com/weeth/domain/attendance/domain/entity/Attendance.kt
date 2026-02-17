@@ -1,62 +1,52 @@
-package com.weeth.domain.attendance.domain.entity;
+package com.weeth.domain.attendance.domain.entity
 
-import jakarta.persistence.*;
-import com.weeth.domain.attendance.domain.entity.enums.Status;
-import com.weeth.domain.schedule.domain.entity.Meeting;
-import com.weeth.domain.user.domain.entity.User;
-import com.weeth.global.common.entity.BaseEntity;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.schedule.domain.entity.Meeting
+import com.weeth.domain.user.domain.entity.User
+import com.weeth.global.common.entity.BaseEntity
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.PrePersist
 
 @Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@SuperBuilder
-public class Attendance extends BaseEntity {
+class Attendance
+    @JvmOverloads
+    constructor(
+        @ManyToOne
+        @JoinColumn(name = "meeting_id")
+        val meeting: Meeting,
+        @ManyToOne
+        @JoinColumn(name = "user_id")
+        val user: User,
+        @Enumerated(EnumType.STRING)
+        var status: Status? = null,
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        @Column(name = "attendance_id")
+        val id: Long = 0,
+    ) : BaseEntity() {
+        @PrePersist
+        fun init() {
+            status = Status.PENDING
+        }
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "attendance_id")
-    private Long id;
+        fun attend() {
+            status = Status.ATTEND
+        }
 
-    @Enumerated(EnumType.STRING)
-    private Status status;
+        fun close() {
+            status = Status.ABSENT
+        }
 
-    @ManyToOne
-    @JoinColumn(name = "meeting_id")
-    private Meeting meeting;
+        val isPending: Boolean
+            get() = status == Status.PENDING
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @PrePersist
-    public void init() {
-        this.status = Status.PENDING;
+        fun isWrong(code: Int): Boolean = meeting.getCode() != code
     }
-
-    public Attendance(Meeting meeting, User user) {
-        this.meeting = meeting;
-        this.user = user;
-    }
-
-    public void attend() {
-        this.status = Status.ATTEND;
-    }
-
-    public void close() {
-        this.status = Status.ABSENT;
-    }
-
-    public boolean isPending() {
-        return this.status == Status.PENDING;
-    }
-
-    public boolean isWrong(Integer code) {
-        return !this.meeting.getCode().equals(code);
-    }
-}
