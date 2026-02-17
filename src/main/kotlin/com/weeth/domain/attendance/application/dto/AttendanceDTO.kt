@@ -1,57 +1,57 @@
-package com.weeth.domain.attendance.application.dto;
+package com.weeth.domain.attendance.application.dto
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import com.weeth.domain.attendance.domain.entity.enums.Status;
+import com.weeth.domain.attendance.domain.entity.enums.Status
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
-import java.util.List;
+class AttendanceDTO {
+    data class Main(
+        val attendanceRate: Int?,
+        val title: String,
+        val status: Status,
+        @field:Schema(description = "어드민인 경우 출석 코드 노출")
+        val code: Int?,
+        val start: LocalDateTime,
+        val end: LocalDateTime,
+        val location: String,
+    )
 
-public class AttendanceDTO {
+    data class Detail(
+        val attendanceCount: Int,
+        val total: Int,
+        val absenceCount: Int,
+        val attendances: List<Response>,
+    )
 
-    public record Main(
-            Integer attendanceRate,
-            String title,
-            Status status,
-            @Schema(description = "어드민인 경우 출석 코드 노출")
-            Integer code,
-            LocalDateTime start,
-            LocalDateTime end,
-            String location
-    ) {}
+    data class Response(
+        val id: Long,
+        val status: Status,
+        val title: String,
+        val start: LocalDateTime,
+        val end: LocalDateTime,
+        val location: String,
+    )
 
-    public record Detail(
-            Integer attendanceCount,
-            Integer total,
-            Integer absenceCount,
-            List<Response> attendances
-    ) {}
+    data class CheckIn(
+        val code: Int,
+    )
 
-    public record Response(
-            Long id,
-            Status status,
-            String title,
-            LocalDateTime start,
-            LocalDateTime end,
-            String location
-    ) {}
+    data class AttendanceInfo(
+        val id: Long,
+        val status: Status,
+        val name: String,
+        val position: String,
+        val department: String,
+        val studentId: String,
+    )
 
-    public record CheckIn(
-            Integer code
-    ) {}
-
-    public record AttendanceInfo(
-            Long id,
-            Status status,
-            String name,
-            String position,
-            String department,
-            String studentId
-    ) {}
-
-    public record UpdateStatus(
-            @NotNull Long attendanceId,
-            @NotNull @Pattern(regexp = "ATTEND|ABSENT")String status
-    ) {}
+    data class UpdateStatus(
+        @field:NotNull
+        val attendanceId: Long,
+        @field:NotNull
+        @field:Pattern(regexp = "ATTEND|ABSENT")
+        val status: String,
+    )
 }
