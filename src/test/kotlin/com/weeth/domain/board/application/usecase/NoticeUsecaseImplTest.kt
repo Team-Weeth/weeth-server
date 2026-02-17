@@ -193,7 +193,7 @@ class NoticeUsecaseImplTest :
                     FileTestFixture.createFile(
                         1L,
                         "old.pdf",
-                        storageKey = StorageKey("NOTICE/2026-02/old.pdf"),
+                        storageKey = StorageKey("NOTICE/2026-02/00000000-0000-0000-0000-000000000000_old.pdf"),
                         ownerType = FileOwnerType.NOTICE,
                         ownerId = noticeId,
                         contentType = FileContentType("application/pdf"),
@@ -211,7 +211,7 @@ class NoticeUsecaseImplTest :
                     FileTestFixture.createFile(
                         2L,
                         "new.pdf",
-                        storageKey = StorageKey("NOTICE/2026-02/old.pdf"),
+                        storageKey = StorageKey("NOTICE/2026-02/00000000-0000-0000-0000-000000000000_old.pdf"),
                         ownerType = FileOwnerType.NOTICE,
                         ownerId = noticeId,
                         contentType = FileContentType("application/pdf"),

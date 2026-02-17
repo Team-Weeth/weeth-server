@@ -272,7 +272,7 @@ class PostUseCaseImplTest :
                     FileTestFixture.createFile(
                         postId,
                         "파일1",
-                        storageKey = StorageKey("POST/2026-02/url1"),
+                        storageKey = StorageKey("POST/2026-02/00000000-0000-0000-0000-000000000000_url1"),
                         ownerType = FileOwnerType.POST,
                         ownerId = postId,
                     )
