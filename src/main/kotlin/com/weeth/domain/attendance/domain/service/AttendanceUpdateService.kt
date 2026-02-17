@@ -1,40 +1,32 @@
-package com.weeth.domain.attendance.domain.service;
+package com.weeth.domain.attendance.domain.service
 
-import jakarta.transaction.Transactional;
-import com.weeth.domain.attendance.domain.entity.Attendance;
-import com.weeth.domain.attendance.domain.entity.enums.Status;
-import com.weeth.domain.user.domain.entity.User;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
+import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.entity.enums.Status
+import org.springframework.stereotype.Service
 
 @Service
-@Transactional
-@RequiredArgsConstructor
-public class AttendanceUpdateService {
-
-    public void attend(Attendance attendance) {
-        attendance.attend();
-        attendance.getUser().attend();
+class AttendanceUpdateService {
+    fun attend(attendance: Attendance) {
+        attendance.attend()
+        attendance.user.attend()
     }
 
-    public void close(List<Attendance> attendances) {
-        attendances.stream()
-                .filter(Attendance::isPending)
-                .forEach(attendance -> {
-                    attendance.close();
-                    attendance.getUser().absent();
-                });
+    fun close(attendances: List<Attendance>) {
+        attendances
+            .filter { it.isPending }
+            .forEach { attendance ->
+                attendance.close()
+                attendance.user.absent()
+            }
     }
 
-    public void updateUserAttendanceByStatus(List<Attendance> attendances) {
-        for (Attendance attendance : attendances) {
-            User user = attendance.getUser();
-            if (attendance.getStatus().equals(Status.ATTEND)) {
-                user.removeAttend();
+    fun updateUserAttendanceByStatus(attendances: List<Attendance>) {
+        attendances.forEach { attendance ->
+            val user = attendance.user
+            if (attendance.status == Status.ATTEND) {
+                user.removeAttend()
             } else {
-                user.removeAbsent();
+                user.removeAbsent()
             }
         }
     }

@@ -1,36 +1,30 @@
-package com.weeth.domain.attendance.domain.service;
+package com.weeth.domain.attendance.domain.service
 
-import jakarta.transaction.Transactional;
-import com.weeth.domain.attendance.domain.entity.Attendance;
-import com.weeth.domain.attendance.domain.repository.AttendanceRepository;
-import com.weeth.domain.schedule.domain.entity.Meeting;
-import com.weeth.domain.user.domain.entity.User;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.schedule.domain.entity.Meeting
+import com.weeth.domain.user.domain.entity.User
+import org.springframework.stereotype.Service
 
 @Service
-@RequiredArgsConstructor
-public class AttendanceSaveService {
-
-    private final AttendanceRepository attendanceRepository;
-
-    public void init(User user, List<Meeting> meetings) {
-        if (meetings != null) {
-            meetings.forEach(meeting -> {
-                Attendance attendance = attendanceRepository.save(new Attendance(meeting, user));
-                user.add(attendance);
-            });
+class AttendanceSaveService(
+    private val attendanceRepository: AttendanceRepository,
+) {
+    fun init(
+        user: User,
+        meetings: List<Meeting>?,
+    ) {
+        meetings?.forEach { meeting ->
+            val attendance = attendanceRepository.save(Attendance(meeting, user))
+            user.add(attendance)
         }
     }
 
-    public void saveAll(List<User> userList, Meeting meeting) {
-        List<Attendance> attendances = userList.stream()
-                .map(user -> new Attendance(meeting, user))
-                .toList();
-
-        attendanceRepository.saveAll(attendances);
+    fun saveAll(
+        userList: List<User>,
+        meeting: Meeting,
+    ) {
+        val attendances = userList.map { user -> Attendance(meeting, user) }
+        attendanceRepository.saveAll(attendances)
     }
 }
