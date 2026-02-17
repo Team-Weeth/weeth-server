@@ -4,4 +4,4 @@ import com.weeth.global.common.exception.BaseException
 
 class PresignedUrlGenerationException(
     cause: Throwable? = null,
-) : BaseException(FileErrorCode.PRESIGNED_URL_GENERATION_FAILED, cause) 
+) : BaseException(FileErrorCode.PRESIGNED_URL_GENERATION_FAILED, cause)
