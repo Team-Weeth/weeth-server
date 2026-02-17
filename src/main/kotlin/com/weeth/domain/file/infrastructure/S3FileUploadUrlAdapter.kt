@@ -20,7 +20,7 @@ import java.util.UUID
 class S3FileUploadUrlAdapter(
     private val s3Presigner: S3Presigner,
     private val awsS3Properties: AwsS3Properties,
-    @Value("\${app.file.presigned-url-expiration-minutes:5}")
+    @param:Value("\${app.file.presigned-url-expiration-minutes:5}")
     private val presignedUrlExpirationMinutes: Long,
 ) : FileUploadUrlPort {
     override fun generateUploadUrl(
