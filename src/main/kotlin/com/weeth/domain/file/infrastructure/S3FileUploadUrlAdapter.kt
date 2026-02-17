@@ -15,6 +15,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 
+/** S3 기반 업로드용 presigned URL 생성 어댑터입니다. */
 @Component
 class S3FileUploadUrlAdapter(
     private val s3Presigner: S3Presigner,
