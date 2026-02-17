@@ -30,7 +30,7 @@ public class AttendanceController {
     @PatchMapping
     @Operation(summary="출석체크")
     public CommonResponse<Void> checkIn(@Parameter(hidden = true) @CurrentUser Long userId, @RequestBody AttendanceDTO.CheckIn checkIn) throws AttendanceCodeMismatchException {
-        attendanceUseCase.checkIn(userId, checkIn.code());
+        attendanceUseCase.checkIn(userId, checkIn.getCode());
         return CommonResponse.success(ATTENDANCE_CHECKIN_SUCCESS);
     }
 

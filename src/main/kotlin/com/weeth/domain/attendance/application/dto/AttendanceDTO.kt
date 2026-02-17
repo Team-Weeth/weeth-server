@@ -9,13 +9,13 @@ import java.time.LocalDateTime
 class AttendanceDTO {
     data class Main(
         val attendanceRate: Int?,
-        val title: String,
-        val status: Status,
+        val title: String?,
+        val status: Status?,
         @field:Schema(description = "어드민인 경우 출석 코드 노출")
         val code: Int?,
-        val start: LocalDateTime,
-        val end: LocalDateTime,
-        val location: String,
+        val start: LocalDateTime?,
+        val end: LocalDateTime?,
+        val location: String?,
     )
 
     data class Detail(
@@ -27,11 +27,11 @@ class AttendanceDTO {
 
     data class Response(
         val id: Long,
-        val status: Status,
-        val title: String,
-        val start: LocalDateTime,
-        val end: LocalDateTime,
-        val location: String,
+        val status: Status?,
+        val title: String?,
+        val start: LocalDateTime?,
+        val end: LocalDateTime?,
+        val location: String?,
     )
 
     data class CheckIn(
@@ -40,11 +40,11 @@ class AttendanceDTO {
 
     data class AttendanceInfo(
         val id: Long,
-        val status: Status,
-        val name: String,
-        val position: String,
-        val department: String,
-        val studentId: String,
+        val status: Status?,
+        val name: String?,
+        val position: String?,
+        val department: String?,
+        val studentId: String?,
     )
 
     data class UpdateStatus(

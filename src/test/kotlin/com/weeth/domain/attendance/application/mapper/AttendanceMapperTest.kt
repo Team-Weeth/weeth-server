@@ -31,11 +31,11 @@ class AttendanceMapperTest :
                 val main = attendanceMapper.toMainDto(user, attendance)
 
                 main.shouldNotBeNull()
-                main.title() shouldBe "Today"
-                main.status() shouldBe attendance.status
-                main.start() shouldBe meeting.start
-                main.end() shouldBe meeting.end
-                main.location() shouldBe meeting.location
+                main.title shouldBe "Today"
+                main.status shouldBe attendance.status
+                main.start shouldBe meeting.start
+                main.end shouldBe meeting.end
+                main.location shouldBe meeting.location
             }
 
             it("todayAttendance가 null이면 필드는 null로 매핑") {
@@ -44,10 +44,10 @@ class AttendanceMapperTest :
                 val main = attendanceMapper.toMainDto(user, null)
 
                 main.shouldNotBeNull()
-                main.title().shouldBeNull()
-                main.start().shouldBeNull()
-                main.end().shouldBeNull()
-                main.location().shouldBeNull()
+                main.title.shouldBeNull()
+                main.start.shouldBeNull()
+                main.end.shouldBeNull()
+                main.location.shouldBeNull()
             }
 
             it("일반 유저는 출석 코드가 null로 매핑된다") {
@@ -59,9 +59,9 @@ class AttendanceMapperTest :
                 val main = attendanceMapper.toMainDto(user, attendance)
 
                 main.shouldNotBeNull()
-                main.code().shouldBeNull()
-                main.title() shouldBe "Today"
-                main.status() shouldBe attendance.status
+                main.code.shouldBeNull()
+                main.title shouldBe "Today"
+                main.status shouldBe attendance.status
             }
         }
 
@@ -74,10 +74,10 @@ class AttendanceMapperTest :
                 val response = attendanceMapper.toResponseDto(attendance)
 
                 response.shouldNotBeNull()
-                response.title() shouldBe "D-1"
-                response.start() shouldBe meeting.start
-                response.end() shouldBe meeting.end
-                response.location() shouldBe meeting.location
+                response.title shouldBe "D-1"
+                response.start shouldBe meeting.start
+                response.end shouldBe meeting.end
+                response.location shouldBe meeting.location
             }
         }
 
@@ -98,8 +98,8 @@ class AttendanceMapperTest :
                 val detail = attendanceMapper.toDetailDto(user, listOf(r1, r2))
 
                 detail.shouldNotBeNull()
-                detail.attendances() shouldBe listOf(r1, r2)
-                detail.total() shouldBe 5
+                detail.attendances shouldBe listOf(r1, r2)
+                detail.total shouldBe 5
             }
         }
 
@@ -115,9 +115,9 @@ class AttendanceMapperTest :
                 val info = attendanceMapper.toAttendanceInfoDto(attendance)
 
                 info.shouldNotBeNull()
-                info.id() shouldBe 10L
-                info.status() shouldBe attendance.status
-                info.name() shouldBe "유저B"
+                info.id shouldBe 10L
+                info.status shouldBe attendance.status
+                info.name shouldBe "유저B"
             }
         }
 
@@ -132,11 +132,11 @@ class AttendanceMapperTest :
                 val main = attendanceMapper.toAdminResponse(adminUser, attendance)
 
                 main.shouldNotBeNull()
-                main.code() shouldBe expectedCode
-                main.title() shouldBe "Today"
-                main.start() shouldBe meeting.start
-                main.end() shouldBe meeting.end
-                main.location() shouldBe meeting.location
+                main.code shouldBe expectedCode
+                main.title shouldBe "Today"
+                main.start shouldBe meeting.start
+                main.end shouldBe meeting.end
+                main.location shouldBe meeting.location
             }
         }
     })

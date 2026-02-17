@@ -120,10 +120,10 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
     @Transactional
     public void updateAttendanceStatus(List<AttendanceDTO.UpdateStatus> attendanceUpdates) {
         attendanceUpdates.forEach(update -> {
-            Attendance attendance = attendanceGetService.findByAttendanceId(update.attendanceId());
+            Attendance attendance = attendanceGetService.findByAttendanceId(update.getAttendanceId());
             User user = attendance.getUser();
 
-            Status newStatus = Status.valueOf(update.status());
+            Status newStatus = Status.valueOf(update.getStatus());
 
             if (newStatus == Status.ABSENT) {
                 attendance.close();
