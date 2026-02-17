@@ -1,0 +1,82 @@
+name: Deploy Prod
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build JAR
+        run: ./gradlew clean build -x test --no-daemon
+
+      # ARM Docker Build 설정
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push prod image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/arm64 # t4g small 배포를 위한 arm platform 설정
+          push: true
+          tags: |
+            ${{ env.IMAGE_REPOSITORY }}:${{ github.event.release.tag_name }}
+            ${{ env.IMAGE_REPOSITORY }}:prod-latest
+
+      # /infra/prod 하위 파일 EC2로 복사
+      - name: Upload deployment files to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          source: "infra/prod"
+          target: "${{ secrets.PROD_DEPLOY_DIR }}"
+
+      - name: Deploy to prod server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROD_EC2_HOST }}
+          username: ${{ secrets.PROD_EC2_USER }}
+          key: ${{ secrets.PROD_EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            DEPLOY_DIR="${{ secrets.PROD_DEPLOY_DIR }}/infra/prod"
+            chmod +x "$DEPLOY_DIR/scripts/deploy.sh"
+
+            APP_IMAGE="${{ env.IMAGE_REPOSITORY }}:${{ github.event.release.tag_name }}" \
+            DOMAIN="${{ secrets.PROD_DOMAIN }}" \
+            DEPLOY_DIR="$DEPLOY_DIR" \
+            "$DEPLOY_DIR/scripts/deploy.sh"

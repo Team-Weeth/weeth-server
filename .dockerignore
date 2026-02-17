@@ -1,0 +1,12 @@
+.git
+.github
+.idea
+.gradle
+.claude
+out
+docs
+infra
+
+**/Dockerfile*
+**/*.iml
+**/.DS_Store

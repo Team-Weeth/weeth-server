@@ -17,7 +17,7 @@
 ## 🛠 기술 스택
 
 ### Core
-- **Language**: Kotlin 2.1.0 (Java 17에서 점진적 마이그레이션)
+- **Language**: Kotlin 2.1.0 (Java 코드에서 점진적 마이그레이션)
 - **Framework**: Spring Boot 3.5.10
 - **Build**: Gradle 8.12 (Kotlin DSL)
 
@@ -45,7 +45,7 @@
 
 ### 사전 요구사항
 
-- JDK 17
+- JDK 21
 - MySQL 8.0
 - Redis 7.0+
 - Gradle 8.12 (Wrapper 포함)
