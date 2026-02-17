@@ -1,0 +1,51 @@
+package com.weeth.domain.file.application.mapper
+
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
+import com.weeth.domain.file.application.dto.response.FileResponse
+import com.weeth.domain.file.application.dto.response.UrlResponse
+import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.entity.FileOwnerType
+import org.springframework.stereotype.Component
+
+@Component
+class FileMapper(
+    private val fileUrlResolver: FileUrlResolver,
+) {
+    fun toFileList(
+        requests: List<FileSaveRequest>?,
+        ownerType: FileOwnerType,
+        ownerId: Long,
+    ): List<File> {
+        if (requests.isNullOrEmpty()) {
+            return emptyList()
+        }
+
+        return requests.map {
+            File.createUploaded(
+                fileName = it.fileName,
+                storageKey = it.storageKey,
+                fileSize = it.fileSize,
+                contentType = it.contentType,
+                ownerType = ownerType,
+                ownerId = ownerId,
+            )
+        }
+    }
+
+    fun toFileResponse(file: File) =
+        FileResponse(
+            fileId = file.id,
+            fileName = file.fileName,
+            fileUrl = fileUrlResolver.resolve(file.storageKey),
+            storageKey = file.storageKey,
+            fileSize = file.fileSize,
+            contentType = file.contentType,
+            status = file.status,
+        )
+
+    fun toUrlResponse(
+        fileName: String,
+        putUrl: String,
+        storageKey: String,
+    ) = UrlResponse(fileName = fileName, putUrl = putUrl, storageKey = storageKey)
+}
