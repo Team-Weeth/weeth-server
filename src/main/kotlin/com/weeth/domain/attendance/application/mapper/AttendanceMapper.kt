@@ -13,26 +13,13 @@ class AttendanceMapper {
     fun toMainResponse(
         user: User,
         attendance: Attendance?,
+        isAdmin: Boolean = false,
     ): AttendanceMainResponse =
         AttendanceMainResponse(
             attendanceRate = user.attendanceRate,
             title = attendance?.meeting?.title,
             status = attendance?.status,
-            code = null,
-            start = attendance?.meeting?.start,
-            end = attendance?.meeting?.end,
-            location = attendance?.meeting?.location,
-        )
-
-    fun toAdminResponse(
-        user: User,
-        attendance: Attendance?,
-    ): AttendanceMainResponse =
-        AttendanceMainResponse(
-            attendanceRate = user.attendanceRate,
-            title = attendance?.meeting?.title,
-            status = attendance?.status,
-            code = attendance?.meeting?.code,
+            code = if (isAdmin) attendance?.meeting?.code else null,
             start = attendance?.meeting?.start,
             end = attendance?.meeting?.end,
             location = attendance?.meeting?.location,

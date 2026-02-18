@@ -62,6 +62,23 @@ class AttendanceMapperTest :
                 main.title shouldBe meeting.title
                 main.status shouldBe attendance.status
             }
+
+            it("ADMIN 유저는 출석 코드가 포함된다") {
+                val today = LocalDate.now()
+                val expectedCode = 1234
+                val meeting = createOneDayMeeting(today, 1, expectedCode, "Today")
+                val adminUser = createAdminUserWithAttendances("관리자", listOf(meeting))
+                val attendance = adminUser.attendances[0]
+
+                val main = mapper.toMainResponse(adminUser, attendance, isAdmin = true)
+
+                main.shouldNotBeNull()
+                main.code shouldBe expectedCode
+                main.title shouldBe meeting.title
+                main.start shouldBe meeting.start
+                main.end shouldBe meeting.end
+                main.location shouldBe meeting.location
+            }
         }
 
         describe("toResponse") {
@@ -120,22 +137,4 @@ class AttendanceMapperTest :
             }
         }
 
-        describe("toAdminResponse") {
-            it("ADMIN 유저는 출석 코드가 포함된다") {
-                val today = LocalDate.now()
-                val expectedCode = 1234
-                val meeting = createOneDayMeeting(today, 1, expectedCode, "Today")
-                val adminUser = createAdminUserWithAttendances("관리자", listOf(meeting))
-                val attendance = adminUser.attendances[0]
-
-                val main = mapper.toAdminResponse(adminUser, attendance)
-
-                main.shouldNotBeNull()
-                main.code shouldBe expectedCode
-                main.title shouldBe meeting.title
-                main.start shouldBe meeting.start
-                main.end shouldBe meeting.end
-                main.location shouldBe meeting.location
-            }
-        }
     })
