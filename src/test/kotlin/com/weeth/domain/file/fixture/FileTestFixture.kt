@@ -1,20 +1,27 @@
 package com.weeth.domain.file.fixture
 
-import com.weeth.domain.board.domain.entity.Notice
 import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.vo.FileContentType
+import com.weeth.domain.file.domain.vo.StorageKey
 
 object FileTestFixture {
     fun createFile(
         id: Long,
         fileName: String,
-        fileUrl: String,
-        notice: Notice? = null,
+        storageKey: StorageKey = StorageKey("NOTICE/2026-02/00000000-0000-0000-0000-000000000000_test.png"),
+        fileSize: Long = 1024,
+        ownerType: FileOwnerType = FileOwnerType.NOTICE,
+        ownerId: Long = 1L,
+        contentType: FileContentType = FileContentType("image/png"),
     ): File =
-        File
-            .builder()
-            .id(id)
-            .fileName(fileName)
-            .fileUrl(fileUrl)
-            .notice(notice)
-            .build()
+        File(
+            id = id,
+            fileName = fileName,
+            storageKey = storageKey,
+            fileSize = fileSize,
+            ownerType = ownerType,
+            ownerId = ownerId,
+            contentType = contentType,
+        )
 }

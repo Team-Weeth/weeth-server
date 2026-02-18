@@ -9,9 +9,9 @@ import com.weeth.domain.comment.domain.service.CommentFindService
 import com.weeth.domain.comment.domain.service.CommentSaveService
 import com.weeth.domain.comment.fixture.CommentTestFixture
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.service.FileDeleteService
-import com.weeth.domain.file.domain.service.FileGetService
-import com.weeth.domain.file.domain.service.FileSaveService
+import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserNotMatchException
 import com.weeth.domain.user.domain.service.UserGetService
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -28,9 +28,8 @@ class NoticeCommentUsecaseImplTest :
         val commentSaveService = mockk<CommentSaveService>(relaxUnitFun = true)
         val commentFindService = mockk<CommentFindService>()
         val commentDeleteService = mockk<CommentDeleteService>(relaxUnitFun = true)
-        val fileSaveService = mockk<FileSaveService>(relaxUnitFun = true)
-        val fileGetService = mockk<FileGetService>()
-        val fileDeleteService = mockk<FileDeleteService>(relaxUnitFun = true)
+        val fileRepository = mockk<FileRepository>(relaxed = true)
+        val fileReader = mockk<FileReader>()
         val fileMapper = mockk<FileMapper>()
         val noticeFindService = mockk<NoticeFindService>()
         val userGetService = mockk<UserGetService>()
@@ -41,9 +40,8 @@ class NoticeCommentUsecaseImplTest :
                 commentSaveService,
                 commentFindService,
                 commentDeleteService,
-                fileSaveService,
-                fileGetService,
-                fileDeleteService,
+                fileRepository,
+                fileReader,
                 fileMapper,
                 noticeFindService,
                 userGetService,
@@ -66,7 +64,7 @@ class NoticeCommentUsecaseImplTest :
                 every { commentMapper.fromCommentDto(dto, notice, user, null) } returns comment
                 every { userGetService.find(user.id) } returns user
                 every { noticeFindService.find(notice.id) } returns notice
-                every { fileMapper.toFileList(dto.files(), comment) } returns listOf()
+                every { fileMapper.toFileList(dto.files(), FileOwnerType.COMMENT, commentId) } returns listOf()
 
                 noticeCommentUsecase.saveNoticeComment(dto, noticeId, userId)
 
@@ -95,7 +93,7 @@ class NoticeCommentUsecaseImplTest :
                 every { userGetService.find(user.id) } returns user
                 every { commentFindService.find(parentComment.id) } returns parentComment
                 every { noticeFindService.find(notice.id) } returns notice
-                every { fileMapper.toFileList(childCommentDTO.files(), childComment) } returns listOf()
+                every { fileMapper.toFileList(childCommentDTO.files(), FileOwnerType.COMMENT, childCommentId) } returns listOf()
 
                 noticeCommentUsecase.saveNoticeComment(childCommentDTO, noticeId, userId)
 

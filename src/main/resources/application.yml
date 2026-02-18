@@ -38,3 +38,8 @@ management:
     metrics:
       export:
         enabled: true
+
+app:
+  file:
+    cdn-base-url: ${CDN_BASE_URL:}
+    presigned-url-expiration-minutes: 5

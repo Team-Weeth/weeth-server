@@ -13,9 +13,10 @@ import com.weeth.domain.board.domain.service.PostUpdateService
 import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.comment.application.mapper.CommentMapper
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.service.FileDeleteService
-import com.weeth.domain.file.domain.service.FileGetService
-import com.weeth.domain.file.domain.service.FileSaveService
+import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.domain.file.fixture.FileTestFixture
 import com.weeth.domain.user.domain.service.CardinalGetService
 import com.weeth.domain.user.domain.service.UserCardinalGetService
@@ -50,9 +51,8 @@ class PostUseCaseImplTest :
         val userGetService = mockk<UserGetService>()
         val userCardinalGetService = mockk<UserCardinalGetService>()
         val cardinalGetService = mockk<CardinalGetService>()
-        val fileSaveService = mockk<FileSaveService>(relaxUnitFun = true)
-        val fileGetService = mockk<FileGetService>()
-        val fileDeleteService = mockk<FileDeleteService>()
+        val fileRepository = mockk<FileRepository>(relaxed = true)
+        val fileReader = mockk<FileReader>()
         val mapper = mockk<PostMapper>()
         val fileMapper = mockk<FileMapper>()
         val commentMapper = mockk<CommentMapper>()
@@ -66,9 +66,8 @@ class PostUseCaseImplTest :
                 userGetService,
                 userCardinalGetService,
                 cardinalGetService,
-                fileSaveService,
-                fileGetService,
-                fileDeleteService,
+                fileRepository,
+                fileReader,
                 mapper,
                 fileMapper,
                 commentMapper,
@@ -86,7 +85,7 @@ class PostUseCaseImplTest :
                 every { userGetService.find(userId) } returns user
                 every { mapper.fromEducationDto(request, user) } returns post
                 every { postSaveService.save(post) } returns post
-                every { fileMapper.toFileList(request.files(), post) } returns listOf()
+                every { fileMapper.toFileList(request.files(), FileOwnerType.POST, postId) } returns listOf()
                 every { mapper.toSaveResponse(post) } returns PostDTO.SaveResponse(postId)
 
                 val response = postUseCase.saveEducation(request, userId)
@@ -146,7 +145,7 @@ class PostUseCaseImplTest :
                 } returns postSlice
 
                 every { mapper.toAll(post2, false) } returns response2
-                every { fileGetService.findAllByPost(post2.id) } returns emptyList()
+                every { fileReader.exists(FileOwnerType.POST, post2.id, null) } returns false
 
                 val result = postUseCase.findPartPosts(dto, pageNumber, pageSize)
 
@@ -207,8 +206,8 @@ class PostUseCaseImplTest :
                 every { postFindService.findByCategory(part, Category.Education, cardinalNumber, pageNumber, pageSize) } returns postSlice
                 every { mapper.toEducationAll(post1, false) } returns response1
                 every { mapper.toEducationAll(post2, false) } returns response2
-                every { fileGetService.findAllByPost(post1.id) } returns emptyList()
-                every { fileGetService.findAllByPost(post2.id) } returns emptyList()
+                every { fileReader.exists(FileOwnerType.POST, post1.id, null) } returns false
+                every { fileReader.exists(FileOwnerType.POST, post2.id, null) } returns false
 
                 val result = postUseCase.findEducationPosts(userId, part, cardinalNumber, pageNumber, pageSize)
 
@@ -269,14 +268,21 @@ class PostUseCaseImplTest :
         describe("checkFileExistsByPost") {
             it("파일이 존재하는 경우 true를 반환한다") {
                 val postId = 1L
-                val file = FileTestFixture.createFile(postId, "파일1", "url1")
+                val file =
+                    FileTestFixture.createFile(
+                        postId,
+                        "파일1",
+                        storageKey = StorageKey("POST/2026-02/00000000-0000-0000-0000-000000000000_url1"),
+                        ownerType = FileOwnerType.POST,
+                        ownerId = postId,
+                    )
 
-                every { fileGetService.findAllByPost(postId) } returns listOf(file)
+                every { fileReader.exists(FileOwnerType.POST, postId, null) } returns true
 
                 val fileExists = postUseCase.checkFileExistsByPost(postId)
 
                 fileExists.shouldBeTrue()
-                verify { fileGetService.findAllByPost(postId) }
+                verify { fileReader.exists(FileOwnerType.POST, postId, null) }
             }
         }
     })

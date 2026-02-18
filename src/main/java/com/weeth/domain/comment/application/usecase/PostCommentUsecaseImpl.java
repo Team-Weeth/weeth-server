@@ -11,9 +11,9 @@ import com.weeth.domain.comment.domain.service.CommentFindService;
 import com.weeth.domain.comment.domain.service.CommentSaveService;
 import com.weeth.domain.file.application.mapper.FileMapper;
 import com.weeth.domain.file.domain.entity.File;
-import com.weeth.domain.file.domain.service.FileDeleteService;
-import com.weeth.domain.file.domain.service.FileGetService;
-import com.weeth.domain.file.domain.service.FileSaveService;
+import com.weeth.domain.file.domain.entity.FileOwnerType;
+import com.weeth.domain.file.domain.repository.FileReader;
+import com.weeth.domain.file.domain.repository.FileRepository;
 import com.weeth.domain.user.application.exception.UserNotMatchException;
 import com.weeth.domain.user.domain.entity.User;
 import com.weeth.domain.user.domain.service.UserGetService;
@@ -31,9 +31,8 @@ public class PostCommentUsecaseImpl implements PostCommentUsecase {
     private final CommentFindService commentFindService;
     private final CommentDeleteService commentDeleteService;
 
-    private final FileSaveService fileSaveService;
-    private final FileGetService fileGetService;
-    private final FileDeleteService fileDeleteService;
+    private final FileRepository fileRepository;
+    private final FileReader fileReader;
     private final FileMapper fileMapper;
 
     private final UserGetService userGetService;
@@ -55,8 +54,8 @@ public class PostCommentUsecaseImpl implements PostCommentUsecase {
         Comment comment = commentMapper.fromCommentDto(dto, post, user, parentComment);
         commentSaveService.save(comment);
 
-        List<File> files = fileMapper.toFileList(dto.files(), comment);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.COMMENT, comment.getId());
+        fileRepository.saveAll(files);
 
         // 부모 댓글이 없다면 새 댓글로 추가
         if (parentComment == null) {
@@ -76,10 +75,10 @@ public class PostCommentUsecaseImpl implements PostCommentUsecase {
         Comment comment = validateOwner(commentId, userId);
 
         List<File> fileList = getFiles(commentId);
-        fileDeleteService.delete(fileList);
+        fileRepository.deleteAll(fileList);
 
-        List<File> files = fileMapper.toFileList(dto.files(), comment);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.COMMENT, comment.getId());
+        fileRepository.saveAll(files);
 
         comment.update(dto);
     }
@@ -93,7 +92,7 @@ public class PostCommentUsecaseImpl implements PostCommentUsecase {
         Post post = comment.getPost();
 
         List<File> fileList = getFiles(commentId);
-        fileDeleteService.delete(fileList);
+        fileRepository.deleteAll(fileList);
 
         /*
         1. 지우고자 하는 댓글이 맨 아래층인 경우(child, child가 없는 댓글
@@ -143,7 +142,7 @@ public class PostCommentUsecaseImpl implements PostCommentUsecase {
     }
 
     private List<File> getFiles(Long commentId) {
-        return fileGetService.findAllByComment(commentId);
+        return fileReader.findAll(FileOwnerType.COMMENT, commentId, null);
     }
 
 }

@@ -12,7 +12,8 @@ import com.weeth.domain.account.domain.service.AccountSaveService;
 import com.weeth.domain.account.domain.service.ReceiptGetService;
 import com.weeth.domain.file.application.dto.response.FileResponse;
 import com.weeth.domain.file.application.mapper.FileMapper;
-import com.weeth.domain.file.domain.service.FileGetService;
+import com.weeth.domain.file.domain.entity.FileOwnerType;
+import com.weeth.domain.file.domain.repository.FileReader;
 import com.weeth.domain.user.domain.service.CardinalGetService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +28,7 @@ public class AccountUseCaseImpl implements AccountUseCase {
     private final AccountGetService accountGetService;
     private final AccountSaveService accountSaveService;
     private final ReceiptGetService receiptGetService;
-    private final FileGetService fileGetService;
+    private final FileReader fileReader;
     private final CardinalGetService cardinalGetService;
 
     private final AccountMapper accountMapper;
@@ -60,7 +61,7 @@ public class AccountUseCaseImpl implements AccountUseCase {
     }
 
     private List<FileResponse> getFiles(Long receiptId) {
-        return fileGetService.findAllByReceipt(receiptId).stream()
+        return fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null).stream()
                 .map(fileMapper::toFileResponse)
                 .toList();
     }

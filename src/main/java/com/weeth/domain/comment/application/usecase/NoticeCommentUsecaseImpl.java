@@ -11,9 +11,9 @@ import com.weeth.domain.comment.domain.service.CommentFindService;
 import com.weeth.domain.comment.domain.service.CommentSaveService;
 import com.weeth.domain.file.application.mapper.FileMapper;
 import com.weeth.domain.file.domain.entity.File;
-import com.weeth.domain.file.domain.service.FileDeleteService;
-import com.weeth.domain.file.domain.service.FileGetService;
-import com.weeth.domain.file.domain.service.FileSaveService;
+import com.weeth.domain.file.domain.entity.FileOwnerType;
+import com.weeth.domain.file.domain.repository.FileReader;
+import com.weeth.domain.file.domain.repository.FileRepository;
 import com.weeth.domain.user.application.exception.UserNotMatchException;
 import com.weeth.domain.user.domain.entity.User;
 import com.weeth.domain.user.domain.service.UserGetService;
@@ -31,9 +31,8 @@ public class NoticeCommentUsecaseImpl implements NoticeCommentUsecase {
     private final CommentFindService commentFindService;
     private final CommentDeleteService commentDeleteService;
 
-    private final FileSaveService fileSaveService;
-    private final FileGetService fileGetService;
-    private final FileDeleteService fileDeleteService;
+    private final FileRepository fileRepository;
+    private final FileReader fileReader;
     private final FileMapper fileMapper;
 
     private final NoticeFindService noticeFindService;
@@ -54,8 +53,8 @@ public class NoticeCommentUsecaseImpl implements NoticeCommentUsecase {
         Comment comment = commentMapper.fromCommentDto(dto, notice, user, parentComment);
         commentSaveService.save(comment);
 
-        List<File> files = fileMapper.toFileList(dto.files(), comment);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.COMMENT, comment.getId());
+        fileRepository.saveAll(files);
 
         // 부모 댓글이 없다면 새 댓글로 추가
         if(parentComment == null) {
@@ -75,10 +74,10 @@ public class NoticeCommentUsecaseImpl implements NoticeCommentUsecase {
         Comment comment = validateOwner(commentId, userId);
 
         List<File> fileList = getFiles(commentId);
-        fileDeleteService.delete(fileList);
+        fileRepository.deleteAll(fileList);
 
-        List<File> files = fileMapper.toFileList(dto.files(), comment);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.COMMENT, comment.getId());
+        fileRepository.saveAll(files);
 
         comment.update(dto);
     }
@@ -91,7 +90,7 @@ public class NoticeCommentUsecaseImpl implements NoticeCommentUsecase {
         Notice notice = comment.getNotice();
 
         List<File> fileList = getFiles(commentId);
-        fileDeleteService.delete(fileList);
+        fileRepository.deleteAll(fileList);
 
         if (comment.getChildren().isEmpty()) {
             Comment parentComment = findParentComment(commentId);
@@ -132,6 +131,6 @@ public class NoticeCommentUsecaseImpl implements NoticeCommentUsecase {
     }
 
     private List<File> getFiles(Long commentId) {
-        return fileGetService.findAllByComment(commentId);
+        return fileReader.findAll(FileOwnerType.COMMENT, commentId, null);
     }
 }

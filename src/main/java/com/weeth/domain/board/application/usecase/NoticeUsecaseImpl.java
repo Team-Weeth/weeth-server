@@ -15,9 +15,9 @@ import com.weeth.domain.comment.domain.entity.Comment;
 import com.weeth.domain.file.application.dto.response.FileResponse;
 import com.weeth.domain.file.application.mapper.FileMapper;
 import com.weeth.domain.file.domain.entity.File;
-import com.weeth.domain.file.domain.service.FileDeleteService;
-import com.weeth.domain.file.domain.service.FileGetService;
-import com.weeth.domain.file.domain.service.FileSaveService;
+import com.weeth.domain.file.domain.entity.FileOwnerType;
+import com.weeth.domain.file.domain.repository.FileReader;
+import com.weeth.domain.file.domain.repository.FileRepository;
 import com.weeth.domain.user.application.exception.UserNotMatchException;
 import com.weeth.domain.user.domain.entity.User;
 import com.weeth.domain.user.domain.service.UserGetService;
@@ -45,9 +45,8 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
 
     private final UserGetService userGetService;
 
-    private final FileSaveService fileSaveService;
-    private final FileGetService fileGetService;
-    private final FileDeleteService fileDeleteService;
+    private final FileRepository fileRepository;
+    private final FileReader fileReader;
 
     private final NoticeMapper mapper;
     private final CommentMapper commentMapper;
@@ -61,8 +60,8 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
         Notice notice = mapper.fromNoticeDto(request, user);
         Notice savedNotice = noticeSaveService.save(notice);
 
-        List<File> files = fileMapper.toFileList(request.files(), notice);
-        fileSaveService.save(files);
+        List<File> files = fileMapper.toFileList(request.files(), FileOwnerType.NOTICE, savedNotice.getId());
+        fileRepository.saveAll(files);
 
         return mapper.toSaveResponse(savedNotice);
     }
@@ -109,11 +108,13 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
     public NoticeDTO.SaveResponse update(Long noticeId, NoticeDTO.Update dto, Long userId) {
         Notice notice = validateOwner(noticeId, userId);
 
-        List<File> fileList = getFiles(noticeId);
-        fileDeleteService.delete(fileList);
+        if (dto.files() != null) {
+            List<File> fileList = getFiles(noticeId);
+            fileRepository.deleteAll(fileList);
 
-        List<File> files = fileMapper.toFileList(dto.files(), notice);
-        fileSaveService.save(files);
+            List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.NOTICE, notice.getId());
+            fileRepository.saveAll(files);
+        }
 
         noticeUpdateService.update(notice, dto);
 
@@ -126,13 +127,13 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
         validateOwner(noticeId, userId);
 
         List<File> fileList = getFiles(noticeId);
-        fileDeleteService.delete(fileList);
+        fileRepository.deleteAll(fileList);
 
         noticeDeleteService.delete(noticeId);
     }
 
     private List<File> getFiles(Long noticeId) {
-        return fileGetService.findAllByNotice(noticeId);
+        return fileReader.findAll(FileOwnerType.NOTICE, noticeId, null);
     }
 
     private Notice validateOwner(Long noticeId, Long userId) {
@@ -144,7 +145,7 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
     }
 
     private boolean checkFileExistsByNotice(Long noticeId){
-        return !fileGetService.findAllByNotice(noticeId).isEmpty();
+        return fileReader.exists(FileOwnerType.NOTICE, noticeId, null);
     }
 
     private List<CommentDTO.Response> filterParentComments(List<Comment> comments) {
@@ -164,7 +165,7 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
                 .map(child -> mapToDtoWithChildren(child, commentMap))
                 .collect(Collectors.toList());
 
-        List<FileResponse> files = fileGetService.findAllByComment(comment.getId()).stream()
+        List<FileResponse> files = fileReader.findAll(FileOwnerType.COMMENT, comment.getId(), null).stream()
                 .map(fileMapper::toFileResponse)
                 .toList();
 

@@ -36,16 +36,16 @@ For each issue provide:
 ## Review Checklist
 
 ### Bug/Logic
-- Null safety (no `!!`, use nullable types)
+- Null safety (avoid "!!", use nullable types)
 - Edge case handling
-- Exception handling (must extend `BaseException`)
+- Exception handling (must extend BaseException)
 - Concurrency issues (race conditions)
 
 ### Security
 - SQL Injection (raw queries, string concatenation)
 - Sensitive data exposure (logs, responses)
-- Missing auth (`@CurrentUser` usage)
-- Input validation (`@Valid`, `@NotNull`, `@NotBlank`)
+- Missing auth (@CurrentUser usage)
+- Input validation (@Valid, @NotNull, @NotBlank)
 
 ### Performance
 - N+1 query (repository calls inside loops)
@@ -56,17 +56,17 @@ For each issue provide:
 - Layer adherence: Controller → UseCase → Repository (UseCase uses Repository directly)
 - Rich Domain Model: business logic in Entity, not UseCase
 - No thin wrapper services (GetService/SaveService) — Domain Service only for multi-entity logic
-- `@Transactional` only on UseCase methods
+- @Transactional only on UseCase methods
 - Port-Adapter: UseCase depends on Port interface, not infrastructure directly
 - Cross-domain read via Reader interface, cross-domain write via Repository directly
 - No layer skipping (Controller → Repository is forbidden)
 
 ### Kotlin-specific
-- `val` over `var`
+- val over var
 - Nullable type overuse
-- Scope function opportunities (`let`, `apply`, `also`)
+- Scope function opportunities (let, apply, also)
 - data class for DTOs
-- `when` expression over if-else chains
+- when expression over if-else chains
 
 ## Output Format
 
