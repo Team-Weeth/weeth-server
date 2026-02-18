@@ -22,7 +22,7 @@ class CloseAttendanceUseCaseTest :
 
         val useCase = CloseAttendanceUseCase(meetingGetService, attendanceRepository)
 
-        describe("execute") {
+        describe("close") {
             it("당일 정기모임을 찾아 pending 출석을 close") {
                 val now = LocalDate.now()
                 val targetMeeting = createOneDayMeeting(now, 1, 1111, "Today")
@@ -41,7 +41,7 @@ class CloseAttendanceUseCaseTest :
                     attendanceRepository.findAllByMeetingAndUserStatus(targetMeeting, Status.ACTIVE)
                 } returns listOf(pendingAttendance, attendedAttendance)
 
-                useCase.execute(now, 1)
+                useCase.close(now, 1)
 
                 verify { pendingAttendance.close() }
                 verify { pendingUser.absent() }
@@ -55,7 +55,7 @@ class CloseAttendanceUseCaseTest :
                 every { meetingGetService.find(1) } returns listOf(otherDayMeeting)
 
                 shouldThrow<MeetingNotFoundException> {
-                    useCase.execute(now, 1)
+                    useCase.close(now, 1)
                 }
             }
         }

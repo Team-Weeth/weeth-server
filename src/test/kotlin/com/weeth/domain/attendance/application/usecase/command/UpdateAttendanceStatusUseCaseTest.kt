@@ -18,7 +18,7 @@ class UpdateAttendanceStatusUseCaseTest :
 
         val useCase = UpdateAttendanceStatusUseCase(attendanceRepository)
 
-        describe("execute") {
+        describe("updateStatus") {
             context("ABSENT로 변경 시") {
                 it("close + removeAttend + absent 호출") {
                     val user = mockk<User>(relaxUnitFun = true)
@@ -28,7 +28,7 @@ class UpdateAttendanceStatusUseCaseTest :
                     every { attendanceRepository.findByIdWithUser(1L) } returns attendance
 
                     val request = UpdateAttendanceStatusRequest(attendanceId = 1L, status = "ABSENT")
-                    useCase.execute(listOf(request))
+                    useCase.updateStatus(listOf(request))
 
                     verify { attendance.close() }
                     verify { user.removeAttend() }
@@ -45,7 +45,7 @@ class UpdateAttendanceStatusUseCaseTest :
                     every { attendanceRepository.findByIdWithUser(1L) } returns attendance
 
                     val request = UpdateAttendanceStatusRequest(attendanceId = 1L, status = "ATTEND")
-                    useCase.execute(listOf(request))
+                    useCase.updateStatus(listOf(request))
 
                     verify { attendance.attend() }
                     verify { user.removeAbsent() }
@@ -60,7 +60,7 @@ class UpdateAttendanceStatusUseCaseTest :
                     val request = UpdateAttendanceStatusRequest(attendanceId = 999L, status = "ABSENT")
 
                     shouldThrow<AttendanceNotFoundException> {
-                        useCase.execute(listOf(request))
+                        useCase.updateStatus(listOf(request))
                     }
                 }
             }

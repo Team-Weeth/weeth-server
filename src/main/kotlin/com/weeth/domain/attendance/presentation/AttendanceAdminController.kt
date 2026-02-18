@@ -38,7 +38,7 @@ class AttendanceAdminController(
         @RequestParam now: LocalDate,
         @RequestParam cardinal: Int,
     ): CommonResponse<Void?> {
-        closeAttendanceUseCase.execute(now, cardinal)
+        closeAttendanceUseCase.close(now, cardinal)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CLOSE_SUCCESS)
     }
 
@@ -66,7 +66,7 @@ class AttendanceAdminController(
     fun updateAttendanceStatus(
         @RequestBody @Valid attendanceUpdates: List<UpdateAttendanceStatusRequest>,
     ): CommonResponse<Void?> {
-        updateAttendanceStatusUseCase.execute(attendanceUpdates)
+        updateAttendanceStatusUseCase.updateStatus(attendanceUpdates)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_UPDATED_SUCCESS)
     }
 }

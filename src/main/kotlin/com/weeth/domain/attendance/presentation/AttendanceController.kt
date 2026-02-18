@@ -32,7 +32,7 @@ class AttendanceController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestBody checkIn: CheckInRequest,
     ): CommonResponse<Void?> {
-        checkInAttendanceUseCase.execute(userId, checkIn.code)
+        checkInAttendanceUseCase.checkIn(userId, checkIn.code)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CHECKIN_SUCCESS)
     }
 

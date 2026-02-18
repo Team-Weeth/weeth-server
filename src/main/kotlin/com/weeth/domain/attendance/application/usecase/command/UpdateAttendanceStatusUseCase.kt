@@ -12,7 +12,7 @@ class UpdateAttendanceStatusUseCase(
     private val attendanceRepository: AttendanceRepository,
 ) {
     @Transactional
-    fun execute(attendanceUpdates: List<UpdateAttendanceStatusRequest>) {
+    fun updateStatus(attendanceUpdates: List<UpdateAttendanceStatusRequest>) {
         attendanceUpdates.forEach { update ->
             val attendance =
                 attendanceRepository.findByIdWithUser(update.attendanceId)

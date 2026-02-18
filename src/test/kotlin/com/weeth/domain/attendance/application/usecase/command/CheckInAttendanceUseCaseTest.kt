@@ -27,7 +27,7 @@ class CheckInAttendanceUseCaseTest :
 
         val useCase = CheckInAttendanceUseCase(userGetService, attendanceRepository)
 
-        describe("execute") {
+        describe("checkIn") {
             context("진행 중 정기모임이고 코드 일치하며 상태가 ATTEND가 아닐 때") {
                 it("출석 처리된다") {
                     val user = mockk<User>()
@@ -39,7 +39,7 @@ class CheckInAttendanceUseCaseTest :
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns attendance
                     every { user.attend() } returns Unit
 
-                    useCase.execute(userId, 1234)
+                    useCase.checkIn(userId, 1234)
 
                     verify { attendance.attend() }
                     verify { user.attend() }
@@ -53,7 +53,7 @@ class CheckInAttendanceUseCaseTest :
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns null
 
                     shouldThrow<AttendanceNotFoundException> {
-                        useCase.execute(userId, 1234)
+                        useCase.checkIn(userId, 1234)
                     }
                 }
             }
@@ -68,7 +68,7 @@ class CheckInAttendanceUseCaseTest :
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns attendance
 
                     shouldThrow<AttendanceCodeMismatchException> {
-                        useCase.execute(userId, 9999)
+                        useCase.checkIn(userId, 9999)
                     }
                 }
             }
@@ -83,7 +83,7 @@ class CheckInAttendanceUseCaseTest :
                     every { userGetService.find(userId) } returns user
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns attendance
 
-                    useCase.execute(userId, 1234)
+                    useCase.checkIn(userId, 1234)
 
                     verify(exactly = 0) { attendance.attend() }
                     verify(exactly = 0) { user.attend() }

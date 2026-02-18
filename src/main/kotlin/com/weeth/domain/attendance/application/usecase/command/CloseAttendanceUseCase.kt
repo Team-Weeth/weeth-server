@@ -14,7 +14,7 @@ class CloseAttendanceUseCase(
     private val attendanceRepository: AttendanceRepository,
 ) {
     @Transactional
-    fun execute(
+    fun close(
         now: LocalDate,
         cardinal: Int,
     ) {

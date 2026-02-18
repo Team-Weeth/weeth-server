@@ -15,7 +15,7 @@ class CheckInAttendanceUseCase(
     private val attendanceRepository: AttendanceRepository,
 ) {
     @Transactional
-    fun execute(
+    fun checkIn(
         userId: Long,
         code: Int,
     ) {
