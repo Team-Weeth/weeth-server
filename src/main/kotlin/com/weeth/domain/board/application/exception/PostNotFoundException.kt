@@ -1,0 +1,5 @@
+package com.weeth.domain.board.application.exception
+
+import com.weeth.global.common.exception.BaseException
+
+class PostNotFoundException : BaseException(BoardErrorCode.POST_NOT_FOUND)
