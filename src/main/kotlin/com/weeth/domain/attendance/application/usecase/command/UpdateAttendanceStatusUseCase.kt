@@ -4,7 +4,6 @@ import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatu
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.domain.entity.enums.Status
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -16,7 +15,7 @@ class UpdateAttendanceStatusUseCase(
     fun execute(attendanceUpdates: List<UpdateAttendanceStatusRequest>) {
         attendanceUpdates.forEach { update ->
             val attendance =
-                attendanceRepository.findByIdOrNull(update.attendanceId)
+                attendanceRepository.findByIdWithUser(update.attendanceId)
                     ?: throw AttendanceNotFoundException()
             val user = attendance.user
             val newStatus = Status.valueOf(update.status)
