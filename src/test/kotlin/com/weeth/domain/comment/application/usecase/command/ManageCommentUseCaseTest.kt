@@ -90,7 +90,15 @@ class ManageCommentUseCaseTest :
                     CommentSaveRequest(
                         parentCommentId = 100L,
                         content = "child",
-                        files = listOf(FileSaveRequest("f.png", "COMMENT/2026-02/123e4567-e89b-12d3-a456-426614174000_f.png", 100L, "image/png")),
+                        files =
+                            listOf(
+                                FileSaveRequest(
+                                    "f.png",
+                                    "COMMENT/2026-02/123e4567-e89b-12d3-a456-426614174000_f.png",
+                                    100L,
+                                    "image/png",
+                                ),
+                            ),
                     )
                 val mappedFiles =
                     listOf(
@@ -169,10 +177,19 @@ class ManageCommentUseCaseTest :
                 val owner = UserTestFixture.createActiveUser1(1L)
                 val post = PostTestFixture.createPost(id = 10L, title = "title", category = Category.StudyLog)
                 val comment = Comment(id = 202L, content = "old", post = post, user = owner)
-                val dto = CommentUpdateRequest(
-                    content = "new content",
-                    files = listOf(FileSaveRequest("new.png", "COMMENT/2026-02/123e4567-e89b-12d3-a456-426614174001_new.png", 200L, "image/png")),
-                )
+                val dto =
+                    CommentUpdateRequest(
+                        content = "new content",
+                        files =
+                            listOf(
+                                FileSaveRequest(
+                                    "new.png",
+                                    "COMMENT/2026-02/123e4567-e89b-12d3-a456-426614174001_new.png",
+                                    200L,
+                                    "image/png",
+                                ),
+                            ),
+                    )
                 val oldFile =
                     File.createUploaded(
                         fileName = "old.png",
@@ -433,7 +450,8 @@ class ManageCommentUseCaseTest :
             it("삭제된 댓글은 수정할 수 없다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
                 val notice = NoticeTestFixture.createNotice(id = 11L, title = "notice", user = owner)
-                val comment = Comment(id = 502L, content = "삭제된 댓글입니다.", notice = notice, user = owner, isDeleted = true)
+                val comment =
+                    Comment(id = 502L, content = "삭제된 댓글입니다.", notice = notice, user = owner, isDeleted = true)
                 val dto = CommentUpdateRequest(content = "updated", files = null)
 
                 every { commentRepository.findByIdAndNoticeId(502L, 11L) } returns comment
