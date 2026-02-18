@@ -55,7 +55,7 @@ class PenaltyMapper {
         PenaltyDetailResponse(
             penaltyId = penalty.id,
             penaltyType = penalty.penaltyType,
-            cardinal = penalty.cardinal?.cardinalNumber,
+            cardinal = penalty.cardinal.cardinalNumber,
             penaltyDescription = penalty.penaltyDescription,
             time = penalty.modifiedAt,
         )
