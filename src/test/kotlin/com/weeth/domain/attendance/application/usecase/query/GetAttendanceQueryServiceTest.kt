@@ -41,33 +41,33 @@ class GetAttendanceQueryServiceTest :
         val userId = 10L
 
         describe("find") {
-            it("오늘 출석 정보가 있으면 mapper.toMainResponse(user, attendance) 호출") {
+            it("오늘 출석 정보가 있으면 mapper.toSummaryResponse(user, attendance) 호출") {
                 val user = createActiveUser("이지훈")
                 val todayAttendance = mockk<Attendance>()
                 val mapped = mockk<AttendanceSummaryResponse>()
 
                 every { userGetService.find(userId) } returns user
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns todayAttendance
-                every { attendanceMapper.toMainResponse(eq(user), eq(todayAttendance)) } returns mapped
+                every { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance)) } returns mapped
 
                 val actual = queryService.find(userId)
 
                 actual shouldBe mapped
-                verify { attendanceMapper.toMainResponse(eq(user), eq(todayAttendance)) }
+                verify { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance)) }
             }
 
-            it("오늘 출석이 없다면 mapper.toMainResponse(user, null) 호출") {
+            it("오늘 출석이 없다면 mapper.toSummaryResponse(user, null) 호출") {
                 val user = createActiveUser("이지훈")
                 val mapped = mockk<AttendanceSummaryResponse>()
 
                 every { userGetService.find(userId) } returns user
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns null
-                every { attendanceMapper.toMainResponse(user, null) } returns mapped
+                every { attendanceMapper.toSummaryResponse(user, null) } returns mapped
 
                 val actual = queryService.find(userId)
 
                 actual shouldBe mapped
-                verify { attendanceMapper.toMainResponse(user, null) }
+                verify { attendanceMapper.toSummaryResponse(user, null) }
             }
         }
 

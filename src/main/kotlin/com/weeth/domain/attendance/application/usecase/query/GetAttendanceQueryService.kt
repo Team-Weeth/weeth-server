@@ -34,7 +34,7 @@ class GetAttendanceQueryService(
                 today.plusDays(1).atStartOfDay(),
             )
 
-        return mapper.toMainResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
+        return mapper.toSummaryResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
     }
 
     fun findAllDetailsByCurrentCardinal(userId: Long): AttendanceDetailResponse {

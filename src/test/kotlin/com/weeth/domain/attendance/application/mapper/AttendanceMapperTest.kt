@@ -20,14 +20,14 @@ class AttendanceMapperTest :
 
         val mapper = AttendanceMapper()
 
-        describe("toMainResponse") {
+        describe("toSummaryResponse") {
             it("사용자 + 당일 출석 객체를 MainResponse로 매핑한다") {
                 val today = LocalDate.now()
                 val meeting = createOneDayMeeting(today, 1, 1111, "Today")
                 val user = createActiveUserWithAttendances("이지훈", listOf(meeting))
                 val attendance = user.attendances[0]
 
-                val main = mapper.toMainResponse(user, attendance)
+                val main = mapper.toSummaryResponse(user, attendance)
 
                 main.shouldNotBeNull()
                 main.title shouldBe meeting.title
@@ -40,7 +40,7 @@ class AttendanceMapperTest :
             it("attendance가 null이면 필드는 null로 매핑") {
                 val user = createActiveUser("이지훈")
 
-                val main = mapper.toMainResponse(user, null)
+                val main = mapper.toSummaryResponse(user, null)
 
                 main.shouldNotBeNull()
                 main.title.shouldBeNull()
@@ -55,7 +55,7 @@ class AttendanceMapperTest :
                 val user = createActiveUserWithAttendances("일반유저", listOf(meeting))
                 val attendance = user.attendances[0]
 
-                val main = mapper.toMainResponse(user, attendance)
+                val main = mapper.toSummaryResponse(user, attendance)
 
                 main.shouldNotBeNull()
                 main.code.shouldBeNull()
@@ -70,7 +70,7 @@ class AttendanceMapperTest :
                 val adminUser = createAdminUserWithAttendances("관리자", listOf(meeting))
                 val attendance = adminUser.attendances[0]
 
-                val main = mapper.toMainResponse(adminUser, attendance, isAdmin = true)
+                val main = mapper.toSummaryResponse(adminUser, attendance, isAdmin = true)
 
                 main.shouldNotBeNull()
                 main.code shouldBe expectedCode

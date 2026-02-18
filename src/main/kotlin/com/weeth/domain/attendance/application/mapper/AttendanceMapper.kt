@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class AttendanceMapper {
-    fun toMainResponse(
+    fun toSummaryResponse(
         user: User,
         attendance: Attendance?,
         isAdmin: Boolean = false,
