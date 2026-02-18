@@ -16,6 +16,7 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.entity.FileStatus
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.service.UserGetService
@@ -62,7 +63,7 @@ class ManageCommentUseCaseTest :
             )
             every { fileMapper.toFileList(any(), FileOwnerType.COMMENT, any()) } returns emptyList()
             every { commentRepository.save(any()) } answers { firstArg() }
-            every { fileReader.findAll(FileOwnerType.COMMENT, any(), any()) } returns emptyList()
+            every { fileReader.findAll(FileOwnerType.COMMENT, any<Long>(), any<FileStatus>()) } returns emptyList()
         }
 
         describe("savePostComment") {
@@ -160,7 +161,7 @@ class ManageCommentUseCaseTest :
                 useCase.updatePostComment(dto, postId = 10L, commentId = 201L, userId = 1L)
 
                 comment.content shouldBe "new content"
-                verify(exactly = 0) { fileReader.findAll(FileOwnerType.COMMENT, any(), any()) }
+                verify(exactly = 0) { fileReader.findAll(FileOwnerType.COMMENT, any<Long>(), any<FileStatus>()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
 
@@ -238,7 +239,7 @@ class ManageCommentUseCaseTest :
                     useCase.updatePostComment(dto, postId = 10L, commentId = 203L, userId = 1L)
                 }
 
-                verify(exactly = 0) { fileReader.findAll(FileOwnerType.COMMENT, any(), any()) }
+                verify(exactly = 0) { fileReader.findAll(FileOwnerType.COMMENT, any<Long>(), any<FileStatus>()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
         }
@@ -441,7 +442,7 @@ class ManageCommentUseCaseTest :
                     useCase.updateNoticeComment(dto, noticeId = 11L, commentId = 502L, userId = 1L)
                 }
 
-                verify(exactly = 0) { fileReader.findAll(FileOwnerType.COMMENT, any(), any()) }
+                verify(exactly = 0) { fileReader.findAll(FileOwnerType.COMMENT, any<Long>(), any<FileStatus>()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
 

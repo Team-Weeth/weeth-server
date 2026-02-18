@@ -146,7 +146,7 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
     }
 
     private List<CommentResponse> filterParentComments(List<Comment> comments) {
-        return getCommentQueryService.buildTree(comments);
+        return getCommentQueryService.toCommentTreeResponses(comments);
     }
 
     private void validatePageNumber(int pageNumber){
