@@ -178,12 +178,15 @@ class ManageCommentUseCase(
         if (comment.children.isEmpty()) {
             deleteCommentFiles(comment)
             val parent = comment.parent
+            val shouldDeleteParent = parent?.let { it.isDeleted && it.children.size == 1 } == true
             commentRepository.delete(comment)
 
-            // 부모 댓글이 삭제된 상태이고 자식 댓글이 1개인 경우 -> 부모 댓글도 삭제
-            if (parent != null && parent.isDeleted && parent.children.size == 1) {
-                deleteCommentFiles(parent)
-                commentRepository.delete(parent)
+            // 부모 댓글이 삭제된 상태이고 유일한 자식이었던 경우 -> 부모 댓글도 삭제
+            if (shouldDeleteParent) {
+                parent.let {
+                    deleteCommentFiles(it)
+                    commentRepository.delete(it)
+                }
             }
             return
         }
