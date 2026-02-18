@@ -1,150 +1,152 @@
-package com.weeth.domain.penalty.application.usecase;
+package com.weeth.domain.penalty.application.usecase
 
-import jakarta.transaction.Transactional;
-import com.weeth.domain.penalty.application.dto.PenaltyDTO;
-import com.weeth.domain.penalty.application.exception.AutoPenaltyDeleteNotAllowedException;
-import com.weeth.domain.penalty.application.mapper.PenaltyMapper;
-import com.weeth.domain.penalty.domain.entity.Penalty;
-import com.weeth.domain.penalty.domain.entity.enums.PenaltyType;
-import com.weeth.domain.penalty.domain.service.PenaltyDeleteService;
-import com.weeth.domain.penalty.domain.service.PenaltyFindService;
-import com.weeth.domain.penalty.domain.service.PenaltySaveService;
-import com.weeth.domain.penalty.domain.service.PenaltyUpdateService;
-import com.weeth.domain.user.domain.entity.Cardinal;
-import com.weeth.domain.user.domain.entity.User;
-import com.weeth.domain.user.domain.entity.UserCardinal;
-import com.weeth.domain.user.domain.service.CardinalGetService;
-import com.weeth.domain.user.domain.service.UserCardinalGetService;
-import com.weeth.domain.user.domain.service.UserGetService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.weeth.domain.penalty.application.dto.PenaltyDTO
+import com.weeth.domain.penalty.application.exception.AutoPenaltyDeleteNotAllowedException
+import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
+import com.weeth.domain.penalty.application.mapper.PenaltyMapper
+import com.weeth.domain.penalty.domain.entity.Penalty
+import com.weeth.domain.penalty.domain.entity.enums.PenaltyType
+import com.weeth.domain.penalty.domain.repository.PenaltyRepository
+import com.weeth.domain.user.domain.service.CardinalGetService
+import com.weeth.domain.user.domain.service.UserCardinalGetService
+import com.weeth.domain.user.domain.service.UserGetService
+import org.springframework.data.repository.findByIdOrNull
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
-@RequiredArgsConstructor
-public class PenaltyUsecaseImpl implements PenaltyUsecase{
+class PenaltyUsecaseImpl(
+    private val penaltyRepository: PenaltyRepository,
+    private val userGetService: UserGetService,
+    private val userCardinalGetService: UserCardinalGetService,
+    private val cardinalGetService: CardinalGetService,
+    private val mapper: PenaltyMapper,
+) : PenaltyUsecase {
+    companion object {
+        private const val AUTO_PENALTY_DESCRIPTION = "누적경고 %d회"
+    }
 
-    private static final String AUTO_PENALTY_DESCRIPTION = "누적경고 %d회";
-
-    private final PenaltySaveService penaltySaveService;
-    private final PenaltyFindService penaltyFindService;
-    private final PenaltyUpdateService penaltyUpdateService;
-    private final PenaltyDeleteService penaltyDeleteService;
-
-    private final UserGetService userGetService;
-
-    private final UserCardinalGetService userCardinalGetService;
-    private final CardinalGetService cardinalGetService;
-
-    private final PenaltyMapper mapper;
-
-    @Override
     @Transactional
-    public void save(PenaltyDTO.Save dto) {
-        User user = userGetService.find(dto.getUserId());
-        Cardinal cardinal = userCardinalGetService.getCurrentCardinal(user);
+    override fun save(dto: PenaltyDTO.Save) {
+        val user = userGetService.find(dto.userId)
+        val cardinal = userCardinalGetService.getCurrentCardinal(user)
 
-        Penalty penalty = mapper.fromPenaltyDto(dto, user, cardinal);
+        val penalty = mapper.fromPenaltyDto(dto, user, cardinal)
+        penaltyRepository.save(penalty)
 
-        penaltySaveService.save(penalty);
-
-        if(penalty.getPenaltyType().equals(PenaltyType.PENALTY)){
-            user.incrementPenaltyCount();
-        } else if (penalty.getPenaltyType().equals(PenaltyType.WARNING)){
-            user.incrementWarningCount();
-
-            Integer warningCount = user.getWarningCount();
-            if(warningCount % 2 == 0){
-                String penaltyDescription = String.format(AUTO_PENALTY_DESCRIPTION, warningCount);
-                Penalty autoPenalty = mapper.toAutoPenalty(penaltyDescription, user, cardinal, PenaltyType.AUTO_PENALTY);
-                penaltySaveService.save(autoPenalty);
-                user.incrementPenaltyCount();
+        when (penalty.penaltyType) {
+            PenaltyType.PENALTY -> {
+                user.incrementPenaltyCount()
             }
-        }
-    }
 
-    @Override
-    @Transactional
-    public void update(PenaltyDTO.Update dto) {
-        Penalty penalty = penaltyFindService.find(dto.getPenaltyId());
-        penaltyUpdateService.update(penalty, dto);
+            PenaltyType.WARNING -> {
+                user.incrementWarningCount()
 
-    }
-
-    // Todo: 쿼리 최적화 필요
-    @Override
-    public List<PenaltyDTO.ResponseAll> findAll(Integer cardinalNumber) {
-        List<Cardinal> cardinals = (cardinalNumber == null)
-                ? cardinalGetService.findAllCardinalNumberDesc()
-                : List.of(cardinalGetService.findByAdminSide(cardinalNumber));
-
-        List<PenaltyDTO.ResponseAll> result = new ArrayList<>();
-
-        for (Cardinal cardinal : cardinals) {
-            List<Penalty> penalties = penaltyFindService.findAllByCardinalId(cardinal.getId());
-
-            Map<Long, List<Penalty>> penaltiesByUser = penalties.stream()
-                    .collect(Collectors.groupingBy(p -> p.getUser().getId()));
-
-            List<PenaltyDTO.Response> responses = penaltiesByUser.entrySet().stream()
-                    .map(entry -> toPenaltyDto(entry.getKey(), entry.getValue()))
-                    .sorted(Comparator.comparing(PenaltyDTO.Response::getUserId))
-                    .toList();
-
-            result.add(mapper.toResponseAll(cardinal.getCardinalNumber(), responses));
-        }
-        return result;
-    }
-
-    @Override
-    public PenaltyDTO.Response find(Long userId) {
-        User user = userGetService.find(userId);
-        Cardinal currentCardinal = userCardinalGetService.getCurrentCardinal(user);
-        List<Penalty> penalties = penaltyFindService.findAllByUserIdAndCardinalId(userId, currentCardinal.getId());
-
-        return toPenaltyDto(userId, penalties);
-    }
-
-    @Override
-    @Transactional
-    public void delete(Long penaltyId) {
-        Penalty penalty = penaltyFindService.find(penaltyId);
-        if(penalty.getPenaltyType().equals(PenaltyType.AUTO_PENALTY)){
-            throw new AutoPenaltyDeleteNotAllowedException();
-        }
-
-        User user = penalty.getUser();
-
-        if(penalty.getPenaltyType().equals(PenaltyType.PENALTY)){
-            penalty.getUser().decrementPenaltyCount();
-        } else if (penalty.getPenaltyType().equals(PenaltyType.WARNING)) {
-            if(user.getWarningCount() % 2 == 0){
-                Penalty relatedAutoPenalty = penaltyFindService.getRelatedAutoPenalty(penalty);
-                if(relatedAutoPenalty != null){
-                    penaltyDeleteService.delete(relatedAutoPenalty.getId());
+                val warningCount = user.warningCount
+                if (warningCount % 2 == 0) {
+                    val description = AUTO_PENALTY_DESCRIPTION.format(warningCount)
+                    val autoPenalty = mapper.toAutoPenalty(description, user, cardinal, PenaltyType.AUTO_PENALTY)
+                    penaltyRepository.save(autoPenalty)
+                    user.incrementPenaltyCount()
                 }
-                user.decrementPenaltyCount();
             }
-            penalty.getUser().decrementWarningCount();
+
+            else -> {}
+        }
+    }
+
+    @Transactional
+    override fun update(dto: PenaltyDTO.Update) {
+        val penalty =
+            penaltyRepository.findByIdOrNull(dto.penaltyId)
+                ?: throw PenaltyNotFoundException()
+
+        if (!dto.penaltyDescription.isNullOrBlank()) {
+            penalty.update(dto.penaltyDescription)
+        }
+    }
+
+    // TODO: 쿼리 최적화 필요
+    @Transactional(readOnly = true)
+    override fun findAll(cardinalNumber: Int?): List<PenaltyDTO.ResponseAll> {
+        val cardinals =
+            if (cardinalNumber == null) {
+                cardinalGetService.findAllCardinalNumberDesc()
+            } else {
+                listOf(cardinalGetService.findByAdminSide(cardinalNumber))
+            }
+
+        return cardinals.map { cardinal ->
+            val penalties = penaltyRepository.findByCardinalIdOrderByIdDesc(cardinal.id)
+
+            val responses =
+                penalties
+                    .groupBy { it.user.id }
+                    .entries
+                    .map { (userId, userPenalties) -> toPenaltyDto(userId, userPenalties) }
+                    .sortedBy { it.userId }
+
+            mapper.toResponseAll(cardinal.cardinalNumber, responses)
+        }
+    }
+
+    @Transactional(readOnly = true)
+    override fun find(userId: Long): PenaltyDTO.Response {
+        val user = userGetService.find(userId)
+        val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
+        val penalties = penaltyRepository.findByUserIdAndCardinalIdOrderByIdDesc(userId, currentCardinal.id)
+
+        return toPenaltyDto(userId, penalties)
+    }
+
+    @Transactional
+    override fun delete(penaltyId: Long) {
+        val penalty =
+            penaltyRepository.findByIdOrNull(penaltyId)
+                ?: throw PenaltyNotFoundException()
+
+        if (penalty.penaltyType == PenaltyType.AUTO_PENALTY) {
+            throw AutoPenaltyDeleteNotAllowedException()
         }
 
-        penaltyDeleteService.delete(penaltyId);
+        val user = penalty.user
+
+        when (penalty.penaltyType) {
+            PenaltyType.PENALTY -> {
+                user.decrementPenaltyCount()
+            }
+
+            PenaltyType.WARNING -> {
+                if (user.warningCount % 2 == 0) {
+                    val relatedAutoPenalty =
+                        penaltyRepository
+                            .findFirstByUserAndCardinalAndPenaltyTypeAndCreatedAtAfterOrderByCreatedAtAsc(
+                                penalty.user,
+                                penalty.cardinal,
+                                PenaltyType.AUTO_PENALTY,
+                                penalty.createdAt,
+                            )
+                    if (relatedAutoPenalty != null) {
+                        penaltyRepository.deleteById(relatedAutoPenalty.id)
+                    }
+                    user.decrementPenaltyCount()
+                }
+                user.decrementWarningCount()
+            }
+
+            else -> {}
+        }
+
+        penaltyRepository.deleteById(penaltyId)
     }
 
-    private PenaltyDTO.Response toPenaltyDto(Long userId, List<Penalty> penalties) {
-        User user = userGetService.find(userId);
-        List<UserCardinal> userCardinals = userCardinalGetService.getUserCardinals(user);
-
-        List<PenaltyDTO.Penalties> penaltyDTOs = penalties.stream()
-                .map(mapper::toPenalties)
-                .toList();
-
-        return mapper.toPenaltyDto(user, penaltyDTOs, userCardinals);
+    private fun toPenaltyDto(
+        userId: Long,
+        penalties: List<Penalty>,
+    ): PenaltyDTO.Response {
+        val user = userGetService.find(userId)
+        val userCardinals = userCardinalGetService.getUserCardinals(user)
+        val penaltyDTOs = penalties.map(mapper::toPenalties)
+        return mapper.toPenaltyDto(user, penaltyDTOs, userCardinals)
     }
-
 }

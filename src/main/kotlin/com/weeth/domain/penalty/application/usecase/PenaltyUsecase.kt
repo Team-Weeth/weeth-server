@@ -1,19 +1,15 @@
-package com.weeth.domain.penalty.application.usecase;
+package com.weeth.domain.penalty.application.usecase
 
-import com.weeth.domain.penalty.application.dto.PenaltyDTO;
+import com.weeth.domain.penalty.application.dto.PenaltyDTO
 
-import java.util.List;
+interface PenaltyUsecase {
+    fun save(dto: PenaltyDTO.Save)
 
-public interface PenaltyUsecase {
+    fun update(dto: PenaltyDTO.Update)
 
-    void save(PenaltyDTO.Save dto);
+    fun findAll(cardinalNumber: Int?): List<PenaltyDTO.ResponseAll>
 
-    void update(PenaltyDTO.Update dto);
+    fun find(userId: Long): PenaltyDTO.Response
 
-    List<PenaltyDTO.ResponseAll> findAll(Integer cardinalNumber);
-
-    PenaltyDTO.Response find(Long userId);
-
-    void delete(Long penaltyId);
-
+    fun delete(penaltyId: Long)
 }
