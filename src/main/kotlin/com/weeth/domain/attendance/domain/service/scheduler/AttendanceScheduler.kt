@@ -3,7 +3,7 @@ package com.weeth.domain.attendance.domain.service.scheduler
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.domain.entity.enums.Status
-import jakarta.transaction.Transactional
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
