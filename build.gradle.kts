@@ -122,7 +122,13 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 tasks.test {
-    useJUnitPlatform()
+    val runPerformanceTests = (findProperty("runPerformanceTests") as String?)?.toBoolean() ?: false
+    systemProperty("runPerformanceTests", runPerformanceTests.toString())
+    useJUnitPlatform {
+        if (!runPerformanceTests) {
+            excludeTags("performance")
+        }
+    }
 }
 
 // plain jar 파일 생성 방지 (bootJar는 그대로)
