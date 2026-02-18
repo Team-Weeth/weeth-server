@@ -1,54 +1,60 @@
-package com.weeth.domain.penalty.presentation;
+package com.weeth.domain.penalty.presentation
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import com.weeth.domain.penalty.application.dto.PenaltyDTO;
-import com.weeth.domain.penalty.application.exception.PenaltyErrorCode;
-import com.weeth.domain.penalty.application.usecase.PenaltyUsecase;
-import com.weeth.global.common.exception.ApiErrorCodeExample;
-import com.weeth.global.common.response.CommonResponse;
-import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-import static com.weeth.domain.penalty.presentation.PenaltyResponseCode.*;
+import com.weeth.domain.penalty.application.dto.PenaltyDTO
+import com.weeth.domain.penalty.application.exception.PenaltyErrorCode
+import com.weeth.domain.penalty.application.usecase.PenaltyUsecase
+import com.weeth.global.common.exception.ApiErrorCodeExample
+import com.weeth.global.common.response.CommonResponse
+import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "PENALTY ADMIN", description = "[ADMIN] 패널티 어드민 API")
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/penalties")
-@ApiErrorCodeExample(PenaltyErrorCode.class)
-public class PenaltyAdminController {
-
-    private final PenaltyUsecase penaltyUsecase;
-
+@ApiErrorCodeExample(PenaltyErrorCode::class)
+class PenaltyAdminController(
+    private val penaltyUsecase: PenaltyUsecase,
+) {
     @PostMapping
-    @Operation(summary="패널티 부여")
-    public CommonResponse<String> assignPenalty(@Valid @RequestBody PenaltyDTO.Save dto){
-        penaltyUsecase.save(dto);
-        return CommonResponse.success(PENALTY_ASSIGN_SUCCESS);
+    @Operation(summary = "패널티 부여")
+    fun assignPenalty(
+        @Valid @RequestBody dto: PenaltyDTO.Save,
+    ): CommonResponse<Void?> {
+        penaltyUsecase.save(dto)
+        return CommonResponse.success(PenaltyResponseCode.PENALTY_ASSIGN_SUCCESS)
     }
 
     @PatchMapping
     @Operation(summary = "패널티 수정")
-    public CommonResponse<String> update(@Valid @RequestBody PenaltyDTO.Update dto){
-        penaltyUsecase.update(dto);
-        return CommonResponse.success(PENALTY_UPDATE_SUCCESS);
+    fun update(
+        @Valid @RequestBody dto: PenaltyDTO.Update,
+    ): CommonResponse<Void?> {
+        penaltyUsecase.update(dto)
+        return CommonResponse.success(PenaltyResponseCode.PENALTY_UPDATE_SUCCESS)
     }
 
     @GetMapping
-    @Operation(summary="전체 패널티 조회")
-    public CommonResponse<List<PenaltyDTO.ResponseAll>> findAll(@RequestParam(required = false) Integer cardinal){
-        return CommonResponse.success(PENALTY_FIND_ALL_SUCCESS, penaltyUsecase.findAll(cardinal));
-    }
+    @Operation(summary = "전체 패널티 조회")
+    fun findAll(
+        @RequestParam(required = false) cardinal: Int?,
+    ): CommonResponse<List<PenaltyDTO.ResponseAll>> =
+        CommonResponse.success(PenaltyResponseCode.PENALTY_FIND_ALL_SUCCESS, penaltyUsecase.findAll(cardinal))
 
     @DeleteMapping
-    @Operation(summary="패널티 삭제")
-    public CommonResponse<String> delete(@RequestParam Long penaltyId){
-        penaltyUsecase.delete(penaltyId);
-        return CommonResponse.success(PENALTY_DELETE_SUCCESS);
+    @Operation(summary = "패널티 삭제")
+    fun delete(
+        @RequestParam penaltyId: Long,
+    ): CommonResponse<Void?> {
+        penaltyUsecase.delete(penaltyId)
+        return CommonResponse.success(PenaltyResponseCode.PENALTY_DELETE_SUCCESS)
     }
-
 }
