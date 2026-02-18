@@ -29,12 +29,11 @@ class PenaltyMapper {
         penaltyDescription: String,
         user: User,
         cardinal: Cardinal,
-        penaltyType: PenaltyType,
     ): Penalty =
         Penalty(
             user = user,
             cardinal = cardinal,
-            penaltyType = penaltyType,
+            penaltyType = PenaltyType.AUTO_PENALTY,
             penaltyDescription = penaltyDescription,
         )
 

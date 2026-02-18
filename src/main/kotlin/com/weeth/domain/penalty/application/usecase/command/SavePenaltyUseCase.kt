@@ -43,7 +43,7 @@ class SavePenaltyUseCase(
                 val warningCount = user.warningCount
                 if (warningCount % 2 == 0) {
                     val description = AUTO_PENALTY_DESCRIPTION.format(warningCount)
-                    val autoPenalty = mapper.toAutoPenalty(description, user, cardinal, PenaltyType.AUTO_PENALTY)
+                    val autoPenalty = mapper.toAutoPenalty(description, user, cardinal)
                     penaltyRepository.save(autoPenalty)
                     user.incrementPenaltyCount()
                 }

@@ -4,9 +4,9 @@ import com.weeth.domain.penalty.domain.enums.PenaltyType
 import java.time.LocalDateTime
 
 data class PenaltyDetailResponse(
-    val penaltyId: Long?,
-    val penaltyType: PenaltyType?,
+    val penaltyId: Long,
+    val penaltyType: PenaltyType,
     val cardinal: Int?,
-    val penaltyDescription: String?,
-    val time: LocalDateTime?,
+    val penaltyDescription: String,
+    val time: LocalDateTime,
 )
