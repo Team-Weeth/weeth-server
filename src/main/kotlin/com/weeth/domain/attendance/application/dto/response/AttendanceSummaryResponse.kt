@@ -4,7 +4,7 @@ import com.weeth.domain.attendance.domain.entity.enums.Status
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
-data class AttendanceMainResponse(
+data class AttendanceSummaryResponse(
     @field:Schema(description = "출석률", example = "80")
     val attendanceRate: Int?,
     @field:Schema(description = "정기모임 제목", example = "1주차 정기모임")

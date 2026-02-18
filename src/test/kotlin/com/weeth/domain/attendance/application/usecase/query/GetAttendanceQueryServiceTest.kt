@@ -2,7 +2,7 @@ package com.weeth.domain.attendance.application.usecase.query
 
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
@@ -44,7 +44,7 @@ class GetAttendanceQueryServiceTest :
             it("오늘 출석 정보가 있으면 mapper.toMainResponse(user, attendance) 호출") {
                 val user = createActiveUser("이지훈")
                 val todayAttendance = mockk<Attendance>()
-                val mapped = mockk<AttendanceMainResponse>()
+                val mapped = mockk<AttendanceSummaryResponse>()
 
                 every { userGetService.find(userId) } returns user
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns todayAttendance
@@ -58,7 +58,7 @@ class GetAttendanceQueryServiceTest :
 
             it("오늘 출석이 없다면 mapper.toMainResponse(user, null) 호출") {
                 val user = createActiveUser("이지훈")
-                val mapped = mockk<AttendanceMainResponse>()
+                val mapped = mockk<AttendanceSummaryResponse>()
 
                 every { userGetService.find(userId) } returns user
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns null

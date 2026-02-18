@@ -2,7 +2,7 @@ package com.weeth.domain.attendance.application.usecase.query
 
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.schedule.domain.service.MeetingGetService
@@ -23,7 +23,7 @@ class GetAttendanceQueryService(
     private val attendanceRepository: AttendanceRepository,
     private val mapper: AttendanceMapper,
 ) {
-    fun find(userId: Long): AttendanceMainResponse {
+    fun find(userId: Long): AttendanceSummaryResponse {
         val user = userGetService.find(userId)
         val today = LocalDate.now()
 

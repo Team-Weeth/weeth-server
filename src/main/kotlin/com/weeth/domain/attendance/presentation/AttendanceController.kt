@@ -2,7 +2,7 @@ package com.weeth.domain.attendance.presentation
 
 import com.weeth.domain.attendance.application.dto.request.CheckInRequest
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceMainResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
 import com.weeth.domain.attendance.application.usecase.command.CheckInAttendanceUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
@@ -40,7 +40,7 @@ class AttendanceController(
     @Operation(summary = "출석 메인페이지")
     fun find(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<AttendanceMainResponse> =
+    ): CommonResponse<AttendanceSummaryResponse> =
         CommonResponse.success(AttendanceResponseCode.ATTENDANCE_FIND_SUCCESS, getAttendanceQueryService.find(userId))
 
     @GetMapping("/detail")
