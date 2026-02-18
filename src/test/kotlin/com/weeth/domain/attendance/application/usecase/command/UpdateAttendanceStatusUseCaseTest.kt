@@ -10,7 +10,6 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.springframework.data.repository.findByIdOrNull
 
 class UpdateAttendanceStatusUseCaseTest :
     DescribeSpec({
@@ -26,7 +25,7 @@ class UpdateAttendanceStatusUseCaseTest :
                     val attendance = mockk<Attendance>(relaxUnitFun = true)
                     every { attendance.user } returns user
 
-                    every { attendanceRepository.findByIdOrNull(1L) } returns attendance
+                    every { attendanceRepository.findByIdWithUser(1L) } returns attendance
 
                     val request = UpdateAttendanceStatusRequest(attendanceId = 1L, status = "ABSENT")
                     useCase.execute(listOf(request))
@@ -43,7 +42,7 @@ class UpdateAttendanceStatusUseCaseTest :
                     val attendance = mockk<Attendance>(relaxUnitFun = true)
                     every { attendance.user } returns user
 
-                    every { attendanceRepository.findByIdOrNull(1L) } returns attendance
+                    every { attendanceRepository.findByIdWithUser(1L) } returns attendance
 
                     val request = UpdateAttendanceStatusRequest(attendanceId = 1L, status = "ATTEND")
                     useCase.execute(listOf(request))
@@ -56,7 +55,7 @@ class UpdateAttendanceStatusUseCaseTest :
 
             context("출석 정보가 없을 때") {
                 it("AttendanceNotFoundException") {
-                    every { attendanceRepository.findByIdOrNull(999L) } returns null
+                    every { attendanceRepository.findByIdWithUser(999L) } returns null
 
                     val request = UpdateAttendanceStatusRequest(attendanceId = 999L, status = "ABSENT")
 
