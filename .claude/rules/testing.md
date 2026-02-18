@@ -93,6 +93,30 @@ object UserTestFixture {
 - Getter/setter, trivial DTO mapping
 - Framework-provided functionality
 
+## Mock Lifecycle in DescribeSpec
+
+MockK mocks are **not** automatically cleared between `it` blocks. Without clearing, accumulated invocations cause `verify(exactly = N)` to fail in subsequent tests.
+
+Always add `beforeTest { clearMocks(...) }` when mocks are shared:
+
+```kotlin
+class SomeUseCaseTest : DescribeSpec({
+    val repository = mockk<SomeRepository>()
+    val useCase = SomeUseCase(repository)
+
+    beforeTest {
+        clearMocks(repository)
+        // Re-stub defaults after clearing
+        every { repository.save(any()) } answers { firstArg() }
+    }
+
+    describe("someMethod") {
+        it("case 1") { verify(exactly = 1) { repository.save(any()) } }
+        it("case 2") { verify(exactly = 1) { repository.save(any()) } } // OK - count reset
+    }
+})
+```
+
 ## Running Tests
 
 ```bash
