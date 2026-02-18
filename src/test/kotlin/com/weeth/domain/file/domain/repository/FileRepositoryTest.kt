@@ -29,7 +29,7 @@ class FileRepositoryTest(
                     fileRepository.save(
                         createTestFile(
                             fileName = "notice-image.png",
-                            ownerType = FileOwnerType.NOTICE,
+                            ownerType = FileOwnerType.POST,
                             ownerId = 101L,
                             status = FileStatus.UPLOADED,
                         ),
@@ -38,7 +38,7 @@ class FileRepositoryTest(
                 val found = fileRepository.findById(saved.id).orElseThrow()
 
                 found.fileName shouldBe "notice-image.png"
-                found.ownerType shouldBe FileOwnerType.NOTICE
+                found.ownerType shouldBe FileOwnerType.POST
                 found.ownerId shouldBe 101L
                 found.status shouldBe FileStatus.UPLOADED
             }
@@ -50,7 +50,7 @@ class FileRepositoryTest(
                 fileRepository.save(createTestFile("target-2.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
                 fileRepository.save(createTestFile("deleted.png", FileOwnerType.POST, 77L, FileStatus.DELETED))
                 fileRepository.save(createTestFile("other-owner.png", FileOwnerType.POST, 78L, FileStatus.UPLOADED))
-                fileRepository.save(createTestFile("other-type.png", FileOwnerType.NOTICE, 77L, FileStatus.UPLOADED))
+                fileRepository.save(createTestFile("other-type.png", FileOwnerType.RECEIPT, 77L, FileStatus.UPLOADED))
 
                 val uploaded = fileRepository.findAll(FileOwnerType.POST, 77L, FileStatus.UPLOADED)
                 val allStatus = fileRepository.findAll(FileOwnerType.POST, 77L, null)
