@@ -108,11 +108,13 @@ public class NoticeUsecaseImpl implements NoticeUsecase {
     public NoticeDTO.SaveResponse update(Long noticeId, NoticeDTO.Update dto, Long userId) {
         Notice notice = validateOwner(noticeId, userId);
 
-        List<File> fileList = getFiles(noticeId);
-        fileRepository.deleteAll(fileList);
+        if (dto.files() != null) {
+            List<File> fileList = getFiles(noticeId);
+            fileRepository.deleteAll(fileList);
 
-        List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.NOTICE, notice.getId());
-        fileRepository.saveAll(files);
+            List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.NOTICE, notice.getId());
+            fileRepository.saveAll(files);
+        }
 
         noticeUpdateService.update(notice, dto);
 
