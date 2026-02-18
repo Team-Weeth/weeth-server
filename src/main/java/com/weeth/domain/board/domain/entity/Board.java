@@ -56,6 +56,10 @@ public class Board extends BaseEntity {
         }
     }
 
+    public void increaseCommentCount() {
+        commentCount++;
+    }
+
     public void updateCommentCount(List<Comment> comments) {
         this.commentCount = (int) comments.stream()
                 .filter(comment -> !comment.getIsDeleted())
