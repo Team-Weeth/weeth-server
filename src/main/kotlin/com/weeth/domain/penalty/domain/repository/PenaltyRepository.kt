@@ -5,9 +5,11 @@ import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
 interface PenaltyRepository : JpaRepository<Penalty, Long> {
+    @Query("SELECT p FROM Penalty p JOIN FETCH p.cardinal WHERE p.user.id = :userId AND p.cardinal.id = :cardinalId ORDER BY p.id DESC")
     fun findByUserIdAndCardinalIdOrderByIdDesc(
         userId: Long,
         cardinalId: Long,
@@ -20,5 +22,6 @@ interface PenaltyRepository : JpaRepository<Penalty, Long> {
         createdAt: LocalDateTime,
     ): Penalty?
 
+    @Query("SELECT p FROM Penalty p JOIN FETCH p.user JOIN FETCH p.cardinal WHERE p.cardinal.id = :cardinalId ORDER BY p.id DESC")
     fun findByCardinalIdOrderByIdDesc(cardinalId: Long): List<Penalty>
 }
