@@ -18,6 +18,7 @@ import java.util.List;
 @SuperBuilder
 public class Notice extends Board {
 
+    // Todo: OneToMany 매핑 제거
     @OneToMany(mappedBy = "notice", orphanRemoval = true)
     @JsonManagedReference
     private List<Comment> comments;

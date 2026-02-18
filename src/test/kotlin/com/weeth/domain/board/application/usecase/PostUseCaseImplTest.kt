@@ -11,7 +11,7 @@ import com.weeth.domain.board.domain.service.PostFindService
 import com.weeth.domain.board.domain.service.PostSaveService
 import com.weeth.domain.board.domain.service.PostUpdateService
 import com.weeth.domain.board.fixture.PostTestFixture
-import com.weeth.domain.comment.application.mapper.CommentMapper
+import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
@@ -55,7 +55,7 @@ class PostUseCaseImplTest :
         val fileReader = mockk<FileReader>()
         val mapper = mockk<PostMapper>()
         val fileMapper = mockk<FileMapper>()
-        val commentMapper = mockk<CommentMapper>()
+        val getCommentQueryService = mockk<GetCommentQueryService>()
 
         val postUseCase =
             PostUseCaseImpl(
@@ -70,7 +70,7 @@ class PostUseCaseImplTest :
                 fileReader,
                 mapper,
                 fileMapper,
-                commentMapper,
+                getCommentQueryService,
             )
 
         describe("saveEducation") {

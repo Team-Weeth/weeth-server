@@ -2,7 +2,7 @@ package com.weeth.domain.board.application.mapper;
 
 import com.weeth.domain.board.application.dto.NoticeDTO;
 import com.weeth.domain.board.domain.entity.Notice;
-import com.weeth.domain.comment.application.dto.CommentDTO;
+import com.weeth.domain.comment.application.dto.response.CommentResponse;
 import com.weeth.domain.comment.application.mapper.CommentMapper;
 import com.weeth.domain.file.application.dto.response.FileResponse;
 import com.weeth.domain.user.domain.entity.User;
@@ -35,7 +35,7 @@ public interface NoticeMapper {
             @Mapping(target = "time", source = "notice.createdAt"),
             @Mapping(target = "comments", source = "comments")
     })
-    NoticeDTO.Response toNoticeDto(Notice notice, List<FileResponse> fileUrls, List<CommentDTO.Response> comments);
+    NoticeDTO.Response toNoticeDto(Notice notice, List<FileResponse> fileUrls, List<CommentResponse> comments);
 
     NoticeDTO.SaveResponse  toSaveResponse(Notice notice);
 

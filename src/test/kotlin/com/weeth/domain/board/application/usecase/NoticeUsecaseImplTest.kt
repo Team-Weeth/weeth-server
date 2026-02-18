@@ -8,7 +8,7 @@ import com.weeth.domain.board.domain.service.NoticeFindService
 import com.weeth.domain.board.domain.service.NoticeSaveService
 import com.weeth.domain.board.domain.service.NoticeUpdateService
 import com.weeth.domain.board.fixture.NoticeTestFixture
-import com.weeth.domain.comment.application.mapper.CommentMapper
+import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
@@ -50,7 +50,7 @@ class NoticeUsecaseImplTest :
         val fileRepository = mockk<FileRepository>(relaxed = true)
         val fileReader = mockk<FileReader>()
         val noticeMapper = mockk<NoticeMapper>()
-        val commentMapper = mockk<CommentMapper>()
+        val getCommentQueryService = mockk<GetCommentQueryService>()
         val fileMapper = mockk<FileMapper>()
 
         val noticeUsecase =
@@ -63,7 +63,7 @@ class NoticeUsecaseImplTest :
                 fileRepository,
                 fileReader,
                 noticeMapper,
-                commentMapper,
+                getCommentQueryService,
                 fileMapper,
             )
 

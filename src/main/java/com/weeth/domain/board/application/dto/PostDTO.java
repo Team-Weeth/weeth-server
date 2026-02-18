@@ -1,16 +1,16 @@
 package com.weeth.domain.board.application.dto;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import com.weeth.domain.board.domain.entity.enums.Category;
 import com.weeth.domain.board.domain.entity.enums.Part;
-import com.weeth.domain.comment.application.dto.CommentDTO;
+import com.weeth.domain.comment.application.dto.response.CommentResponse;
 import com.weeth.domain.file.application.dto.request.FileSaveRequest;
 import com.weeth.domain.file.application.dto.response.FileResponse;
 import com.weeth.domain.user.domain.entity.enums.Position;
 import com.weeth.domain.user.domain.entity.enums.Role;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
@@ -85,7 +85,7 @@ public class PostDTO {
             List<Part> parts,
             LocalDateTime time,
             Integer commentCount,
-            List<CommentDTO.Response> comments,
+            List<CommentResponse> comments,
             List<FileResponse> fileUrls
     ) {
     }

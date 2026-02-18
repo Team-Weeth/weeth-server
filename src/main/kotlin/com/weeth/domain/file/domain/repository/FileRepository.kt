@@ -19,6 +19,17 @@ interface FileRepository :
         status: FileStatus,
     ): List<File>
 
+    fun findAllByOwnerTypeAndOwnerIdIn(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+    ): List<File>
+
+    fun findAllByOwnerTypeAndOwnerIdInAndStatus(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+        status: FileStatus,
+    ): List<File>
+
     fun existsByOwnerTypeAndOwnerId(
         ownerType: FileOwnerType,
         ownerId: Long,
@@ -37,6 +48,18 @@ interface FileRepository :
     ): List<File> =
         status?.let { findAllByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, it) }
             ?: findAllByOwnerTypeAndOwnerId(ownerType, ownerId)
+
+    override fun findAll(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+        status: FileStatus?,
+    ): List<File> {
+        if (ownerIds.isEmpty()) {
+            return emptyList()
+        }
+        return status?.let { findAllByOwnerTypeAndOwnerIdInAndStatus(ownerType, ownerIds, it) }
+            ?: findAllByOwnerTypeAndOwnerIdIn(ownerType, ownerIds)
+    }
 
     override fun exists(
         ownerType: FileOwnerType,
