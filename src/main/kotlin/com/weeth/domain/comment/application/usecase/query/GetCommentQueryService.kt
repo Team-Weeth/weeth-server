@@ -8,8 +8,10 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetCommentQueryService(
     private val fileReader: FileReader,
     private val fileMapper: FileMapper,

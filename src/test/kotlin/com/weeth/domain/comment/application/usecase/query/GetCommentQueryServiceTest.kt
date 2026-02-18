@@ -47,7 +47,7 @@ class GetCommentQueryServiceTest :
             children = children,
         )
 
-        describe("buildTree") {
+        describe("toCommentTreeResponses") {
             it("빈 리스트면 빈 리스트를 반환하고 파일 조회를 하지 않는다") {
                 val result = assembler.toCommentTreeResponses(emptyList())
 

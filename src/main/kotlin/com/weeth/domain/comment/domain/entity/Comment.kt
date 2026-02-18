@@ -1,6 +1,5 @@
 package com.weeth.domain.comment.domain.entity
 
-import com.fasterxml.jackson.annotation.JsonBackReference
 import com.weeth.domain.board.domain.entity.Notice
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.comment.domain.vo.CommentContent

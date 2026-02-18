@@ -37,7 +37,7 @@ class NoticeCommentController(
         return CommonResponse.success(CommentResponseCode.COMMENT_CREATED_SUCCESS)
     }
 
-    @PatchMapping("{commentId}")
+    @PatchMapping("/{commentId}")
     @Operation(
         summary = "공지사항 댓글 수정",
         description = "files 규약: null=기존 첨부 유지, []=기존 첨부 전체 삭제, 배열 전달=전달 목록으로 교체",
@@ -52,7 +52,7 @@ class NoticeCommentController(
         return CommonResponse.success(CommentResponseCode.COMMENT_UPDATED_SUCCESS)
     }
 
-    @DeleteMapping("{commentId}")
+    @DeleteMapping("/{commentId}")
     @Operation(summary = "공지사항 댓글 삭제")
     fun deleteNoticeComment(
         @PathVariable noticeId: Long,

@@ -52,7 +52,7 @@ class PostCommentController(
         return CommonResponse.success(CommentResponseCode.POST_COMMENT_UPDATED_SUCCESS)
     }
 
-    @DeleteMapping("{commentId}")
+    @DeleteMapping("/{commentId}")
     @Operation(summary = "게시글 댓글 삭제")
     fun deletePostComment(
         @PathVariable boardId: Long,

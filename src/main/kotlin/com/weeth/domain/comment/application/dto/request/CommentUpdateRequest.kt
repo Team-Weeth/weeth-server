@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class CommentUpdateRequest(
+    @field:Schema(description = "댓글 내용", example = "댓글입니다.")
     @field:NotBlank
     @field:Size(max = 300, message = "댓글은 최대 300자까지 가능합니다.")
     val content: String,
