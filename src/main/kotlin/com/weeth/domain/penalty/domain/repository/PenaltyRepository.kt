@@ -1,21 +1,24 @@
-package com.weeth.domain.penalty.domain.repository;
+package com.weeth.domain.penalty.domain.repository
 
-import com.weeth.domain.penalty.domain.entity.Penalty;
-import com.weeth.domain.penalty.domain.entity.enums.PenaltyType;
-import com.weeth.domain.user.domain.entity.Cardinal;
-import com.weeth.domain.user.domain.entity.User;
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.weeth.domain.penalty.domain.entity.Penalty
+import com.weeth.domain.penalty.domain.entity.enums.PenaltyType
+import com.weeth.domain.user.domain.entity.Cardinal
+import com.weeth.domain.user.domain.entity.User
+import org.springframework.data.jpa.repository.JpaRepository
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+interface PenaltyRepository : JpaRepository<Penalty, Long> {
+    fun findByUserIdAndCardinalIdOrderByIdDesc(
+        userId: Long,
+        cardinalId: Long,
+    ): List<Penalty>
 
-public interface PenaltyRepository extends JpaRepository<Penalty, Long> {
+    fun findFirstByUserAndCardinalAndPenaltyTypeAndCreatedAtAfterOrderByCreatedAtAsc(
+        user: User,
+        cardinal: Cardinal,
+        penaltyType: PenaltyType,
+        createdAt: LocalDateTime,
+    ): Penalty?
 
-    List<Penalty> findByUserIdAndCardinalIdOrderByIdDesc(Long userId, Long cardinalId);
-
-    Optional<Penalty> findFirstByUserAndCardinalAndPenaltyTypeAndCreatedAtAfterOrderByCreatedAtAsc(
-            User user, Cardinal cardinal, PenaltyType penaltyType, LocalDateTime createdAt);
-
-    List<Penalty> findByCardinalIdOrderByIdDesc(Long cardinalId);
+    fun findByCardinalIdOrderByIdDesc(cardinalId: Long): List<Penalty>
 }
