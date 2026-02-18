@@ -1,5 +1,6 @@
 package com.weeth.domain.attendance.application.usecase.command
 
+import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
 import com.weeth.domain.schedule.domain.service.MeetingGetService
@@ -27,7 +28,22 @@ class CloseAttendanceUseCase(
             } ?: throw MeetingNotFoundException()
 
         val attendanceList = attendanceRepository.findAllByMeetingAndUserStatus(targetMeeting, Status.ACTIVE)
-        attendanceList
+        closePendingAttendances(attendanceList)
+    }
+
+    @Transactional
+    fun autoClose() {
+        val meetings = meetingGetService.findAllOpenMeetingsBeforeNow()
+
+        meetings.forEach { meeting ->
+            meeting.close()
+            val attendanceList = attendanceRepository.findAllByMeetingAndUserStatus(meeting, Status.ACTIVE)
+            closePendingAttendances(attendanceList)
+        }
+    }
+
+    private fun closePendingAttendances(attendances: List<Attendance>) {
+        attendances
             .filter { it.isPending }
             .forEach { attendance ->
                 attendance.close()
