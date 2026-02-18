@@ -35,7 +35,7 @@ public class PenaltyFindService {
                         penalty.getCardinal(),
                         PenaltyType.AUTO_PENALTY,
                         penalty.getCreatedAt()
-                ).orElse(null);
+                );
     }
 
     public List<Penalty> findAllByCardinalId(Long cardinalId) {

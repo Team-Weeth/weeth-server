@@ -46,7 +46,7 @@ public class PenaltyUsecaseImpl implements PenaltyUsecase{
     @Override
     @Transactional
     public void save(PenaltyDTO.Save dto) {
-        User user = userGetService.find(dto.userId());
+        User user = userGetService.find(dto.getUserId());
         Cardinal cardinal = userCardinalGetService.getCurrentCardinal(user);
 
         Penalty penalty = mapper.fromPenaltyDto(dto, user, cardinal);
@@ -71,7 +71,7 @@ public class PenaltyUsecaseImpl implements PenaltyUsecase{
     @Override
     @Transactional
     public void update(PenaltyDTO.Update dto) {
-        Penalty penalty = penaltyFindService.find(dto.penaltyId());
+        Penalty penalty = penaltyFindService.find(dto.getPenaltyId());
         penaltyUpdateService.update(penalty, dto);
 
     }
@@ -93,7 +93,7 @@ public class PenaltyUsecaseImpl implements PenaltyUsecase{
 
             List<PenaltyDTO.Response> responses = penaltiesByUser.entrySet().stream()
                     .map(entry -> toPenaltyDto(entry.getKey(), entry.getValue()))
-                    .sorted(Comparator.comparing(PenaltyDTO.Response::userId))
+                    .sorted(Comparator.comparing(PenaltyDTO.Response::getUserId))
                     .toList();
 
             result.add(mapper.toResponseAll(cardinal.getCardinalNumber(), responses));

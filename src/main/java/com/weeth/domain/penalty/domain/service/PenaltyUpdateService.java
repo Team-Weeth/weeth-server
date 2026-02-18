@@ -8,8 +8,8 @@ import org.springframework.stereotype.Service;
 public class PenaltyUpdateService {
 
     public void update(Penalty penalty, PenaltyDTO.Update dto) {
-        if (dto.penaltyDescription() != null && !dto.penaltyDescription().isBlank()) {
-            penalty.update(dto.penaltyDescription());
+        if (dto.getPenaltyDescription() != null && !dto.getPenaltyDescription().isBlank()) {
+            penalty.update(dto.getPenaltyDescription());
         }
     }
 }
