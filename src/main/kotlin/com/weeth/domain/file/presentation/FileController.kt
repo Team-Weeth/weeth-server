@@ -2,7 +2,7 @@ package com.weeth.domain.file.presentation
 
 import com.weeth.domain.file.application.dto.response.UrlResponse
 import com.weeth.domain.file.application.exception.FileErrorCode
-import com.weeth.domain.file.application.usecase.query.FileQueryService
+import com.weeth.domain.file.application.usecase.command.GenerateFileUrlUsecase
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v4/files")
 @ApiErrorCodeExample(FileErrorCode::class)
 class FileController(
-    private val fileQueryService: FileQueryService,
+    private val generateFileUrlUsecase: GenerateFileUrlUsecase,
 ) {
     @GetMapping
     @Operation(summary = "파일 업로드를 위한 presigned url을 요청하는 API 입니다.")
@@ -31,7 +31,7 @@ class FileController(
         require(fileNames.isNotEmpty()) { "fileName은 비어 있을 수 없습니다." }
         return CommonResponse.success(
             FileResponseCode.PRESIGNED_URL_GET_SUCCESS,
-            fileQueryService.generateFileUploadUrls(ownerType, fileNames),
+            generateFileUrlUsecase.generateFileUploadUrls(ownerType, fileNames),
         )
     }
 }

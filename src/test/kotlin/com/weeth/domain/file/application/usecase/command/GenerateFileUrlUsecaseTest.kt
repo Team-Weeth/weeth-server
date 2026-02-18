@@ -1,4 +1,4 @@
-package com.weeth.domain.file.application.usecase.query
+package com.weeth.domain.file.application.usecase.command
 
 import com.weeth.domain.file.application.dto.response.UrlResponse
 import com.weeth.domain.file.application.mapper.FileMapper
@@ -13,11 +13,11 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 
-class FileQueryServiceTest :
+class GenerateFileUrlUsecaseTest :
     DescribeSpec({
         val preSignedService = mockk<FileUploadUrlPort>()
         val fileMapper = mockk<FileMapper>()
-        val useCase = FileQueryService(preSignedService, fileMapper)
+        val useCase = GenerateFileUrlUsecase(preSignedService, fileMapper)
 
         beforeEach {
             clearMocks(preSignedService, fileMapper)
