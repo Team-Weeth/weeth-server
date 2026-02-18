@@ -84,6 +84,7 @@ public class SwaggerConfig {
         return GroupedOpenApi.builder()
                 .group("admin")
                 .pathsToMatch("/api/v1/admin/**")
+                .addOperationCustomizer(operationCustomizer())
                 .build();
     }
 
@@ -91,8 +92,8 @@ public class SwaggerConfig {
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
                 .group("public")
-                .pathsToMatch("/api/v1/**")
                 .pathsToExclude("/api/v1/admin/**")
+                .addOperationCustomizer(operationCustomizer())
                 .build();
     }
 
