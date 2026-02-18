@@ -1,6 +1,6 @@
 package com.weeth.domain.attendance.domain.entity
 
-import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.enums.Status
 import com.weeth.domain.schedule.domain.entity.Meeting
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity

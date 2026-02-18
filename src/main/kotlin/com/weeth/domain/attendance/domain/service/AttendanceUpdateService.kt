@@ -1,7 +1,7 @@
 package com.weeth.domain.attendance.domain.service
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.enums.Status
 import org.springframework.stereotype.Service
 
 @Service

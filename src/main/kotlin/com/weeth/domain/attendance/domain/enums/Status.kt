@@ -1,4 +1,4 @@
-package com.weeth.domain.attendance.domain.entity.enums
+package com.weeth.domain.attendance.domain.enums
 
 enum class Status {
     ATTEND,

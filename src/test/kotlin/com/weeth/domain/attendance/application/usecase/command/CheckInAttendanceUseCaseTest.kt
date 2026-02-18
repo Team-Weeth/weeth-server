@@ -3,20 +3,15 @@ package com.weeth.domain.attendance.application.usecase.command
 import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.enums.Status
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createInProgressMeeting
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setUserAttendanceStats
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.service.UserGetService
-import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.time.LocalDateTime
 
 class CheckInAttendanceUseCaseTest :
     DescribeSpec({

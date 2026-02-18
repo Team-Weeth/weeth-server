@@ -2,7 +2,7 @@ package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
-import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.enums.Status
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.user.domain.service.UserGetService
 import org.springframework.stereotype.Service

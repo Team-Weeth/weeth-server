@@ -2,7 +2,7 @@ package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
-import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.enums.Status
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
