@@ -13,8 +13,8 @@ import com.weeth.domain.board.domain.service.PostDeleteService;
 import com.weeth.domain.board.domain.service.PostFindService;
 import com.weeth.domain.board.domain.service.PostSaveService;
 import com.weeth.domain.board.domain.service.PostUpdateService;
-import com.weeth.domain.comment.application.dto.CommentDTO;
-import com.weeth.domain.comment.application.mapper.CommentMapper;
+import com.weeth.domain.comment.application.dto.response.CommentResponse;
+import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService;
 import com.weeth.domain.comment.domain.entity.Comment;
 import com.weeth.domain.file.application.dto.response.FileResponse;
 import com.weeth.domain.file.application.mapper.FileMapper;
@@ -35,8 +35,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,7 +54,7 @@ public class PostUseCaseImpl implements PostUsecase {
 
     private final PostMapper mapper;
     private final FileMapper fileMapper;
-    private final CommentMapper commentMapper;
+    private final GetCommentQueryService getCommentQueryService;
 
     @Override
     @Transactional
@@ -254,28 +252,8 @@ public class PostUseCaseImpl implements PostUsecase {
         return fileReader.exists(FileOwnerType.POST, postId, null);
     }
 
-    private List<CommentDTO.Response> filterParentComments(List<Comment> comments) {
-        Map<Long, List<Comment>> commentMap = comments.stream()
-                .filter(comment -> comment.getParent() != null)
-                .collect(Collectors.groupingBy(comment -> comment.getParent().getId()));
-
-        return comments.stream()
-                .filter(comment -> comment.getParent() == null) // 부모 댓글만 가져오기
-                .map(parent -> mapToDtoWithChildren(parent, commentMap))
-                .toList();
-    }
-
-    private CommentDTO.Response mapToDtoWithChildren(Comment comment, Map<Long, List<Comment>> commentMap) {
-        List<CommentDTO.Response> children = commentMap.getOrDefault(comment.getId(), Collections.emptyList())
-                .stream()
-                .map(child -> mapToDtoWithChildren(child, commentMap))
-                .collect(Collectors.toList());
-
-        List<FileResponse> files = fileReader.findAll(FileOwnerType.COMMENT, comment.getId(), null).stream()
-                .map(fileMapper::toFileResponse)
-                .toList();
-
-        return commentMapper.toCommentDto(comment, children, files);
+    private List<CommentResponse> filterParentComments(List<Comment> comments) {
+        return getCommentQueryService.buildTree(comments);
     }
 
     private void validatePageNumber(int pageNumber){

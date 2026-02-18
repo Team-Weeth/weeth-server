@@ -1,18 +1,27 @@
 package com.weeth.domain.board.domain.repository;
 
-import java.util.Collection;
-import java.util.List;
 import com.weeth.domain.board.domain.entity.Post;
 import com.weeth.domain.board.domain.entity.enums.Category;
 import com.weeth.domain.board.domain.entity.enums.Part;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.QueryHints;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
+import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+	@Query("select p from Post p where p.id = :id")
+	Post findByIdWithLock(@Param("id") Long id);
 
 	@Query("""
         SELECT p FROM Post p

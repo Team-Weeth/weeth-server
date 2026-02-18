@@ -2,7 +2,7 @@ package com.weeth.domain.board.application.mapper;
 
 import com.weeth.domain.board.application.dto.PostDTO;
 import com.weeth.domain.board.domain.entity.Post;
-import com.weeth.domain.comment.application.dto.CommentDTO;
+import com.weeth.domain.comment.application.dto.response.CommentResponse;
 import com.weeth.domain.comment.application.mapper.CommentMapper;
 import com.weeth.domain.file.application.dto.response.FileResponse;
 import com.weeth.domain.user.domain.entity.User;
@@ -66,7 +66,7 @@ public interface PostMapper {
             @Mapping(target = "time", source = "post.createdAt"),
             @Mapping(target = "comments", source = "comments")
     })
-    PostDTO.Response toPostDto(Post post, List<FileResponse> fileUrls, List<CommentDTO.Response> comments);
+    PostDTO.Response toPostDto(Post post, List<FileResponse> fileUrls, List<CommentResponse> comments);
 
     default PostDTO.ResponseStudyNames toStudyNames(List<String> studyNames) {
         return new PostDTO.ResponseStudyNames(studyNames);
