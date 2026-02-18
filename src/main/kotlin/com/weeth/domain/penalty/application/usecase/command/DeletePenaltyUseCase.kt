@@ -4,6 +4,8 @@ import com.weeth.domain.penalty.application.exception.AutoPenaltyDeleteNotAllowe
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
 import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
+import com.weeth.domain.user.application.exception.UserNotFoundException
+import com.weeth.domain.user.domain.repository.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class DeletePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
+    private val userRepository: UserRepository,
 ) {
     @Transactional
     fun execute(penaltyId: Long) {
@@ -22,7 +25,10 @@ class DeletePenaltyUseCase(
             throw AutoPenaltyDeleteNotAllowedException()
         }
 
-        val user = penalty.user
+        val user =
+            userRepository
+                .findByIdWithLock(penalty.user.id)
+                .orElseThrow { UserNotFoundException() }
 
         when (penalty.penaltyType) {
             PenaltyType.PENALTY -> {
