@@ -1,57 +1,69 @@
-package com.weeth.domain.penalty.application.mapper;
+package com.weeth.domain.penalty.application.mapper
 
-import com.weeth.domain.penalty.application.dto.PenaltyDTO;
-import com.weeth.domain.penalty.domain.entity.Penalty;
-import com.weeth.domain.penalty.domain.entity.enums.PenaltyType;
-import com.weeth.domain.user.domain.entity.Cardinal;
-import com.weeth.domain.user.domain.entity.User;
-import com.weeth.domain.user.domain.entity.UserCardinal;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import com.weeth.domain.penalty.application.dto.PenaltyDTO
+import com.weeth.domain.penalty.domain.entity.Penalty
+import com.weeth.domain.penalty.domain.entity.enums.PenaltyType
+import com.weeth.domain.user.domain.entity.Cardinal
+import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.user.domain.entity.UserCardinal
+import org.springframework.stereotype.Component
 
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
+@Component
+class PenaltyMapper {
+    fun fromPenaltyDto(
+        dto: PenaltyDTO.Save,
+        user: User,
+        cardinal: Cardinal,
+    ): Penalty =
+        Penalty(
+            user = user,
+            cardinal = cardinal,
+            penaltyType = dto.penaltyType,
+            penaltyDescription = dto.penaltyDescription ?: "",
+        )
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface PenaltyMapper {
+    fun toAutoPenalty(
+        penaltyDescription: String,
+        user: User,
+        cardinal: Cardinal,
+        penaltyType: PenaltyType,
+    ): Penalty =
+        Penalty(
+            user = user,
+            cardinal = cardinal,
+            penaltyType = penaltyType,
+            penaltyDescription = penaltyDescription,
+        )
 
-    @Mapping(target = "user", source = "user")
-    @Mapping(target = "cardinal", source = "cardinal")
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "modifiedAt", ignore = true)
-    Penalty fromPenaltyDto(PenaltyDTO.Save dto, User user, Cardinal cardinal);
+    fun toPenaltyDto(
+        user: User,
+        penalties: List<PenaltyDTO.Penalties>,
+        userCardinals: List<UserCardinal>,
+    ): PenaltyDTO.Response =
+        PenaltyDTO.Response(
+            userId = user.id,
+            penaltyCount = null,
+            warningCount = null,
+            name = null,
+            cardinals = userCardinals.map { it.cardinal.cardinalNumber },
+            penalties = penalties,
+        )
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "modifiedAt", ignore = true)
-    Penalty toAutoPenalty(String penaltyDescription, User user, Cardinal cardinal, PenaltyType penaltyType);
+    fun toPenalties(penalty: Penalty): PenaltyDTO.Penalties =
+        PenaltyDTO.Penalties(
+            penaltyId = penalty.id,
+            penaltyType = penalty.penaltyType,
+            cardinal = penalty.cardinal?.cardinalNumber,
+            penaltyDescription = penalty.penaltyDescription,
+            time = penalty.modifiedAt,
+        )
 
-    @Mapping(target = "Penalties", source = "penalties")
-    @Mapping(target = "userId", source = "user.id")
-    @Mapping(target = "cardinals", expression = "java( toCardinalNumbers(userCardinals) )")
-    PenaltyDTO.Response toPenaltyDto(User user, List<PenaltyDTO.Penalties> penalties, List<UserCardinal> userCardinals);
-
-    @Mapping(target = "time", source = "modifiedAt")
-    @Mapping(target = "penaltyId", source = "id")
-    @Mapping(target = "cardinal",
-            expression = "java(penalty.getCardinal() != null ? penalty.getCardinal().getCardinalNumber() : null)")
-
-    PenaltyDTO.Penalties toPenalties(Penalty penalty);
-
-    PenaltyDTO.ResponseAll toResponseAll(Integer cardinal, List<PenaltyDTO.Response> responses);
-
-    default List<Integer> toCardinalNumbers(List<UserCardinal> userCardinals) {
-        if (userCardinals == null || userCardinals.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        return userCardinals.stream()
-                .map(uc -> uc.getCardinal().getCardinalNumber())
-                .collect(Collectors.toList());
-    }
-
+    fun toResponseAll(
+        cardinal: Int?,
+        responses: List<PenaltyDTO.Response>,
+    ): PenaltyDTO.ResponseAll =
+        PenaltyDTO.ResponseAll(
+            cardinal = cardinal,
+            responses = responses,
+        )
 }

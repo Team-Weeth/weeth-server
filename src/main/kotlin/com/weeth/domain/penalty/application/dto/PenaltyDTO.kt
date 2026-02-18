@@ -1,51 +1,43 @@
-package com.weeth.domain.penalty.application.dto;
+package com.weeth.domain.penalty.application.dto
 
-import jakarta.validation.constraints.NotNull;
-import com.weeth.domain.penalty.domain.entity.enums.PenaltyType;
-import lombok.Builder;
+import com.weeth.domain.penalty.domain.entity.enums.PenaltyType
+import jakarta.validation.constraints.NotNull
+import java.time.LocalDateTime
 
-import java.time.LocalDateTime;
-import java.util.List;
+class PenaltyDTO {
+    data class Save(
+        @field:NotNull
+        val userId: Long,
+        @field:NotNull
+        val penaltyType: PenaltyType,
+        val penaltyDescription: String?,
+    )
 
-public class PenaltyDTO {
+    data class Update(
+        @field:NotNull
+        val penaltyId: Long,
+        val penaltyDescription: String?,
+    )
 
-    @Builder
-    public record Save(
-            @NotNull Long userId,
-            @NotNull PenaltyType penaltyType,
-            String penaltyDescription
-    ){}
+    data class ResponseAll(
+        val cardinal: Int?,
+        val responses: List<Response>,
+    )
 
-    @Builder
-    public record Update(
-            @NotNull Long penaltyId,
-            String penaltyDescription
-    ){}
+    data class Response(
+        val userId: Long?,
+        val penaltyCount: Int?,
+        val warningCount: Int?,
+        val name: String?,
+        val cardinals: List<Int>,
+        val penalties: List<Penalties>,
+    )
 
-    @Builder
-    public record ResponseAll(
-            Integer cardinal,
-            List<Response> responses
-    ){}
-
-    @Builder
-    public record Response(
-        Long userId,
-        Integer penaltyCount,
-        Integer warningCount,
-        String name,
-        List<Integer> cardinals,
-        List<PenaltyDTO.Penalties> Penalties
-    ){}
-
-    @Builder
-    public record Penalties(
-       Long penaltyId,
-       PenaltyType penaltyType,
-       Integer cardinal,
-       String penaltyDescription,
-       LocalDateTime time
-    ){}
-
+    data class Penalties(
+        val penaltyId: Long?,
+        val penaltyType: PenaltyType?,
+        val cardinal: Int?,
+        val penaltyDescription: String?,
+        val time: LocalDateTime?,
+    )
 }
-
