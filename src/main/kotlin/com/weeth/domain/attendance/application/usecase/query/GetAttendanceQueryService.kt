@@ -28,14 +28,11 @@ class GetAttendanceQueryService(
         val today = LocalDate.now()
 
         val todayAttendance =
-            user.attendances.firstOrNull { attendance ->
-                attendance.meeting.start
-                    .toLocalDate()
-                    .isEqual(today) &&
-                    attendance.meeting.end
-                        .toLocalDate()
-                        .isEqual(today)
-            }
+            attendanceRepository.findTodayByUserId(
+                userId,
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
+            )
 
         return if (user.role == Role.ADMIN) {
             mapper.toAdminResponse(user, todayAttendance)
@@ -49,9 +46,7 @@ class GetAttendanceQueryService(
         val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
 
         val responses =
-            user.attendances
-                .filter { it.meeting.cardinal == currentCardinal.cardinalNumber }
-                .sortedBy { it.meeting.start }
+            attendanceRepository.findAllByUserIdAndCardinal(userId, currentCardinal.cardinalNumber)
                 .map(mapper::toResponse)
 
         return mapper.toDetailResponse(user, responses)
