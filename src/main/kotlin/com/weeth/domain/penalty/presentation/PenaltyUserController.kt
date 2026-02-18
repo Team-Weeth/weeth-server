@@ -25,5 +25,5 @@ class PenaltyUserController(
     fun findAllPenalties(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PenaltyResponse> =
-        CommonResponse.success(PenaltyResponseCode.PENALTY_USER_FIND_SUCCESS, getPenaltyQueryService.find(userId))
+        CommonResponse.success(PenaltyResponseCode.PENALTY_USER_FIND_SUCCESS, getPenaltyQueryService.findByUser(userId))
 }

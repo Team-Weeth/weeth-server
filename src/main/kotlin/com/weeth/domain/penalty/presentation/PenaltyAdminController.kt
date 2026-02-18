@@ -55,7 +55,7 @@ class PenaltyAdminController(
     fun findAll(
         @RequestParam(required = false) cardinal: Int?,
     ): CommonResponse<List<PenaltyByCardinalResponse>> =
-        CommonResponse.success(PenaltyResponseCode.PENALTY_FIND_ALL_SUCCESS, getPenaltyQueryService.findAll(cardinal))
+        CommonResponse.success(PenaltyResponseCode.PENALTY_FIND_ALL_SUCCESS, getPenaltyQueryService.findAllByCardinal(cardinal))
 
     @DeleteMapping
     @Operation(summary = "패널티 삭제")

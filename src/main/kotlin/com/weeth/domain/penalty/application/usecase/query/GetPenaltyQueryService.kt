@@ -3,10 +3,7 @@ package com.weeth.domain.penalty.application.usecase.query
 import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
-import com.weeth.domain.penalty.domain.entity.Penalty
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
-import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.domain.service.CardinalGetService
 import com.weeth.domain.user.domain.service.UserCardinalGetService
 import com.weeth.domain.user.domain.service.UserGetService
@@ -22,7 +19,7 @@ class GetPenaltyQueryService(
     private val mapper: PenaltyMapper,
 ) {
     @Transactional(readOnly = true)
-    fun findAll(cardinalNumber: Int?): List<PenaltyByCardinalResponse> {
+    fun findAllByCardinal(cardinalNumber: Int?): List<PenaltyByCardinalResponse> {
         val cardinals =
             if (cardinalNumber == null) {
                 cardinalGetService.findAllCardinalNumberDesc()
@@ -44,7 +41,7 @@ class GetPenaltyQueryService(
                     .entries
                     .map { (userId, userPenalties) ->
                         val userCardinals = userCardinalsMap[userId] ?: emptyList()
-                        toPenaltyResponse(userPenalties.first().user, userPenalties, userCardinals)
+                        mapper.toResponse(userPenalties.first().user, userPenalties, userCardinals)
                     }.sortedBy { it.userId }
 
             mapper.toByCardinalResponse(cardinal.cardinalNumber, responses)
@@ -52,21 +49,12 @@ class GetPenaltyQueryService(
     }
 
     @Transactional(readOnly = true)
-    fun find(userId: Long): PenaltyResponse {
+    fun findByUser(userId: Long): PenaltyResponse {
         val user = userGetService.find(userId)
         val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
         val penalties = penaltyRepository.findByUserIdAndCardinalIdOrderByIdDesc(userId, currentCardinal.id)
         val userCardinals = userCardinalGetService.getUserCardinals(user)
 
-        return toPenaltyResponse(user, penalties, userCardinals)
-    }
-
-    private fun toPenaltyResponse(
-        user: User,
-        penalties: List<Penalty>,
-        userCardinals: List<UserCardinal>,
-    ): PenaltyResponse {
-        val penaltyDetails = penalties.map(mapper::toDetailResponse)
-        return mapper.toResponse(user, penaltyDetails, userCardinals)
+        return mapper.toResponse(user, penalties, userCardinals)
     }
 }

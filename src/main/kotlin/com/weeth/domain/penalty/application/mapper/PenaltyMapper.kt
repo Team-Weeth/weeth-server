@@ -39,7 +39,7 @@ class PenaltyMapper {
 
     fun toResponse(
         user: User,
-        penalties: List<PenaltyDetailResponse>,
+        penalties: List<Penalty>,
         userCardinals: List<UserCardinal>,
     ): PenaltyResponse =
         PenaltyResponse(
@@ -48,7 +48,7 @@ class PenaltyMapper {
             penaltyCount = user.penaltyCount,
             warningCount = user.warningCount,
             cardinals = userCardinals.map { it.cardinal.cardinalNumber },
-            penalties = penalties,
+            penalties = penalties.map(::toDetailResponse),
         )
 
     fun toDetailResponse(penalty: Penalty): PenaltyDetailResponse =
