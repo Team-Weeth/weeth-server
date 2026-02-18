@@ -2,8 +2,6 @@ package com.weeth.domain.penalty.domain.repository
 
 import com.weeth.domain.penalty.domain.entity.Penalty
 import com.weeth.domain.penalty.domain.enums.PenaltyType
-import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.entity.User
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
@@ -15,9 +13,18 @@ interface PenaltyRepository : JpaRepository<Penalty, Long> {
         cardinalId: Long,
     ): List<Penalty>
 
-    fun findFirstByUserAndCardinalAndPenaltyTypeAndCreatedAtAfterOrderByCreatedAtAsc(
-        user: User,
-        cardinal: Cardinal,
+    @Query(
+        """
+        SELECT p FROM Penalty p
+        WHERE p.user.id = :userId AND p.cardinal.id = :cardinalId
+        AND p.penaltyType = :penaltyType AND p.createdAt > :createdAt
+        ORDER BY p.createdAt ASC
+        LIMIT 1
+    """,
+    )
+    fun findFirstAutoPenaltyAfter(
+        userId: Long,
+        cardinalId: Long,
         penaltyType: PenaltyType,
         createdAt: LocalDateTime,
     ): Penalty?

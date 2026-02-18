@@ -39,9 +39,9 @@ class DeletePenaltyUseCase(
                 if (user.warningCount % 2 == 0) {
                     val relatedAutoPenalty =
                         penaltyRepository
-                            .findFirstByUserAndCardinalAndPenaltyTypeAndCreatedAtAfterOrderByCreatedAtAsc(
-                                penalty.user,
-                                penalty.cardinal,
+                            .findFirstAutoPenaltyAfter(
+                                penalty.user.id,
+                                penalty.cardinal.id,
                                 PenaltyType.AUTO_PENALTY,
                                 penalty.createdAt,
                             )
