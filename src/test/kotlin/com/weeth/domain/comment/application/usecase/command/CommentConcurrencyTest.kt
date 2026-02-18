@@ -2,9 +2,10 @@ package com.weeth.domain.comment.application.usecase.command
 
 import com.weeth.config.QueryCountUtil
 import com.weeth.config.TestContainersConfig
+import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
-import com.weeth.domain.board.domain.entity.enums.Category
-import com.weeth.domain.board.domain.entity.enums.Part
+import com.weeth.domain.board.domain.entity.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.comment.application.dto.request.CommentSaveRequest
 import com.weeth.domain.comment.domain.entity.Comment
@@ -32,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference
 @Import(TestContainersConfig::class, CommentConcurrencyBenchmarkConfig::class)
 class CommentConcurrencyTest(
     private val postCommentUsecase: PostCommentUsecase,
+    private val boardRepository: BoardRepository,
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
     private val commentRepository: CommentRepository,
@@ -62,28 +64,33 @@ class CommentConcurrencyTest(
                 )
             }
 
-        fun createPost(title: String): Post =
-            postRepository.save(
-                Post
-                    .builder()
-                    .title(title)
-                    .content("내용")
-                    .comments(ArrayList())
-                    .commentCount(0)
-                    .category(Category.StudyLog)
-                    .cardinalNumber(1)
-                    .week(1)
-                    .part(Part.ALL)
-                    .parts(listOf(Part.ALL))
-                    .build(),
+        fun createPost(
+            title: String,
+            user: User,
+        ): Post {
+            val board =
+                boardRepository.save(
+                    Board(
+                        name = "concurrency-board",
+                        type = BoardType.GENERAL,
+                    ),
+                )
+            return postRepository.save(
+                Post(
+                    title = title,
+                    content = "내용",
+                    user = user,
+                    board = board,
+                ),
             )
+        }
 
         fun runConcurrentSave(
             threadCount: Int,
             saveAction: (postId: Long, userId: Long, index: Int) -> Unit,
         ): ConcurrencyResult {
             val users = createUsers(threadCount)
-            val post = createPost("동시성 테스트 게시글")
+            val post = createPost("동시성 테스트 게시글", users.first())
             val executor = Executors.newFixedThreadPool(threadCount)
             val latch = CountDownLatch(threadCount)
             val successCount = AtomicInteger(0)
@@ -135,6 +142,7 @@ class CommentConcurrencyTest(
         afterEach {
             commentRepository.deleteAllInBatch()
             postRepository.deleteAllInBatch()
+            boardRepository.deleteAllInBatch()
             userRepository.deleteAllInBatch()
         }
 
@@ -158,8 +166,6 @@ class CommentConcurrencyTest(
         }
 
         describe("동시성 해소 방식별 성능 비교") {
-            // TODO(board-refactor): Board 도메인 구조 개편(댓글 카운트 책임/저장 구조 변경) 이후
-            // 이 비교 시나리오는 동일 조건으로 다시 측정해 기준선을 재작성한다.
             it("PESSIMISTIC_WRITE와 Atomic Increment를 측정한다").config(enabled = runPerformanceTests) {
                 val threadCount = 30
 
@@ -191,9 +197,6 @@ class CommentConcurrencyTest(
                         )
                     }
 
-                println("[pessimistic] $pessimisticResult")
-                println("[atomic] $atomicResult")
-
                 pessimisticResult.failCount shouldBe 0
                 atomicResult.failCount shouldBe 0
                 pessimisticResult.postCommentCount shouldBe threadCount
@@ -211,8 +214,6 @@ class AtomicCommentCountCommand(
     private val entityManager: EntityManager,
     private val transactionTemplate: TransactionTemplate,
 ) {
-    // TODO(board-refactor): 현재는 동시성 비교 실험용 테스트 전용 커맨드.
-    // Board 리팩토링 후 실제 카운트 갱신 구조에 맞춰 제거 또는 대체한다.
     fun savePostCommentWithAtomicIncrement(
         dto: CommentSaveRequest,
         postId: Long,
