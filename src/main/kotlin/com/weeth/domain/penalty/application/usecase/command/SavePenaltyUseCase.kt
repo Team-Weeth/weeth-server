@@ -4,9 +4,9 @@ import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
 import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
+import com.weeth.domain.user.application.exception.UserNotFoundException
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.domain.service.UserCardinalGetService
-import com.weeth.domain.user.domain.service.UserGetService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional
 class SavePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
     private val userRepository: UserRepository,
-    private val userGetService: UserGetService,
     private val userCardinalGetService: UserCardinalGetService,
     private val mapper: PenaltyMapper,
 ) {
@@ -24,14 +23,14 @@ class SavePenaltyUseCase(
 
     @Transactional
     fun execute(request: SavePenaltyRequest) {
-        val user = userGetService.find(request.userId)
+        val user =
+            userRepository
+                .findByIdWithLock(request.userId)
+                .orElseThrow { UserNotFoundException() }
         val cardinal = userCardinalGetService.getCurrentCardinal(user)
 
         val penalty = mapper.toEntity(request, user, cardinal)
         penaltyRepository.save(penalty)
-
-        // 카운트 수정 직전에만 비관적 락 획득
-        userRepository.findByIdWithLock(request.userId)
 
         when (penalty.penaltyType) {
             PenaltyType.PENALTY -> {
