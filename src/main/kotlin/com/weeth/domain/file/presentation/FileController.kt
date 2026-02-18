@@ -9,12 +9,16 @@ import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "FILE")
+@Validated
 @RestController
 @RequestMapping("/api/v4/files")
 @ApiErrorCodeExample(FileErrorCode::class)
@@ -26,12 +30,10 @@ class FileController(
     fun getUrl(
         @Parameter(description = "파일 소유 타입", example = "POST")
         @RequestParam ownerType: FileOwnerType,
-        @RequestParam fileNames: List<String>,
-    ): CommonResponse<List<UrlResponse>> {
-        require(fileNames.isNotEmpty()) { "fileName은 비어 있을 수 없습니다." }
-        return CommonResponse.success(
+        @RequestParam @NotEmpty fileNames: List<@NotBlank String>,
+    ): CommonResponse<List<UrlResponse>> =
+        CommonResponse.success(
             FileResponseCode.PRESIGNED_URL_GET_SUCCESS,
             generateFileUrlUsecase.generateFileUploadUrls(ownerType, fileNames),
         )
-    }
 }
