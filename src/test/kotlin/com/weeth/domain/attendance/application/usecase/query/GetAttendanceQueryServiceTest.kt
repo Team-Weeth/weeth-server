@@ -7,8 +7,7 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUserWithAttendances
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDayMeeting
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
 import com.weeth.domain.schedule.domain.entity.Meeting
 import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.domain.entity.Cardinal
@@ -20,7 +19,6 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.time.LocalDate
 
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
@@ -43,49 +41,27 @@ class GetAttendanceQueryServiceTest :
         val userId = 10L
 
         describe("find") {
-            it("여러 날짜의 출석 목록 중 시작/종료 날짜가 모두 오늘인 출석정보를 선택") {
-                val today = LocalDate.now()
-
-                val meetingYesterday = createOneDayMeeting(today.minusDays(1), 1, 1111, "Yesterday")
-                val meetingToday = createOneDayMeeting(today, 1, 2222, "Today")
-                val meetingTomorrow = createOneDayMeeting(today.plusDays(1), 1, 3333, "Tomorrow")
-
-                val user =
-                    createActiveUserWithAttendances(
-                        "이지훈",
-                        listOf(meetingYesterday, meetingToday, meetingTomorrow),
-                    )
-
-                val expectedTodayAttendance =
-                    user.attendances.first {
-                        it.meeting == meetingToday
-                    }
-
+            it("오늘 출석 정보가 있으면 mapper.toMainResponse(user, attendance) 호출") {
+                val user = createActiveUser("이지훈")
+                val todayAttendance = mockk<Attendance>()
                 val mapped = mockk<AttendanceMainResponse>()
 
                 every { userGetService.find(userId) } returns user
-                every { attendanceMapper.toMainResponse(eq(user), eq(expectedTodayAttendance)) } returns mapped
+                every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns todayAttendance
+                every { attendanceMapper.toMainResponse(eq(user), eq(todayAttendance)) } returns mapped
 
                 val actual = queryService.find(userId)
 
                 actual shouldBe mapped
-                verify { attendanceMapper.toMainResponse(eq(user), eq(expectedTodayAttendance)) }
+                verify { attendanceMapper.toMainResponse(eq(user), eq(todayAttendance)) }
             }
 
-            it("시작/종료 날짜가 모두 오늘인 출석이 없다면 mapper.toMainResponse(user, null)을 호출") {
-                val today = LocalDate.now()
-
-                val yesterdayMeeting = createOneDayMeeting(today.minusDays(1), 1, 1111, "Yesterday")
-                val tomorrowMeeting = createOneDayMeeting(today.plusDays(1), 1, 3333, "Tomorrow")
-
-                val user =
-                    createActiveUserWithAttendances(
-                        "이지훈",
-                        listOf(yesterdayMeeting, tomorrowMeeting),
-                    )
-
+            it("오늘 출석이 없다면 mapper.toMainResponse(user, null) 호출") {
+                val user = createActiveUser("이지훈")
                 val mapped = mockk<AttendanceMainResponse>()
+
                 every { userGetService.find(userId) } returns user
+                every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns null
                 every { attendanceMapper.toMainResponse(user, null) } returns mapped
 
                 val actual = queryService.find(userId)
@@ -96,25 +72,21 @@ class GetAttendanceQueryServiceTest :
         }
 
         describe("findAllDetailsByCurrentCardinal") {
-            it("현재 기수만 필터링·정렬하여 Detail 매핑") {
-                val today = LocalDate.now()
-                val meetingDayMinus1 = createOneDayMeeting(today.minusDays(1), 1, 1111, "D-1")
-                val meetingToday = createOneDayMeeting(today, 1, 2222, "D-Day")
-                val user = createActiveUserWithAttendances("이지훈", listOf(meetingDayMinus1, meetingToday))
-
-                val userAttendances = user.attendances
-                val attendanceFirst = userAttendances[0]
-                val attendanceSecond = userAttendances[1]
+            it("현재 기수의 출석 목록을 매핑하여 Detail 반환") {
+                val user = createActiveUser("이지훈")
+                val attendance1 = mockk<Attendance>()
+                val attendance2 = mockk<Attendance>()
 
                 every { userGetService.find(userId) } returns user
                 val currentCardinal = mockk<Cardinal>()
                 every { currentCardinal.cardinalNumber } returns 1
                 every { userCardinalGetService.getCurrentCardinal(user) } returns currentCardinal
+                every { attendanceRepository.findAllByUserIdAndCardinal(userId, 1) } returns listOf(attendance1, attendance2)
 
-                val responseFirst = mockk<AttendanceResponse>()
-                val responseSecond = mockk<AttendanceResponse>()
-                every { attendanceMapper.toResponse(attendanceFirst) } returns responseFirst
-                every { attendanceMapper.toResponse(attendanceSecond) } returns responseSecond
+                val response1 = mockk<AttendanceResponse>()
+                val response2 = mockk<AttendanceResponse>()
+                every { attendanceMapper.toResponse(attendance1) } returns response1
+                every { attendanceMapper.toResponse(attendance2) } returns response2
 
                 val expectedDetail = mockk<AttendanceDetailResponse>()
                 every { attendanceMapper.toDetailResponse(eq(user), any()) } returns expectedDetail
