@@ -2,8 +2,8 @@ package com.weeth.domain.attendance.application.usecase.query
 
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
+import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository

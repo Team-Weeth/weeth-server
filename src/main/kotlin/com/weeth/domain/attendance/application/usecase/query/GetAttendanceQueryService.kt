@@ -42,7 +42,8 @@ class GetAttendanceQueryService(
         val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
 
         val responses =
-            attendanceRepository.findAllByUserIdAndCardinal(userId, currentCardinal.cardinalNumber)
+            attendanceRepository
+                .findAllByUserIdAndCardinal(userId, currentCardinal.cardinalNumber)
                 .map(mapper::toResponse)
 
         return mapper.toDetailResponse(user, responses)

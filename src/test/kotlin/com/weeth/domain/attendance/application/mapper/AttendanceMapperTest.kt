@@ -136,5 +136,4 @@ class AttendanceMapperTest :
                 info.name shouldBe user.name
             }
         }
-
     })
