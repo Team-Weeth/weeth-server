@@ -1,8 +1,8 @@
 package com.weeth.domain.penalty.presentation
 
-import com.weeth.domain.penalty.application.dto.PenaltyDTO
+import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.application.exception.PenaltyErrorCode
-import com.weeth.domain.penalty.application.usecase.PenaltyUsecase
+import com.weeth.domain.penalty.application.usecase.query.GetPenaltyQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -18,12 +18,12 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/penalties")
 @ApiErrorCodeExample(PenaltyErrorCode::class)
 class PenaltyUserController(
-    private val penaltyUsecase: PenaltyUsecase,
+    private val getPenaltyQueryService: GetPenaltyQueryService,
 ) {
     @GetMapping
     @Operation(summary = "본인 패널티 조회")
     fun findAllPenalties(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<PenaltyDTO.Response> =
-        CommonResponse.success(PenaltyResponseCode.PENALTY_USER_FIND_SUCCESS, penaltyUsecase.find(userId))
+    ): CommonResponse<PenaltyResponse> =
+        CommonResponse.success(PenaltyResponseCode.PENALTY_USER_FIND_SUCCESS, getPenaltyQueryService.find(userId))
 }

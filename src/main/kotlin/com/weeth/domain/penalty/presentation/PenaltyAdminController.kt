@@ -1,8 +1,13 @@
 package com.weeth.domain.penalty.presentation
 
-import com.weeth.domain.penalty.application.dto.PenaltyDTO
+import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
+import com.weeth.domain.penalty.application.dto.request.UpdatePenaltyRequest
+import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
 import com.weeth.domain.penalty.application.exception.PenaltyErrorCode
-import com.weeth.domain.penalty.application.usecase.PenaltyUsecase
+import com.weeth.domain.penalty.application.usecase.command.DeletePenaltyUseCase
+import com.weeth.domain.penalty.application.usecase.command.SavePenaltyUseCase
+import com.weeth.domain.penalty.application.usecase.command.UpdatePenaltyUseCase
+import com.weeth.domain.penalty.application.usecase.query.GetPenaltyQueryService
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -22,23 +27,26 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/admin/penalties")
 @ApiErrorCodeExample(PenaltyErrorCode::class)
 class PenaltyAdminController(
-    private val penaltyUsecase: PenaltyUsecase,
+    private val savePenaltyUseCase: SavePenaltyUseCase,
+    private val updatePenaltyUseCase: UpdatePenaltyUseCase,
+    private val deletePenaltyUseCase: DeletePenaltyUseCase,
+    private val getPenaltyQueryService: GetPenaltyQueryService,
 ) {
     @PostMapping
     @Operation(summary = "패널티 부여")
     fun assignPenalty(
-        @Valid @RequestBody dto: PenaltyDTO.Save,
+        @Valid @RequestBody request: SavePenaltyRequest,
     ): CommonResponse<Void?> {
-        penaltyUsecase.save(dto)
+        savePenaltyUseCase.execute(request)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_ASSIGN_SUCCESS)
     }
 
     @PatchMapping
     @Operation(summary = "패널티 수정")
     fun update(
-        @Valid @RequestBody dto: PenaltyDTO.Update,
+        @Valid @RequestBody request: UpdatePenaltyRequest,
     ): CommonResponse<Void?> {
-        penaltyUsecase.update(dto)
+        updatePenaltyUseCase.execute(request)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_UPDATE_SUCCESS)
     }
 
@@ -46,15 +54,15 @@ class PenaltyAdminController(
     @Operation(summary = "전체 패널티 조회")
     fun findAll(
         @RequestParam(required = false) cardinal: Int?,
-    ): CommonResponse<List<PenaltyDTO.ResponseAll>> =
-        CommonResponse.success(PenaltyResponseCode.PENALTY_FIND_ALL_SUCCESS, penaltyUsecase.findAll(cardinal))
+    ): CommonResponse<List<PenaltyByCardinalResponse>> =
+        CommonResponse.success(PenaltyResponseCode.PENALTY_FIND_ALL_SUCCESS, getPenaltyQueryService.findAll(cardinal))
 
     @DeleteMapping
     @Operation(summary = "패널티 삭제")
     fun delete(
         @RequestParam penaltyId: Long,
     ): CommonResponse<Void?> {
-        penaltyUsecase.delete(penaltyId)
+        deletePenaltyUseCase.execute(penaltyId)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_DELETE_SUCCESS)
     }
 }

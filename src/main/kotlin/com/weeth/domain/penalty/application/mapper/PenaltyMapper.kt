@@ -1,8 +1,11 @@
 package com.weeth.domain.penalty.application.mapper
 
-import com.weeth.domain.penalty.application.dto.PenaltyDTO
+import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
+import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
+import com.weeth.domain.penalty.application.dto.response.PenaltyDetailResponse
+import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.domain.entity.Penalty
-import com.weeth.domain.penalty.domain.entity.enums.PenaltyType
+import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
@@ -10,16 +13,16 @@ import org.springframework.stereotype.Component
 
 @Component
 class PenaltyMapper {
-    fun fromPenaltyDto(
-        dto: PenaltyDTO.Save,
+    fun toEntity(
+        request: SavePenaltyRequest,
         user: User,
         cardinal: Cardinal,
     ): Penalty =
         Penalty(
             user = user,
             cardinal = cardinal,
-            penaltyType = dto.penaltyType,
-            penaltyDescription = dto.penaltyDescription ?: "",
+            penaltyType = request.penaltyType,
+            penaltyDescription = request.penaltyDescription ?: "",
         )
 
     fun toAutoPenalty(
@@ -35,12 +38,12 @@ class PenaltyMapper {
             penaltyDescription = penaltyDescription,
         )
 
-    fun toPenaltyDto(
+    fun toResponse(
         user: User,
-        penalties: List<PenaltyDTO.Penalties>,
+        penalties: List<PenaltyDetailResponse>,
         userCardinals: List<UserCardinal>,
-    ): PenaltyDTO.Response =
-        PenaltyDTO.Response(
+    ): PenaltyResponse =
+        PenaltyResponse(
             userId = user.id,
             penaltyCount = null,
             warningCount = null,
@@ -49,8 +52,8 @@ class PenaltyMapper {
             penalties = penalties,
         )
 
-    fun toPenalties(penalty: Penalty): PenaltyDTO.Penalties =
-        PenaltyDTO.Penalties(
+    fun toDetailResponse(penalty: Penalty): PenaltyDetailResponse =
+        PenaltyDetailResponse(
             penaltyId = penalty.id,
             penaltyType = penalty.penaltyType,
             cardinal = penalty.cardinal?.cardinalNumber,
@@ -58,11 +61,11 @@ class PenaltyMapper {
             time = penalty.modifiedAt,
         )
 
-    fun toResponseAll(
+    fun toByCardinalResponse(
         cardinal: Int?,
-        responses: List<PenaltyDTO.Response>,
-    ): PenaltyDTO.ResponseAll =
-        PenaltyDTO.ResponseAll(
+        responses: List<PenaltyResponse>,
+    ): PenaltyByCardinalResponse =
+        PenaltyByCardinalResponse(
             cardinal = cardinal,
             responses = responses,
         )
