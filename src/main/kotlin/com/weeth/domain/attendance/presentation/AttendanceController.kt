@@ -41,7 +41,7 @@ class AttendanceController(
     fun find(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<AttendanceSummaryResponse> =
-        CommonResponse.success(AttendanceResponseCode.ATTENDANCE_FIND_SUCCESS, getAttendanceQueryService.find(userId))
+        CommonResponse.success(AttendanceResponseCode.ATTENDANCE_FIND_SUCCESS, getAttendanceQueryService.findAttendance(userId))
 
     @GetMapping("/detail")
     @Operation(summary = "출석 내역 상세조회")

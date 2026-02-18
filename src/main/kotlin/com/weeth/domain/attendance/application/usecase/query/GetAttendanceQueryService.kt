@@ -23,7 +23,7 @@ class GetAttendanceQueryService(
     private val attendanceRepository: AttendanceRepository,
     private val mapper: AttendanceMapper,
 ) {
-    fun find(userId: Long): AttendanceSummaryResponse {
+    fun findAttendance(userId: Long): AttendanceSummaryResponse {
         val user = userGetService.find(userId)
         val today = LocalDate.now()
 

@@ -50,7 +50,7 @@ class GetAttendanceQueryServiceTest :
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns todayAttendance
                 every { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance), eq(false)) } returns mapped
 
-                val actual = queryService.find(userId)
+                val actual = queryService.findAttendance(userId)
 
                 actual shouldBe mapped
                 verify { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance), eq(false)) }
@@ -64,7 +64,7 @@ class GetAttendanceQueryServiceTest :
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns null
                 every { attendanceMapper.toSummaryResponse(user, null, false) } returns mapped
 
-                val actual = queryService.find(userId)
+                val actual = queryService.findAttendance(userId)
 
                 actual shouldBe mapped
                 verify { attendanceMapper.toSummaryResponse(user, null, false) }
