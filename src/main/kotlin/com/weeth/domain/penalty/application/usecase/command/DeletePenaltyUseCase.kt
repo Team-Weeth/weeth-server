@@ -16,7 +16,7 @@ class DeletePenaltyUseCase(
     private val userRepository: UserRepository,
 ) {
     @Transactional
-    fun execute(penaltyId: Long) {
+    fun delete(penaltyId: Long) {
         val penalty =
             penaltyRepository.findByIdOrNull(penaltyId)
                 ?: throw PenaltyNotFoundException()

@@ -12,7 +12,7 @@ class UpdatePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
 ) {
     @Transactional
-    fun execute(request: UpdatePenaltyRequest) {
+    fun update(request: UpdatePenaltyRequest) {
         val penalty =
             penaltyRepository.findByIdOrNull(request.penaltyId)
                 ?: throw PenaltyNotFoundException()

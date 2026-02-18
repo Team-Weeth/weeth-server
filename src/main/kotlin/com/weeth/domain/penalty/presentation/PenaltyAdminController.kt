@@ -37,7 +37,7 @@ class PenaltyAdminController(
     fun assignPenalty(
         @Valid @RequestBody request: SavePenaltyRequest,
     ): CommonResponse<Void?> {
-        savePenaltyUseCase.execute(request)
+        savePenaltyUseCase.save(request)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_ASSIGN_SUCCESS)
     }
 
@@ -46,7 +46,7 @@ class PenaltyAdminController(
     fun update(
         @Valid @RequestBody request: UpdatePenaltyRequest,
     ): CommonResponse<Void?> {
-        updatePenaltyUseCase.execute(request)
+        updatePenaltyUseCase.update(request)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_UPDATE_SUCCESS)
     }
 
@@ -62,7 +62,7 @@ class PenaltyAdminController(
     fun delete(
         @RequestParam penaltyId: Long,
     ): CommonResponse<Void?> {
-        deletePenaltyUseCase.execute(penaltyId)
+        deletePenaltyUseCase.delete(penaltyId)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_DELETE_SUCCESS)
     }
 }

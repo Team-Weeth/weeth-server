@@ -22,7 +22,7 @@ class SavePenaltyUseCase(
     }
 
     @Transactional
-    fun execute(request: SavePenaltyRequest) {
+    fun save(request: SavePenaltyRequest) {
         val user =
             userRepository
                 .findByIdWithLock(request.userId)
