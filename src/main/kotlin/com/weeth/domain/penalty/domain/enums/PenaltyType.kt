@@ -1,4 +1,4 @@
-package com.weeth.domain.penalty.domain.entity.enums
+package com.weeth.domain.penalty.domain.enums
 
 enum class PenaltyType {
     PENALTY,
