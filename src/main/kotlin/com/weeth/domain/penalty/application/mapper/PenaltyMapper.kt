@@ -45,9 +45,9 @@ class PenaltyMapper {
     ): PenaltyResponse =
         PenaltyResponse(
             userId = user.id,
-            penaltyCount = null,
-            warningCount = null,
-            name = null,
+            name = user.name,
+            penaltyCount = user.penaltyCount,
+            warningCount = user.warningCount,
             cardinals = userCardinals.map { it.cardinal.cardinalNumber },
             penalties = penalties,
         )
