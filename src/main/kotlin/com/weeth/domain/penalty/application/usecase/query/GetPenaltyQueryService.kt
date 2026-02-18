@@ -6,6 +6,7 @@ import com.weeth.domain.penalty.application.mapper.PenaltyMapper
 import com.weeth.domain.penalty.domain.entity.Penalty
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
 import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.domain.service.CardinalGetService
 import com.weeth.domain.user.domain.service.UserCardinalGetService
 import com.weeth.domain.user.domain.service.UserGetService
@@ -31,13 +32,20 @@ class GetPenaltyQueryService(
 
         return cardinals.map { cardinal ->
             val penalties = penaltyRepository.findByCardinalIdOrderByIdDesc(cardinal.id)
+            val users = penalties.map { it.user }.distinct()
+            val userCardinalsMap =
+                userCardinalGetService
+                    .findAll(users)
+                    .groupBy { it.user.id }
 
             val responses =
                 penalties
                     .groupBy { it.user.id }
                     .entries
-                    .map { (_, userPenalties) -> toPenaltyResponse(userPenalties.first().user, userPenalties) }
-                    .sortedBy { it.userId }
+                    .map { (userId, userPenalties) ->
+                        val userCardinals = userCardinalsMap[userId] ?: emptyList()
+                        toPenaltyResponse(userPenalties.first().user, userPenalties, userCardinals)
+                    }.sortedBy { it.userId }
 
             mapper.toByCardinalResponse(cardinal.cardinalNumber, responses)
         }
@@ -48,15 +56,16 @@ class GetPenaltyQueryService(
         val user = userGetService.find(userId)
         val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
         val penalties = penaltyRepository.findByUserIdAndCardinalIdOrderByIdDesc(userId, currentCardinal.id)
+        val userCardinals = userCardinalGetService.getUserCardinals(user)
 
-        return toPenaltyResponse(user, penalties)
+        return toPenaltyResponse(user, penalties, userCardinals)
     }
 
     private fun toPenaltyResponse(
         user: User,
         penalties: List<Penalty>,
+        userCardinals: List<UserCardinal>,
     ): PenaltyResponse {
-        val userCardinals = userCardinalGetService.getUserCardinals(user)
         val penaltyDetails = penalties.map(mapper::toDetailResponse)
         return mapper.toResponse(user, penaltyDetails, userCardinals)
     }
