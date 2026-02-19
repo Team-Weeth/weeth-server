@@ -1,46 +1,72 @@
-package com.weeth.domain.account.domain.entity;
+package com.weeth.domain.account.domain.entity
 
-import jakarta.persistence.*;
-import com.weeth.global.common.entity.BaseEntity;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
+import com.weeth.domain.account.domain.vo.Money
+import com.weeth.global.common.entity.BaseEntity
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
 
 @Entity
-@Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@SuperBuilder
-public class Account extends BaseEntity {
-
+class Account(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "account_id")
-    private Long id;
-
-    private String description;
-
-    private Integer totalAmount;
-
-    private Integer currentAmount;
-
-    private Integer cardinal;
-
-    @OneToMany(mappedBy = "account", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<Receipt> receipts = new ArrayList<>();
-
-    public void spend(Receipt receipt) {
-        this.receipts.add(receipt);
-        this.currentAmount -= receipt.getAmount();
+    val id: Long = 0,
+    @Column(nullable = false)
+    val description: String,
+    @Column(nullable = false)
+    val totalAmount: Int,
+    @Column(nullable = false)
+    var currentAmount: Int,
+    @Column(nullable = false)
+    val cardinal: Int,
+) : BaseEntity() {
+    fun spend(amount: Money) {
+        require(amount.value > 0) { "사용 금액은 0보다 커야 합니다: ${amount.value}" }
+        check(currentAmount >= amount.value) { "잔액이 부족합니다. 현재: $currentAmount, 요청: ${amount.value}" }
+        currentAmount -= amount.value
     }
 
-    public void cancel(Receipt receipt) {
-        this.receipts.remove(receipt);
-        this.currentAmount += receipt.getAmount();
+    fun cancelSpend(amount: Money) {
+        require(amount.value > 0) { "취소 금액은 0보다 커야 합니다: ${amount.value}" }
+        check(currentAmount + amount.value <= totalAmount) { "총액을 초과할 수 없습니다. 총액: $totalAmount" }
+        currentAmount += amount.value
+    }
+
+    fun adjustSpend(
+        oldAmount: Money,
+        newAmount: Money,
+    ) {
+        cancelSpend(oldAmount)
+        spend(newAmount)
+    }
+
+    // Java interop overloads — removed when Java UseCases are migrated in Phase 5
+    fun spend(amount: Int) = spend(Money.of(amount))
+
+    fun cancelSpend(amount: Int) = cancelSpend(Money.of(amount))
+
+    fun adjustSpend(
+        oldAmount: Int,
+        newAmount: Int,
+    ) = adjustSpend(Money.of(oldAmount), Money.of(newAmount))
+
+    companion object {
+        @JvmStatic
+        fun create(
+            description: String,
+            totalAmount: Int,
+            cardinal: Int,
+        ): Account {
+            require(totalAmount > 0) { "총액은 0보다 커야 합니다: $totalAmount" }
+            return Account(
+                description = description,
+                totalAmount = totalAmount,
+                currentAmount = totalAmount,
+                cardinal = cardinal,
+            )
+        }
     }
 }
