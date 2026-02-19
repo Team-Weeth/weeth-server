@@ -6,7 +6,7 @@ import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
 import com.weeth.domain.attendance.application.usecase.command.CloseAttendanceUseCase
 import com.weeth.domain.attendance.application.usecase.command.UpdateAttendanceStatusUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
-import com.weeth.domain.schedule.application.dto.MeetingDTO
+import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.usecase.MeetingUseCase
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -46,7 +46,7 @@ class AttendanceAdminController(
     @Operation(summary = "정기모임 조회")
     fun getMeetings(
         @RequestParam(required = false) cardinal: Int?,
-    ): CommonResponse<MeetingDTO.Infos> {
+    ): CommonResponse<SessionInfosResponse> {
         val response = meetingUseCase.find(cardinal)
         return CommonResponse.success(AttendanceResponseCode.MEETING_FIND_SUCCESS, response)
     }

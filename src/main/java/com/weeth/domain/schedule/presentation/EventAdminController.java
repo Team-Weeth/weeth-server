@@ -4,7 +4,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import com.weeth.domain.schedule.application.dto.ScheduleDTO;
+import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest;
+import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest;
 import com.weeth.domain.schedule.application.exception.EventErrorCode;
 import com.weeth.domain.schedule.application.usecase.EventUseCase;
 import com.weeth.domain.schedule.application.usecase.MeetingUseCase;
@@ -29,9 +30,9 @@ public class EventAdminController {
 
     @PostMapping
     @Operation(summary = "일정/정기모임 생성")
-    public CommonResponse<Void> save(@Valid @RequestBody ScheduleDTO.Save dto,
+    public CommonResponse<Void> save(@Valid @RequestBody ScheduleSaveRequest dto,
                                      @Parameter(hidden = true) @CurrentUser Long userId) {
-        if (dto.type() == Type.EVENT) {
+        if (dto.getType() == Type.EVENT) {
             eventUseCase.save(dto, userId);
         } else {
             meetingUseCase.save(dto, userId);
@@ -42,9 +43,9 @@ public class EventAdminController {
 
     @PatchMapping("/{eventId}")
     @Operation(summary = "일정 수정 (type은 변경할 수 없게 해주세요.)")
-    public CommonResponse<Void> update(@PathVariable Long eventId, @Valid @RequestBody ScheduleDTO.Update dto,
+    public CommonResponse<Void> update(@PathVariable Long eventId, @Valid @RequestBody ScheduleUpdateRequest dto,
                                        @Parameter(hidden = true) @CurrentUser Long userId) {
-        if (dto.type() == Type.EVENT) {
+        if (dto.getType() == Type.EVENT) {
             eventUseCase.update(eventId, dto, userId);
         } else {
             meetingUseCase.update(dto, userId, eventId);

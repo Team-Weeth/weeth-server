@@ -3,7 +3,7 @@ package com.weeth.domain.schedule.presentation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.weeth.domain.schedule.application.dto.MeetingDTO;
+import com.weeth.domain.schedule.application.dto.response.SessionResponse;
 import com.weeth.domain.schedule.application.exception.MeetingErrorCode;
 import com.weeth.domain.schedule.application.usecase.MeetingUseCase;
 import com.weeth.global.auth.annotation.CurrentUser;
@@ -28,8 +28,8 @@ public class MeetingController {
 
     @GetMapping("/{meetingId}")
     @Operation(summary="정기모임 상세 조회")
-    public CommonResponse<MeetingDTO.Response> find(@Parameter(hidden = true) @CurrentUser Long userId,
-                                                    @PathVariable Long meetingId) {
+    public CommonResponse<SessionResponse> find(@Parameter(hidden = true) @CurrentUser Long userId,
+                                                @PathVariable Long meetingId) {
         return CommonResponse.success(MEETING_FIND_SUCCESS, meetingUseCase.find(userId, meetingId));
     }
 }

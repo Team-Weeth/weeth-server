@@ -2,6 +2,7 @@ package com.weeth.domain.schedule.presentation;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.weeth.domain.schedule.application.dto.response.ScheduleResponse;
 import com.weeth.domain.schedule.application.exception.EventErrorCode;
 import com.weeth.domain.schedule.application.exception.MeetingErrorCode;
 import com.weeth.domain.schedule.application.usecase.ScheduleUseCase;
@@ -18,7 +19,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static com.weeth.domain.schedule.application.dto.ScheduleDTO.Response;
 import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.SCHEDULE_MONTHLY_FIND_SUCCESS;
 import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.SCHEDULE_YEARLY_FIND_SUCCESS;
 
@@ -33,15 +33,17 @@ public class ScheduleController {
 
     @GetMapping("/monthly")
     @Operation(summary="월별 일정 조회")
-    public CommonResponse<List<Response>> findByMonthly(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
-                                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        return CommonResponse.success(SCHEDULE_MONTHLY_FIND_SUCCESS,scheduleUseCase.findByMonthly(start, end));
+    public CommonResponse<List<ScheduleResponse>> findByMonthly(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
+        return CommonResponse.success(SCHEDULE_MONTHLY_FIND_SUCCESS, scheduleUseCase.findByMonthly(start, end));
     }
 
     @GetMapping("/yearly")
     @Operation(summary="연도별 일정 조회")
-    public CommonResponse<Map<Integer, List<Response>>> findByYearly(@RequestParam Integer year,
-                                                                     @RequestParam Integer semester) {
-        return CommonResponse.success(SCHEDULE_YEARLY_FIND_SUCCESS,scheduleUseCase.findByYearly(year, semester));
+    public CommonResponse<Map<Integer, List<ScheduleResponse>>> findByYearly(
+            @RequestParam Integer year,
+            @RequestParam Integer semester) {
+        return CommonResponse.success(SCHEDULE_YEARLY_FIND_SUCCESS, scheduleUseCase.findByYearly(year, semester));
     }
 }
