@@ -1,7 +1,7 @@
 package com.weeth.domain.schedule.domain.service;
 
-import com.weeth.domain.schedule.domain.entity.Meeting;
-import com.weeth.domain.schedule.domain.repository.MeetingRepository;
+import com.weeth.domain.attendance.domain.entity.Session;
+import com.weeth.domain.attendance.domain.repository.SessionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class MeetingDeleteService {
 
-    private final MeetingRepository meetingRepository;
+    private final SessionRepository sessionRepository;
 
-    public void delete(Meeting meeting) {
-        meetingRepository.delete(meeting);
+    public void delete(Session session) {
+        sessionRepository.delete(session);
     }
 }

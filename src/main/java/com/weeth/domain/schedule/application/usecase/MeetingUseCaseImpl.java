@@ -3,6 +3,7 @@ package com.weeth.domain.schedule.application.usecase;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import com.weeth.domain.attendance.domain.entity.Attendance;
+import com.weeth.domain.attendance.domain.entity.Session;
 import com.weeth.domain.attendance.domain.service.AttendanceDeleteService;
 import com.weeth.domain.attendance.domain.service.AttendanceGetService;
 import com.weeth.domain.attendance.domain.service.AttendanceSaveService;
@@ -10,7 +11,6 @@ import com.weeth.domain.attendance.domain.service.AttendanceUpdateService;
 import com.weeth.domain.schedule.application.dto.MeetingDTO;
 import com.weeth.domain.schedule.application.dto.ScheduleDTO;
 import com.weeth.domain.schedule.application.mapper.MeetingMapper;
-import com.weeth.domain.schedule.domain.entity.Meeting;
 import com.weeth.domain.schedule.domain.service.MeetingDeleteService;
 import com.weeth.domain.schedule.domain.service.MeetingGetService;
 import com.weeth.domain.schedule.domain.service.MeetingSaveService;
@@ -55,29 +55,29 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
     private EntityManager em;
 
     @Override
-    public Response find(Long userId, Long meetingId) {
+    public Response find(Long userId, Long sessionId) {
         User user = userGetService.find(userId);
-        Meeting meeting = meetingGetService.find(meetingId);
+        Session session = meetingGetService.find(sessionId);
 
         if (Role.ADMIN == user.getRole()) {
-            return mapper.toAdminResponse(meeting)  ;
+            return mapper.toAdminResponse(session);
         }
 
-        return mapper.to(meeting);
+        return mapper.to(session);
     }
 
     @Override
     public MeetingDTO.Infos find(Integer cardinal) {
-        List<Meeting> meetings;
+        List<Session> sessions;
 
         if (cardinal == null) {
-            meetings = meetingGetService.findAll();
+            sessions = meetingGetService.findAll();
         } else {
-            meetings = meetingGetService.findMeetingByCardinal(cardinal);
+            sessions = meetingGetService.findMeetingByCardinal(cardinal);
         }
 
-        Meeting thisWeek = findThisWeek(meetings);
-        List<Meeting> sorted = sortMeetings(meetings);
+        Session thisWeek = findThisWeek(sessions);
+        List<Session> sorted = sortSessions(sessions);
 
         return new MeetingDTO.Infos(
             thisWeek != null ? mapper.toInfo(thisWeek) : null,
@@ -92,54 +92,52 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
 
         List<User> userList = userGetService.findAllByCardinal(cardinal);
 
-        Meeting meeting = mapper.from(dto, user);
-        meetingSaveService.save(meeting);
+        Session session = mapper.from(dto, user);
+        meetingSaveService.save(session);
 
-        attendanceSaveService.saveAll(userList, meeting);
+        attendanceSaveService.saveAll(userList, session);
     }
 
     @Override
     @Transactional
-    public void update(ScheduleDTO.Update dto, Long userId, Long meetingId) {
-        Meeting meeting = meetingGetService.find(meetingId);
+    public void update(ScheduleDTO.Update dto, Long userId, Long sessionId) {
+        Session session = meetingGetService.find(sessionId);
         User user = userGetService.find(userId);
-        meetingUpdateService.update(dto, user, meeting);
+        meetingUpdateService.update(dto, user, session);
     }
 
     @Override
     @Transactional
-    public void delete(Long meetingId) {
-        Meeting meeting = meetingGetService.find(meetingId);
-        List<Attendance> attendances = attendanceGetService.findAllByMeeting(meeting);
+    public void delete(Long sessionId) {
+        Session session = meetingGetService.find(sessionId);
+        List<Attendance> attendances = attendanceGetService.findAllByMeeting(session);
 
         attendanceUpdateService.updateUserAttendanceByStatus(attendances);
 
         em.flush();
         em.clear();
 
-        attendanceDeleteService.deleteAll(meeting);
-        meetingDeleteService.delete(meeting);
+        attendanceDeleteService.deleteAll(session);
+        meetingDeleteService.delete(session);
     }
 
-    private List<Meeting> sortMeetings(List<Meeting> meetings) {
-        return meetings.stream()
-            .sorted(Comparator.comparing(Meeting::getStart).reversed())
+    private List<Session> sortSessions(List<Session> sessions) {
+        return sessions.stream()
+            .sorted(Comparator.comparing(Session::getStart).reversed())
             .toList();
     }
 
-
-    private Meeting findThisWeek(List<Meeting> meetings) {
+    private Session findThisWeek(List<Session> sessions) {
         LocalDate today = LocalDate.now();
         LocalDate startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         LocalDate endOfWeek   = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY));
 
-        return meetings.stream()
-            .filter(m -> {
-                LocalDate d = m.getStart().toLocalDate();
+        return sessions.stream()
+            .filter(s -> {
+                LocalDate d = s.getStart().toLocalDate();
                 return !d.isBefore(startOfWeek) && !d.isAfter(endOfWeek);
             })
             .findFirst()
             .orElse(null);
     }
-
 }

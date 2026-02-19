@@ -1,10 +1,10 @@
 package com.weeth.domain.schedule.domain.service;
 
+import com.weeth.domain.attendance.domain.entity.Session;
+import com.weeth.domain.attendance.domain.entity.enums.SessionStatus;
+import com.weeth.domain.attendance.domain.repository.SessionRepository;
 import com.weeth.domain.schedule.application.dto.ScheduleDTO;
 import com.weeth.domain.schedule.application.mapper.ScheduleMapper;
-import com.weeth.domain.schedule.domain.entity.Meeting;
-import com.weeth.domain.schedule.domain.entity.enums.MeetingStatus;
-import com.weeth.domain.schedule.domain.repository.MeetingRepository;
 import com.weeth.domain.schedule.application.exception.MeetingNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,39 +16,39 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MeetingGetService {
 
-    private final MeetingRepository meetingRepository;
+    private final SessionRepository sessionRepository;
     private final ScheduleMapper mapper;
 
-    public Meeting find(Long meetingId) {
-        return meetingRepository.findById(meetingId)
+    public Session find(Long sessionId) {
+        return sessionRepository.findById(sessionId)
                 .orElseThrow(MeetingNotFoundException::new);
     }
 
     public List<ScheduleDTO.Response> find(LocalDateTime start, LocalDateTime end) {
-        return meetingRepository.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start).stream()
-                .map(meeting -> mapper.toScheduleDTO(meeting, true))
+        return sessionRepository.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start).stream()
+                .map(session -> mapper.toScheduleDTO(session, true))
                 .toList();
     }
 
-    public List<Meeting> find(Integer cardinal) {
-        return meetingRepository.findAllByCardinalOrderByStartAsc(cardinal);
+    public List<Session> find(Integer cardinal) {
+        return sessionRepository.findAllByCardinalOrderByStartAsc(cardinal);
     }
 
-    public List<Meeting> findMeetingByCardinal(Integer cardinal) {
-        return meetingRepository.findAllByCardinalOrderByStartDesc(cardinal);
+    public List<Session> findMeetingByCardinal(Integer cardinal) {
+        return sessionRepository.findAllByCardinalOrderByStartDesc(cardinal);
     }
 
-    public List<Meeting> findAll() {
-        return meetingRepository.findAllByOrderByStartDesc();
+    public List<Session> findAll() {
+        return sessionRepository.findAllByOrderByStartDesc();
     }
 
     public List<ScheduleDTO.Response> findByCardinal(Integer cardinal) {
-        return meetingRepository.findAllByCardinal(cardinal).stream()
-                .map(meeting -> mapper.toScheduleDTO(meeting, true))
+        return sessionRepository.findAllByCardinal(cardinal).stream()
+                .map(session -> mapper.toScheduleDTO(session, true))
                 .toList();
     }
 
-    public List<Meeting> findAllOpenMeetingsBeforeNow() {
-        return meetingRepository.findAllByMeetingStatusAndEndBeforeOrderByEndAsc(MeetingStatus.OPEN, LocalDateTime.now());
+    public List<Session> findAllOpenMeetingsBeforeNow() {
+        return sessionRepository.findAllByStatusAndEndBeforeOrderByEndAsc(SessionStatus.OPEN, LocalDateTime.now());
     }
 }
