@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import com.weeth.domain.user.application.exception.UserErrorCode;
 import com.weeth.domain.user.application.usecase.UserManageUseCase;
 import com.weeth.domain.user.domain.entity.enums.UsersOrderBy;
-import com.weeth.global.auth.jwt.exception.JwtErrorCode;
+import com.weeth.global.auth.jwt.application.exception.JwtErrorCode;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;

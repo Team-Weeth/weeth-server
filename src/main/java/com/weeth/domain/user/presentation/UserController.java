@@ -13,7 +13,7 @@ import com.weeth.domain.user.application.usecase.UserUseCase;
 import com.weeth.domain.user.domain.service.UserGetService;
 import com.weeth.global.auth.annotation.CurrentUser;
 import com.weeth.global.auth.jwt.application.dto.JwtDto;
-import com.weeth.global.auth.jwt.exception.JwtErrorCode;
+import com.weeth.global.auth.jwt.application.exception.JwtErrorCode;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;

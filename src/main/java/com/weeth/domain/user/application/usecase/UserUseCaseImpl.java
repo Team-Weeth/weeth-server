@@ -69,7 +69,7 @@ public class UserUseCaseImpl implements UserUseCase {
             throw new UserInActiveException();
         }
 
-        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole());
+        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole().name());
         return mapper.toLoginResponse(user, token);
     }
 
@@ -94,7 +94,7 @@ public class UserUseCaseImpl implements UserUseCase {
             throw new UserInActiveException();
         }
 
-        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole());
+        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole().name());
 
         return mapper.toLoginResponse(user, token);
     }
@@ -182,7 +182,7 @@ public class UserUseCaseImpl implements UserUseCase {
         JwtDto token = jwtManageUseCase.reIssueToken(requestToken);
 
         log.info("RefreshToken 발급 완료: {}", token);
-        return new JwtDto(token.accessToken(), token.refreshToken());
+        return new JwtDto(token.getAccessToken(), token.getRefreshToken());
     }
 
     @Override
@@ -206,9 +206,9 @@ public class UserUseCaseImpl implements UserUseCase {
 
     private long getKakaoId(Login dto) {
         KakaoTokenResponse tokenResponse = kakaoAuthService.getKakaoToken(dto.authCode());
-        KakaoUserInfoResponse userInfo = kakaoAuthService.getUserInfo(tokenResponse.access_token());
+        KakaoUserInfoResponse userInfo = kakaoAuthService.getUserInfo(tokenResponse.getAccessToken());
 
-        return userInfo.id();
+        return userInfo.getId();
     }
 
     private void validate(Update dto, Long userId) {
@@ -246,10 +246,10 @@ public class UserUseCaseImpl implements UserUseCase {
     public SocialLoginResponse appleLogin(Login dto) {
         // Apple Token 요청 및 유저 정보 요청
         AppleTokenResponse tokenResponse = appleAuthService.getAppleToken(dto.authCode());
-        AppleUserInfo userInfo = appleAuthService.verifyAndDecodeIdToken(tokenResponse.id_token());
+        AppleUserInfo userInfo = appleAuthService.verifyAndDecodeIdToken(tokenResponse.getIdToken());
 
-        String appleIdToken = tokenResponse.id_token();
-        String appleId = userInfo.appleId();
+        String appleIdToken = tokenResponse.getIdToken();
+        String appleId = userInfo.getAppleId();
 
         Optional<User> optionalUser = userGetService.findByAppleId(appleId);
 
@@ -264,7 +264,7 @@ public class UserUseCaseImpl implements UserUseCase {
             throw new UserInActiveException();
         }
 
-        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole());
+        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole().name());
         return mapper.toAppleLoginResponse(user, token);
     }
 
@@ -275,13 +275,13 @@ public class UserUseCaseImpl implements UserUseCase {
 
         // Apple authCode로 토큰 교환 후 ID Token 검증 및 사용자 정보 추출
         AppleTokenResponse tokenResponse = appleAuthService.getAppleToken(dto.appleAuthCode());
-        AppleUserInfo appleUserInfo = appleAuthService.verifyAndDecodeIdToken(tokenResponse.id_token());
+        AppleUserInfo appleUserInfo = appleAuthService.verifyAndDecodeIdToken(tokenResponse.getIdToken());
 
         Cardinal cardinal = cardinalGetService.findByUserSide(dto.cardinal());
 
         User user = mapper.from(dto);
         // Apple ID 설정
-        user.addAppleId(appleUserInfo.appleId());
+        user.addAppleId(appleUserInfo.getAppleId());
 
         UserCardinal userCardinal = new UserCardinal(user, cardinal);
 
