@@ -284,4 +284,58 @@ class AttendanceUseCaseImplTest :
                 }
             }
         }
+
+        describe("findAllAttendanceByMeeting") {
+            it("해당 정기모임의 출석 목록을 매핑하여 반환한다") {
+                val meetingId = 1L
+                val meeting = createOneDayMeeting(LocalDate.now(), 1, 1234, "Today")
+                val attendance1 = mockk<Attendance>()
+                val attendance2 = mockk<Attendance>()
+                val info1 = mockk<AttendanceDTO.AttendanceInfo>()
+                val info2 = mockk<AttendanceDTO.AttendanceInfo>()
+
+                every { meetingGetService.find(meetingId) } returns meeting
+                every { attendanceGetService.findAllByMeeting(meeting) } returns listOf(attendance1, attendance2)
+                every { attendanceMapper.toAttendanceInfoDto(attendance1) } returns info1
+                every { attendanceMapper.toAttendanceInfoDto(attendance2) } returns info2
+
+                val result = attendanceUseCase.findAllAttendanceByMeeting(meetingId)
+
+                result.size shouldBe 2
+                result[0] shouldBe info1
+                result[1] shouldBe info2
+            }
+        }
+
+        describe("updateAttendanceStatus") {
+            it("ABSENT로 변경 시 close + removeAttend + absent 호출") {
+                val attendance = mockk<Attendance>(relaxUnitFun = true)
+                val user = mockk<User>(relaxUnitFun = true)
+                every { attendanceGetService.findByAttendanceId(1L) } returns attendance
+                every { attendance.user } returns user
+
+                attendanceUseCase.updateAttendanceStatus(
+                    listOf(AttendanceDTO.UpdateStatus(1L, "ABSENT")),
+                )
+
+                verify { attendance.close() }
+                verify { user.removeAttend() }
+                verify { user.absent() }
+            }
+
+            it("ATTEND로 변경 시 attend + removeAbsent + attend 호출") {
+                val attendance = mockk<Attendance>(relaxUnitFun = true)
+                val user = mockk<User>(relaxUnitFun = true)
+                every { attendanceGetService.findByAttendanceId(2L) } returns attendance
+                every { attendance.user } returns user
+
+                attendanceUseCase.updateAttendanceStatus(
+                    listOf(AttendanceDTO.UpdateStatus(2L, "ATTEND")),
+                )
+
+                verify { attendance.attend() }
+                verify { user.removeAbsent() }
+                verify { user.attend() }
+            }
+        }
     })
