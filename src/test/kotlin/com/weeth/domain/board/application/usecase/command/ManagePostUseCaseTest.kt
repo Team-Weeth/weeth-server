@@ -18,7 +18,9 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.UserGetService
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -52,6 +54,32 @@ class ManagePostUseCaseTest :
                 postMapper,
             )
 
+        fun createUploadedPostFile(
+            fileName: String,
+            ownerId: Long = 1L,
+        ): File =
+            File.createUploaded(
+                fileName = fileName,
+                storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_$fileName",
+                fileSize = 10,
+                contentType = "image/png",
+                ownerType = FileOwnerType.POST,
+                ownerId = ownerId,
+            )
+
+        fun createUser(
+            id: Long = 1L,
+            role: Role = Role.USER,
+        ): User =
+            User
+                .builder()
+                .id(id)
+                .name("적순")
+                .email("test1@test.com")
+                .status(Status.ACTIVE)
+                .role(role)
+                .build()
+
         beforeTest {
             clearMocks(postRepository, boardRepository, userGetService, fileRepository, fileReader, fileMapper, postMapper)
             every { postRepository.save(any()) } answers { firstArg() }
@@ -64,7 +92,7 @@ class ManagePostUseCaseTest :
 
         describe("save") {
             it("일반 게시판에서 게시글을 저장한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val board = Board(id = 10L, name = "일반", type = BoardType.GENERAL)
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
@@ -78,7 +106,7 @@ class ManagePostUseCaseTest :
             }
 
             it("ADMIN 전용 게시판에 일반 사용자가 작성하면 예외를 던진다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val board =
                     Board(
                         id = 20L,
@@ -98,8 +126,29 @@ class ManagePostUseCaseTest :
                 verify(exactly = 0) { postRepository.save(any<Post>()) }
             }
 
+            it("비공개 게시판에 일반 사용자가 작성하면 예외를 던진다") {
+                val user = createUser(1L, Role.USER)
+                val board =
+                    Board(
+                        id = 21L,
+                        name = "비공개",
+                        type = BoardType.GENERAL,
+                        config = BoardConfig(isPrivate = true),
+                    )
+                val request = CreatePostRequest(title = "제목", content = "내용")
+
+                every { userGetService.find(1L) } returns user
+                every { boardRepository.findByIdAndIsDeletedFalse(21L) } returns board
+
+                shouldThrow<CategoryAccessDeniedException> {
+                    useCase.save(21L, request, 1L)
+                }
+
+                verify(exactly = 0) { postRepository.save(any<Post>()) }
+            }
+
             it("cardinalNumber가 전달되면 게시글에 반영된다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val board = Board(id = 11L, name = "일반", type = BoardType.GENERAL)
                 val request =
                     CreatePostRequest(
@@ -123,7 +172,7 @@ class ManagePostUseCaseTest :
             }
 
             it("존재하지 않는 boardId면 예외를 던진다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userGetService.find(1L) } returns user
@@ -154,25 +203,10 @@ class ManagePostUseCaseTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
                 val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
-                val oldFile =
-                    File.createUploaded(
-                        fileName = "old.png",
-                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_old.png",
-                        fileSize = 10,
-                        contentType = "image/png",
-                        ownerType = FileOwnerType.POST,
-                        ownerId = 1L,
-                    )
+                val oldFile = createUploadedPostFile("old.png")
                 val newFiles =
                     listOf(
-                        File.createUploaded(
-                            fileName = "new.png",
-                            storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440001_new.png",
-                            fileSize = 10,
-                            contentType = "image/png",
-                            ownerType = FileOwnerType.POST,
-                            ownerId = 1L,
-                        ),
+                        createUploadedPostFile("new.png"),
                     )
                 val request =
                     UpdatePostRequest(
@@ -197,6 +231,8 @@ class ManagePostUseCaseTest :
                 useCase.update(1L, request, 1L)
 
                 oldFile.status.name shouldBe "DELETED"
+                post.title shouldBe "수정"
+                post.content shouldBe "수정"
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
         }
@@ -206,15 +242,7 @@ class ManagePostUseCaseTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
                 val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
-                val oldFile =
-                    File.createUploaded(
-                        fileName = "old.png",
-                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_old.png",
-                        fileSize = 10,
-                        contentType = "image/png",
-                        ownerType = FileOwnerType.POST,
-                        ownerId = 1L,
-                    )
+                val oldFile = createUploadedPostFile("old.png")
 
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns listOf(oldFile)
