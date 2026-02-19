@@ -164,7 +164,7 @@ class UserManageUseCaseTest :
                 useCase.update(listOf(request))
 
                 verify { userUpdateService.update(user1, "ADMIN") }
-                verify { refreshTokenStorePort.updateRole(1L, "ADMIN") }
+                verify { refreshTokenStorePort.updateRole(1L, Role.ADMIN) }
             }
         }
 

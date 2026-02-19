@@ -1,7 +1,5 @@
 package com.weeth.global.auth.jwt.filter
 
-import com.weeth.domain.user.domain.entity.enums.Role
-import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
@@ -41,16 +39,13 @@ class JwtAuthenticationProcessingFilter(
 
     fun saveAuthentication(accessToken: String) {
         val claims = jwtTokenExtractor.extractClaims(accessToken) ?: throw TokenNotFoundException()
-        val role =
-            runCatching { Role.valueOf(claims.role) }
-                .getOrElse { throw InvalidTokenException() }
-        val principal = AuthenticatedUser(claims.id, claims.email, role)
+        val principal = AuthenticatedUser(claims.id, claims.email, claims.role)
 
         val authentication =
             UsernamePasswordAuthenticationToken(
                 principal,
                 null,
-                listOf(SimpleGrantedAuthority("ROLE_${role.name}")),
+                listOf(SimpleGrantedAuthority("ROLE_${claims.role.name}")),
             )
 
         SecurityContextHolder.getContext().authentication = authentication

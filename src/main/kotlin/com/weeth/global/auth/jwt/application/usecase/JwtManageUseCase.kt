@@ -1,5 +1,6 @@
 package com.weeth.global.auth.jwt.application.usecase
 
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.jwt.application.dto.JwtDto
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.port.RefreshTokenStorePort
@@ -15,7 +16,7 @@ class JwtManageUseCase(
     fun create(
         userId: Long,
         email: String,
-        role: String,
+        role: Role,
     ): JwtDto {
         val accessToken = jwtTokenProvider.createAccessToken(userId, email, role)
         val refreshToken = jwtTokenProvider.createRefreshToken(userId)
@@ -40,7 +41,7 @@ class JwtManageUseCase(
     private fun updateToken(
         userId: Long,
         refreshToken: String,
-        role: String,
+        role: Role,
         email: String,
     ) {
         refreshTokenStore.save(userId, refreshToken, role, email)

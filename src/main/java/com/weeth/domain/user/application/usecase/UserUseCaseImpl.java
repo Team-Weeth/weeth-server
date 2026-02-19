@@ -69,7 +69,7 @@ public class UserUseCaseImpl implements UserUseCase {
             throw new UserInActiveException();
         }
 
-        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole().name());
+        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole());
         return mapper.toLoginResponse(user, token);
     }
 
@@ -94,7 +94,7 @@ public class UserUseCaseImpl implements UserUseCase {
             throw new UserInActiveException();
         }
 
-        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole().name());
+        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole());
 
         return mapper.toLoginResponse(user, token);
     }
@@ -264,7 +264,7 @@ public class UserUseCaseImpl implements UserUseCase {
             throw new UserInActiveException();
         }
 
-        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole().name());
+        JwtDto token = jwtManageUseCase.create(user.getId(), user.getEmail(), user.getRole());
         return mapper.toAppleLoginResponse(user, token);
     }
 

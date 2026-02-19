@@ -1,5 +1,6 @@
 package com.weeth.global.auth.jwt.domain.service
 
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.config.properties.JwtProperties
 import io.kotest.assertions.throwables.shouldThrow
@@ -18,7 +19,7 @@ class JwtTokenProviderTest :
         val jwtProvider = JwtTokenProvider(jwtProperties)
 
         "access token 생성 후 claims를 파싱할 수 있다" {
-            val token = jwtProvider.createAccessToken(1L, "test@weeth.com", "ADMIN")
+            val token = jwtProvider.createAccessToken(1L, "test@weeth.com", Role.ADMIN)
 
             val claims = jwtProvider.parseClaims(token)
 

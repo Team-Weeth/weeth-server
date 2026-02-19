@@ -1,6 +1,7 @@
 package com.weeth.global.auth.jwt.infrastructure.store
 
 import com.weeth.config.TestContainersConfig
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.auth.jwt.application.exception.RedisTokenNotFoundException
 import com.weeth.global.auth.jwt.infrastructure.RedisRefreshTokenStoreAdapter
@@ -28,9 +29,9 @@ class RedisRefreshTokenStoreAdapterTest(
 
         describe("save/get") {
             it("실제 Redis에 role/email/token을 저장하고 조회한다") {
-                redisRefreshTokenStoreAdapter.save(1L, "rt", "ADMIN", "a@weeth.com")
+                redisRefreshTokenStoreAdapter.save(1L, "rt", Role.ADMIN, "a@weeth.com")
 
-                redisRefreshTokenStoreAdapter.getRole(1L) shouldBe "ADMIN"
+                redisRefreshTokenStoreAdapter.getRole(1L) shouldBe Role.ADMIN
                 redisRefreshTokenStoreAdapter.getEmail(1L) shouldBe "a@weeth.com"
                 redisTemplate.opsForHash<String, String>().get("refreshToken:1", "token") shouldBe "rt"
             }
@@ -38,13 +39,13 @@ class RedisRefreshTokenStoreAdapterTest(
 
         describe("validateRefreshToken") {
             it("저장된 토큰과 일치하면 예외가 발생하지 않는다") {
-                redisRefreshTokenStoreAdapter.save(2L, "stored", "USER", "u@weeth.com")
+                redisRefreshTokenStoreAdapter.save(2L, "stored", Role.USER, "u@weeth.com")
 
                 redisRefreshTokenStoreAdapter.validateRefreshToken(2L, "stored")
             }
 
             it("요청 토큰이 다르면 InvalidTokenException이 발생한다") {
-                redisRefreshTokenStoreAdapter.save(3L, "stored", "USER", "u@weeth.com")
+                redisRefreshTokenStoreAdapter.save(3L, "stored", Role.USER, "u@weeth.com")
 
                 shouldThrow<InvalidTokenException> {
                     redisRefreshTokenStoreAdapter.validateRefreshToken(3L, "different")
@@ -65,7 +66,7 @@ class RedisRefreshTokenStoreAdapterTest(
 
         describe("delete/updateRole") {
             it("delete 후 조회 시 예외가 발생한다") {
-                redisRefreshTokenStoreAdapter.save(4L, "rt", "USER", "x@weeth.com")
+                redisRefreshTokenStoreAdapter.save(4L, "rt", Role.USER, "x@weeth.com")
                 redisRefreshTokenStoreAdapter.delete(4L)
 
                 shouldThrow<RedisTokenNotFoundException> {
@@ -74,11 +75,11 @@ class RedisRefreshTokenStoreAdapterTest(
             }
 
             it("updateRole은 기존 저장 값의 role만 변경한다") {
-                redisRefreshTokenStoreAdapter.save(5L, "rt", "USER", "x@weeth.com")
+                redisRefreshTokenStoreAdapter.save(5L, "rt", Role.USER, "x@weeth.com")
 
-                redisRefreshTokenStoreAdapter.updateRole(5L, "ADMIN")
+                redisRefreshTokenStoreAdapter.updateRole(5L, Role.ADMIN)
 
-                redisRefreshTokenStoreAdapter.getRole(5L) shouldBe "ADMIN"
+                redisRefreshTokenStoreAdapter.getRole(5L) shouldBe Role.ADMIN
                 redisRefreshTokenStoreAdapter.getEmail(5L) shouldBe "x@weeth.com"
             }
         }

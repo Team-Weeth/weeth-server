@@ -1,5 +1,7 @@
 package com.weeth.global.auth.jwt.application.service
 
+import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.config.properties.JwtProperties
@@ -18,7 +20,7 @@ class JwtTokenExtractor(
     data class TokenClaims(
         val id: Long,
         val email: String,
-        val role: String,
+        val role: Role,
     )
 
     fun extractRefreshToken(request: HttpServletRequest): String =
@@ -58,7 +60,9 @@ class JwtTokenExtractor(
             TokenClaims(
                 id = claims.get(JwtTokenProvider.ID_CLAIM, Long::class.java),
                 email = claims.get(JwtTokenProvider.EMAIL_CLAIM, String::class.java),
-                role = claims.get(JwtTokenProvider.ROLE_CLAIM, String::class.java),
+                role =
+                    runCatching { Role.valueOf(claims.get(JwtTokenProvider.ROLE_CLAIM, String::class.java)) }
+                        .getOrElse { throw InvalidTokenException() },
             )
         }.getOrElse {
             log.error("액세스 토큰이 유효하지 않습니다.")

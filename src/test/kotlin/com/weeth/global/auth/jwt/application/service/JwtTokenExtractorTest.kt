@@ -1,5 +1,6 @@
 package com.weeth.global.auth.jwt.application.service
 
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.config.properties.JwtProperties
@@ -77,7 +78,7 @@ class JwtTokenExtractorTest :
 
                 tokenClaims?.id shouldBe 77L
                 tokenClaims?.email shouldBe "sample@com"
-                tokenClaims?.role shouldBe "USER"
+                tokenClaims?.role shouldBe Role.USER
                 verify(exactly = 1) { jwtProvider.parseClaims(token) }
             }
         }

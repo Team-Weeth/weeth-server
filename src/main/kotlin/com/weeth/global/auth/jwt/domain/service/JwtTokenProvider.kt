@@ -1,5 +1,6 @@
 package com.weeth.global.auth.jwt.domain.service
 
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.config.properties.JwtProperties
 import io.jsonwebtoken.Claims
@@ -31,7 +32,7 @@ class JwtTokenProvider(
     fun createAccessToken(
         id: Long,
         email: String,
-        role: String,
+        role: Role,
     ): String {
         val now = Date()
         return Jwts
@@ -39,7 +40,7 @@ class JwtTokenProvider(
             .subject(ACCESS_TOKEN_SUBJECT)
             .claim(ID_CLAIM, id)
             .claim(EMAIL_CLAIM, email)
-            .claim(ROLE_CLAIM, role)
+            .claim(ROLE_CLAIM, role.name)
             .issuedAt(now)
             .expiration(Date(now.time + accessTokenExpirationPeriod))
             .signWith(secretKey)

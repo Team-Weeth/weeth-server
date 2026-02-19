@@ -1,5 +1,6 @@
 package com.weeth.global.auth.jwt.filter
 
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.model.AuthenticatedUser
@@ -39,7 +40,7 @@ class JwtAuthenticationProcessingFilterTest :
 
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
-                every { jwtService.extractClaims("access-token") } returns JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", "ADMIN")
+                every { jwtService.extractClaims("access-token") } returns JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", Role.ADMIN)
 
                 filter.doFilter(request, response, chain)
 
@@ -66,16 +67,14 @@ class JwtAuthenticationProcessingFilterTest :
                 verify(exactly = 0) { jwtProvider.validate(any()) }
             }
 
-            it("role claim이 유효하지 않으면 인증을 저장하지 않는다") {
+            it("claims 추출에 실패하면 인증을 저장하지 않는다") {
                 val request = MockHttpServletRequest().apply { requestURI = "/api/v1/users" }
                 val response = MockHttpServletResponse()
                 val chain = MockFilterChain()
 
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
-                every {
-                    jwtService.extractClaims("access-token")
-                } returns JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", "NOT_A_ROLE")
+                every { jwtService.extractClaims("access-token") } returns null
 
                 filter.doFilter(request, response, chain)
 

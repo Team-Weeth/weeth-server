@@ -108,7 +108,7 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
             User user = userGetService.find(request.userId());
 
             userUpdateService.update(user, request.role().name());
-            refreshTokenStorePort.updateRole(user.getId(), request.role().name());
+            refreshTokenStorePort.updateRole(user.getId(), request.role());
         });
     }
 
