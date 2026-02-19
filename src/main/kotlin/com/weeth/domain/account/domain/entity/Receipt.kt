@@ -35,6 +35,7 @@ class Receipt(
         amount: Int,
         date: LocalDate,
     ) {
+        require(amount > 0) { "금액은 0보다 커야 합니다: $amount" }
         this.description = description
         this.source = source
         this.amount = amount

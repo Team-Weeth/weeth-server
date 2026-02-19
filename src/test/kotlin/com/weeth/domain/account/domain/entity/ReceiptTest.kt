@@ -1,6 +1,7 @@
 package com.weeth.domain.account.domain.entity
 
 import com.weeth.domain.account.fixture.ReceiptTestFixture
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import java.time.LocalDate
@@ -22,5 +23,13 @@ class ReceiptTest :
             receipt.source shouldBe "새 출처"
             receipt.amount shouldBe 20_000
             receipt.date shouldBe LocalDate.of(2025, 6, 1)
+        }
+
+        "update 시 amount가 0 이하면 IllegalArgumentException을 던진다" {
+            val receipt = ReceiptTestFixture.createReceipt(amount = 5_000)
+
+            shouldThrow<IllegalArgumentException> {
+                receipt.update("설명", "출처", 0, LocalDate.of(2025, 6, 1))
+            }
         }
     })
