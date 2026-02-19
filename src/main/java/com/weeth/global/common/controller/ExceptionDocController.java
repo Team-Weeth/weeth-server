@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import com.weeth.domain.account.application.exception.AccountErrorCode;
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode;
 import com.weeth.domain.board.application.exception.BoardErrorCode;
-import com.weeth.domain.board.application.exception.NoticeErrorCode;
-import com.weeth.domain.board.application.exception.PostErrorCode;
 import com.weeth.domain.comment.application.exception.CommentErrorCode;
 import com.weeth.domain.penalty.application.exception.PenaltyErrorCode;
 import com.weeth.domain.schedule.application.exception.EventErrorCode;
@@ -37,7 +35,7 @@ public class ExceptionDocController {
 
     @GetMapping("/board")
     @Operation(summary = "Board 도메인 에러 코드 목록")
-    @ApiErrorCodeExample({BoardErrorCode.class, NoticeErrorCode.class, PostErrorCode.class, CommentErrorCode.class})
+    @ApiErrorCodeExample({BoardErrorCode.class, CommentErrorCode.class})
     public void boardErrorCodes() {
     }
 
@@ -59,7 +57,6 @@ public class ExceptionDocController {
     public void userErrorCodes() {
     }
 
-    //todo: SAS 관련 예외도 추가
     @GetMapping("/auth")
     @Operation(summary = "인증/인가 에러 코드 목록")
     @ApiErrorCodeExample({JwtErrorCode.class})

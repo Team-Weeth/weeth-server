@@ -2,9 +2,10 @@ package com.weeth.domain.comment.application.usecase.query
 
 import com.weeth.config.QueryCountUtil
 import com.weeth.config.TestContainersConfig
+import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
-import com.weeth.domain.board.domain.entity.enums.Category
-import com.weeth.domain.board.domain.entity.enums.Part
+import com.weeth.domain.board.domain.entity.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.application.mapper.CommentMapper
@@ -36,6 +37,7 @@ import java.util.UUID
 @Tag("performance")
 class CommentQueryPerformanceTest(
     private val userRepository: UserRepository,
+    private val boardRepository: BoardRepository,
     private val postRepository: PostRepository,
     private val commentRepository: CommentRepository,
     private val fileRepository: FileRepository,
@@ -43,38 +45,48 @@ class CommentQueryPerformanceTest(
 ) : DescribeSpec({
         val runPerformanceTests = System.getProperty("runPerformanceTests")?.toBoolean() ?: false
 
+        fun createUser(): User =
+            userRepository.save(
+                User
+                    .builder()
+                    .name("perf-user")
+                    .email("perf-user@test.com")
+                    .status(Status.ACTIVE)
+                    .position(Position.BE)
+                    .role(Role.USER)
+                    .build(),
+            )
+
+        fun createBoard(): Board =
+            boardRepository.save(
+                Board(
+                    name = "perf-board",
+                    type = BoardType.GENERAL,
+                ),
+            )
+
+        fun createPost(
+            user: User,
+            board: Board,
+        ): Post =
+            postRepository.save(
+                Post(
+                    title = "query-performance",
+                    content = "measure comment query performance",
+                    user = user,
+                    board = board,
+                    cardinalNumber = 4,
+                ),
+            )
+
         fun setupData(
             rootCount: Int,
             childrenPerRoot: Int,
             filesPerComment: Int,
         ): List<Long> {
-            val user =
-                userRepository.save(
-                    User
-                        .builder()
-                        .name("perf-user")
-                        .email("perf-user@test.com")
-                        .status(Status.ACTIVE)
-                        .position(Position.BE)
-                        .role(Role.USER)
-                        .build(),
-                )
-            val post =
-                postRepository.save(
-                    Post
-                        .builder()
-                        .user(user)
-                        .title("query-performance")
-                        .content("measure comment query performance")
-                        .category(Category.StudyLog)
-                        .part(Part.BE)
-                        .parts(listOf(Part.BE))
-                        .cardinalNumber(4)
-                        .week(1)
-                        .comments(ArrayList())
-                        .commentCount(0)
-                        .build(),
-                )
+            val user = createUser()
+            val board = createBoard()
+            val post = createPost(user, board)
 
             val commentIds = mutableListOf<Long>()
             repeat(rootCount) { rootIdx ->
@@ -206,7 +218,6 @@ private class LegacyCommentQueryService(
             fileRepository
                 .findAll(FileOwnerType.COMMENT, comment.id)
                 .map(fileMapper::toFileResponse)
-                ?: emptyList()
 
         return commentMapper.toCommentDto(comment, children, files)
     }

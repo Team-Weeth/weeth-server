@@ -1,6 +1,5 @@
 package com.weeth.domain.comment.domain.entity
 
-import com.weeth.domain.board.domain.entity.Notice
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.comment.domain.vo.CommentContent
 import com.weeth.domain.user.domain.entity.User
@@ -30,10 +29,7 @@ class Comment(
     var isDeleted: Boolean = false,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "post_id")
-    val post: Post? = null, // Todo: Board 도메인 리팩토링시 반영
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "notice_id")
-    val notice: Notice? = null, // Todo: Board 도메인 리팩토링시 반영
+    val post: Post,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     val user: User,
@@ -65,29 +61,12 @@ class Comment(
             user: User,
             parent: Comment?,
         ): Comment {
-            require(parent == null || parent.post?.id == post.id) {
+            require(parent == null || parent.post.id == post.id) {
                 "부모 댓글은 동일한 게시글에 존재해야 합니다."
             }
             return Comment(
                 content = CommentContent.from(content).value,
                 post = post,
-                user = user,
-                parent = parent,
-            )
-        }
-
-        fun createForNotice(
-            content: String,
-            notice: Notice,
-            user: User,
-            parent: Comment?,
-        ): Comment {
-            require(parent == null || parent.notice?.id == notice.id) {
-                "부모 댓글은 동일한 공지글에 존재해야 합니다."
-            }
-            return Comment(
-                content = CommentContent.from(content).value,
-                notice = notice,
                 user = user,
                 parent = parent,
             )

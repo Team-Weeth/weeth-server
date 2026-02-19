@@ -9,9 +9,9 @@ object FileTestFixture {
     fun createFile(
         id: Long,
         fileName: String,
-        storageKey: StorageKey = StorageKey("NOTICE/2026-02/00000000-0000-0000-0000-000000000000_test.png"),
+        storageKey: StorageKey = StorageKey("POST/2026-02/00000000-0000-0000-0000-000000000000_test.png"),
         fileSize: Long = 1024,
-        ownerType: FileOwnerType = FileOwnerType.NOTICE,
+        ownerType: FileOwnerType = FileOwnerType.POST,
         ownerId: Long = 1L,
         contentType: FileContentType = FileContentType("image/png"),
     ): File =

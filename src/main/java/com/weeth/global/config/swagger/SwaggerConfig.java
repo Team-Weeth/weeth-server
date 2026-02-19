@@ -18,8 +18,8 @@ import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springdoc.core.models.GroupedOpenApi;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -41,7 +41,7 @@ import static java.util.stream.Collectors.groupingBy;
                         - Domain Error: **2xxx**
                         - Server Error: **3xxx**
                         - Client Error: **4xxx**
-
+                        
                         ## 도메인별 코드 범위
                         | Domain | Success | Error |
                         |--------|---------|------|
@@ -54,7 +54,7 @@ import static java.util.stream.Collectors.groupingBy;
                         | Schedule | 17xx | 27xx |
                         | User | 18xx | 28xx |
                         | Auth/JWT (Global) | - | 29xx |
-
+                        
                         > 각 API의 상세 응답 예시는 Swagger의 **Responses** 섹션에서 확인하세요.
                         """
         )
@@ -83,7 +83,7 @@ public class SwaggerConfig {
     public GroupedOpenApi adminApi() {
         return GroupedOpenApi.builder()
                 .group("admin")
-                .pathsToMatch("/api/v1/admin/**")
+                .pathsToMatch("/api/v1/admin/**", "/api/v4/admin/**")
                 .addOperationCustomizer(operationCustomizer())
                 .build();
     }
@@ -92,7 +92,7 @@ public class SwaggerConfig {
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
                 .group("public")
-                .pathsToExclude("/api/v1/admin/**")
+                .pathsToExclude("/api/v1/admin/**", "/api/v4/admin/**")
                 .addOperationCustomizer(operationCustomizer())
                 .build();
     }

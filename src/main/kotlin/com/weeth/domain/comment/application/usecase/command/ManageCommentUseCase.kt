@@ -1,10 +1,7 @@
 package com.weeth.domain.comment.application.usecase.command
 
-import com.weeth.domain.board.application.exception.NoticeNotFoundException
 import com.weeth.domain.board.application.exception.PostNotFoundException
-import com.weeth.domain.board.domain.entity.Notice
 import com.weeth.domain.board.domain.entity.Post
-import com.weeth.domain.board.domain.repository.NoticeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.comment.application.dto.request.CommentSaveRequest
 import com.weeth.domain.comment.application.dto.request.CommentUpdateRequest
@@ -26,14 +23,11 @@ import org.springframework.transaction.annotation.Transactional
 class ManageCommentUseCase(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
-    private val noticeRepository: NoticeRepository,
     private val userGetService: UserGetService,
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val fileMapper: FileMapper,
-) : PostCommentUsecase,
-    NoticeCommentUsecase {
-    // Todo: Board 도메인 리팩토링 후 단일 Post 대응으로 수정.
+) : PostCommentUsecase {
     @Transactional
     override fun savePostComment(
         dto: CommentSaveRequest,
@@ -88,61 +82,6 @@ class ManageCommentUseCase(
         post.decreaseCommentCount()
     }
 
-    @Transactional
-    override fun saveNoticeComment(
-        dto: CommentSaveRequest,
-        noticeId: Long,
-        userId: Long,
-    ) {
-        val user = userGetService.find(userId)
-        val notice = findNoticeWithLock(noticeId)
-        val parent =
-            dto.parentCommentId?.let { parentId ->
-                commentRepository.findByIdAndNoticeId(parentId, noticeId) ?: throw CommentNotFoundException()
-            }
-
-        val comment =
-            Comment.createForNotice(
-                content = dto.content,
-                notice = notice,
-                user = user,
-                parent = parent,
-            )
-        val savedComment = commentRepository.save(comment)
-        saveCommentFiles(savedComment, dto.files)
-        notice.increaseCommentCount()
-    }
-
-    @Transactional
-    override fun updateNoticeComment(
-        dto: CommentUpdateRequest,
-        noticeId: Long,
-        commentId: Long,
-        userId: Long,
-    ) {
-        val comment = commentRepository.findByIdAndNoticeId(commentId, noticeId) ?: throw CommentNotFoundException()
-        ensureOwner(comment, userId)
-        ensureNotDeleted(comment)
-
-        comment.updateContent(dto.content)
-        replaceCommentFiles(comment, dto.files)
-    }
-
-    @Transactional
-    override fun deleteNoticeComment(
-        noticeId: Long,
-        commentId: Long,
-        userId: Long,
-    ) {
-        val notice = findNoticeWithLock(noticeId)
-        val comment =
-            commentRepository.findByIdAndNoticeId(commentId, noticeId) ?: throw CommentNotFoundException()
-        ensureOwner(comment, userId)
-
-        deleteComment(comment)
-        notice.decreaseCommentCount()
-    }
-
     private fun saveCommentFiles(
         comment: Comment,
         files: List<FileSaveRequest>?,
@@ -157,10 +96,6 @@ class ManageCommentUseCase(
         comment: Comment,
         files: List<FileSaveRequest>?,
     ) {
-        // 계약:
-        // files == null -> 첨부 유지(변경 안 함)
-        // files == []   -> 기존 첨부 전체 삭제
-        // files == [...] -> 기존 첨부 삭제 후 전달 목록으로 교체
         if (files == null) {
             return
         }
@@ -174,21 +109,21 @@ class ManageCommentUseCase(
             throw CommentAlreadyDeletedException()
         }
 
-        // 자식 댓글이 없는 경우 -> 삭제
         if (comment.children.isEmpty()) {
             deleteCommentFiles(comment)
             val parent = comment.parent
+            val shouldDeleteParent = parent?.let { it.isDeleted && it.children.size == 1 } == true
             commentRepository.delete(comment)
 
-            // 부모 댓글이 삭제된 상태이고 자식 댓글이 1개인 경우 -> 부모 댓글도 삭제
-            if (parent != null && parent.isDeleted && parent.children.size == 1) {
-                deleteCommentFiles(parent)
-                commentRepository.delete(parent)
+            if (shouldDeleteParent) {
+                parent.let {
+                    deleteCommentFiles(it)
+                    commentRepository.delete(it)
+                }
             }
             return
         }
 
-        // 자식 댓글이 있는 경우 -> 댓글을 Soft Delete해 서비스에서 "삭제된 댓글"으로 표시
         deleteCommentFiles(comment)
         comment.markAsDeleted()
     }
@@ -219,6 +154,4 @@ class ManageCommentUseCase(
     }
 
     private fun findPostWithLock(postId: Long): Post = postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
-
-    private fun findNoticeWithLock(noticeId: Long): Notice = noticeRepository.findByIdWithLock(noticeId) ?: throw NoticeNotFoundException()
 }

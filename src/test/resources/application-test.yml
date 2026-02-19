@@ -1,6 +1,9 @@
 spring:
-  profiles:
-    active: test
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -10,3 +13,41 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
         generate_statistics: true
+
+weeth:
+  jwt:
+    key: test-jwt-secret-key-test-jwt-secret-key
+    access:
+      expiration: 30
+      header: Auth
+    refresh:
+      expiration: 1440
+      header: Refresh
+
+auth:
+  providers:
+    kakao:
+      authorize_uri: https://kauth.kakao.com/oauth/authorize
+      client_id: test-kakao-client-id
+      redirect_uri: http://localhost/test/kakao/callback
+      grant_type: authorization_code
+      token_uri: https://kauth.kakao.com/oauth/token
+      user_info_uri: https://kapi.kakao.com/v2/user/me
+    apple:
+      client_id: test.apple.client
+      team_id: TESTTEAMID
+      key_id: TESTKEYID
+      redirect_uri: http://localhost/test/apple/callback
+      token_uri: https://appleid.apple.com/auth/token
+      keys_uri: https://appleid.apple.com/auth/keys
+      private_key_path: test/AuthKey_TEST.p8
+
+cloud:
+  aws:
+    s3:
+      bucket: test-bucket
+    credentials:
+      access-key: test-access-key
+      secret-key: test-secret-key
+    region:
+      static: ap-northeast-2
