@@ -23,34 +23,33 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.HandlerMethod
 
+private const val SWAGGER_DESCRIPTION =
+    "## Response Code 규칙\n" +
+        "- Success: **1xxx**\n" +
+        "- Domain Error: **2xxx**\n" +
+        "- Server Error: **3xxx**\n" +
+        "- Client Error: **4xxx**\n\n" +
+        "## 도메인별 코드 범위\n" +
+        "| Domain | Success | Error |\n" +
+        "|--------|---------|------|\n" +
+        "| Account | 11xx | 21xx |\n" +
+        "| Attendance | 12xx | 22xx |\n" +
+        "| Board | 13xx | 23xx |\n" +
+        "| Comment | 14xx | 24xx |\n" +
+        "| File | 15xx | 25xx |\n" +
+        "| Penalty | 16xx | 26xx |\n" +
+        "| Schedule | 17xx | 27xx |\n" +
+        "| User | 18xx | 28xx |\n" +
+        "| Auth/JWT (Global) | - | 29xx |\n\n" +
+        "> 각 API의 상세 응답 예시는 Swagger의 **Responses** 섹션에서 확인하세요."
+
 @Configuration
 @OpenAPIDefinition(
     info =
         Info(
             title = "Weeth API",
             version = "v4.0.0",
-            description = """
-            ## Response Code 규칙
-            - Success: **1xxx**
-            - Domain Error: **2xxx**
-            - Server Error: **3xxx**
-            - Client Error: **4xxx**
-
-            ## 도메인별 코드 범위
-            | Domain | Success | Error |
-            |--------|---------|------|
-            | Account | 11xx | 21xx |
-            | Attendance | 12xx | 22xx |
-            | Board | 13xx | 23xx |
-            | Comment | 14xx | 24xx |
-            | File | 15xx | 25xx |
-            | Penalty | 16xx | 26xx |
-            | Schedule | 17xx | 27xx |
-            | User | 18xx | 28xx |
-            | Auth/JWT (Global) | - | 29xx |
-
-            > 각 API의 상세 응답 예시는 Swagger의 **Responses** 섹션에서 확인하세요.
-            """,
+            description = SWAGGER_DESCRIPTION,
         ),
 )
 class SwaggerConfig(
