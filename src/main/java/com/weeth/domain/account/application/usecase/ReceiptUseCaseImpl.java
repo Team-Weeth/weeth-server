@@ -42,8 +42,10 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
         cardinalGetService.findByAdminSide(dto.cardinal());
 
         Account account = accountGetService.find(dto.cardinal());
-        Receipt receipt = receiptSaveService.save(mapper.from(dto, account));
-        account.spend(receipt);
+        Receipt receipt = receiptSaveService.save(
+                Receipt.Companion.create(dto.description(), dto.source(), dto.amount(), dto.date(), account)
+        );
+        account.spend(dto.amount());
 
         List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, receipt.getId());
         fileRepository.saveAll(files);
@@ -51,12 +53,12 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
 
     @Override
     @Transactional
-    public void update(Long receiptId, ReceiptDTO.Update dto){
+    public void update(Long receiptId, ReceiptDTO.Update dto) {
         Account account = accountGetService.find(dto.cardinal());
         Receipt receipt = receiptGetService.find(receiptId);
-        account.cancel(receipt);
+        account.adjustSpend(receipt.getAmount(), dto.amount());
 
-        if(!dto.files().isEmpty()){ // 업데이트하려는 파일이 있다면 파일을 전체 삭제한 뒤 저장
+        if (!dto.files().isEmpty()) { // 업데이트하려는 파일이 있다면 파일을 전체 삭제한 뒤 저장
             List<File> fileList = getFiles(receiptId);
             fileRepository.deleteAll(fileList);
 
@@ -64,7 +66,6 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
             fileRepository.saveAll(files);
         }
         receiptUpdateService.update(receipt, dto);
-        account.spend(receipt);
     }
 
     private List<File> getFiles(Long receiptId) {
@@ -77,7 +78,7 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
         Receipt receipt = receiptGetService.find(id);
         List<File> fileList = fileReader.findAll(FileOwnerType.RECEIPT, id, null);
 
-        receipt.getAccount().cancel(receipt);
+        receipt.getAccount().cancelSpend(receipt.getAmount());
 
         fileRepository.deleteAll(fileList);
         receiptDeleteService.delete(receipt);

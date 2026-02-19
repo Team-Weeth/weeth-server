@@ -1,6 +1,5 @@
 package com.weeth.domain.account.domain.entity
 
-import com.weeth.domain.account.application.dto.ReceiptDTO
 import com.weeth.domain.account.fixture.ReceiptTestFixture
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -16,9 +15,8 @@ class ReceiptTest :
                     amount = 5_000,
                     date = LocalDate.of(2024, 1, 1),
                 )
-            val dto = ReceiptDTO.Update("새로운 설명", "새 출처", 20_000, LocalDate.of(2025, 6, 1), 40, emptyList())
 
-            receipt.update(dto)
+            receipt.update("새로운 설명", "새 출처", 20_000, LocalDate.of(2025, 6, 1))
 
             receipt.description shouldBe "새로운 설명"
             receipt.source shouldBe "새 출처"

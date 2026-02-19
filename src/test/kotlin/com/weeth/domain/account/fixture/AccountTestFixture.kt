@@ -10,13 +10,11 @@ object AccountTestFixture {
         currentAmount: Int = 100_000,
         cardinal: Int = 40,
     ): Account =
-        Account
-            .builder()
-            .id(id)
-            .description(description)
-            .totalAmount(totalAmount)
-            .currentAmount(currentAmount)
-            .cardinal(cardinal)
-            .receipts(mutableListOf())
-            .build()
+        Account(
+            id = id,
+            description = description,
+            totalAmount = totalAmount,
+            currentAmount = currentAmount,
+            cardinal = cardinal,
+        )
 }

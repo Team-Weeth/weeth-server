@@ -102,16 +102,14 @@ class AccountUseCaseImplTest :
             }
 
             context("정상 저장 시") {
-                it("account가 저장된다") {
+                it("Account.create로 생성된 account가 저장된다") {
                     val dto = AccountDTO.Save("설명", 100_000, 40)
-                    val account = AccountTestFixture.createAccount()
                     every { accountGetService.validate(40) } returns false
                     every { cardinalGetService.findByAdminSide(40) } returns mockk()
-                    every { accountMapper.from(dto) } returns account
 
                     useCase.save(dto)
 
-                    verify(exactly = 1) { accountSaveService.save(account) }
+                    verify(exactly = 1) { accountSaveService.save(any()) }
                 }
             }
         }

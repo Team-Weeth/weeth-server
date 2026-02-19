@@ -7,6 +7,7 @@ import com.weeth.domain.account.domain.service.ReceiptDeleteService
 import com.weeth.domain.account.domain.service.ReceiptGetService
 import com.weeth.domain.account.domain.service.ReceiptSaveService
 import com.weeth.domain.account.domain.service.ReceiptUpdateService
+import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.account.fixture.ReceiptTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
@@ -66,9 +67,9 @@ class ReceiptUseCaseImplTest :
 
         describe("save") {
             context("파일이 있는 경우") {
-                it("영수증 저장 후 account.spend와 fileRepository.saveAll이 호출된다") {
+                it("영수증 저장 후 fileRepository.saveAll이 호출된다") {
                     val account = AccountTestFixture.createAccount(cardinal = 40)
-                    val receipt = ReceiptTestFixture.createReceipt(id = 10L, amount = 5_000, account = account)
+                    val savedReceipt = ReceiptTestFixture.createReceipt(id = 10L, amount = 5_000, account = account)
                     val files = listOf(mockk<File>())
                     val dto =
                         ReceiptDTO.Save(
@@ -82,13 +83,12 @@ class ReceiptUseCaseImplTest :
 
                     every { cardinalGetService.findByAdminSide(40) } returns mockk()
                     every { accountGetService.find(40) } returns account
-                    every { receiptMapper.from(dto, account) } returns receipt
-                    every { receiptSaveService.save(receipt) } returns receipt
-                    every { fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, receipt.id) } returns files
+                    every { receiptSaveService.save(any()) } returns savedReceipt
+                    every { fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, savedReceipt.id) } returns files
 
                     useCase.save(dto)
 
-                    verify(exactly = 1) { receiptSaveService.save(receipt) }
+                    verify(exactly = 1) { receiptSaveService.save(any()) }
                     verify(exactly = 1) { fileRepository.saveAll(files) }
                 }
             }
@@ -96,18 +96,17 @@ class ReceiptUseCaseImplTest :
             context("파일이 없는 경우") {
                 it("영수증 저장 후 fileRepository.saveAll은 빈 리스트로 호출된다") {
                     val account = AccountTestFixture.createAccount(cardinal = 40)
-                    val receipt = ReceiptTestFixture.createReceipt(id = 11L, amount = 3_000, account = account)
+                    val savedReceipt = ReceiptTestFixture.createReceipt(id = 11L, amount = 3_000, account = account)
                     val dto = ReceiptDTO.Save("교통비", "지하철", 3_000, LocalDate.of(2024, 9, 2), 40, emptyList())
 
                     every { cardinalGetService.findByAdminSide(40) } returns mockk()
                     every { accountGetService.find(40) } returns account
-                    every { receiptMapper.from(dto, account) } returns receipt
-                    every { receiptSaveService.save(receipt) } returns receipt
-                    every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, receipt.id) } returns emptyList()
+                    every { receiptSaveService.save(any()) } returns savedReceipt
+                    every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, savedReceipt.id) } returns emptyList()
 
                     useCase.save(dto)
 
-                    verify(exactly = 1) { receiptSaveService.save(receipt) }
+                    verify(exactly = 1) { receiptSaveService.save(any()) }
                     verify(exactly = 1) { fileRepository.saveAll(emptyList()) }
                 }
             }
@@ -118,7 +117,7 @@ class ReceiptUseCaseImplTest :
                 val receiptId = 10L
                 val account = AccountTestFixture.createAccount(cardinal = 40)
                 val receipt = ReceiptTestFixture.createReceipt(id = receiptId, amount = 1_000, account = account)
-                account.spend(receipt)
+                account.spend(Money.of(receipt.amount)) // adjustSpend를 위한 사전 spend
 
                 val dto =
                     ReceiptDTO.Update(
@@ -146,11 +145,11 @@ class ReceiptUseCaseImplTest :
         }
 
         describe("delete") {
-            it("관련 파일 삭제 후 account.cancel이 호출되고 영수증이 삭제된다") {
+            it("관련 파일 삭제 후 cancelSpend가 호출되고 영수증이 삭제된다") {
                 val receiptId = 5L
                 val account = AccountTestFixture.createAccount(currentAmount = 100_000)
                 val receipt = ReceiptTestFixture.createReceipt(id = receiptId, amount = 10_000, account = account)
-                account.spend(receipt) // receipts 목록에 추가해야 cancel이 동작
+                account.spend(Money.of(receipt.amount)) // cancelSpend를 위한 사전 spend
                 val files = listOf(mockk<File>())
 
                 every { receiptGetService.find(receiptId) } returns receipt

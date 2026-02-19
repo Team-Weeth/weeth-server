@@ -9,6 +9,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ReceiptUpdateService {
     public void update(Receipt receipt, ReceiptDTO.Update dto) {
-        receipt.update(dto);
+        receipt.update(dto.description(), dto.source(), dto.amount(), dto.date());
     }
 }

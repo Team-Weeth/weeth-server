@@ -15,6 +15,4 @@ public interface AccountMapper {
     @Mapping(target = "time", source = "account.modifiedAt")
     AccountDTO.Response to(Account account, List<ReceiptDTO.Response> receipts);
 
-    @Mapping(target = "currentAmount", source = "totalAmount")
-    Account from(AccountDTO.Save dto);
 }

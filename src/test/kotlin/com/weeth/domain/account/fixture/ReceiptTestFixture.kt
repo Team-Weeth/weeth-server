@@ -13,13 +13,12 @@ object ReceiptTestFixture {
         date: LocalDate = LocalDate.of(2024, 9, 1),
         account: Account = AccountTestFixture.createAccount(),
     ): Receipt =
-        Receipt
-            .builder()
-            .id(id)
-            .description(description)
-            .source(source)
-            .amount(amount)
-            .date(date)
-            .account(account)
-            .build()
+        Receipt(
+            id = id,
+            description = description,
+            source = source,
+            amount = amount,
+            date = date,
+            account = account,
+        )
 }

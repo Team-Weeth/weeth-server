@@ -52,7 +52,7 @@ public class AccountUseCaseImpl implements AccountUseCase {
         validate(dto);
         cardinalGetService.findByAdminSide(dto.cardinal());
 
-        accountSaveService.save(accountMapper.from(dto));
+        accountSaveService.save(Account.Companion.create(dto.description(), dto.totalAmount(), dto.cardinal()));
     }
 
     private void validate(AccountDTO.Save dto) {

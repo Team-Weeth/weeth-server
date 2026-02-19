@@ -18,8 +18,4 @@ public interface ReceiptMapper {
 
     ReceiptDTO.Response to(Receipt receipt, List<FileResponse> fileUrls);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "description", source = "dto.description")
-    @Mapping(target = "account", source = "account")
-    Receipt from(ReceiptDTO.Save dto, Account account);
 }
