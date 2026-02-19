@@ -1,8 +1,8 @@
 package com.weeth.domain.board.application.usecase.query
 
+import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.NoSearchResultException
 import com.weeth.domain.board.application.exception.PageNotFoundException
-import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.entity.Board

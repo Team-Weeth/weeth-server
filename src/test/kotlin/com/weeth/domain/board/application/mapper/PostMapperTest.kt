@@ -79,5 +79,4 @@ class PostMapperTest :
                 response.fileUrls.size shouldBe 1
             }
         }
-
     })

@@ -44,5 +44,4 @@ class PostMapper {
         hasFile = hasFile,
         isNew = post.createdAt.isAfter(now.minusHours(24)),
     )
-
 }

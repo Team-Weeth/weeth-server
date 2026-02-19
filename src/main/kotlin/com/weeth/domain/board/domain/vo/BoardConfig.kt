@@ -6,5 +6,4 @@ data class BoardConfig(
     val commentEnabled: Boolean = true,
     val writePermission: Role = Role.USER,
     val isPrivate: Boolean = false,
-) {
-}
+)

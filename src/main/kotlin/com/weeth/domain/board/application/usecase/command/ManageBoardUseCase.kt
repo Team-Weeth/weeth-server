@@ -61,6 +61,5 @@ class ManageBoardUseCase(
         board.markDeleted()
     }
 
-    private fun findBoard(boardId: Long): Board =
-        boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
+    private fun findBoard(boardId: Long): Board = boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 }
