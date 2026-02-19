@@ -5,14 +5,14 @@ import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchE
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.entity.Session
+import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.service.AttendanceGetService
 import com.weeth.domain.attendance.domain.service.AttendanceUpdateService
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUserWithAttendances
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createInProgressMeeting
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDayMeeting
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createInProgressSession
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDaySession
 import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
-import com.weeth.domain.schedule.domain.entity.Meeting
 import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.User
@@ -53,19 +53,19 @@ class AttendanceUseCaseImplTest :
             it("여러 날짜의 출석 목록 중 시작/종료 날짜가 모두 오늘인 출석정보를 선택") {
                 val today = LocalDate.now()
 
-                val meetingYesterday = createOneDayMeeting(today.minusDays(1), 1, 1111, "Yesterday")
-                val meetingToday = createOneDayMeeting(today, 1, 2222, "Today")
-                val meetingTomorrow = createOneDayMeeting(today.plusDays(1), 1, 3333, "Tomorrow")
+                val sessionYesterday = createOneDaySession(today.minusDays(1), 1, 1111, "Yesterday")
+                val sessionToday = createOneDaySession(today, 1, 2222, "Today")
+                val sessionTomorrow = createOneDaySession(today.plusDays(1), 1, 3333, "Tomorrow")
 
                 val user =
                     createActiveUserWithAttendances(
                         "이지훈",
-                        listOf(meetingYesterday, meetingToday, meetingTomorrow),
+                        listOf(sessionYesterday, sessionToday, sessionTomorrow),
                     )
 
                 val expectedTodayAttendance =
                     user.attendances.first {
-                        it.meeting.title == "Today"
+                        it.session.title == "Today"
                     }
 
                 val mapped = mockk<AttendanceDTO.Main>()
@@ -82,13 +82,13 @@ class AttendanceUseCaseImplTest :
             it("시작/종료 날짜가 모두 오늘인 출석이 없다면 mapper.toMainDto(user, null)을 호출") {
                 val today = LocalDate.now()
 
-                val yesterdayMeeting = createOneDayMeeting(today.minusDays(1), 1, 1111, "Yesterday")
-                val tomorrowMeeting = createOneDayMeeting(today.plusDays(1), 1, 3333, "Tomorrow")
+                val sessionYesterday = createOneDaySession(today.minusDays(1), 1, 1111, "Yesterday")
+                val sessionTomorrow = createOneDaySession(today.plusDays(1), 1, 3333, "Tomorrow")
 
                 val user =
                     createActiveUserWithAttendances(
                         "이지훈",
-                        listOf(yesterdayMeeting, tomorrowMeeting),
+                        listOf(sessionYesterday, sessionTomorrow),
                     )
 
                 val mapped = mockk<AttendanceDTO.Main>()
@@ -104,19 +104,18 @@ class AttendanceUseCaseImplTest :
 
         describe("checkIn") {
             context("10분 전부터 출석이 가능한지 확인") {
-                it("5분 뒤 시작 회의에 출석 성공") {
+                it("5분 뒤 시작 세션에 출석 성공") {
                     val now = LocalDateTime.now()
-                    val meeting =
-                        Meeting
-                            .builder()
-                            .start(now.plusMinutes(5))
-                            .end(now.plusHours(2))
-                            .code(1234)
-                            .title("Today")
-                            .cardinal(1)
-                            .build()
+                    val session =
+                        Session(
+                            start = now.plusMinutes(5),
+                            end = now.plusHours(2),
+                            code = 1234,
+                            title = "Today",
+                            cardinal = 1,
+                        )
 
-                    val user = createActiveUserWithAttendances("이지훈", listOf(meeting))
+                    val user = createActiveUserWithAttendances("이지훈", listOf(session))
 
                     every { userGetService.find(userId) } returns user
 
@@ -128,17 +127,16 @@ class AttendanceUseCaseImplTest :
 
                 it("11분 전에 출석시 오류 발생") {
                     val now = LocalDateTime.now()
-                    val meeting =
-                        Meeting
-                            .builder()
-                            .start(now.plusMinutes(11))
-                            .end(now.plusHours(2))
-                            .code(1234)
-                            .title("Today")
-                            .cardinal(1)
-                            .build()
+                    val session =
+                        Session(
+                            start = now.plusMinutes(11),
+                            end = now.plusHours(2),
+                            code = 1234,
+                            title = "Today",
+                            cardinal = 1,
+                        )
 
-                    val user = createActiveUserWithAttendances("이지훈", listOf(meeting))
+                    val user = createActiveUserWithAttendances("이지훈", listOf(session))
 
                     every { userGetService.find(userId) } returns user
 
@@ -148,14 +146,14 @@ class AttendanceUseCaseImplTest :
                 }
             }
 
-            context("진행 중 정기모임이고 코드 일치하며 상태가 ATTEND가 아닐 때") {
+            context("진행 중 세션이고 코드 일치하며 상태가 ATTEND가 아닐 때") {
                 it("출석 처리된다") {
                     val user = mockk<User>()
-                    val inProgressMeeting = createInProgressMeeting(1, 1234, "InProgress")
+                    val inProgressSession = createInProgressSession(1, 1234, "InProgress")
                     val attendance = mockk<Attendance>()
-                    every { attendance.meeting } returns inProgressMeeting
+                    every { attendance.session } returns inProgressSession
                     every { attendance.isWrong(1234) } returns false
-                    every { attendance.status } returns Status.PENDING
+                    every { attendance.status } returns AttendanceStatus.PENDING
 
                     every { userGetService.find(userId) } returns user
                     every { user.attendances } returns listOf(attendance)
@@ -166,7 +164,7 @@ class AttendanceUseCaseImplTest :
                 }
             }
 
-            context("진행 중 정기모임이 없을 때") {
+            context("진행 중 세션이 없을 때") {
                 it("AttendanceNotFoundException") {
                     val user = mockk<User>()
                     every { userGetService.find(userId) } returns user
@@ -181,10 +179,10 @@ class AttendanceUseCaseImplTest :
             context("코드 불일치 시") {
                 it("AttendanceCodeMismatchException") {
                     val user = mockk<User>()
-                    val inProgressMeeting = createInProgressMeeting(1, 1234, "InProgress")
+                    val inProgressSession = createInProgressSession(1, 1234, "InProgress")
 
                     val attendance = mockk<Attendance>()
-                    every { attendance.meeting } returns inProgressMeeting
+                    every { attendance.session } returns inProgressSession
                     every { attendance.isWrong(9999) } returns true
 
                     every { userGetService.find(userId) } returns user
@@ -199,12 +197,12 @@ class AttendanceUseCaseImplTest :
             context("이미 ATTEND일 때") {
                 it("추가 처리 없이 종료") {
                     val user = mockk<User>()
-                    val inProgressMeeting = createInProgressMeeting(1, 1234, "InProgress")
+                    val inProgressSession = createInProgressSession(1, 1234, "InProgress")
 
                     val attendance = mockk<Attendance>()
-                    every { attendance.meeting } returns inProgressMeeting
+                    every { attendance.session } returns inProgressSession
                     every { attendance.isWrong(1234) } returns false
-                    every { attendance.status } returns Status.ATTEND
+                    every { attendance.status } returns AttendanceStatus.ATTEND
 
                     every { userGetService.find(userId) } returns user
                     every { user.attendances } returns listOf(attendance)
@@ -219,9 +217,9 @@ class AttendanceUseCaseImplTest :
         describe("findAllDetailsByCurrentCardinal") {
             it("현재 기수만 필터링·정렬하여 Detail 매핑") {
                 val today = LocalDate.now()
-                val meetingDayMinus1 = createOneDayMeeting(today.minusDays(1), 1, 1111, "D-1")
-                val meetingToday = createOneDayMeeting(today, 1, 2222, "D-Day")
-                val user = createActiveUserWithAttendances("이지훈", listOf(meetingDayMinus1, meetingToday))
+                val sessionDayMinus1 = createOneDaySession(today.minusDays(1), 1, 1111, "D-1")
+                val sessionToday = createOneDaySession(today, 1, 2222, "D-Day")
+                val user = createActiveUserWithAttendances("이지훈", listOf(sessionDayMinus1, sessionToday))
 
                 val userAttendances = user.attendances
                 val attendanceFirst = userAttendances[0]
@@ -253,16 +251,16 @@ class AttendanceUseCaseImplTest :
         }
 
         describe("close") {
-            it("당일 정기모임을 찾아 close") {
+            it("당일 세션을 찾아 close") {
                 val now = LocalDate.now()
-                val targetMeeting = createOneDayMeeting(now, 1, 1111, "Today")
-                val otherMeeting = createOneDayMeeting(now.minusDays(1), 1, 9999, "Yesterday")
+                val targetSession = createOneDaySession(now, 1, 1111, "Today")
+                val otherSession = createOneDaySession(now.minusDays(1), 1, 9999, "Yesterday")
 
                 val attendance1 = mockk<Attendance>()
                 val attendance2 = mockk<Attendance>()
 
-                every { meetingGetService.find(1) } returns listOf(targetMeeting, otherMeeting)
-                every { attendanceGetService.findAllByMeeting(targetMeeting) } returns listOf(attendance1, attendance2)
+                every { meetingGetService.find(1) } returns listOf(targetSession, otherSession)
+                every { attendanceGetService.findAllByMeeting(targetSession) } returns listOf(attendance1, attendance2)
 
                 attendanceUseCase.close(now, 1)
 
@@ -273,11 +271,11 @@ class AttendanceUseCaseImplTest :
                 }
             }
 
-            it("당일 정기모임이 없으면 MeetingNotFoundException") {
+            it("당일 세션이 없으면 MeetingNotFoundException") {
                 val now = LocalDate.now()
-                val otherDayMeeting = createOneDayMeeting(now.minusDays(1), 1, 9999, "Yesterday")
+                val otherDaySession = createOneDaySession(now.minusDays(1), 1, 9999, "Yesterday")
 
-                every { meetingGetService.find(1) } returns listOf(otherDayMeeting)
+                every { meetingGetService.find(1) } returns listOf(otherDaySession)
 
                 shouldThrow<MeetingNotFoundException> {
                     attendanceUseCase.close(now, 1)
@@ -286,20 +284,20 @@ class AttendanceUseCaseImplTest :
         }
 
         describe("findAllAttendanceByMeeting") {
-            it("해당 정기모임의 출석 목록을 매핑하여 반환한다") {
-                val meetingId = 1L
-                val meeting = createOneDayMeeting(LocalDate.now(), 1, 1234, "Today")
+            it("해당 세션의 출석 목록을 매핑하여 반환한다") {
+                val sessionId = 1L
+                val session = createOneDaySession(LocalDate.now(), 1, 1234, "Today")
                 val attendance1 = mockk<Attendance>()
                 val attendance2 = mockk<Attendance>()
                 val info1 = mockk<AttendanceDTO.AttendanceInfo>()
                 val info2 = mockk<AttendanceDTO.AttendanceInfo>()
 
-                every { meetingGetService.find(meetingId) } returns meeting
-                every { attendanceGetService.findAllByMeeting(meeting) } returns listOf(attendance1, attendance2)
+                every { meetingGetService.find(sessionId) } returns session
+                every { attendanceGetService.findAllByMeeting(session) } returns listOf(attendance1, attendance2)
                 every { attendanceMapper.toAttendanceInfoDto(attendance1) } returns info1
                 every { attendanceMapper.toAttendanceInfoDto(attendance2) } returns info2
 
-                val result = attendanceUseCase.findAllAttendanceByMeeting(meetingId)
+                val result = attendanceUseCase.findAllAttendanceByMeeting(sessionId)
 
                 result.size shouldBe 2
                 result[0] shouldBe info1

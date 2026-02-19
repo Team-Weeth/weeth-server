@@ -1,7 +1,8 @@
 package com.weeth.domain.schedule.application.usecase
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.enums.Status
+import com.weeth.domain.attendance.domain.entity.Session
+import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.service.AttendanceDeleteService
 import com.weeth.domain.attendance.domain.service.AttendanceGetService
 import com.weeth.domain.attendance.domain.service.AttendanceSaveService
@@ -9,7 +10,6 @@ import com.weeth.domain.attendance.domain.service.AttendanceUpdateService
 import com.weeth.domain.schedule.application.dto.MeetingDTO
 import com.weeth.domain.schedule.application.dto.ScheduleDTO
 import com.weeth.domain.schedule.application.mapper.MeetingMapper
-import com.weeth.domain.schedule.domain.entity.Meeting
 import com.weeth.domain.schedule.domain.entity.enums.Type
 import com.weeth.domain.schedule.domain.service.MeetingDeleteService
 import com.weeth.domain.schedule.domain.service.MeetingGetService
@@ -83,56 +83,56 @@ class MeetingUseCaseImplTest :
             )
         }
 
-        describe("find(userId, meetingId)") {
-            val meetingId = 1L
+        describe("find(userId, sessionId)") {
+            val sessionId = 1L
             val userId = 10L
-            val meeting = ScheduleTestFixture.createMeeting(id = meetingId)
+            val session = ScheduleTestFixture.createSession(id = sessionId)
 
             context("ADMIN 유저일 때") {
                 it("toAdminResponse로 매핑한다") {
                     val adminUser = mockk<User>()
                     every { adminUser.role } returns Role.ADMIN
                     every { userGetService.find(userId) } returns adminUser
-                    every { meetingGetService.find(meetingId) } returns meeting
+                    every { meetingGetService.find(sessionId) } returns session
                     val adminResponse = mockk<MeetingDTO.Response>()
-                    every { meetingMapper.toAdminResponse(meeting) } returns adminResponse
+                    every { meetingMapper.toAdminResponse(session) } returns adminResponse
 
-                    val result = useCase.find(userId, meetingId)
+                    val result = useCase.find(userId, sessionId)
 
                     result shouldBe adminResponse
-                    verify { meetingMapper.toAdminResponse(meeting) }
+                    verify { meetingMapper.toAdminResponse(session) }
                 }
             }
 
             context("일반 유저일 때") {
-                it("to(meeting)으로 매핑한다 (코드 미노출)") {
+                it("to(session)으로 매핑한다 (코드 미노출)") {
                     val normalUser = mockk<User>()
                     every { normalUser.role } returns Role.USER
                     every { userGetService.find(userId) } returns normalUser
-                    every { meetingGetService.find(meetingId) } returns meeting
+                    every { meetingGetService.find(sessionId) } returns session
                     val normalResponse = mockk<MeetingDTO.Response>()
-                    every { meetingMapper.to(meeting) } returns normalResponse
+                    every { meetingMapper.to(session) } returns normalResponse
 
-                    val result = useCase.find(userId, meetingId)
+                    val result = useCase.find(userId, sessionId)
 
                     result shouldBe normalResponse
-                    verify { meetingMapper.to(meeting) }
+                    verify { meetingMapper.to(session) }
                 }
             }
         }
 
         describe("find(cardinal)") {
-            it("이번 주 정기모임이 있으면 thisWeek에 포함된다") {
+            it("이번 주 세션이 있으면 thisWeek에 포함된다") {
                 val now = LocalDateTime.now()
-                val thisWeekMeeting =
-                    ScheduleTestFixture.createMeeting(
+                val thisWeekSession =
+                    ScheduleTestFixture.createSession(
                         id = 1L,
                         title = "This Week",
                         start = now,
                         end = now.plusHours(2),
                     )
-                val lastWeekMeeting =
-                    ScheduleTestFixture.createMeeting(
+                val lastWeekSession =
+                    ScheduleTestFixture.createSession(
                         id = 2L,
                         title = "Last Week",
                         start = now.minusDays(14),
@@ -141,9 +141,9 @@ class MeetingUseCaseImplTest :
                 val thisWeekInfo = MeetingDTO.Info(1L, 1, "This Week", now)
                 val lastWeekInfo = MeetingDTO.Info(2L, 1, "Last Week", now.minusDays(14))
 
-                every { meetingGetService.findMeetingByCardinal(1) } returns listOf(thisWeekMeeting, lastWeekMeeting)
-                every { meetingMapper.toInfo(thisWeekMeeting) } returns thisWeekInfo
-                every { meetingMapper.toInfo(lastWeekMeeting) } returns lastWeekInfo
+                every { meetingGetService.findMeetingByCardinal(1) } returns listOf(thisWeekSession, lastWeekSession)
+                every { meetingMapper.toInfo(thisWeekSession) } returns thisWeekInfo
+                every { meetingMapper.toInfo(lastWeekSession) } returns lastWeekInfo
 
                 val result = useCase.find(1)
 
@@ -153,12 +153,12 @@ class MeetingUseCaseImplTest :
         }
 
         describe("save") {
-            it("정기모임 저장 후 해당 기수 전체 유저에게 출석을 생성한다") {
+            it("세션 저장 후 해당 기수 전체 유저에게 출석을 생성한다") {
                 val userId = 10L
                 val user = mockk<User>()
                 val cardinal = mockk<Cardinal>()
                 val userList = listOf(mockk<User>(), mockk<User>(), mockk<User>())
-                val meeting = ScheduleTestFixture.createMeeting()
+                val session = ScheduleTestFixture.createSession()
                 val dto =
                     ScheduleDTO.Save(
                         "Title",
@@ -174,34 +174,34 @@ class MeetingUseCaseImplTest :
                 every { userGetService.find(userId) } returns user
                 every { cardinalGetService.findByUserSide(1) } returns cardinal
                 every { userGetService.findAllByCardinal(cardinal) } returns userList
-                every { meetingMapper.from(dto, user) } returns meeting
+                every { meetingMapper.from(dto, user) } returns session
 
                 useCase.save(dto, userId)
 
-                verify(exactly = 1) { meetingSaveService.save(meeting) }
-                verify(exactly = 1) { attendanceSaveService.saveAll(userList, meeting) }
+                verify(exactly = 1) { meetingSaveService.save(session) }
+                verify(exactly = 1) { attendanceSaveService.saveAll(userList, session) }
             }
         }
 
         describe("delete") {
-            it("출석 통계 롤백 후 출석 삭제 → 정기모임 삭제 순서로 처리한다") {
-                val meetingId = 1L
-                val meeting = ScheduleTestFixture.createMeeting(id = meetingId)
+            it("출석 통계 롤백 후 출석 삭제 → 세션 삭제 순서로 처리한다") {
+                val sessionId = 1L
+                val session = ScheduleTestFixture.createSession(id = sessionId)
                 val attendance1 = mockk<Attendance>()
                 val attendance2 = mockk<Attendance>()
                 val attendances = listOf(attendance1, attendance2)
 
-                every { meetingGetService.find(meetingId) } returns meeting
-                every { attendanceGetService.findAllByMeeting(meeting) } returns attendances
+                every { meetingGetService.find(sessionId) } returns session
+                every { attendanceGetService.findAllByMeeting(session) } returns attendances
 
-                useCase.delete(meetingId)
+                useCase.delete(sessionId)
 
                 verify(ordering = io.mockk.Ordering.ORDERED) {
                     attendanceUpdateService.updateUserAttendanceByStatus(attendances)
                     em.flush()
                     em.clear()
-                    attendanceDeleteService.deleteAll(meeting)
-                    meetingDeleteService.delete(meeting)
+                    attendanceDeleteService.deleteAll(session)
+                    meetingDeleteService.delete(session)
                 }
             }
         }

@@ -1,7 +1,7 @@
 package com.weeth.domain.user.application.usecase
 
+import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.attendance.domain.service.AttendanceSaveService
-import com.weeth.domain.schedule.domain.entity.Meeting
 import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.application.dto.request.UserRequestDto
 import com.weeth.domain.user.application.dto.response.UserResponseDto
@@ -141,7 +141,7 @@ class UserManageUseCaseTest :
                 val user1 = UserTestFixture.createWaitingUser1(1L)
                 val userIds = UserRequestDto.UserId(listOf(1L))
                 val cardinal = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 8, year = 2020, semester = 2)
-                val meetings = listOf(mockk<Meeting>())
+                val meetings = listOf(mockk<Session>())
 
                 every { userGetService.findAll(userIds.userId()) } returns listOf(user1)
                 every { userCardinalGetService.getCurrentCardinal(user1) } returns cardinal
@@ -205,7 +205,7 @@ class UserManageUseCaseTest :
                         .build()
                 val nextCardinal = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 4, year = 2020, semester = 2)
                 val request = UserRequestDto.UserApplyOB(1L, 4)
-                val meeting = listOf(mockk<Meeting>())
+                val meeting = listOf(mockk<Session>())
 
                 every { userGetService.find(1L) } returns user
                 every { cardinalGetService.findByAdminSide(4) } returns nextCardinal
