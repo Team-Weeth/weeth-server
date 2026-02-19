@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "COMMENT-BOARD", description = "게시판 댓글 API")
+@Tag(name = "COMMENT-POST", description = "게시글 댓글 API")
 @RestController
-@RequestMapping("/api/v1/board/{boardId}/comments")
+@RequestMapping("/api/v1/posts/{postId}/comments")
 @ApiErrorCodeExample(CommentErrorCode::class)
 class PostCommentController(
     private val postCommentUsecase: PostCommentUsecase,
@@ -30,10 +30,10 @@ class PostCommentController(
     @Operation(summary = "게시글 댓글 작성")
     fun savePostComment(
         @RequestBody @Valid dto: CommentSaveRequest,
-        @PathVariable boardId: Long,
+        @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<String> {
-        postCommentUsecase.savePostComment(dto, boardId, userId)
+        postCommentUsecase.savePostComment(dto, postId, userId)
         return CommonResponse.success(CommentResponseCode.POST_COMMENT_CREATED_SUCCESS)
     }
 
@@ -44,22 +44,22 @@ class PostCommentController(
     )
     fun updatePostComment(
         @RequestBody @Valid dto: CommentUpdateRequest,
-        @PathVariable boardId: Long,
+        @PathVariable postId: Long,
         @PathVariable commentId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<String> {
-        postCommentUsecase.updatePostComment(dto, boardId, commentId, userId)
+        postCommentUsecase.updatePostComment(dto, postId, commentId, userId)
         return CommonResponse.success(CommentResponseCode.POST_COMMENT_UPDATED_SUCCESS)
     }
 
     @DeleteMapping("/{commentId}")
     @Operation(summary = "게시글 댓글 삭제")
     fun deletePostComment(
-        @PathVariable boardId: Long,
+        @PathVariable postId: Long,
         @PathVariable commentId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<String> {
-        postCommentUsecase.deletePostComment(boardId, commentId, userId)
+        postCommentUsecase.deletePostComment(postId, commentId, userId)
         return CommonResponse.success(CommentResponseCode.POST_COMMENT_DELETED_SUCCESS)
     }
 }

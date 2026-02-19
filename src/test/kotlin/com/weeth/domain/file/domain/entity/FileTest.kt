@@ -123,10 +123,10 @@ class FileTest :
                 val file =
                     File.createUploaded(
                         fileName = "doc.pdf",
-                        storageKey = "NOTICE/2026-02/550e8400-e29b-41d4-a716-446655440000_doc.pdf",
+                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_doc.pdf",
                         fileSize = 100,
                         contentType = "application/pdf",
-                        ownerType = FileOwnerType.NOTICE,
+                        ownerType = FileOwnerType.POST,
                         ownerId = 2L,
                     )
 

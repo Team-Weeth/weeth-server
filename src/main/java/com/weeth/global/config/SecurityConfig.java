@@ -1,7 +1,6 @@
 package com.weeth.global.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.weeth.domain.user.domain.service.UserGetService;
 import com.weeth.global.auth.authentication.CustomAccessDeniedHandler;
 import com.weeth.global.auth.authentication.CustomAuthenticationEntryPoint;
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase;
@@ -39,7 +38,6 @@ public class SecurityConfig {
     private final JwtProvider jwtProvider;
     private final JwtService jwtService;
     private final JwtManageUseCase jwtManageUseCase;
-    private final UserGetService userGetService;
     private final ObjectMapper objectMapper;
 
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
@@ -78,7 +76,7 @@ public class SecurityConfig {
                                             return new AuthorizationDecision(allowed);
                                         })
                                         .requestMatchers("/actuator/health").permitAll()
-                                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                                        .requestMatchers("/api/v1/admin/**", "/api/v4/admin/**").hasRole("ADMIN")
                                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exceptionHandling ->
@@ -112,6 +110,6 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationProcessingFilter jwtAuthenticationProcessingFilter() {
-        return new JwtAuthenticationProcessingFilter(jwtProvider, jwtService, userGetService);
+        return new JwtAuthenticationProcessingFilter(jwtProvider, jwtService);
     }
 }

@@ -15,12 +15,7 @@ interface FileReader {
         ownerType: FileOwnerType,
         ownerIds: List<Long>,
         status: FileStatus? = FileStatus.UPLOADED,
-    ): List<File> {
-        if (ownerIds.isEmpty()) {
-            return emptyList()
-        }
-        return ownerIds.flatMap { findAll(ownerType, it, status) }
-    }
+    ): List<File>
 
     fun exists(
         ownerType: FileOwnerType,

@@ -87,4 +87,4 @@ public class UserResponseDto {
             Role role
     ) {
     }
-}
+} //todo: User 전역 dto 구현 (id, 이름, role)
