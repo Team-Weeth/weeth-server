@@ -42,7 +42,7 @@ class GetPostQueryService(
         role: Role,
     ): PostDetailResponse {
         val post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
-        if (!post.board.isAccessibleBy(role)) {
+        if (post.board.isDeleted || !post.board.isAccessibleBy(role)) {
             throw PostNotFoundException()
         }
 

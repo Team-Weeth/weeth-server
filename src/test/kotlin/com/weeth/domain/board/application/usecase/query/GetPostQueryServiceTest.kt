@@ -141,6 +141,18 @@ class GetPostQueryServiceTest :
                     queryService.findPost(1L, Role.USER)
                 }
             }
+
+            it("삭제된 게시판의 게시글은 조회할 수 없다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val deletedBoard = Board(id = 3L, name = "삭제", type = BoardType.GENERAL, isDeleted = true)
+                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = deletedBoard, commentCount = 0)
+
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+
+                shouldThrow<PostNotFoundException> {
+                    queryService.findPost(1L, Role.USER)
+                }
+            }
         }
 
         describe("searchPosts") {
