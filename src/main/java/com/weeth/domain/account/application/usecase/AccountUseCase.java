@@ -1,9 +1,10 @@
 package com.weeth.domain.account.application.usecase;
 
-import com.weeth.domain.account.application.dto.AccountDTO;
+import com.weeth.domain.account.application.dto.request.AccountSaveRequest;
+import com.weeth.domain.account.application.dto.response.AccountResponse;
 
 public interface AccountUseCase {
-    AccountDTO.Response find(Integer cardinal);
+    AccountResponse find(Integer cardinal);
 
-    void save(AccountDTO.Save dto);
+    void save(AccountSaveRequest dto);
 }

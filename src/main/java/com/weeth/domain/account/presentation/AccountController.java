@@ -2,7 +2,7 @@ package com.weeth.domain.account.presentation;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import com.weeth.domain.account.application.dto.AccountDTO;
+import com.weeth.domain.account.application.dto.response.AccountResponse;
 import com.weeth.domain.account.application.exception.AccountErrorCode;
 import com.weeth.domain.account.application.usecase.AccountUseCase;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
@@ -25,7 +25,7 @@ public class AccountController {
 
     @GetMapping("/{cardinal}")
     @Operation(summary="회비 내역 조회")
-    public CommonResponse<AccountDTO.Response> find(@PathVariable Integer cardinal) {
+    public CommonResponse<AccountResponse> find(@PathVariable Integer cardinal) {
         return CommonResponse.success(ACCOUNT_FIND_SUCCESS,accountUseCase.find(cardinal));
     }
 }

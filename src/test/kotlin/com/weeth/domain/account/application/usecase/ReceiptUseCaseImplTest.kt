@@ -1,6 +1,7 @@
 package com.weeth.domain.account.application.usecase
 
-import com.weeth.domain.account.application.dto.ReceiptDTO
+import com.weeth.domain.account.application.dto.request.ReceiptSaveRequest
+import com.weeth.domain.account.application.dto.request.ReceiptUpdateRequest
 import com.weeth.domain.account.application.mapper.ReceiptMapper
 import com.weeth.domain.account.domain.service.AccountGetService
 import com.weeth.domain.account.domain.service.ReceiptDeleteService
@@ -72,7 +73,7 @@ class ReceiptUseCaseImplTest :
                     val savedReceipt = ReceiptTestFixture.createReceipt(id = 10L, amount = 5_000, account = account)
                     val files = listOf(mockk<File>())
                     val dto =
-                        ReceiptDTO.Save(
+                        ReceiptSaveRequest(
                             "간식비",
                             "편의점",
                             5_000,
@@ -84,7 +85,7 @@ class ReceiptUseCaseImplTest :
                     every { cardinalGetService.findByAdminSide(40) } returns mockk()
                     every { accountGetService.find(40) } returns account
                     every { receiptSaveService.save(any()) } returns savedReceipt
-                    every { fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, savedReceipt.id) } returns files
+                    every { fileMapper.toFileList(dto.files, FileOwnerType.RECEIPT, savedReceipt.id) } returns files
 
                     useCase.save(dto)
 
@@ -97,7 +98,7 @@ class ReceiptUseCaseImplTest :
                 it("영수증 저장 후 fileRepository.saveAll은 빈 리스트로 호출된다") {
                     val account = AccountTestFixture.createAccount(cardinal = 40)
                     val savedReceipt = ReceiptTestFixture.createReceipt(id = 11L, amount = 3_000, account = account)
-                    val dto = ReceiptDTO.Save("교통비", "지하철", 3_000, LocalDate.of(2024, 9, 2), 40, emptyList())
+                    val dto = ReceiptSaveRequest("교통비", "지하철", 3_000, LocalDate.of(2024, 9, 2), 40, emptyList())
 
                     every { cardinalGetService.findByAdminSide(40) } returns mockk()
                     every { accountGetService.find(40) } returns account
@@ -120,7 +121,7 @@ class ReceiptUseCaseImplTest :
                 account.spend(Money.of(receipt.amount)) // adjustSpend를 위한 사전 spend
 
                 val dto =
-                    ReceiptDTO.Update(
+                    ReceiptUpdateRequest(
                         "desc",
                         "source",
                         2_000,
@@ -131,16 +132,16 @@ class ReceiptUseCaseImplTest :
                 val oldFiles = listOf(mockk<File>())
                 val newFiles = listOf(mockk<File>())
 
-                every { accountGetService.find(dto.cardinal()) } returns account
+                every { accountGetService.find(dto.cardinal) } returns account
                 every { receiptGetService.find(receiptId) } returns receipt
                 every { fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null) } returns oldFiles
-                every { fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, receiptId) } returns newFiles
+                every { fileMapper.toFileList(dto.files, FileOwnerType.RECEIPT, receiptId) } returns newFiles
 
                 useCase.update(receiptId, dto)
 
                 verify(exactly = 1) { fileRepository.deleteAll(oldFiles) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
-                verify(exactly = 1) { receiptUpdateService.update(receipt, dto) }
+                verify(exactly = 1) { receiptUpdateService.update(receipt, any()) }
             }
         }
 

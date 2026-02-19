@@ -1,7 +1,8 @@
 package com.weeth.domain.account.application.usecase;
 
-import com.weeth.domain.account.application.dto.AccountDTO;
-import com.weeth.domain.account.application.dto.ReceiptDTO;
+import com.weeth.domain.account.application.dto.request.AccountSaveRequest;
+import com.weeth.domain.account.application.dto.response.AccountResponse;
+import com.weeth.domain.account.application.dto.response.ReceiptResponse;
 import com.weeth.domain.account.application.exception.AccountExistsException;
 import com.weeth.domain.account.application.mapper.AccountMapper;
 import com.weeth.domain.account.application.mapper.ReceiptMapper;
@@ -36,27 +37,27 @@ public class AccountUseCaseImpl implements AccountUseCase {
     private final FileMapper fileMapper;
 
     @Override
-    public AccountDTO.Response find(Integer cardinal) {
+    public AccountResponse find(Integer cardinal) {
         Account account = accountGetService.find(cardinal);
         List<Receipt> receipts = receiptGetService.findAllByAccountId(account.getId());
-        List<ReceiptDTO.Response> response = receipts.stream()
-                .map(receipt -> receiptMapper.to(receipt, getFiles(receipt.getId())))
+        List<ReceiptResponse> response = receipts.stream()
+                .map(receipt -> receiptMapper.toResponse(receipt, getFiles(receipt.getId())))
                 .toList();
 
-        return accountMapper.to(account, response);
+        return accountMapper.toResponse(account, response);
     }
 
     @Override
     @Transactional
-    public void save(AccountDTO.Save dto) {
+    public void save(AccountSaveRequest dto) {
         validate(dto);
-        cardinalGetService.findByAdminSide(dto.cardinal());
+        cardinalGetService.findByAdminSide(dto.getCardinal());
 
-        accountSaveService.save(Account.Companion.create(dto.description(), dto.totalAmount(), dto.cardinal()));
+        accountSaveService.save(Account.create(dto.getDescription(), dto.getTotalAmount(), dto.getCardinal()));
     }
 
-    private void validate(AccountDTO.Save dto) {
-        if (accountGetService.validate(dto.cardinal()))
+    private void validate(AccountSaveRequest dto) {
+        if (accountGetService.validate(dto.getCardinal()))
             throw new AccountExistsException();
     }
 

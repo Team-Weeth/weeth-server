@@ -1,7 +1,8 @@
 package com.weeth.domain.account.application.usecase;
 
 import jakarta.transaction.Transactional;
-import com.weeth.domain.account.application.dto.ReceiptDTO;
+import com.weeth.domain.account.application.dto.request.ReceiptSaveRequest;
+import com.weeth.domain.account.application.dto.request.ReceiptUpdateRequest;
 import com.weeth.domain.account.application.mapper.ReceiptMapper;
 import com.weeth.domain.account.domain.entity.Account;
 import com.weeth.domain.account.domain.entity.Receipt;
@@ -38,31 +39,31 @@ public class ReceiptUseCaseImpl implements ReceiptUseCase {
 
     @Override
     @Transactional
-    public void save(ReceiptDTO.Save dto) {
-        cardinalGetService.findByAdminSide(dto.cardinal());
+    public void save(ReceiptSaveRequest dto) {
+        cardinalGetService.findByAdminSide(dto.getCardinal());
 
-        Account account = accountGetService.find(dto.cardinal());
+        Account account = accountGetService.find(dto.getCardinal());
         Receipt receipt = receiptSaveService.save(
-                Receipt.Companion.create(dto.description(), dto.source(), dto.amount(), dto.date(), account)
+                Receipt.Companion.create(dto.getDescription(), dto.getSource(), dto.getAmount(), dto.getDate(), account)
         );
-        account.spend(dto.amount());
+        account.spend(dto.getAmount());
 
-        List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, receipt.getId());
+        List<File> files = fileMapper.toFileList(dto.getFiles(), FileOwnerType.RECEIPT, receipt.getId());
         fileRepository.saveAll(files);
     }
 
     @Override
     @Transactional
-    public void update(Long receiptId, ReceiptDTO.Update dto) {
-        Account account = accountGetService.find(dto.cardinal());
+    public void update(Long receiptId, ReceiptUpdateRequest dto) {
+        Account account = accountGetService.find(dto.getCardinal());
         Receipt receipt = receiptGetService.find(receiptId);
-        account.adjustSpend(receipt.getAmount(), dto.amount());
+        account.adjustSpend(receipt.getAmount(), dto.getAmount());
 
-        if (!dto.files().isEmpty()) { // 업데이트하려는 파일이 있다면 파일을 전체 삭제한 뒤 저장
+        if (dto.getFiles() != null && !dto.getFiles().isEmpty()) {
             List<File> fileList = getFiles(receiptId);
             fileRepository.deleteAll(fileList);
 
-            List<File> files = fileMapper.toFileList(dto.files(), FileOwnerType.RECEIPT, receipt.getId());
+            List<File> files = fileMapper.toFileList(dto.getFiles(), FileOwnerType.RECEIPT, receipt.getId());
             fileRepository.saveAll(files);
         }
         receiptUpdateService.update(receipt, dto);
