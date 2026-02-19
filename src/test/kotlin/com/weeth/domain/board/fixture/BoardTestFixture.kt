@@ -3,6 +3,7 @@ package com.weeth.domain.board.fixture
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
+import com.weeth.domain.user.domain.entity.enums.Role
 
 object BoardTestFixture {
     fun create(
@@ -26,6 +27,6 @@ object BoardTestFixture {
             id = id,
             name = name,
             type = BoardType.NOTICE,
-            config = BoardConfig(writePermission = BoardConfig.WritePermission.ADMIN),
+            config = BoardConfig(writePermission = Role.ADMIN),
         )
 }
