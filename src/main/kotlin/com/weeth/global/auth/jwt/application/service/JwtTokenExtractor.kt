@@ -37,13 +37,13 @@ class JwtTokenExtractor(
 
     fun extractEmail(accessToken: String): String? = extractClaim(accessToken, JwtTokenProvider.EMAIL_CLAIM, String::class.java)
 
-    fun extractId(token: String): Long? = extractClaim(token, JwtTokenProvider.ID_CLAIM, Long::class.java)
+    fun extractId(token: String): Long? = extractClaim(token, JwtTokenProvider.ID_CLAIM, Long::class.javaObjectType)
 
     fun extractClaims(token: String): TokenClaims? =
         runCatching {
             val claims: Claims = jwtTokenProvider.parseClaims(token)
             TokenClaims(
-                id = claims.get(JwtTokenProvider.ID_CLAIM, Long::class.java),
+                id = claims.get(JwtTokenProvider.ID_CLAIM, Long::class.javaObjectType),
                 email = claims.get(JwtTokenProvider.EMAIL_CLAIM, String::class.java),
                 role = Role.valueOf(claims.get(JwtTokenProvider.ROLE_CLAIM, String::class.java)),
             )

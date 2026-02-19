@@ -56,7 +56,7 @@ class JwtTokenExtractorTest :
                 val token = "sample"
                 val claims = mockk<io.jsonwebtoken.Claims>()
                 every { jwtProvider.parseClaims(token) } returns claims
-                every { claims.get("id", Long::class.java) } returns 77L
+                every { claims.get("id", Long::class.javaObjectType) } returns 77L
 
                 val id = jwtTokenExtractor.extractId(token)
 
@@ -70,7 +70,7 @@ class JwtTokenExtractorTest :
                 val token = "sample"
                 val claims = mockk<io.jsonwebtoken.Claims>()
                 every { jwtProvider.parseClaims(token) } returns claims
-                every { claims.get("id", Long::class.java) } returns 77L
+                every { claims.get("id", Long::class.javaObjectType) } returns 77L
                 every { claims.get("email", String::class.java) } returns "sample@com"
                 every { claims.get("role", String::class.java) } returns "USER"
 
