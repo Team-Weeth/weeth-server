@@ -44,7 +44,6 @@ class Account(
     }
 
     companion object {
-        @JvmStatic
         fun create(
             description: String,
             totalAmount: Int,
