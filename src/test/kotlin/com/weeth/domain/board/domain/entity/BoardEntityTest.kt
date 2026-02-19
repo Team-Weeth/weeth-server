@@ -2,6 +2,7 @@ package com.weeth.domain.board.domain.entity
 
 import com.weeth.domain.board.domain.entity.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
+import com.weeth.domain.user.domain.entity.enums.Role
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -34,7 +35,7 @@ class BoardEntityTest :
                     id = 2L,
                     name = "공지",
                     type = BoardType.NOTICE,
-                    config = BoardConfig(writePermission = BoardConfig.WritePermission.ADMIN),
+                    config = BoardConfig(writePermission = Role.ADMIN),
                 )
 
             board.isAdminOnly shouldBe true

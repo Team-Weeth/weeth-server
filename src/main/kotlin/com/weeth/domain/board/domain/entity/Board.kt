@@ -3,6 +3,7 @@ package com.weeth.domain.board.domain.entity
 import com.weeth.domain.board.domain.converter.BoardConfigConverter
 import com.weeth.domain.board.domain.entity.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
@@ -33,7 +34,7 @@ class Board(
         get() = config.commentEnabled
 
     val isAdminOnly: Boolean
-        get() = config.writePermission == BoardConfig.WritePermission.ADMIN
+        get() = config.writePermission == Role.ADMIN
 
     fun updateConfig(newConfig: BoardConfig) {
         config = newConfig
