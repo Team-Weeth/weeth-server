@@ -2,11 +2,13 @@ package com.weeth.domain.board.application.usecase.query
 
 import com.weeth.domain.board.application.exception.NoSearchResultException
 import com.weeth.domain.board.application.exception.PageNotFoundException
+import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.entity.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
@@ -29,11 +31,11 @@ import io.mockk.verify
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.SliceImpl
 import java.time.LocalDateTime
-import java.util.Optional
 
 class GetPostQueryServiceTest :
     DescribeSpec({
         val postRepository = mockk<PostRepository>()
+        val boardRepository = mockk<BoardRepository>()
         val commentReader = mockk<CommentReader>()
         val getCommentQueryService = mockk<GetCommentQueryService>()
         val fileReader = mockk<FileReader>()
@@ -43,6 +45,7 @@ class GetPostQueryServiceTest :
         val queryService =
             GetPostQueryService(
                 postRepository,
+                boardRepository,
                 commentReader,
                 getCommentQueryService,
                 fileReader,
@@ -53,6 +56,7 @@ class GetPostQueryServiceTest :
         beforeTest {
             clearMocks(
                 postRepository,
+                boardRepository,
                 commentReader,
                 getCommentQueryService,
                 fileReader,
@@ -63,10 +67,10 @@ class GetPostQueryServiceTest :
 
         describe("findPost") {
             it("존재하지 않는 게시글이면 예외를 던진다") {
-                every { postRepository.findById(1L) } returns Optional.empty()
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns null
 
                 shouldThrow<PostNotFoundException> {
-                    queryService.findPost(1L)
+                    queryService.findPost(1L, Role.USER)
                 }
             }
 
@@ -111,28 +115,53 @@ class GetPostQueryServiceTest :
                         fileUrls = fileResponses,
                     )
 
-                every { postRepository.findById(1L) } returns Optional.of(post)
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
                 every { commentReader.findAllByPostId(1L) } returns emptyList()
                 every { getCommentQueryService.toCommentTreeResponses(any()) } returns comments
                 every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns files
                 every { postMapper.toDetailResponse(post, comments, fileResponses) } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
-                val result = queryService.findPost(1L)
+                val result = queryService.findPost(1L, Role.USER)
 
                 result.id shouldBe 1L
                 result.comments.size shouldBe 1
                 result.fileUrls.size shouldBe 1
+            }
+
+            it("비공개 게시판 게시글은 일반/익명에게 노출하지 않는다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val privateBoard = Board(id = 2L, name = "비공개", type = BoardType.GENERAL)
+                privateBoard.updateConfig(privateBoard.config.copy(isPrivate = true))
+                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = privateBoard, commentCount = 0)
+
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+
+                shouldThrow<PostNotFoundException> {
+                    queryService.findPost(1L, Role.USER)
+                }
             }
         }
 
         describe("searchPosts") {
             it("검색 결과가 없으면 예외를 던진다") {
                 val pageable = PageRequest.of(0, 10)
+                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
                 every { postRepository.searchByBoardId(1L, "키워드", any()) } returns SliceImpl(emptyList(), pageable, false)
 
                 shouldThrow<NoSearchResultException> {
-                    queryService.searchPosts(1L, "키워드", 0, 10)
+                    queryService.searchPosts(1L, "키워드", 0, 10, Role.USER)
+                }
+            }
+
+            it("비공개 게시판은 일반/익명이 검색할 수 없다") {
+                val privateBoard = Board(id = 1L, name = "비공개", type = BoardType.GENERAL)
+                privateBoard.updateConfig(privateBoard.config.copy(isPrivate = true))
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns privateBoard
+
+                shouldThrow<BoardNotFoundException> {
+                    queryService.searchPosts(1L, "키워드", 0, 10, Role.USER)
                 }
             }
         }
@@ -140,7 +169,7 @@ class GetPostQueryServiceTest :
         describe("validatePage") {
             it("음수 페이지면 예외를 던진다") {
                 shouldThrow<PageNotFoundException> {
-                    queryService.findPosts(1L, -1, 10)
+                    queryService.findPosts(1L, -1, 10, Role.USER)
                 }
             }
         }
@@ -165,12 +194,12 @@ class GetPostQueryServiceTest :
                         isNew = false,
                     )
 
-                every { postRepository.findAllByBoardId(1L, any()) } returns postSlice
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
+                every { postRepository.findAllActiveByBoardId(1L, any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
-                every { fileReader.findAll(FileOwnerType.POST, 10L, any()) } returns emptyList()
                 every { postMapper.toListResponse(any(), any(), any()) } returns response
 
-                val result = queryService.findPosts(1L, 0, 10)
+                val result = queryService.findPosts(1L, 0, 10, Role.USER)
 
                 result.content.size shouldBe 1
                 result.content.first().id shouldBe 10L

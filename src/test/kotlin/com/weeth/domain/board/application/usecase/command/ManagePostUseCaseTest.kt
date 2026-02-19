@@ -30,7 +30,6 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
-import java.util.Optional
 
 class ManagePostUseCaseTest :
     DescribeSpec({
@@ -70,7 +69,7 @@ class ManagePostUseCaseTest :
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userGetService.find(1L) } returns user
-                every { boardRepository.findById(10L) } returns Optional.of(board)
+                every { boardRepository.findByIdAndIsDeletedFalse(10L) } returns board
 
                 val result = useCase.save(10L, request, 1L)
 
@@ -85,12 +84,12 @@ class ManagePostUseCaseTest :
                         id = 20L,
                         name = "공지",
                         type = BoardType.NOTICE,
-                        config = BoardConfig(writePermission = BoardConfig.WritePermission.ADMIN),
+                        config = BoardConfig(writePermission = Role.ADMIN),
                     )
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userGetService.find(1L) } returns user
-                every { boardRepository.findById(20L) } returns Optional.of(board)
+                every { boardRepository.findByIdAndIsDeletedFalse(20L) } returns board
 
                 shouldThrow<CategoryAccessDeniedException> {
                     useCase.save(20L, request, 1L)
@@ -110,7 +109,7 @@ class ManagePostUseCaseTest :
                     )
 
                 every { userGetService.find(1L) } returns user
-                every { boardRepository.findById(11L) } returns Optional.of(board)
+                every { boardRepository.findByIdAndIsDeletedFalse(11L) } returns board
 
                 useCase.save(11L, request, 1L)
 
@@ -128,7 +127,7 @@ class ManagePostUseCaseTest :
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userGetService.find(1L) } returns user
-                every { boardRepository.findById(999L) } returns Optional.empty()
+                every { boardRepository.findByIdAndIsDeletedFalse(999L) } returns null
 
                 shouldThrow<BoardNotFoundException> {
                     useCase.save(999L, request, 1L)
@@ -143,7 +142,7 @@ class ManagePostUseCaseTest :
                 val post = Post.create("제목", "내용", user, board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
-                every { postRepository.findById(1L) } returns Optional.of(post)
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
                 useCase.update(1L, request, 1L)
 
@@ -190,7 +189,7 @@ class ManagePostUseCaseTest :
                             ),
                     )
 
-                every { postRepository.findById(1L) } returns Optional.of(post)
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns listOf(oldFile)
                 every { fileMapper.toFileList(request.files, FileOwnerType.POST, 1L) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
@@ -203,7 +202,7 @@ class ManagePostUseCaseTest :
         }
 
         describe("delete") {
-            it("삭제 시 첨부 파일을 soft delete하고 게시글을 삭제한다") {
+            it("삭제 시 첨부 파일과 게시글을 soft delete한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
                 val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
@@ -217,14 +216,14 @@ class ManagePostUseCaseTest :
                         ownerId = 1L,
                     )
 
-                every { postRepository.findById(1L) } returns Optional.of(post)
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns listOf(oldFile)
-                every { postRepository.delete(post) } just runs
 
                 useCase.delete(1L, 1L)
 
                 oldFile.status.name shouldBe "DELETED"
-                verify(exactly = 1) { postRepository.delete(post) }
+                post.isDeleted shouldBe true
+                verify(exactly = 0) { postRepository.delete(any()) }
             }
         }
 
@@ -235,7 +234,7 @@ class ManagePostUseCaseTest :
                 val post = Post(id = 1L, title = "제목", content = "내용", user = owner, board = board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
-                every { postRepository.findById(1L) } returns Optional.of(post)
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
                 shouldThrow<com.weeth.domain.board.application.exception.PostNotOwnedException> {
                     useCase.update(1L, request, 2L)

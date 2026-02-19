@@ -14,27 +14,48 @@ import org.springframework.data.repository.query.Param
 
 interface PostRepository : JpaRepository<Post, Long> {
     @EntityGraph(attributePaths = ["user"])
-    fun findAllByBoardId(
-        boardId: Long,
-        pageable: Pageable,
-    ): Slice<Post>
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
-    @Query("SELECT p FROM Post p WHERE p.id = :id")
-    fun findByIdWithLock(
-        @Param("id") id: Long,
-    ): Post?
-
     @Query(
         """
         SELECT p
         FROM Post p
         WHERE p.board.id = :boardId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        """,
+    )
+    fun findAllActiveByBoardId(
+        @Param("boardId") boardId: Long,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    fun findByIdAndIsDeletedFalse(id: Long): Post?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.id = :id
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        """,
+    )
+    fun findByIdWithLock(
+        @Param("id") id: Long,
+    ): Post?
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.id = :boardId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
           AND (LOWER(p.title) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.content) LIKE LOWER(CONCAT('%', :keyword, '%')))
         """,
     )
-    @EntityGraph(attributePaths = ["user"])
     fun searchByBoardId(
         @Param("boardId") boardId: Long,
         @Param("keyword") keyword: String,

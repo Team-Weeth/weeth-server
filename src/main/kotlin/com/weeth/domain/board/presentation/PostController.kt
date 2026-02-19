@@ -8,8 +8,9 @@ import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.command.ManagePostUseCase
 import com.weeth.domain.board.application.usecase.query.GetPostQueryService
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.annotation.CurrentUser
-import com.weeth.global.auth.jwt.exception.JwtErrorCode
+import com.weeth.global.auth.annotation.CurrentUserRole
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -50,15 +51,20 @@ class PostController(
         @PathVariable boardId: Long,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "10") pageSize: Int,
+        @Parameter(hidden = true) @CurrentUserRole role: Role,
     ): CommonResponse<Slice<PostListResponse>> =
-        CommonResponse.success(BoardResponseCode.POST_FIND_ALL_SUCCESS, getPostQueryService.findPosts(boardId, pageNumber, pageSize))
+        CommonResponse.success(
+            BoardResponseCode.POST_FIND_ALL_SUCCESS,
+            getPostQueryService.findPosts(boardId, pageNumber, pageSize, role),
+        )
 
     @GetMapping("/posts/{postId}")
     @Operation(summary = "게시글 상세 조회")
     fun findPost(
         @PathVariable postId: Long,
+        @Parameter(hidden = true) @CurrentUserRole role: Role,
     ): CommonResponse<PostDetailResponse> =
-        CommonResponse.success(BoardResponseCode.POST_FIND_BY_ID_SUCCESS, getPostQueryService.findPost(postId))
+        CommonResponse.success(BoardResponseCode.POST_FIND_BY_ID_SUCCESS, getPostQueryService.findPost(postId, role))
 
     @PatchMapping("/posts/{postId}")
     @Operation(summary = "게시글 수정")
@@ -67,7 +73,10 @@ class PostController(
         @RequestBody @Valid request: UpdatePostRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostSaveResponse> =
-        CommonResponse.success(BoardResponseCode.POST_UPDATED_SUCCESS, managePostUseCase.update(postId, request, userId))
+        CommonResponse.success(
+            BoardResponseCode.POST_UPDATED_SUCCESS,
+            managePostUseCase.update(postId, request, userId),
+        )
 
     @DeleteMapping("/posts/{postId}")
     @Operation(summary = "게시글 삭제")
@@ -86,9 +95,10 @@ class PostController(
         @RequestParam keyword: String,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "10") pageSize: Int,
+        @Parameter(hidden = true) @CurrentUserRole role: Role,
     ): CommonResponse<Slice<PostListResponse>> =
         CommonResponse.success(
             BoardResponseCode.POST_SEARCH_SUCCESS,
-            getPostQueryService.searchPosts(boardId, keyword, pageNumber, pageSize),
+            getPostQueryService.searchPosts(boardId, keyword, pageNumber, pageSize, role),
         )
 }
