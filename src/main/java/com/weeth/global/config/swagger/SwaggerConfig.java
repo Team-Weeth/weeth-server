@@ -92,7 +92,7 @@ public class SwaggerConfig {
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
                 .group("public")
-                .pathsToExclude("/api/v1/admin/**")
+                .pathsToExclude("/api/v1/admin/**", "/api/v4/admin/**")
                 .addOperationCustomizer(operationCustomizer())
                 .build();
     }

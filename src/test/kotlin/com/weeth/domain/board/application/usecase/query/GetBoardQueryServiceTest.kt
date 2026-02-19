@@ -22,9 +22,10 @@ class GetBoardQueryServiceTest :
         describe("findBoards") {
             it("일반 사용자에게는 공개 게시판만 반환한다") {
                 val publicBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
-                val privateBoard = Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
-                    updateConfig(config.copy(isPrivate = true))
-                }
+                val privateBoard =
+                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                        updateConfig(config.copy(isPrivate = true))
+                    }
 
                 every { boardRepository.findAllByIsDeletedFalseOrderByIdAsc() } returns listOf(publicBoard, privateBoard)
 
@@ -36,9 +37,10 @@ class GetBoardQueryServiceTest :
 
             it("관리자에게는 비공개 게시판도 포함해 반환한다") {
                 val publicBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
-                val privateBoard = Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
-                    updateConfig(config.copy(isPrivate = true))
-                }
+                val privateBoard =
+                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                        updateConfig(config.copy(isPrivate = true))
+                    }
 
                 every { boardRepository.findAllByIsDeletedFalseOrderByIdAsc() } returns listOf(publicBoard, privateBoard)
 
@@ -50,9 +52,10 @@ class GetBoardQueryServiceTest :
 
         describe("findBoard") {
             it("일반 사용자가 비공개 게시판 상세를 조회하면 예외를 던진다") {
-                val privateBoard = Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
-                    updateConfig(config.copy(isPrivate = true))
-                }
+                val privateBoard =
+                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                        updateConfig(config.copy(isPrivate = true))
+                    }
                 every { boardRepository.findByIdAndIsDeletedFalse(2L) } returns privateBoard
 
                 shouldThrow<BoardNotFoundException> {
@@ -61,9 +64,10 @@ class GetBoardQueryServiceTest :
             }
 
             it("관리자는 비공개 게시판 상세를 조회할 수 있다") {
-                val privateBoard = Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
-                    updateConfig(config.copy(isPrivate = true))
-                }
+                val privateBoard =
+                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                        updateConfig(config.copy(isPrivate = true))
+                    }
                 every { boardRepository.findByIdAndIsDeletedFalse(2L) } returns privateBoard
 
                 val result = queryService.findBoard(2L, Role.ADMIN)
