@@ -16,6 +16,7 @@ import com.weeth.domain.user.domain.repository.UserRepository
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import jakarta.persistence.EntityManager
+import org.junit.jupiter.api.Tag
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean
@@ -33,6 +34,7 @@ import kotlin.math.roundToLong
 @SpringBootTest
 @ActiveProfiles("test")
 @Import(TestContainersConfig::class, CommentConcurrencyBenchmarkConfig::class)
+@Tag("performance")
 class CommentConcurrencyTest(
     private val postCommentUsecase: PostCommentUsecase,
     private val boardRepository: BoardRepository,
