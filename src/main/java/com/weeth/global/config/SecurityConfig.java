@@ -78,7 +78,7 @@ public class SecurityConfig {
                                             return new AuthorizationDecision(allowed);
                                         })
                                         .requestMatchers("/actuator/health").permitAll()
-                                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                                        .requestMatchers("/api/v1/admin/**", "/api/v4/admin/**").hasRole("ADMIN")
                                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exceptionHandling ->
