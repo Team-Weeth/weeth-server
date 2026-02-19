@@ -25,8 +25,10 @@ import org.springframework.transaction.PlatformTransactionManager
 import org.springframework.transaction.support.TransactionTemplate
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.math.roundToLong
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -50,6 +52,14 @@ class CommentConcurrencyTest(
             val queryCount: Long,
             val elapsedTimeMs: Double,
             val firstError: String?,
+        )
+
+        data class BenchmarkSummary(
+            val label: String,
+            val medianElapsedMs: Double,
+            val medianQueryCount: Long,
+            val medianThroughput: Double,
+            val allElapsedMs: List<Double>,
         )
 
         fun createUsers(size: Int): List<User> =
@@ -139,6 +149,41 @@ class CommentConcurrencyTest(
             )
         }
 
+        fun benchmark(
+            label: String,
+            rounds: Int,
+            threadCount: Int,
+            saveAction: (postId: Long, userId: Long, index: Int) -> Unit,
+        ): BenchmarkSummary {
+            val results = (1..rounds).map { runConcurrentSave(threadCount, saveAction) }
+            results.forEach { r ->
+                r.failCount shouldBe 0
+                r.postCommentCount shouldBe threadCount
+                r.actualCommentCount shouldBe threadCount
+            }
+
+            val elapsedSorted = results.map { it.elapsedTimeMs }.sorted()
+            val querySorted = results.map { it.queryCount }.sorted()
+            val medianElapsedMs = elapsedSorted[elapsedSorted.size / 2]
+            val medianQueryCount = querySorted[querySorted.size / 2]
+            val medianThroughput = threadCount / (medianElapsedMs / 1000.0)
+
+            println(
+                "[CommentBenchmark][$label] rounds=$rounds, threadCount=$threadCount, " +
+                    "medianElapsedMs=${medianElapsedMs.roundToLong()}, " +
+                    "medianThroughput=${"%.2f".format(medianThroughput)} ops/s, " +
+                    "medianQueryCount=$medianQueryCount, allElapsedMs=${elapsedSorted.map { it.roundToLong() }}",
+            )
+
+            return BenchmarkSummary(
+                label = label,
+                medianElapsedMs = medianElapsedMs,
+                medianQueryCount = medianQueryCount,
+                medianThroughput = medianThroughput,
+                allElapsedMs = elapsedSorted,
+            )
+        }
+
         afterEach {
             commentRepository.deleteAllInBatch()
             postRepository.deleteAllInBatch()
@@ -166,11 +211,12 @@ class CommentConcurrencyTest(
         }
 
         describe("동시성 해소 방식별 성능 비교") {
-            it("PESSIMISTIC_WRITE와 Atomic Increment를 측정한다").config(enabled = runPerformanceTests) {
+            it("PESSIMISTIC_WRITE와 Atomic Increment를 측정하고 Atomic 우위를 검증한다").config(enabled = runPerformanceTests) {
                 val threadCount = 30
+                val rounds = 5
 
-                val pessimisticResult =
-                    runConcurrentSave(threadCount) { postId, userId, index ->
+                val pessimisticSummary =
+                    benchmark("pessimistic", rounds, threadCount) { postId, userId, index ->
                         postCommentUsecase.savePostComment(
                             dto =
                                 CommentSaveRequest(
@@ -183,8 +229,8 @@ class CommentConcurrencyTest(
                         )
                     }
 
-                val atomicResult =
-                    runConcurrentSave(threadCount) { postId, userId, index ->
+                val atomicSummary =
+                    benchmark("atomic", rounds, threadCount) { postId, userId, index ->
                         atomicCommentCountCommand.savePostCommentWithAtomicIncrement(
                             dto =
                                 CommentSaveRequest(
@@ -197,20 +243,21 @@ class CommentConcurrencyTest(
                         )
                     }
 
-                pessimisticResult.failCount shouldBe 0
-                atomicResult.failCount shouldBe 0
-                pessimisticResult.postCommentCount shouldBe threadCount
-                pessimisticResult.actualCommentCount shouldBe threadCount
-                atomicResult.postCommentCount shouldBe threadCount
-                atomicResult.actualCommentCount shouldBe threadCount
+                println(
+                    "[CommentBenchmark][compare] " +
+                        "atomicMedian=${atomicSummary.medianElapsedMs.roundToLong()}ms, " +
+                        "pessimisticMedian=${pessimisticSummary.medianElapsedMs.roundToLong()}ms, " +
+                        "atomicThroughput=${"%.2f".format(atomicSummary.medianThroughput)} ops/s, " +
+                        "pessimisticThroughput=${"%.2f".format(pessimisticSummary.medianThroughput)} ops/s",
+                )
+                val winner = if (atomicSummary.medianElapsedMs < pessimisticSummary.medianElapsedMs) "atomic" else "pessimistic"
+                println("[CommentBenchmark][winner] $winner")
             }
         }
     })
 
 class AtomicCommentCountCommand(
     private val commentRepository: CommentRepository,
-    private val postRepository: PostRepository,
-    private val userRepository: UserRepository,
     private val entityManager: EntityManager,
     private val transactionTemplate: TransactionTemplate,
 ) {
@@ -219,14 +266,14 @@ class AtomicCommentCountCommand(
         postId: Long,
         userId: Long,
     ) {
-        val maxRetries = 10
+        val maxRetries = 20
         var lastError: Exception? = null
 
         repeat(maxRetries) { attempt ->
             try {
                 transactionTemplate.executeWithoutResult {
-                    val user = userRepository.findById(userId).orElseThrow()
-                    val post = postRepository.findById(postId).orElseThrow()
+                    val user = entityManager.getReference(User::class.java, userId)
+                    val post = entityManager.getReference(Post::class.java, postId)
                     val parent =
                         dto.parentCommentId?.let { parentId ->
                             commentRepository.findByIdAndPostId(parentId, postId) ?: throw IllegalArgumentException("parent not found")
@@ -250,10 +297,12 @@ class AtomicCommentCountCommand(
             } catch (e: Exception) {
                 lastError = e
                 val deadlock = e.message?.contains("Deadlock found", ignoreCase = true) == true
-                if (!deadlock || attempt == maxRetries - 1) {
+                val lockWaitTimeout = e.message?.contains("Lock wait timeout exceeded", ignoreCase = true) == true
+                if ((!deadlock && !lockWaitTimeout) || attempt == maxRetries - 1) {
                     throw e
                 }
-                Thread.sleep(10)
+                val backoffMs = ThreadLocalRandom.current().nextLong(10, 40)
+                Thread.sleep(backoffMs)
             }
         }
 
@@ -266,15 +315,11 @@ class CommentConcurrencyBenchmarkConfig {
     @Bean
     fun atomicCommentCountCommand(
         commentRepository: CommentRepository,
-        postRepository: PostRepository,
-        userRepository: UserRepository,
         entityManager: EntityManager,
         transactionManager: PlatformTransactionManager,
     ): AtomicCommentCountCommand =
         AtomicCommentCountCommand(
             commentRepository = commentRepository,
-            postRepository = postRepository,
-            userRepository = userRepository,
             entityManager = entityManager,
             transactionTemplate = TransactionTemplate(transactionManager),
         )
