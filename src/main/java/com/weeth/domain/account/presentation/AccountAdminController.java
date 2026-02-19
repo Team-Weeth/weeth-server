@@ -2,7 +2,7 @@ package com.weeth.domain.account.presentation;
 
 import com.weeth.domain.account.application.dto.request.AccountSaveRequest;
 import com.weeth.domain.account.application.exception.AccountErrorCode;
-import com.weeth.domain.account.application.usecase.AccountUseCase;
+import com.weeth.domain.account.application.usecase.command.ManageAccountUseCase;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -23,12 +23,12 @@ import static com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_
 @ApiErrorCodeExample(AccountErrorCode.class)
 public class AccountAdminController {
 
-    private final AccountUseCase accountUseCase;
+    private final ManageAccountUseCase manageAccountUseCase;
 
     @PostMapping
     @Operation(summary="회비 총 금액 기입")
     public CommonResponse<Void> save(@RequestBody @Valid AccountSaveRequest dto) {
-        accountUseCase.save(dto);
+        manageAccountUseCase.save(dto);
         return CommonResponse.success(ACCOUNT_SAVE_SUCCESS);
     }
 }

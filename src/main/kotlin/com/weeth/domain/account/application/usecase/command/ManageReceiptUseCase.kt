@@ -30,15 +30,19 @@ class ManageReceiptUseCase(
     fun save(request: ReceiptSaveRequest) {
         cardinalGetService.findByAdminSide(request.cardinal)
         val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
-        val receipt = receiptRepository.save(
-            Receipt.create(request.description, request.source, request.amount, request.date, account),
-        )
+        val receipt =
+            receiptRepository.save(
+                Receipt.create(request.description, request.source, request.amount, request.date, account),
+            )
         account.spend(Money.of(request.amount))
         fileRepository.saveAll(fileMapper.toFileList(request.files, FileOwnerType.RECEIPT, receipt.id))
     }
 
     @Transactional
-    fun update(receiptId: Long, request: ReceiptUpdateRequest) {
+    fun update(
+        receiptId: Long,
+        request: ReceiptUpdateRequest,
+    ) {
         val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
         account.adjustSpend(Money.of(receipt.amount), Money.of(request.amount))

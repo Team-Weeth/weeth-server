@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.weeth.domain.account.application.dto.response.AccountResponse;
 import com.weeth.domain.account.application.exception.AccountErrorCode;
-import com.weeth.domain.account.application.usecase.AccountUseCase;
+import com.weeth.domain.account.application.usecase.query.GetAccountQueryService;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +21,11 @@ import static com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_
 @ApiErrorCodeExample(AccountErrorCode.class)
 public class AccountController {
 
-    private final AccountUseCase accountUseCase;
+    private final GetAccountQueryService getAccountQueryService;
 
     @GetMapping("/{cardinal}")
     @Operation(summary="회비 내역 조회")
     public CommonResponse<AccountResponse> find(@PathVariable Integer cardinal) {
-        return CommonResponse.success(ACCOUNT_FIND_SUCCESS,accountUseCase.find(cardinal));
+        return CommonResponse.success(ACCOUNT_FIND_SUCCESS, getAccountQueryService.findByCardinal(cardinal));
     }
 }

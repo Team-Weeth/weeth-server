@@ -27,7 +27,8 @@ class GetAccountQueryService(
         val receipts = receiptRepository.findAllByAccountIdOrderByCreatedAtDesc(account.id)
         val receiptIds = receipts.map { it.id }
         val filesByReceiptId =
-            fileReader.findAll(FileOwnerType.RECEIPT, receiptIds, null)
+            fileReader
+                .findAll(FileOwnerType.RECEIPT, receiptIds, null)
                 .groupBy({ it.ownerId }, { fileMapper.toFileResponse(it) })
         return accountMapper.toResponse(account, receiptMapper.toResponses(receipts, filesByReceiptId))
     }

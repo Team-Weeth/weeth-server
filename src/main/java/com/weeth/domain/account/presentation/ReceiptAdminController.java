@@ -6,7 +6,7 @@ import jakarta.validation.Valid;
 import com.weeth.domain.account.application.dto.request.ReceiptSaveRequest;
 import com.weeth.domain.account.application.dto.request.ReceiptUpdateRequest;
 import com.weeth.domain.account.application.exception.AccountErrorCode;
-import com.weeth.domain.account.application.usecase.ReceiptUseCase;
+import com.weeth.domain.account.application.usecase.command.ManageReceiptUseCase;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,26 +20,26 @@ import static com.weeth.domain.account.presentation.AccountResponseCode.*;
 @ApiErrorCodeExample(AccountErrorCode.class)
 public class ReceiptAdminController {
 
-    private final ReceiptUseCase receiptUseCase;
+    private final ManageReceiptUseCase manageReceiptUseCase;
 
     @PostMapping
     @Operation(summary="회비 사용 내역 기입")
     public CommonResponse<Void> save(@RequestBody @Valid ReceiptSaveRequest dto) {
-        receiptUseCase.save(dto);
+        manageReceiptUseCase.save(dto);
         return CommonResponse.success(RECEIPT_SAVE_SUCCESS);
     }
 
     @DeleteMapping("/{receiptId}")
     @Operation(summary="회비 사용 내역 취소")
     public CommonResponse<Void> delete(@PathVariable Long receiptId) {
-        receiptUseCase.delete(receiptId);
+        manageReceiptUseCase.delete(receiptId);
         return CommonResponse.success(RECEIPT_DELETE_SUCCESS);
     }
 
     @PatchMapping("/{receiptId}")
     @Operation(summary="회비 사용 내역 수정")
     public CommonResponse<Void> update(@PathVariable Long receiptId, @RequestBody @Valid ReceiptUpdateRequest dto) {
-        receiptUseCase.update(receiptId, dto);
+        manageReceiptUseCase.update(receiptId, dto);
         return CommonResponse.success(RECEIPT_UPDATE_SUCCESS);
     }
 }

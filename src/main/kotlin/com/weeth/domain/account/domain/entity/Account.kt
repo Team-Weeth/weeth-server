@@ -43,16 +43,6 @@ class Account(
         spend(newAmount)
     }
 
-    // Java interop overloads — removed when Java UseCases are migrated in Phase 5
-    fun spend(amount: Int) = spend(Money.of(amount))
-
-    fun cancelSpend(amount: Int) = cancelSpend(Money.of(amount))
-
-    fun adjustSpend(
-        oldAmount: Int,
-        newAmount: Int,
-    ) = adjustSpend(Money.of(oldAmount), Money.of(newAmount))
-
     companion object {
         @JvmStatic
         fun create(
