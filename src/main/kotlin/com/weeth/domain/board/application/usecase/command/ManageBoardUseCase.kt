@@ -40,9 +40,11 @@ class ManageBoardUseCase(
     ): BoardDetailResponse {
         val board = findBoard(boardId)
 
+        // TODO: PATCH 규칙 - 요청 값이 현재 값과 다를 때만 반영하도록 수정 필요
         request.name?.let { board.rename(it) }
 
         if (request.commentEnabled != null || request.writePermission != null || request.isPrivate != null) {
+            // TODO: PATCH 규칙 - 각 필드별로 변경 여부를 비교해 바뀐 값만 업데이트하도록 수정 필요
             board.updateConfig(
                 board.config.copy(
                     commentEnabled = request.commentEnabled ?: board.config.commentEnabled,
