@@ -20,7 +20,6 @@ import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.service.UserGetService
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -86,12 +85,12 @@ class ManagePostUseCase(
         validateOwner(post, userId)
 
         markPostFilesDeleted(post.id)
-        postRepository.delete(post)
+        post.markDeleted()
     }
 
-    private fun findBoard(boardId: Long): Board = boardRepository.findByIdOrNull(boardId) ?: throw BoardNotFoundException()
+    private fun findBoard(boardId: Long): Board = boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 
-    private fun findPost(postId: Long): Post = postRepository.findByIdOrNull(postId) ?: throw PostNotFoundException()
+    private fun findPost(postId: Long): Post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
 
     private fun validateOwner(
         post: Post,

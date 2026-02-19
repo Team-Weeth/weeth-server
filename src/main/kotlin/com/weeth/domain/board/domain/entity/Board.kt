@@ -29,6 +29,8 @@ class Board(
     @Column(columnDefinition = "JSON") // Json 속성 사용으로 인한 커스텀 컨버터 적용
     @Convert(converter = BoardConfigConverter::class)
     var config: BoardConfig = BoardConfig(),
+    @Column(nullable = false)
+    var isDeleted: Boolean = false,
 ) : BaseEntity() {
     val isCommentEnabled: Boolean
         get() = config.commentEnabled
@@ -43,5 +45,13 @@ class Board(
     fun rename(newName: String) {
         require(newName.isNotBlank()) { "게시판 이름은 공백이 될 수 없습니다." }
         name = newName
+    }
+
+    fun markDeleted() {
+        isDeleted = true
+    }
+
+    fun restore() {
+        isDeleted = false
     }
 }

@@ -34,6 +34,8 @@ class Post(
     var likeCount: Int = 0,
     @Column
     var cardinalNumber: Int? = null,
+    @Column(nullable = false)
+    var isDeleted: Boolean = false,
 ) : BaseEntity() {
     fun increaseCommentCount() {
         commentCount++
@@ -71,6 +73,14 @@ class Post(
     ) {
         updateContent(newTitle, newContent)
         cardinalNumber = newCardinalNumber
+    }
+
+    fun markDeleted() {
+        isDeleted = true
+    }
+
+    fun restore() {
+        isDeleted = false
     }
 
     companion object {
