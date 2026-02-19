@@ -1,16 +1,34 @@
-package com.weeth.domain.schedule.application.mapper;
+package com.weeth.domain.schedule.application.mapper
 
-import com.weeth.domain.attendance.domain.entity.Session;
-import com.weeth.domain.schedule.application.dto.ScheduleDTO;
-import com.weeth.domain.schedule.domain.entity.Event;
-import org.mapstruct.Mapper;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import com.weeth.domain.attendance.domain.entity.Session
+import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
+import com.weeth.domain.schedule.domain.entity.Event
+import org.springframework.stereotype.Component
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface ScheduleMapper {
+@Component
+class ScheduleMapper {
 
-    ScheduleDTO.Response toScheduleDTO(Event event, Boolean isMeeting);
+    fun toResponse(
+        event: Event,
+        isMeeting: Boolean,
+    ): ScheduleResponse =
+        ScheduleResponse(
+            id = event.id,
+            title = event.title,
+            start = event.start,
+            end = event.end,
+            isMeeting = isMeeting,
+        )
 
-    ScheduleDTO.Response toScheduleDTO(Session session, Boolean isMeeting);
+    fun toResponse(
+        session: Session,
+        isMeeting: Boolean,
+    ): ScheduleResponse =
+        ScheduleResponse(
+            id = session.id,
+            title = session.title,
+            start = session.start,
+            end = session.end,
+            isMeeting = isMeeting,
+        )
 }
