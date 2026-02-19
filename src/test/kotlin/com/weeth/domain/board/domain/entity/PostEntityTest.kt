@@ -33,7 +33,20 @@ class PostEntityTest :
             )
 
             post.title shouldBe "변경"
+            post.content shouldBe "변경 내용"
             post.cardinalNumber shouldBe 7
+        }
+
+        "update는 content가 공백이면 예외를 던진다" {
+            val post = PostTestFixture.create()
+
+            shouldThrow<IllegalArgumentException> {
+                post.update(
+                    newTitle = "변경",
+                    newContent = "   ",
+                    newCardinalNumber = null,
+                )
+            }
         }
 
         "increaseLikeCount는 좋아요 수를 1 증가시킨다" {
