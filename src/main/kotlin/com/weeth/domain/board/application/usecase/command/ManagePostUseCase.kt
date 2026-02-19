@@ -18,7 +18,6 @@ import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.service.UserGetService
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -106,7 +105,8 @@ class ManagePostUseCase(
         board: Board,
         user: User,
     ) {
-        if (board.isAdminOnly && user.role != Role.ADMIN) {
+        val userRole = user.role ?: throw CategoryAccessDeniedException()
+        if (!board.canWriteBy(userRole)) {
             throw CategoryAccessDeniedException()
         }
     }

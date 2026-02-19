@@ -41,6 +41,34 @@ class BoardEntityTest :
             board.isAdminOnly shouldBe true
         }
 
+        "isRestricted는 ADMIN 전용 또는 비공개 게시판이면 true를 반환한다" {
+            val adminOnlyBoard =
+                Board(
+                    id = 21L,
+                    name = "공지",
+                    type = BoardType.NOTICE,
+                    config = BoardConfig(writePermission = Role.ADMIN),
+                )
+            val privateBoard =
+                Board(
+                    id = 22L,
+                    name = "비공개",
+                    type = BoardType.GENERAL,
+                    config = BoardConfig(isPrivate = true),
+                )
+            val publicBoard =
+                Board(
+                    id = 23L,
+                    name = "일반",
+                    type = BoardType.GENERAL,
+                    config = BoardConfig(),
+                )
+
+            adminOnlyBoard.isRestricted shouldBe true
+            privateBoard.isRestricted shouldBe true
+            publicBoard.isRestricted shouldBe false
+        }
+
         "isAccessibleBy는 비공개 게시판을 ADMIN에게만 허용한다" {
             val privateBoard =
                 Board(
@@ -52,6 +80,24 @@ class BoardEntityTest :
 
             privateBoard.isAccessibleBy(Role.ADMIN) shouldBe true
             privateBoard.isAccessibleBy(Role.USER) shouldBe false
+        }
+
+        "canWriteBy는 비공개/관리자 전용 설정을 모두 고려한다" {
+            val privateBoard = Board(id = 24L, name = "비공개", type = BoardType.GENERAL, config = BoardConfig(isPrivate = true))
+            val adminOnlyBoard =
+                Board(
+                    id = 25L,
+                    name = "공지",
+                    type = BoardType.NOTICE,
+                    config = BoardConfig(writePermission = Role.ADMIN),
+                )
+            val publicBoard = Board(id = 26L, name = "일반", type = BoardType.GENERAL, config = BoardConfig())
+
+            privateBoard.canWriteBy(Role.USER) shouldBe false
+            privateBoard.canWriteBy(Role.ADMIN) shouldBe true
+            adminOnlyBoard.canWriteBy(Role.USER) shouldBe false
+            adminOnlyBoard.canWriteBy(Role.ADMIN) shouldBe true
+            publicBoard.canWriteBy(Role.USER) shouldBe true
         }
 
         "updateConfig는 config를 교체한다" {
