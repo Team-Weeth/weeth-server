@@ -33,13 +33,16 @@ class GetPostQueryService(
     private val fileMapper: FileMapper,
     private val postMapper: PostMapper,
 ) {
+    companion object {
+        private const val MAX_PAGE_SIZE = 50
+    }
+
     fun findPost(
         postId: Long,
         role: Role,
     ): PostDetailResponse {
-        val isAdmin = isAdmin(role)
         val post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
-        if (!canAccessBoard(post.board.config.isPrivate, isAdmin)) {
+        if (!post.board.isAccessibleBy(role)) {
             throw PostNotFoundException()
         }
 
@@ -56,9 +59,8 @@ class GetPostQueryService(
         pageSize: Int,
         role: Role,
     ): Slice<PostListResponse> {
-        validatePage(pageNumber)
-        val isAdmin = isAdmin(role)
-        validateBoardVisibility(boardId, isAdmin)
+        validatePage(pageNumber, pageSize)
+        validateBoardVisibility(boardId, role)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
 
@@ -76,9 +78,8 @@ class GetPostQueryService(
         pageSize: Int,
         role: Role,
     ): Slice<PostListResponse> {
-        validatePage(pageNumber)
-        val isAdmin = isAdmin(role)
-        validateBoardVisibility(boardId, isAdmin)
+        validatePage(pageNumber, pageSize)
+        validateBoardVisibility(boardId, role)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.searchByBoardId(boardId, keyword.trim(), pageable)
 
@@ -93,8 +94,11 @@ class GetPostQueryService(
         return posts.map { postMapper.toListResponse(it, fileExistsByPostId[it.id] == true, now) }
     }
 
-    private fun validatePage(pageNumber: Int) {
-        if (pageNumber < 0) {
+    private fun validatePage(
+        pageNumber: Int,
+        pageSize: Int,
+    ) {
+        if (pageNumber < 0 || pageSize !in 1..MAX_PAGE_SIZE) {
             throw PageNotFoundException()
         }
     }
@@ -109,18 +113,11 @@ class GetPostQueryService(
 
     private fun validateBoardVisibility(
         boardId: Long,
-        isAdmin: Boolean,
+        role: Role,
     ) {
         val board = boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
-        if (!canAccessBoard(board.config.isPrivate, isAdmin)) {
+        if (!board.isAccessibleBy(role)) {
             throw BoardNotFoundException()
         }
     }
-
-    private fun canAccessBoard(
-        isPrivate: Boolean,
-        isAdmin: Boolean,
-    ): Boolean = isAdmin || !isPrivate
-
-    private fun isAdmin(role: Role): Boolean = role == Role.ADMIN
 }

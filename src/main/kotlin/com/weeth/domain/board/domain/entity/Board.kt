@@ -38,6 +38,8 @@ class Board(
     val isAdminOnly: Boolean
         get() = config.writePermission == Role.ADMIN
 
+    fun isAccessibleBy(role: Role): Boolean = role == Role.ADMIN || !config.isPrivate
+
     fun updateConfig(newConfig: BoardConfig) {
         config = newConfig
     }

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "Board", description = "Board API")
+@Tag(name = "BOARD", description = "게시판 API")
 @RestController
 @RequestMapping("/api/v4/boards")
 @ApiErrorCodeExample(BoardErrorCode::class)

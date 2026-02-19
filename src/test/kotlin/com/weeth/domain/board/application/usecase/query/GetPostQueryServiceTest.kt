@@ -172,6 +172,18 @@ class GetPostQueryServiceTest :
                     queryService.findPosts(1L, -1, 10, Role.USER)
                 }
             }
+
+            it("pageSize가 0이면 예외를 던진다") {
+                shouldThrow<PageNotFoundException> {
+                    queryService.findPosts(1L, 0, 0, Role.USER)
+                }
+            }
+
+            it("pageSize가 최대값을 초과하면 예외를 던진다") {
+                shouldThrow<PageNotFoundException> {
+                    queryService.findPosts(1L, 0, 51, Role.USER)
+                }
+            }
         }
 
         describe("findPosts") {

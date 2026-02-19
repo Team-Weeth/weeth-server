@@ -41,6 +41,19 @@ class BoardEntityTest :
             board.isAdminOnly shouldBe true
         }
 
+        "isAccessibleBy는 비공개 게시판을 ADMIN에게만 허용한다" {
+            val privateBoard =
+                Board(
+                    id = 20L,
+                    name = "운영",
+                    type = BoardType.NOTICE,
+                    config = BoardConfig(isPrivate = true),
+                )
+
+            privateBoard.isAccessibleBy(Role.ADMIN) shouldBe true
+            privateBoard.isAccessibleBy(Role.USER) shouldBe false
+        }
+
         "updateConfig는 config를 교체한다" {
             val board = Board(id = 3L, name = "일반", type = BoardType.GENERAL)
             val newConfig = BoardConfig(commentEnabled = false, isPrivate = true)

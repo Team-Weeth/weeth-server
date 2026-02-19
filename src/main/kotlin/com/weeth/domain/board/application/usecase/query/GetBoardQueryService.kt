@@ -15,23 +15,20 @@ class GetBoardQueryService(
     private val boardRepository: BoardRepository,
     private val boardMapper: BoardMapper,
 ) {
-    fun findBoards(role: Role): List<BoardListResponse> {
-        val isAdmin = isAdmin(role)
-        return boardRepository
+    fun findBoards(role: Role): List<BoardListResponse> =
+        boardRepository
             .findAllByIsDeletedFalseOrderByIdAsc()
-            .filter { canAccessBoard(it.config.isPrivate, isAdmin) }
+            .filter { it.isAccessibleBy(role) }
             .map(boardMapper::toListResponse)
-    }
 
     fun findBoard(
         boardId: Long,
         role: Role,
     ): BoardDetailResponse {
-        val isAdmin = isAdmin(role)
         val board =
             boardRepository
                 .findByIdAndIsDeletedFalse(boardId)
-                ?.takeIf { canAccessBoard(it.config.isPrivate, isAdmin) }
+                ?.takeIf { it.isAccessibleBy(role) }
                 ?: throw BoardNotFoundException()
         return boardMapper.toDetailResponse(board)
     }
@@ -40,11 +37,4 @@ class GetBoardQueryService(
         boardRepository
             .findAllByIsDeletedFalseOrderByIdAsc()
             .map(boardMapper::toDetailResponseForAdmin)
-
-    private fun canAccessBoard(
-        isPrivate: Boolean,
-        isAdmin: Boolean,
-    ): Boolean = isAdmin || !isPrivate
-
-    private fun isAdmin(role: Role): Boolean = role == Role.ADMIN
 }

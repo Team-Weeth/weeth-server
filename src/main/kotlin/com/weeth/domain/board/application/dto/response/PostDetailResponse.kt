@@ -2,7 +2,6 @@ package com.weeth.domain.board.application.dto.response
 
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
-import com.weeth.domain.user.domain.entity.enums.Position
 import com.weeth.domain.user.domain.entity.enums.Role
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
