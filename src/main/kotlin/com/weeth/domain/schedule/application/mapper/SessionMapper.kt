@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class SessionMapper {
-
     fun toResponse(session: Session): SessionResponse =
         SessionResponse(
             id = session.id,
@@ -69,9 +68,9 @@ class SessionMapper {
             title = request.title,
             content = request.content,
             location = request.location,
-            cardinal = request.cardinal!!,
-            start = request.start!!,
-            end = request.end!!,
+            cardinal = request.cardinal,
+            start = request.start,
+            end = request.end,
             user = user,
         )
 }

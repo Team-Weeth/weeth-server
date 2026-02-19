@@ -9,7 +9,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class EventMapper {
-
     fun toResponse(event: Event): EventResponse =
         EventResponse(
             id = event.id,
@@ -33,9 +32,9 @@ class EventMapper {
             title = request.title,
             content = request.content,
             location = request.location,
-            cardinal = request.cardinal!!,
-            start = request.start!!,
-            end = request.end!!,
+            cardinal = request.cardinal,
+            start = request.start,
+            end = request.end,
             user = user,
         )
 }

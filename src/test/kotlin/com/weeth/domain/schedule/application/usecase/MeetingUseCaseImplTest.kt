@@ -7,9 +7,11 @@ import com.weeth.domain.attendance.domain.service.AttendanceDeleteService
 import com.weeth.domain.attendance.domain.service.AttendanceGetService
 import com.weeth.domain.attendance.domain.service.AttendanceSaveService
 import com.weeth.domain.attendance.domain.service.AttendanceUpdateService
-import com.weeth.domain.schedule.application.dto.MeetingDTO
-import com.weeth.domain.schedule.application.dto.ScheduleDTO
-import com.weeth.domain.schedule.application.mapper.MeetingMapper
+import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
+import com.weeth.domain.schedule.application.dto.response.SessionInfoResponse
+import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
+import com.weeth.domain.schedule.application.dto.response.SessionResponse
+import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.schedule.domain.entity.enums.Type
 import com.weeth.domain.schedule.domain.service.MeetingDeleteService
 import com.weeth.domain.schedule.domain.service.MeetingGetService
@@ -35,7 +37,7 @@ import java.time.LocalDateTime
 class MeetingUseCaseImplTest :
     DescribeSpec({
         val meetingGetService = mockk<MeetingGetService>()
-        val meetingMapper = mockk<MeetingMapper>()
+        val sessionMapper = mockk<SessionMapper>()
         val meetingSaveService = mockk<MeetingSaveService>(relaxUnitFun = true)
         val userGetService = mockk<UserGetService>()
         val meetingUpdateService = mockk<MeetingUpdateService>(relaxUnitFun = true)
@@ -50,7 +52,7 @@ class MeetingUseCaseImplTest :
         val useCase =
             MeetingUseCaseImpl(
                 meetingGetService,
-                meetingMapper,
+                sessionMapper,
                 meetingSaveService,
                 userGetService,
                 meetingUpdateService,
@@ -69,7 +71,7 @@ class MeetingUseCaseImplTest :
         beforeTest {
             clearMocks(
                 meetingGetService,
-                meetingMapper,
+                sessionMapper,
                 meetingSaveService,
                 userGetService,
                 meetingUpdateService,
@@ -94,29 +96,29 @@ class MeetingUseCaseImplTest :
                     every { adminUser.role } returns Role.ADMIN
                     every { userGetService.find(userId) } returns adminUser
                     every { meetingGetService.find(sessionId) } returns session
-                    val adminResponse = mockk<MeetingDTO.Response>()
-                    every { meetingMapper.toAdminResponse(session) } returns adminResponse
+                    val adminResponse = mockk<SessionResponse>()
+                    every { sessionMapper.toAdminResponse(session) } returns adminResponse
 
                     val result = useCase.find(userId, sessionId)
 
                     result shouldBe adminResponse
-                    verify { meetingMapper.toAdminResponse(session) }
+                    verify { sessionMapper.toAdminResponse(session) }
                 }
             }
 
             context("일반 유저일 때") {
-                it("to(session)으로 매핑한다 (코드 미노출)") {
+                it("toResponse(session)으로 매핑한다 (코드 미노출)") {
                     val normalUser = mockk<User>()
                     every { normalUser.role } returns Role.USER
                     every { userGetService.find(userId) } returns normalUser
                     every { meetingGetService.find(sessionId) } returns session
-                    val normalResponse = mockk<MeetingDTO.Response>()
-                    every { meetingMapper.to(session) } returns normalResponse
+                    val normalResponse = mockk<SessionResponse>()
+                    every { sessionMapper.toResponse(session) } returns normalResponse
 
                     val result = useCase.find(userId, sessionId)
 
                     result shouldBe normalResponse
-                    verify { meetingMapper.to(session) }
+                    verify { sessionMapper.toResponse(session) }
                 }
             }
         }
@@ -138,17 +140,17 @@ class MeetingUseCaseImplTest :
                         start = now.minusDays(14),
                         end = now.minusDays(14).plusHours(2),
                     )
-                val thisWeekInfo = MeetingDTO.Info(1L, 1, "This Week", now)
-                val lastWeekInfo = MeetingDTO.Info(2L, 1, "Last Week", now.minusDays(14))
+                val thisWeekInfo = SessionInfoResponse(1L, 1, "This Week", now)
+                val lastWeekInfo = SessionInfoResponse(2L, 1, "Last Week", now.minusDays(14))
+                val expectedInfos = SessionInfosResponse(thisWeekInfo, listOf(thisWeekInfo, lastWeekInfo))
 
                 every { meetingGetService.findMeetingByCardinal(1) } returns listOf(thisWeekSession, lastWeekSession)
-                every { meetingMapper.toInfo(thisWeekSession) } returns thisWeekInfo
-                every { meetingMapper.toInfo(lastWeekSession) } returns lastWeekInfo
+                every { sessionMapper.toInfos(thisWeekSession, any()) } returns expectedInfos
 
                 val result = useCase.find(1)
 
                 result.thisWeek shouldNotBe null
-                result.thisWeek.title() shouldBe "This Week"
+                result.thisWeek!!.title shouldBe "This Week"
             }
         }
 
@@ -160,21 +162,20 @@ class MeetingUseCaseImplTest :
                 val userList = listOf(mockk<User>(), mockk<User>(), mockk<User>())
                 val session = ScheduleTestFixture.createSession()
                 val dto =
-                    ScheduleDTO.Save(
-                        "Title",
-                        "Content",
-                        "Location",
-                        null,
-                        Type.MEETING,
-                        1,
-                        LocalDateTime.of(2026, 3, 1, 10, 0),
-                        LocalDateTime.of(2026, 3, 1, 12, 0),
+                    ScheduleSaveRequest(
+                        title = "Title",
+                        content = "Content",
+                        location = "Location",
+                        type = Type.MEETING,
+                        cardinal = 1,
+                        start = LocalDateTime.of(2026, 3, 1, 10, 0),
+                        end = LocalDateTime.of(2026, 3, 1, 12, 0),
                     )
 
                 every { userGetService.find(userId) } returns user
                 every { cardinalGetService.findByUserSide(1) } returns cardinal
                 every { userGetService.findAllByCardinal(cardinal) } returns userList
-                every { meetingMapper.from(dto, user) } returns session
+                every { sessionMapper.toEntity(dto, user) } returns session
 
                 useCase.save(dto, userId)
 

@@ -7,7 +7,6 @@ import org.springframework.stereotype.Component
 
 @Component
 class ScheduleMapper {
-
     fun toResponse(
         event: Event,
         isMeeting: Boolean,
