@@ -1,18 +1,23 @@
-package com.weeth.domain.account.application.mapper;
+package com.weeth.domain.account.application.mapper
 
-import com.weeth.domain.account.application.dto.AccountDTO;
-import com.weeth.domain.account.application.dto.ReceiptDTO;
-import com.weeth.domain.account.domain.entity.Account;
-import org.mapstruct.*;
+import com.weeth.domain.account.application.dto.response.AccountResponse
+import com.weeth.domain.account.application.dto.response.ReceiptResponse
+import com.weeth.domain.account.domain.entity.Account
+import org.springframework.stereotype.Component
 
-import java.util.List;
-
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface AccountMapper {
-
-    @Mapping(target = "accountId", source = "account.id")
-    @Mapping(target = "receipts", source = "receipts")
-    @Mapping(target = "time", source = "account.modifiedAt")
-    AccountDTO.Response to(Account account, List<ReceiptDTO.Response> receipts);
-
+@Component
+class AccountMapper {
+    fun toResponse(
+        account: Account,
+        receipts: List<ReceiptResponse>,
+    ): AccountResponse =
+        AccountResponse(
+            accountId = account.id,
+            description = account.description,
+            totalAmount = account.totalAmount,
+            currentAmount = account.currentAmount,
+            time = account.modifiedAt,
+            cardinal = account.cardinal,
+            receipts = receipts,
+        )
 }

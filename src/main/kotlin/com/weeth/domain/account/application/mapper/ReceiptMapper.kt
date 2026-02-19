@@ -1,21 +1,30 @@
-package com.weeth.domain.account.application.mapper;
+package com.weeth.domain.account.application.mapper
 
-import com.weeth.domain.account.application.dto.ReceiptDTO;
-import com.weeth.domain.account.domain.entity.Account;
-import com.weeth.domain.account.domain.entity.Receipt;
-import com.weeth.domain.file.application.dto.response.FileResponse;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.MappingConstants;
-import org.mapstruct.ReportingPolicy;
+import com.weeth.domain.account.application.dto.response.ReceiptResponse
+import com.weeth.domain.account.domain.entity.Receipt
+import com.weeth.domain.file.application.dto.response.FileResponse
+import org.springframework.stereotype.Component
 
-import java.util.List;
+@Component
+class ReceiptMapper {
+    fun toResponse(
+        receipt: Receipt,
+        fileUrls: List<FileResponse>,
+    ): ReceiptResponse =
+        ReceiptResponse(
+            id = receipt.id,
+            description = receipt.description,
+            source = receipt.source,
+            amount = receipt.amount,
+            date = receipt.date,
+            fileUrls = fileUrls,
+        )
 
-@Mapper(componentModel = MappingConstants.ComponentModel.SPRING, unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface ReceiptMapper {
-
-    List<ReceiptDTO.Response> to(List<Receipt> account);
-
-    ReceiptDTO.Response to(Receipt receipt, List<FileResponse> fileUrls);
-
+    fun toResponses(
+        receipts: List<Receipt>,
+        filesByReceiptId: Map<Long, List<FileResponse>>,
+    ): List<ReceiptResponse> =
+        receipts.map { receipt ->
+            toResponse(receipt, filesByReceiptId[receipt.id] ?: emptyList())
+        }
 }
