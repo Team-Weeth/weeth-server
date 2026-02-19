@@ -60,6 +60,7 @@ class Post(
         newContent: String,
     ) {
         require(newTitle.isNotBlank()) { "title must not be blank" }
+        require(newContent.isNotBlank()) { "content must not be blank" }
         title = newTitle
         content = newContent
     }
