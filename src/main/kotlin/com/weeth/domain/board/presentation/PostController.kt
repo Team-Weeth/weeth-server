@@ -101,4 +101,6 @@ class PostController(
             BoardResponseCode.POST_SEARCH_SUCCESS,
             getPostQueryService.searchPosts(boardId, keyword, pageNumber, pageSize, role),
         )
+
+    // todo: 좋아요 관련 API 추가
 }
