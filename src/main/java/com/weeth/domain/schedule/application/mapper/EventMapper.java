@@ -14,6 +14,7 @@ public interface EventMapper {
     @Mapping(target = "type", expression = "java(Type.EVENT)")
     Response to(Event event);
 
+    @BeanMapping(builder = @Builder(disableBuilder = true))
     @Mappings({
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "user", source = "user")

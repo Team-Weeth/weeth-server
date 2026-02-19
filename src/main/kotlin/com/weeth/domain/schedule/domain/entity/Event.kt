@@ -15,25 +15,17 @@ import java.time.LocalDateTime
 @Entity
 class Event(
     var title: String,
-
     @Column(columnDefinition = "TEXT")
     var content: String,
-
     var location: String,
-
     var cardinal: Int,
-
     var requiredItem: String? = null,
-
     var start: LocalDateTime,
-
     var end: LocalDateTime,
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     var user: User? = null,
 ) : BaseEntity() {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0

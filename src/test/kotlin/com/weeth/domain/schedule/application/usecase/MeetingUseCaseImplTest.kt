@@ -68,10 +68,18 @@ class MeetingUseCaseImplTest :
 
         beforeTest {
             clearMocks(
-                meetingGetService, meetingMapper, meetingSaveService, userGetService,
-                meetingUpdateService, meetingDeleteService, attendanceGetService,
-                attendanceSaveService, attendanceDeleteService, attendanceUpdateService,
-                cardinalGetService, em,
+                meetingGetService,
+                meetingMapper,
+                meetingSaveService,
+                userGetService,
+                meetingUpdateService,
+                meetingDeleteService,
+                attendanceGetService,
+                attendanceSaveService,
+                attendanceDeleteService,
+                attendanceUpdateService,
+                cardinalGetService,
+                em,
             )
         }
 
@@ -153,8 +161,12 @@ class MeetingUseCaseImplTest :
                 val meeting = ScheduleTestFixture.createMeeting()
                 val dto =
                     ScheduleDTO.Save(
-                        "Title", "Content", "Location", null,
-                        Type.MEETING, 1,
+                        "Title",
+                        "Content",
+                        "Location",
+                        null,
+                        Type.MEETING,
+                        1,
                         LocalDateTime.of(2026, 3, 1, 10, 0),
                         LocalDateTime.of(2026, 3, 1, 12, 0),
                     )

@@ -13,6 +13,6 @@ import org.springframework.stereotype.Service;
 public class EventUpdateService {
 
     public void update(Event event, ScheduleDTO.Update dto, User user) {
-        event.update(dto, user);
+        event.update(dto.title(), dto.content(), dto.location(), dto.requiredItem(), dto.start(), dto.end(), user);
     }
 }

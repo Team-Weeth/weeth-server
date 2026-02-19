@@ -17,15 +17,16 @@ object ScheduleTestFixture {
         end: LocalDateTime = LocalDateTime.of(2026, 3, 1, 12, 0),
     ): Event {
         val event =
-            Event
-                .builder()
-                .title(title)
-                .content(content)
-                .location(location)
-                .cardinal(cardinal)
-                .start(start)
-                .end(end)
-                .build()
+            Event.create(
+                title = title,
+                content = content,
+                location = location,
+                cardinal = cardinal,
+                requiredItem = null,
+                start = start,
+                end = end,
+                user = null,
+            )
         if (id != 0L) ReflectionTestUtils.setField(event, "id", id)
         return event
     }
