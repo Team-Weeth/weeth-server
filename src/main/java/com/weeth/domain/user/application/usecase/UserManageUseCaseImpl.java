@@ -2,7 +2,7 @@ package com.weeth.domain.user.application.usecase;
 
 import jakarta.transaction.Transactional;
 import com.weeth.domain.attendance.domain.service.AttendanceSaveService;
-import com.weeth.domain.schedule.domain.entity.Meeting;
+import com.weeth.domain.attendance.domain.entity.Session;
 import com.weeth.domain.schedule.domain.service.MeetingGetService;
 import com.weeth.domain.user.application.exception.InvalidUserOrderException;
 import com.weeth.domain.user.application.mapper.UserMapper;
@@ -95,8 +95,8 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
 
             if (user.isInactive()) {
                 userUpdateService.accept(user);
-                List<Meeting> meetings = meetingGetService.find(cardinal);
-                attendanceSaveService.init(user, meetings);
+                List<Session> sessions = meetingGetService.find(cardinal);
+                attendanceSaveService.init(user, sessions);
             }
         });
     }
@@ -140,8 +140,8 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
             if (userCardinalGetService.notContains(user, nextCardinal)) {
                 if (userCardinalGetService.isCurrent(user, nextCardinal)) {
                     user.initAttendance();
-                    List<Meeting> meetings = meetingGetService.find(request.cardinal());
-                    attendanceSaveService.init(user, meetings);
+                    List<Session> sessionList = meetingGetService.find(request.cardinal());
+                    attendanceSaveService.init(user, sessionList);
                 }
                 UserCardinal userCardinal = new UserCardinal(user, nextCardinal);
 
