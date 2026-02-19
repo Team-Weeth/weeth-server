@@ -8,9 +8,11 @@ import com.weeth.domain.attendance.domain.service.AttendanceDeleteService;
 import com.weeth.domain.attendance.domain.service.AttendanceGetService;
 import com.weeth.domain.attendance.domain.service.AttendanceSaveService;
 import com.weeth.domain.attendance.domain.service.AttendanceUpdateService;
-import com.weeth.domain.schedule.application.dto.MeetingDTO;
-import com.weeth.domain.schedule.application.dto.ScheduleDTO;
-import com.weeth.domain.schedule.application.mapper.MeetingMapper;
+import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest;
+import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest;
+import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse;
+import com.weeth.domain.schedule.application.dto.response.SessionResponse;
+import com.weeth.domain.schedule.application.mapper.SessionMapper;
 import com.weeth.domain.schedule.domain.service.MeetingDeleteService;
 import com.weeth.domain.schedule.domain.service.MeetingGetService;
 import com.weeth.domain.schedule.domain.service.MeetingSaveService;
@@ -31,16 +33,13 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.weeth.domain.schedule.application.dto.MeetingDTO.Info;
-import static com.weeth.domain.schedule.application.dto.MeetingDTO.Response;
-
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MeetingUseCaseImpl implements MeetingUseCase {
 
     private final MeetingGetService meetingGetService;
-    private final MeetingMapper mapper;
+    private final SessionMapper mapper;
     private final MeetingSaveService meetingSaveService;
     private final UserGetService userGetService;
     private final MeetingUpdateService meetingUpdateService;
@@ -55,7 +54,7 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
     private EntityManager em;
 
     @Override
-    public Response find(Long userId, Long sessionId) {
+    public SessionResponse find(Long userId, Long sessionId) {
         User user = userGetService.find(userId);
         Session session = meetingGetService.find(sessionId);
 
@@ -63,11 +62,11 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
             return mapper.toAdminResponse(session);
         }
 
-        return mapper.to(session);
+        return mapper.toResponse(session);
     }
 
     @Override
-    public MeetingDTO.Infos find(Integer cardinal) {
+    public SessionInfosResponse find(Integer cardinal) {
         List<Session> sessions;
 
         if (cardinal == null) {
@@ -79,20 +78,18 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
         Session thisWeek = findThisWeek(sessions);
         List<Session> sorted = sortSessions(sessions);
 
-        return new MeetingDTO.Infos(
-            thisWeek != null ? mapper.toInfo(thisWeek) : null,
-            sorted.stream().map(mapper::toInfo).toList());
+        return mapper.toInfos(thisWeek, sorted);
     }
 
     @Override
     @Transactional
-    public void save(ScheduleDTO.Save dto, Long userId) {
+    public void save(ScheduleSaveRequest dto, Long userId) {
         User user = userGetService.find(userId);
-        Cardinal cardinal = cardinalGetService.findByUserSide(dto.cardinal());
+        Cardinal cardinal = cardinalGetService.findByUserSide(dto.getCardinal());
 
         List<User> userList = userGetService.findAllByCardinal(cardinal);
 
-        Session session = mapper.from(dto, user);
+        Session session = mapper.toEntity(dto, user);
         meetingSaveService.save(session);
 
         attendanceSaveService.saveAll(userList, session);
@@ -100,7 +97,7 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
 
     @Override
     @Transactional
-    public void update(ScheduleDTO.Update dto, Long userId, Long sessionId) {
+    public void update(ScheduleUpdateRequest dto, Long userId, Long sessionId) {
         Session session = meetingGetService.find(sessionId);
         User user = userGetService.find(userId);
         meetingUpdateService.update(dto, user, session);

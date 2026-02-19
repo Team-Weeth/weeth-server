@@ -1,5 +1,6 @@
 package com.weeth.domain.schedule.application.usecase;
 
+import com.weeth.domain.schedule.application.dto.response.ScheduleResponse;
 import com.weeth.domain.schedule.domain.service.EventGetService;
 import com.weeth.domain.schedule.domain.service.MeetingGetService;
 import com.weeth.domain.user.domain.entity.Cardinal;
@@ -13,8 +14,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.weeth.domain.schedule.application.dto.ScheduleDTO.Response;
-
 @Service
 @RequiredArgsConstructor
 public class ScheduleUseCaseImpl implements ScheduleUseCase {
@@ -24,32 +23,32 @@ public class ScheduleUseCaseImpl implements ScheduleUseCase {
     private final CardinalGetService cardinalGetService;
 
     @Override
-    public List<Response> findByMonthly(LocalDateTime start, LocalDateTime end) {
-        List<Response> events = eventGetService.find(start, end);
-        List<Response> meetings = meetingGetService.find(start, end);
+    public List<ScheduleResponse> findByMonthly(LocalDateTime start, LocalDateTime end) {
+        List<ScheduleResponse> events = eventGetService.find(start, end);
+        List<ScheduleResponse> meetings = meetingGetService.find(start, end);
 
         return Stream.of(events, meetings)
                 .flatMap(Collection::stream)
-                .sorted(Comparator.comparing(Response::start))
+                .sorted(Comparator.comparing(ScheduleResponse::getStart))
                 .toList();
     }
 
     @Override
-    public Map<Integer, List<Response>> findByYearly(Integer year, Integer semester) {
+    public Map<Integer, List<ScheduleResponse>> findByYearly(Integer year, Integer semester) {
         Cardinal cardinal = cardinalGetService.find(year, semester);
 
-        List<Response> events = eventGetService.find(cardinal.getCardinalNumber());
-        List<Response> meetings = meetingGetService.findByCardinal(cardinal.getCardinalNumber());
+        List<ScheduleResponse> events = eventGetService.find(cardinal.getCardinalNumber());
+        List<ScheduleResponse> meetings = meetingGetService.findByCardinal(cardinal.getCardinalNumber());
 
         return Stream.of(events, meetings)
-                .flatMap(Collection::stream)    // 병합
-                .sorted(Comparator.comparing(Response::start))  // 스케줄 시작 시간으로 정렬
+                .flatMap(Collection::stream)
+                .sorted(Comparator.comparing(ScheduleResponse::getStart))
                 .flatMap(schedule -> {
-                    List<Map.Entry<Integer, Response>> monthEventPairs = new ArrayList<>();
+                    List<Map.Entry<Integer, ScheduleResponse>> monthEventPairs = new ArrayList<>();
 
-                    int left = schedule.start().getMonthValue();
-                    int right = schedule.end().getMonthValue() + 1;
-                    IntStream.range(left, right)    // 기간 내 포함된 달 계산
+                    int left = schedule.getStart().getMonthValue();
+                    int right = schedule.getEnd().getMonthValue() + 1;
+                    IntStream.range(left, right)
                             .forEach(month -> monthEventPairs.add(
                                     new AbstractMap.SimpleEntry<>(month, schedule))
                             );

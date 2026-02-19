@@ -1,16 +1,16 @@
 package com.weeth.domain.schedule.application.usecase;
 
-import com.weeth.domain.schedule.application.dto.ScheduleDTO;
-
-import static com.weeth.domain.schedule.application.dto.EventDTO.*;
+import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest;
+import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest;
+import com.weeth.domain.schedule.application.dto.response.EventResponse;
 
 public interface EventUseCase {
 
-    Response find(Long eventId);
+    EventResponse find(Long eventId);
 
-    void save(ScheduleDTO.Save dto, Long userId);
+    void save(ScheduleSaveRequest dto, Long userId);
 
-    void update(Long eventId, ScheduleDTO.Update dto, Long userId);
+    void update(Long eventId, ScheduleUpdateRequest dto, Long userId);
 
     void delete(Long eventId);
 }

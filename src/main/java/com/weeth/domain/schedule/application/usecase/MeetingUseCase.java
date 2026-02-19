@@ -1,22 +1,19 @@
 package com.weeth.domain.schedule.application.usecase;
 
-import com.weeth.domain.schedule.application.dto.MeetingDTO;
-import com.weeth.domain.schedule.application.dto.ScheduleDTO;
-
-import java.util.List;
-
-import static com.weeth.domain.schedule.application.dto.MeetingDTO.Info;
-import static com.weeth.domain.schedule.application.dto.MeetingDTO.Response;
+import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest;
+import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest;
+import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse;
+import com.weeth.domain.schedule.application.dto.response.SessionResponse;
 
 public interface MeetingUseCase {
 
-    Response find(Long userId, Long eventId);
+    SessionResponse find(Long userId, Long eventId);
 
-    MeetingDTO.Infos find(Integer cardinal);
+    SessionInfosResponse find(Integer cardinal);
 
-    void save(ScheduleDTO.Save dto, Long userId);
+    void save(ScheduleSaveRequest dto, Long userId);
 
-    void update(ScheduleDTO.Update dto, Long userId, Long meetingId);
+    void update(ScheduleUpdateRequest dto, Long userId, Long meetingId);
 
     void delete(Long meetingId);
 }

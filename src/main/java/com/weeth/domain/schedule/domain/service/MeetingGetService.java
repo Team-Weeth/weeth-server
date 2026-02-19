@@ -3,7 +3,7 @@ package com.weeth.domain.schedule.domain.service;
 import com.weeth.domain.attendance.domain.entity.Session;
 import com.weeth.domain.attendance.domain.entity.enums.SessionStatus;
 import com.weeth.domain.attendance.domain.repository.SessionRepository;
-import com.weeth.domain.schedule.application.dto.ScheduleDTO;
+import com.weeth.domain.schedule.application.dto.response.ScheduleResponse;
 import com.weeth.domain.schedule.application.mapper.ScheduleMapper;
 import com.weeth.domain.schedule.application.exception.MeetingNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +24,9 @@ public class MeetingGetService {
                 .orElseThrow(MeetingNotFoundException::new);
     }
 
-    public List<ScheduleDTO.Response> find(LocalDateTime start, LocalDateTime end) {
+    public List<ScheduleResponse> find(LocalDateTime start, LocalDateTime end) {
         return sessionRepository.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start).stream()
-                .map(session -> mapper.toScheduleDTO(session, true))
+                .map(session -> mapper.toResponse(session, true))
                 .toList();
     }
 
@@ -42,9 +42,9 @@ public class MeetingGetService {
         return sessionRepository.findAllByOrderByStartDesc();
     }
 
-    public List<ScheduleDTO.Response> findByCardinal(Integer cardinal) {
+    public List<ScheduleResponse> findByCardinal(Integer cardinal) {
         return sessionRepository.findAllByCardinal(cardinal).stream()
-                .map(session -> mapper.toScheduleDTO(session, true))
+                .map(session -> mapper.toResponse(session, true))
                 .toList();
     }
 
