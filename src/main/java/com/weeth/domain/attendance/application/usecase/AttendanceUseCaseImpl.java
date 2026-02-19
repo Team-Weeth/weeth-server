@@ -5,11 +5,11 @@ import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchE
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException;
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper;
 import com.weeth.domain.attendance.domain.entity.Attendance;
-import com.weeth.domain.attendance.domain.entity.enums.Status;
+import com.weeth.domain.attendance.domain.entity.Session;
+import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus;
 import com.weeth.domain.attendance.domain.service.AttendanceGetService;
 import com.weeth.domain.attendance.domain.service.AttendanceUpdateService;
 import com.weeth.domain.schedule.application.exception.MeetingNotFoundException;
-import com.weeth.domain.schedule.domain.entity.Meeting;
 import com.weeth.domain.schedule.domain.service.MeetingGetService;
 import com.weeth.domain.user.domain.entity.Cardinal;
 import com.weeth.domain.user.domain.entity.User;
@@ -45,15 +45,15 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
 
         LocalDateTime now = LocalDateTime.now();
         Attendance todayMeeting = user.getAttendances().stream()
-                .filter(attendance -> attendance.getMeeting().getStart().minusMinutes(10).isBefore(now)
-                        && attendance.getMeeting().getEnd().isAfter(now))
+                .filter(attendance -> attendance.getSession().getStart().minusMinutes(10).isBefore(now)
+                        && attendance.getSession().getEnd().isAfter(now))
                 .findAny()
                 .orElseThrow(AttendanceNotFoundException::new);
 
         if (todayMeeting.isWrong(code))
             throw new AttendanceCodeMismatchException();
 
-        if (todayMeeting.getStatus() != Status.ATTEND)
+        if (todayMeeting.getStatus() != AttendanceStatus.ATTEND)
             attendanceUpdateService.attend(todayMeeting);
     }
 
@@ -62,8 +62,8 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
         User user = userGetService.find(userId);
 
         Attendance todayMeeting = user.getAttendances().stream()
-                .filter(attendance -> attendance.getMeeting().getStart().toLocalDate().isEqual(LocalDate.now())
-                        && attendance.getMeeting().getEnd().toLocalDate().isEqual(LocalDate.now()))
+                .filter(attendance -> attendance.getSession().getStart().toLocalDate().isEqual(LocalDate.now())
+                        && attendance.getSession().getEnd().toLocalDate().isEqual(LocalDate.now()))
                 .findAny()
                 .orElse(null);
 
@@ -79,8 +79,8 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
         Cardinal currentCardinal = userCardinalGetService.getCurrentCardinal(user);
 
         List<AttendanceDTO.Response> responses = user.getAttendances().stream()
-                .filter(attendance -> attendance.getMeeting().getCardinal().equals(currentCardinal.getCardinalNumber()))
-                .sorted(Comparator.comparing(attendance -> attendance.getMeeting().getStart()))
+                .filter(attendance -> attendance.getSession().getCardinal() == currentCardinal.getCardinalNumber())
+                .sorted(Comparator.comparing(attendance -> attendance.getSession().getStart()))
                 .map(mapper::toResponseDto)
                 .toList();
 
@@ -88,10 +88,10 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
     }
 
     @Override
-    public List<AttendanceDTO.AttendanceInfo> findAllAttendanceByMeeting(Long meetingId) {
-        Meeting meeting = meetingGetService.find(meetingId);
+    public List<AttendanceDTO.AttendanceInfo> findAllAttendanceByMeeting(Long sessionId) {
+        Session session = meetingGetService.find(sessionId);
 
-        List<Attendance> attendances = attendanceGetService.findAllByMeeting(meeting);
+        List<Attendance> attendances = attendanceGetService.findAllByMeeting(session);
 
         return attendances.stream()
                 .map(mapper::toAttendanceInfoDto)
@@ -100,18 +100,15 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
 
     @Override
     public void close(LocalDate now, Integer cardinal) {
-        List<Meeting> meetings = meetingGetService.find(cardinal);
+        List<Session> sessions = meetingGetService.find(cardinal);
 
-        /*
-        todo 차후 리팩토링 정기모임 id를 입력받아서 해당 정기모임의 출석을 마감하도록 수정
-         */
-        Meeting targetMeeting = meetings.stream()
-                .filter(meeting -> meeting.getStart().toLocalDate().isEqual(now)
-                        && meeting.getEnd().toLocalDate().isEqual(now))
+        Session targetSession = sessions.stream()
+                .filter(session -> session.getStart().toLocalDate().isEqual(now)
+                        && session.getEnd().toLocalDate().isEqual(now))
                 .findAny()
                 .orElseThrow(MeetingNotFoundException::new);
 
-        List<Attendance> attendanceList = attendanceGetService.findAllByMeeting(targetMeeting);
+        List<Attendance> attendanceList = attendanceGetService.findAllByMeeting(targetSession);
 
         attendanceUpdateService.close(attendanceList);
     }
@@ -123,9 +120,9 @@ public class AttendanceUseCaseImpl implements AttendanceUseCase {
             Attendance attendance = attendanceGetService.findByAttendanceId(update.attendanceId());
             User user = attendance.getUser();
 
-            Status newStatus = Status.valueOf(update.status());
+            AttendanceStatus newStatus = AttendanceStatus.valueOf(update.status());
 
-            if (newStatus == Status.ABSENT) {
+            if (newStatus == AttendanceStatus.ABSENT) {
                 attendance.close();
                 user.removeAttend();
                 user.absent();

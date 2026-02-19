@@ -3,7 +3,7 @@ package com.weeth.domain.attendance.application.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import com.weeth.domain.attendance.domain.entity.enums.Status;
+import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,7 +13,7 @@ public class AttendanceDTO {
     public record Main(
             Integer attendanceRate,
             String title,
-            Status status,
+            AttendanceStatus status,
             @Schema(description = "어드민인 경우 출석 코드 노출")
             Integer code,
             LocalDateTime start,
@@ -30,7 +30,7 @@ public class AttendanceDTO {
 
     public record Response(
             Long id,
-            Status status,
+            AttendanceStatus status,
             String title,
             LocalDateTime start,
             LocalDateTime end,
@@ -43,7 +43,7 @@ public class AttendanceDTO {
 
     public record AttendanceInfo(
             Long id,
-            Status status,
+            AttendanceStatus status,
             String name,
             String position,
             String department,

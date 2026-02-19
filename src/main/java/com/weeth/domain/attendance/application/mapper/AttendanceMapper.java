@@ -12,23 +12,23 @@ public interface AttendanceMapper {
 
     @Mappings({
             @Mapping(target = "attendanceRate", source = "user.attendanceRate"),
-            @Mapping(target = "title", source = "attendance.meeting.title"),
+            @Mapping(target = "title", source = "attendance.session.title"),
             @Mapping(target = "status", source = "attendance.status"),
             @Mapping(target = "code", ignore = true),
-            @Mapping(target = "start", source = "attendance.meeting.start"),
-            @Mapping(target = "end", source = "attendance.meeting.end"),
-            @Mapping(target = "location", source = "attendance.meeting.location"),
+            @Mapping(target = "start", source = "attendance.session.start"),
+            @Mapping(target = "end", source = "attendance.session.end"),
+            @Mapping(target = "location", source = "attendance.session.location"),
     })
     AttendanceDTO.Main toMainDto(User user, Attendance attendance);
 
     @Mappings({
             @Mapping(target = "attendanceRate", source = "user.attendanceRate"),
-            @Mapping(target = "title", source = "attendance.meeting.title"),
+            @Mapping(target = "title", source = "attendance.session.title"),
             @Mapping(target = "status", source = "attendance.status"),
-            @Mapping(target = "code", source = "attendance.meeting.code"),
-            @Mapping(target = "start", source = "attendance.meeting.start"),
-            @Mapping(target = "end", source = "attendance.meeting.end"),
-            @Mapping(target = "location", source = "attendance.meeting.location"),
+            @Mapping(target = "code", source = "attendance.session.code"),
+            @Mapping(target = "start", source = "attendance.session.start"),
+            @Mapping(target = "end", source = "attendance.session.end"),
+            @Mapping(target = "location", source = "attendance.session.location"),
     })
     AttendanceDTO.Main toAdminResponse(User user, Attendance attendance);
 
@@ -39,10 +39,10 @@ public interface AttendanceMapper {
     AttendanceDTO.Detail toDetailDto(User user, List<AttendanceDTO.Response> attendances);
 
     @Mappings({
-            @Mapping(target = "title", source = "attendance.meeting.title"),
-            @Mapping(target = "start", source = "attendance.meeting.start"),
-            @Mapping(target = "end", source = "attendance.meeting.end"),
-            @Mapping(target = "location", source = "attendance.meeting.location"),
+            @Mapping(target = "title", source = "attendance.session.title"),
+            @Mapping(target = "start", source = "attendance.session.start"),
+            @Mapping(target = "end", source = "attendance.session.end"),
+            @Mapping(target = "location", source = "attendance.session.location"),
     })    AttendanceDTO.Response toResponseDto(Attendance attendance);
 
     @Mappings({
