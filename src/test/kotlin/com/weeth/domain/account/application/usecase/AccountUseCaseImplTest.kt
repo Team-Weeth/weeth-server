@@ -14,6 +14,7 @@ import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.account.fixture.ReceiptTestFixture
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.user.domain.service.CardinalGetService
@@ -70,11 +71,14 @@ class AccountUseCaseImplTest :
                     val receiptResponse = mockk<ReceiptResponse>()
                     val accountResponse = mockk<AccountResponse>()
 
+                    val mockFile = mockk<File>()
+                    every { mockFile.ownerId } returns receipt.id
+
                     every { accountGetService.find(40) } returns account
                     every { receiptGetService.findAllByAccountId(account.id) } returns listOf(receipt)
-                    every { fileReader.findAll(FileOwnerType.RECEIPT, receipt.id, null) } returns listOf(mockk())
-                    every { fileMapper.toFileResponse(any()) } returns fileResponse
-                    every { receiptMapper.toResponse(receipt, listOf(fileResponse)) } returns receiptResponse
+                    every { fileReader.findAll(FileOwnerType.RECEIPT, listOf(receipt.id), null) } returns listOf(mockFile)
+                    every { fileMapper.toFileResponse(mockFile) } returns fileResponse
+                    every { receiptMapper.toResponses(listOf(receipt), any()) } returns listOf(receiptResponse)
                     every { accountMapper.toResponse(account, listOf(receiptResponse)) } returns accountResponse
 
                     val result = useCase.find(40)
