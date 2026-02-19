@@ -13,7 +13,6 @@ class RedisRefreshTokenStoreAdapter(
     private val jwtProperties: JwtProperties,
     private val redisTemplate: RedisTemplate<String, String>,
 ) : RefreshTokenStorePort {
-
     override fun save(
         userId: Long,
         refreshToken: String,

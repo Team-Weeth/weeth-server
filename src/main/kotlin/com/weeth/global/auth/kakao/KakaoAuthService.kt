@@ -13,7 +13,7 @@ import org.springframework.web.client.body
 class KakaoAuthService(
     oAuthProperties: OAuthProperties,
     restClientBuilder: RestClient.Builder,
-    ) {
+) {
     private val kakaoProperties = oAuthProperties.kakao
     private val restClient = restClientBuilder.build()
 

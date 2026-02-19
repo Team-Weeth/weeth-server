@@ -45,7 +45,9 @@ class AppleAuthService(
     private val appleProperties = oAuthProperties.apple
     private val restClient = restClientBuilder.build()
     private val publicKeysTtl: Duration = Duration.ofHours(1)
+
     @Volatile private var cachedPublicKeys: ApplePublicKeys? = null
+
     @Volatile private var cachedPublicKeysExpiresAt: Instant = Instant.EPOCH
     private val privateKey: PrivateKey by lazy { loadPrivateKey() }
 
@@ -195,13 +197,22 @@ class AppleAuthService(
         val now = Date.from(Instant.now(clock))
 
         when {
-            iss != "https://appleid.apple.com" -> throw RuntimeException("유효하지 않은 발급자(issuer)입니다.")
+            iss != "https://appleid.apple.com" -> {
+                throw RuntimeException("유효하지 않은 발급자(issuer)입니다.")
+            }
+
             audiences.isEmpty() || !audiences.contains(appleProperties.clientId) -> {
                 log.error("유효하지 않은 audience: {}. 기대값: {}", audiences, appleProperties.clientId)
                 throw RuntimeException("유효하지 않은 수신자(audience)입니다.")
             }
-            expiration.before(now) -> throw RuntimeException("만료된 ID Token입니다.")
-            claims.subject.isNullOrBlank() -> throw RuntimeException("유효하지 않은 subject입니다.")
+
+            expiration.before(now) -> {
+                throw RuntimeException("만료된 ID Token입니다.")
+            }
+
+            claims.subject.isNullOrBlank() -> {
+                throw RuntimeException("유효하지 않은 subject입니다.")
+            }
         }
     }
 
@@ -233,8 +244,7 @@ class AppleAuthService(
             throw RuntimeException("JSON 파싱 실패")
         }
 
-    private fun decodeBase64Url(value: String): String =
-        String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8)
+    private fun decodeBase64Url(value: String): String = String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8)
 
     private fun parseEmailVerified(raw: Any?): Boolean =
         when (raw) {

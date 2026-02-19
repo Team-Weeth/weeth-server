@@ -1,8 +1,8 @@
 package com.weeth.global.auth.resolver
 
+import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.AnonymousAuthenticationException
-import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.model.AuthenticatedUser
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
