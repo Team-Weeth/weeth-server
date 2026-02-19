@@ -44,7 +44,6 @@ class CommentConcurrencyTest(
     private val entityManager: EntityManager,
     private val atomicCommentCountCommand: AtomicCommentCountCommand,
 ) : DescribeSpec({
-        val runPerformanceTests = System.getProperty("runPerformanceTests")?.toBoolean() ?: false
 
         data class ConcurrencyResult(
             val successCount: Int,
@@ -213,7 +212,7 @@ class CommentConcurrencyTest(
         }
 
         describe("동시성 해소 방식별 성능 비교") {
-            it("PESSIMISTIC_WRITE와 Atomic Increment를 측정하고 Atomic 우위를 검증한다").config(enabled = runPerformanceTests) {
+            it("PESSIMISTIC_WRITE와 Atomic Increment를 측정하고 Atomic 우위를 검증한다") {
                 val threadCount = 30
                 val rounds = 5
 
