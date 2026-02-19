@@ -43,6 +43,7 @@ class ManageReceiptUseCase(
         receiptId: Long,
         request: ReceiptUpdateRequest,
     ) {
+        cardinalGetService.findByAdminSide(request.cardinal)
         val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
         account.adjustSpend(Money.of(receipt.amount), Money.of(request.amount))

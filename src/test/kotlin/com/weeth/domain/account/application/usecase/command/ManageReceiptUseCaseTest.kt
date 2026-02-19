@@ -122,7 +122,9 @@ class ManageReceiptUseCaseTest :
                 val oldFiles = listOf(mockk<File>())
                 val newFiles = listOf(mockk<File>())
 
+                every { cardinalGetService.findByAdminSide(dto.cardinal) } returns mockk()
                 every { accountRepository.findByCardinal(dto.cardinal) } returns account
+
                 every { receiptRepository.findById(receiptId) } returns Optional.of(receipt)
                 every { fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null) } returns oldFiles
                 every { fileMapper.toFileList(dto.files, FileOwnerType.RECEIPT, receiptId) } returns newFiles
