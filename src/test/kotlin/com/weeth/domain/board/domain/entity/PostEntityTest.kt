@@ -51,4 +51,14 @@ class PostEntityTest :
                 post.decreaseLikeCount()
             }
         }
+
+        "markDeleted와 restore는 삭제 상태를 토글한다" {
+            val post = PostTestFixture.create()
+
+            post.markDeleted()
+            post.isDeleted shouldBe true
+
+            post.restore()
+            post.isDeleted shouldBe false
+        }
     })

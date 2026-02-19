@@ -49,4 +49,14 @@ class BoardEntityTest :
 
             board.config shouldBe newConfig
         }
+
+        "markDeleted와 restore는 삭제 상태를 토글한다" {
+            val board = Board(id = 4L, name = "운영", type = BoardType.GENERAL)
+
+            board.markDeleted()
+            board.isDeleted shouldBe true
+
+            board.restore()
+            board.isDeleted shouldBe false
+        }
     })
