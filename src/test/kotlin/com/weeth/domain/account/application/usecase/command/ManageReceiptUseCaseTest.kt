@@ -134,6 +134,34 @@ class ManageReceiptUseCaseTest :
                 verify(exactly = 1) { fileRepository.deleteAll(oldFiles) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
+
+            it("빈 리스트로 업데이트 시 기존 파일을 모두 삭제한다") {
+                val receiptId = 11L
+                val account = AccountTestFixture.createAccount(cardinal = 40)
+                val receipt = ReceiptTestFixture.createReceipt(id = receiptId, amount = 1_000, account = account)
+                account.spend(Money.of(receipt.amount))
+                val dto =
+                    ReceiptUpdateRequest(
+                        "desc",
+                        "source",
+                        2_000,
+                        LocalDate.of(2026, 1, 1),
+                        40,
+                        emptyList(),
+                    )
+                val oldFiles = listOf(mockk<File>())
+
+                every { cardinalGetService.findByAdminSide(dto.cardinal) } returns mockk()
+                every { accountRepository.findByCardinal(dto.cardinal) } returns account
+                every { receiptRepository.findById(receiptId) } returns Optional.of(receipt)
+                every { fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null) } returns oldFiles
+                every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, receiptId) } returns emptyList()
+
+                useCase.update(receiptId, dto)
+
+                verify(exactly = 1) { fileRepository.deleteAll(oldFiles) }
+                verify(exactly = 1) { fileRepository.saveAll(emptyList()) }
+            }
         }
 
         describe("delete") {

@@ -47,7 +47,7 @@ class ManageReceiptUseCase(
         val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
         account.adjustSpend(Money.of(receipt.amount), Money.of(request.amount))
-        if (!request.files.isNullOrEmpty()) {
+        if (request.files != null) {
             fileRepository.deleteAll(fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null))
             fileRepository.saveAll(fileMapper.toFileList(request.files, FileOwnerType.RECEIPT, receiptId))
         }
