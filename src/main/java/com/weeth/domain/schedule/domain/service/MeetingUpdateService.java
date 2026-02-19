@@ -9,6 +9,6 @@ import org.springframework.stereotype.Service;
 public class MeetingUpdateService {
 
     public void update(ScheduleDTO.Update dto, User user, Session session) {
-        session.updateInfo(dto.title(), dto.content(), dto.location(), dto.requiredItem(), dto.start(), dto.end(), user);
+        session.updateInfo(dto.title(), dto.content(), dto.location(), dto.start(), dto.end(), user);
     }
 }

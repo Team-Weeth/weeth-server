@@ -19,7 +19,6 @@ class Event(
     var content: String,
     var location: String,
     var cardinal: Int,
-    var requiredItem: String? = null,
     var start: LocalDateTime,
     var end: LocalDateTime,
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,7 +33,6 @@ class Event(
         title: String,
         content: String,
         location: String,
-        requiredItem: String?,
         start: LocalDateTime,
         end: LocalDateTime,
         user: User?,
@@ -42,7 +40,6 @@ class Event(
         this.title = title
         this.content = content
         this.location = location
-        this.requiredItem = requiredItem
         this.start = start
         this.end = end
         this.user = user
@@ -54,7 +51,6 @@ class Event(
             content: String,
             location: String,
             cardinal: Int,
-            requiredItem: String?,
             start: LocalDateTime,
             end: LocalDateTime,
             user: User?,
@@ -66,7 +62,6 @@ class Event(
                 content = content,
                 location = location,
                 cardinal = cardinal,
-                requiredItem = requiredItem,
                 start = start,
                 end = end,
                 user = user,

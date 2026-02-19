@@ -22,7 +22,6 @@ object ScheduleTestFixture {
                 content = content,
                 location = location,
                 cardinal = cardinal,
-                requiredItem = null,
                 start = start,
                 end = end,
                 user = null,
