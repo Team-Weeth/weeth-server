@@ -1,7 +1,6 @@
 package com.weeth.global.auth.jwt.application.service
 
 import com.weeth.domain.user.domain.entity.enums.Role
-import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.config.properties.JwtProperties
@@ -36,23 +35,9 @@ class JwtTokenExtractor(
             ?.takeIf { it.startsWith(BEARER) }
             ?.removePrefix(BEARER)
 
-    fun extractEmail(accessToken: String): String? =
-        runCatching {
-            val claims: Claims = jwtTokenProvider.parseClaims(accessToken)
-            claims.get(JwtTokenProvider.EMAIL_CLAIM, String::class.java)
-        }.getOrElse {
-            log.error("액세스 토큰이 유효하지 않습니다.")
-            null
-        }
+    fun extractEmail(accessToken: String): String? = extractClaim(accessToken, JwtTokenProvider.EMAIL_CLAIM, String::class.java)
 
-    fun extractId(token: String): Long? =
-        runCatching {
-            val claims: Claims = jwtTokenProvider.parseClaims(token)
-            claims.get(JwtTokenProvider.ID_CLAIM, Long::class.java)
-        }.getOrElse {
-            log.error("액세스 토큰이 유효하지 않습니다.")
-            null
-        }
+    fun extractId(token: String): Long? = extractClaim(token, JwtTokenProvider.ID_CLAIM, Long::class.java)
 
     fun extractClaims(token: String): TokenClaims? =
         runCatching {
@@ -60,14 +45,22 @@ class JwtTokenExtractor(
             TokenClaims(
                 id = claims.get(JwtTokenProvider.ID_CLAIM, Long::class.java),
                 email = claims.get(JwtTokenProvider.EMAIL_CLAIM, String::class.java),
-                role =
-                    runCatching { Role.valueOf(claims.get(JwtTokenProvider.ROLE_CLAIM, String::class.java)) }
-                        .getOrElse { throw InvalidTokenException() },
+                role = Role.valueOf(claims.get(JwtTokenProvider.ROLE_CLAIM, String::class.java)),
             )
-        }.getOrElse {
-            log.error("액세스 토큰이 유효하지 않습니다.")
-            null
-        }
+        }.onFailure {
+            log.error("액세스 토큰이 유효하지 않습니다: {}", it.message)
+        }.getOrNull()
+
+    private fun <T> extractClaim(
+        token: String,
+        claimName: String,
+        type: Class<T>,
+    ): T? =
+        runCatching {
+            jwtTokenProvider.parseClaims(token).get(claimName, type)
+        }.onFailure {
+            log.error("액세스 토큰 claim 추출 실패({}): {}", claimName, it.message)
+        }.getOrNull()
 
     companion object {
         private const val BEARER = "Bearer "

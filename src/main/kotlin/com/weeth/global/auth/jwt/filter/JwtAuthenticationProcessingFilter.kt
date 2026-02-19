@@ -37,7 +37,7 @@ class JwtAuthenticationProcessingFilter(
         filterChain.doFilter(request, response)
     }
 
-    fun saveAuthentication(accessToken: String) {
+    private fun saveAuthentication(accessToken: String) {
         val claims = jwtTokenExtractor.extractClaims(accessToken) ?: throw TokenNotFoundException()
         val principal = AuthenticatedUser(claims.id, claims.email, claims.role)
 

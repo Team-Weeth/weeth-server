@@ -15,7 +15,7 @@ class CommonExceptionHandler {
 
     @ExceptionHandler(BaseException::class)
     fun handle(ex: BaseException): ResponseEntity<CommonResponse<Void?>> {
-        log.warn("구체로그: ", ex)
+        log.warn("예외 처리(BaseException)", ex)
         log.warn(LOG_FORMAT, ex::class.simpleName, ex.statusCode, ex.message)
 
         val errorCode = ex.errorCode
@@ -33,11 +33,10 @@ class CommonExceptionHandler {
 
     @ExceptionHandler(BindException::class)
     fun handle(ex: BindException): ResponseEntity<CommonResponse<List<BindExceptionResponse>>> {
-        var statusCode = 400
+        val statusCode = if (ex is ErrorResponse) ex.statusCode.value() else 400
         val exceptionResponses = mutableListOf<BindExceptionResponse>()
 
         if (ex is ErrorResponse) {
-            statusCode = ex.statusCode.value()
             ex.bindingResult.fieldErrors.forEach { fieldError ->
                 exceptionResponses.add(
                     BindExceptionResponse(
@@ -48,7 +47,7 @@ class CommonExceptionHandler {
             }
         }
 
-        log.warn("구체로그: ", ex)
+        log.warn("예외 처리(BindException)", ex)
         log.warn(LOG_FORMAT, ex::class.simpleName, statusCode, exceptionResponses)
 
         val response = CommonResponse.createFailure(statusCode, "bindException", exceptionResponses.toList())
@@ -60,12 +59,9 @@ class CommonExceptionHandler {
 
     @ExceptionHandler(MethodArgumentTypeMismatchException::class)
     fun handle(ex: MethodArgumentTypeMismatchException): ResponseEntity<CommonResponse<Void?>> {
-        var statusCode = 400
-        if (ex is ErrorResponse) {
-            statusCode = ex.statusCode.value()
-        }
+        val statusCode = if (ex is ErrorResponse) ex.statusCode.value() else 400
 
-        log.warn("구체로그: ", ex)
+        log.warn("예외 처리(MethodArgumentTypeMismatchException)", ex)
         log.warn(LOG_FORMAT, ex::class.simpleName, statusCode, ex.message)
 
         val response = CommonResponse.createFailure(statusCode, INPUT_FORMAT_ERROR_MESSAGE)
@@ -77,13 +73,9 @@ class CommonExceptionHandler {
 
     @ExceptionHandler(Exception::class)
     fun handle(ex: Exception): ResponseEntity<CommonResponse<Void?>> {
-        var statusCode = 500
+        val statusCode = if (ex is ErrorResponse) ex.statusCode.value() else 500
 
-        if (ex is ErrorResponse) {
-            statusCode = ex.statusCode.value()
-        }
-
-        log.warn("구체로그: ", ex)
+        log.warn("예외 처리(Exception)", ex)
         log.warn(LOG_FORMAT, ex::class.simpleName, statusCode, ex.message)
 
         val response = CommonResponse.createFailure(statusCode, ex.message ?: "")

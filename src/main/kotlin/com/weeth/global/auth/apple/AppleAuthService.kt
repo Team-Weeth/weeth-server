@@ -40,15 +40,18 @@ class AppleAuthService(
     private val objectMapper: ObjectMapper,
     private val clock: Clock = Clock.systemUTC(),
 ) {
+    private data class CachedKeys(
+        val keys: ApplePublicKeys,
+        val expiresAt: Instant,
+    )
+
     private val log = LoggerFactory.getLogger(javaClass)
 
     private val appleProperties = oAuthProperties.apple
     private val restClient = restClientBuilder.build()
     private val publicKeysTtl: Duration = Duration.ofHours(1)
 
-    @Volatile private var cachedPublicKeys: ApplePublicKeys? = null
-
-    @Volatile private var cachedPublicKeysExpiresAt: Instant = Instant.EPOCH
+    @Volatile private var cached: CachedKeys? = null
     private val privateKey: PrivateKey by lazy { loadPrivateKey() }
 
     fun getAppleToken(authCode: String): AppleTokenResponse {
@@ -115,6 +118,8 @@ class AppleAuthService(
                 email = email,
                 emailVerified = emailVerified,
             )
+        } catch (e: AppleAuthenticationException) {
+            throw e
         } catch (e: Exception) {
             log.error("애플 ID Token 검증 실패", e)
             throw AppleAuthenticationException()
@@ -198,29 +203,33 @@ class AppleAuthService(
 
         when {
             iss != "https://appleid.apple.com" -> {
-                throw RuntimeException("유효하지 않은 발급자(issuer)입니다.")
+                log.warn("유효하지 않은 발급자: {}", iss)
+                throw AppleAuthenticationException()
             }
 
             audiences.isEmpty() || !audiences.contains(appleProperties.clientId) -> {
-                log.error("유효하지 않은 audience: {}. 기대값: {}", audiences, appleProperties.clientId)
-                throw RuntimeException("유효하지 않은 수신자(audience)입니다.")
+                log.warn("유효하지 않은 audience: {}. 기대값: {}", audiences, appleProperties.clientId)
+                throw AppleAuthenticationException()
             }
 
             expiration.before(now) -> {
-                throw RuntimeException("만료된 ID Token입니다.")
+                log.warn("만료된 ID Token")
+                throw AppleAuthenticationException()
             }
 
             claims.subject.isNullOrBlank() -> {
-                throw RuntimeException("유효하지 않은 subject입니다.")
+                log.warn("유효하지 않은 subject")
+                throw AppleAuthenticationException()
             }
         }
     }
 
     private fun getApplePublicKeys(): ApplePublicKeys {
         val now = Instant.now(clock)
-        val cached = cachedPublicKeys
-        if (cached != null && now.isBefore(cachedPublicKeysExpiresAt)) {
-            return cached
+        cached?.let {
+            if (now.isBefore(it.expiresAt)) {
+                return it.keys
+            }
         }
 
         val fetched =
@@ -232,16 +241,15 @@ class AppleAuthService(
                     .body<ApplePublicKeys>(),
             )
 
-        cachedPublicKeys = fetched
-        cachedPublicKeysExpiresAt = now.plus(publicKeysTtl)
+        cached = CachedKeys(fetched, now.plus(publicKeysTtl))
         return fetched
     }
 
     private fun parseJson(json: String): ObjectNode =
         try {
-            objectMapper.readTree(json) as? ObjectNode ?: throw RuntimeException("JSON 객체가 아닙니다.")
+            objectMapper.readTree(json) as? ObjectNode ?: throw AppleAuthenticationException()
         } catch (e: Exception) {
-            throw RuntimeException("JSON 파싱 실패")
+            throw AppleAuthenticationException()
         }
 
     private fun decodeBase64Url(value: String): String = String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8)

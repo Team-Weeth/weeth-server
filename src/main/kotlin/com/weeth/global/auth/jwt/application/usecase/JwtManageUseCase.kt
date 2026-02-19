@@ -2,6 +2,7 @@ package com.weeth.global.auth.jwt.application.usecase
 
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.global.auth.jwt.application.dto.JwtDto
+import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.port.RefreshTokenStorePort
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
@@ -29,7 +30,7 @@ class JwtManageUseCase(
     fun reIssueToken(requestToken: String): JwtDto {
         jwtTokenProvider.validate(requestToken)
 
-        val userId = requireNotNull(jwtTokenExtractor.extractId(requestToken))
+        val userId = jwtTokenExtractor.extractId(requestToken) ?: throw InvalidTokenException()
         refreshTokenStore.validateRefreshToken(userId, requestToken)
 
         val role = refreshTokenStore.getRole(userId)
