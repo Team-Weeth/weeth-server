@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetPenaltyQueryService(
     private val penaltyRepository: PenaltyRepository,
     private val userGetService: UserGetService,
@@ -18,7 +19,6 @@ class GetPenaltyQueryService(
     private val cardinalGetService: CardinalGetService,
     private val mapper: PenaltyMapper,
 ) {
-    @Transactional(readOnly = true)
     fun findAllByCardinal(cardinalNumber: Int?): List<PenaltyByCardinalResponse> {
         val cardinals =
             if (cardinalNumber == null) {
@@ -48,7 +48,6 @@ class GetPenaltyQueryService(
         }
     }
 
-    @Transactional(readOnly = true)
     fun findByUser(userId: Long): PenaltyResponse {
         val user = userGetService.find(userId)
         val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
