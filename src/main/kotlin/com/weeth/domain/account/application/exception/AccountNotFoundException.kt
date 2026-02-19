@@ -1,9 +1,5 @@
-package com.weeth.domain.account.application.exception;
+package com.weeth.domain.account.application.exception
 
-import com.weeth.global.common.exception.BaseException;
+import com.weeth.global.common.exception.BaseException
 
-public class AccountNotFoundException extends BaseException {
-    public AccountNotFoundException() {
-        super(AccountErrorCode.ACCOUNT_NOT_FOUND);
-    }
-}
+class AccountNotFoundException : BaseException(AccountErrorCode.ACCOUNT_NOT_FOUND)
