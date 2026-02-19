@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,10 +42,16 @@ public class AccountUseCaseImpl implements AccountUseCase {
     public AccountResponse find(Integer cardinal) {
         Account account = accountGetService.find(cardinal);
         List<Receipt> receipts = receiptGetService.findAllByAccountId(account.getId());
-        List<ReceiptResponse> response = receipts.stream()
-                .map(receipt -> receiptMapper.toResponse(receipt, getFiles(receipt.getId())))
-                .toList();
 
+        List<Long> receiptIds = receipts.stream().map(Receipt::getId).toList();
+        Map<Long, List<FileResponse>> filesByReceiptId = fileReader.findAll(FileOwnerType.RECEIPT, receiptIds, null)
+                .stream()
+                .collect(Collectors.groupingBy(
+                        file -> file.getOwnerId(),
+                        Collectors.mapping(fileMapper::toFileResponse, Collectors.toList())
+                ));
+
+        List<ReceiptResponse> response = receiptMapper.toResponses(receipts, filesByReceiptId);
         return accountMapper.toResponse(account, response);
     }
 
@@ -61,9 +69,4 @@ public class AccountUseCaseImpl implements AccountUseCase {
             throw new AccountExistsException();
     }
 
-    private List<FileResponse> getFiles(Long receiptId) {
-        return fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null).stream()
-                .map(fileMapper::toFileResponse)
-                .toList();
-    }
 }
