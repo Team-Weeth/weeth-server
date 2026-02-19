@@ -1,25 +1,17 @@
-package com.weeth.domain.account.application.dto;
+package com.weeth.domain.account.application.dto.request
 
-import jakarta.validation.constraints.NotNull;
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Positive
 
-import java.time.LocalDateTime;
-import java.util.List;
-
-public class AccountDTO {
-
-    public record Response(
-            Long accountId,
-            String description,
-            Integer totalAmount,
-            Integer currentAmount,
-            LocalDateTime time,
-            Integer cardinal,
-            List<ReceiptDTO.Response> receipts
-    ) {}
-
-    public record Save(
-            String description,
-            @NotNull Integer totalAmount,
-            @NotNull Integer cardinal
-    ) {}
-}
+data class AccountSaveRequest(
+    @field:Schema(description = "회비 설명", example = "2024년 2학기 회비")
+    val description: String,
+    @field:Schema(description = "총 금액", example = "100000")
+    @field:NotNull
+    @field:Positive
+    val totalAmount: Int,
+    @field:Schema(description = "기수", example = "40")
+    @field:NotNull
+    val cardinal: Int,
+)

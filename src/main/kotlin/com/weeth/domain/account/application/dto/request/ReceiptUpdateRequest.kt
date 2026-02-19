@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import java.time.LocalDate
 
-data class ReceiptSaveRequest(
+data class ReceiptUpdateRequest(
     @field:Schema(description = "영수증 설명", example = "간식비")
     val description: String?,
     @field:Schema(description = "출처", example = "편의점")
