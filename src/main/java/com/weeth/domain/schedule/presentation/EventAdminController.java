@@ -7,8 +7,8 @@ import jakarta.validation.Valid;
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest;
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest;
 import com.weeth.domain.schedule.application.exception.EventErrorCode;
-import com.weeth.domain.schedule.application.usecase.EventUseCase;
-import com.weeth.domain.schedule.application.usecase.MeetingUseCase;
+import com.weeth.domain.attendance.application.usecase.command.ManageSessionUseCase;
+import com.weeth.domain.schedule.application.usecase.command.ManageEventUseCase;
 import com.weeth.domain.schedule.domain.entity.enums.Type;
 import com.weeth.global.auth.annotation.CurrentUser;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
@@ -25,17 +25,17 @@ import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.*;
 @ApiErrorCodeExample(EventErrorCode.class)
 public class EventAdminController {
 
-    private final EventUseCase eventUseCase;
-    private final MeetingUseCase meetingUseCase;
+    private final ManageEventUseCase manageEventUseCase;
+    private final ManageSessionUseCase manageSessionUseCase;
 
     @PostMapping
     @Operation(summary = "일정/정기모임 생성")
     public CommonResponse<Void> save(@Valid @RequestBody ScheduleSaveRequest dto,
                                      @Parameter(hidden = true) @CurrentUser Long userId) {
         if (dto.getType() == Type.EVENT) {
-            eventUseCase.save(dto, userId);
+            manageEventUseCase.create(dto, userId);
         } else {
-            meetingUseCase.save(dto, userId);
+            manageSessionUseCase.create(dto, userId);
         }
 
         return CommonResponse.success(EVENT_SAVE_SUCCESS);
@@ -46,9 +46,9 @@ public class EventAdminController {
     public CommonResponse<Void> update(@PathVariable Long eventId, @Valid @RequestBody ScheduleUpdateRequest dto,
                                        @Parameter(hidden = true) @CurrentUser Long userId) {
         if (dto.getType() == Type.EVENT) {
-            eventUseCase.update(eventId, dto, userId);
+            manageEventUseCase.update(eventId, dto, userId);
         } else {
-            meetingUseCase.update(dto, userId, eventId);
+            manageSessionUseCase.update(eventId, dto, userId);
         }
 
         return CommonResponse.success(EVENT_UPDATE_SUCCESS);
@@ -57,7 +57,7 @@ public class EventAdminController {
     @DeleteMapping("/{eventId}")
     @Operation(summary = "일정 삭제")
     public CommonResponse<Void> delete(@PathVariable Long eventId) {
-        eventUseCase.delete(eventId);
+        manageEventUseCase.delete(eventId);
 
         return CommonResponse.success(EVENT_DELETE_SUCCESS);
     }

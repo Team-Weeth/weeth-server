@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.weeth.domain.schedule.application.dto.response.EventResponse;
 import com.weeth.domain.schedule.application.exception.EventErrorCode;
-import com.weeth.domain.schedule.application.usecase.EventUseCase;
+import com.weeth.domain.schedule.application.usecase.command.ManageEventUseCase;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,13 +22,13 @@ import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.EVENT_
 @ApiErrorCodeExample(EventErrorCode.class)
 public class EventController {
 
-    private final EventUseCase eventUseCase;
+    private final ManageEventUseCase manageEventUseCase;
 
     @GetMapping("/{eventId}")
     @Operation(summary="일정 상세 조회")
     public CommonResponse<EventResponse> find(@PathVariable Long eventId) {
         return CommonResponse.success(EVENT_FIND_SUCCESS,
-                eventUseCase.find(eventId));
+                manageEventUseCase.find(eventId));
     }
 
 }

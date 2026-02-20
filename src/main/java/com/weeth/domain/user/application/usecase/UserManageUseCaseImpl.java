@@ -1,9 +1,10 @@
 package com.weeth.domain.user.application.usecase;
 
 import jakarta.transaction.Transactional;
-import com.weeth.domain.attendance.domain.service.AttendanceSaveService;
+import com.weeth.domain.attendance.domain.entity.Attendance;
 import com.weeth.domain.attendance.domain.entity.Session;
-import com.weeth.domain.schedule.domain.service.MeetingGetService;
+import com.weeth.domain.attendance.domain.repository.AttendanceRepository;
+import com.weeth.domain.attendance.domain.repository.SessionRepository;
 import com.weeth.domain.user.application.exception.InvalidUserOrderException;
 import com.weeth.domain.user.application.mapper.UserMapper;
 import com.weeth.domain.user.domain.entity.Cardinal;
@@ -33,8 +34,8 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
     private final UserUpdateService userUpdateService;
     private final UserDeleteService userDeleteService;
 
-    private final AttendanceSaveService attendanceSaveService;
-    private final MeetingGetService meetingGetService;
+    private final AttendanceRepository attendanceRepository;
+    private final SessionRepository sessionRepository;
     private final JwtRedisService jwtRedisService;
     private final CardinalGetService cardinalGetService;
     private final UserCardinalSaveService userCardinalSaveService;
@@ -95,8 +96,11 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
 
             if (user.isInactive()) {
                 userUpdateService.accept(user);
-                List<Session> sessions = meetingGetService.find(cardinal);
-                attendanceSaveService.init(user, sessions);
+                List<Session> sessions = sessionRepository.findAllByCardinalOrderByStartAsc(cardinal);
+                List<Attendance> attendances = sessions.stream()
+                        .map(s -> Attendance.Companion.create(s, user))
+                        .collect(java.util.stream.Collectors.toList());
+                attendanceRepository.saveAll(attendances);
             }
         });
     }
@@ -140,8 +144,11 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
             if (userCardinalGetService.notContains(user, nextCardinal)) {
                 if (userCardinalGetService.isCurrent(user, nextCardinal)) {
                     user.initAttendance();
-                    List<Session> sessionList = meetingGetService.find(request.cardinal());
-                    attendanceSaveService.init(user, sessionList);
+                    List<Session> sessionList = sessionRepository.findAllByCardinalOrderByStartAsc(request.cardinal());
+                    List<Attendance> attendances = sessionList.stream()
+                            .map(s -> Attendance.Companion.create(s, user))
+                            .collect(java.util.stream.Collectors.toList());
+                    attendanceRepository.saveAll(attendances);
                 }
                 UserCardinal userCardinal = new UserCardinal(user, nextCardinal);
 

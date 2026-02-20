@@ -4,7 +4,7 @@ import com.weeth.domain.attendance.application.dto.request.CheckInRequest
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
-import com.weeth.domain.attendance.application.usecase.command.CheckInAttendanceUseCase
+import com.weeth.domain.attendance.application.usecase.command.ManageAttendanceUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v1/attendances")
 @ApiErrorCodeExample(AttendanceErrorCode::class)
 class AttendanceController(
-    private val checkInAttendanceUseCase: CheckInAttendanceUseCase,
+    private val manageAttendanceUseCase: ManageAttendanceUseCase,
     private val getAttendanceQueryService: GetAttendanceQueryService,
 ) {
     @PatchMapping
@@ -32,7 +32,7 @@ class AttendanceController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestBody checkIn: CheckInRequest,
     ): CommonResponse<Void?> {
-        checkInAttendanceUseCase.checkIn(userId, checkIn.code)
+        manageAttendanceUseCase.checkIn(userId, checkIn.code)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CHECKIN_SUCCESS)
     }
 

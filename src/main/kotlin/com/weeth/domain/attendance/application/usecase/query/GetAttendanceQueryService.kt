@@ -5,7 +5,8 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceInfoRespon
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.schedule.domain.service.MeetingGetService
+import com.weeth.domain.attendance.domain.repository.SessionRepository
+import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.UserCardinalGetService
@@ -19,7 +20,7 @@ import java.time.LocalDate
 class GetAttendanceQueryService(
     private val userGetService: UserGetService,
     private val userCardinalGetService: UserCardinalGetService,
-    private val meetingGetService: MeetingGetService,
+    private val sessionRepository: SessionRepository,
     private val attendanceRepository: AttendanceRepository,
     private val mapper: AttendanceMapper,
 ) {
@@ -50,7 +51,7 @@ class GetAttendanceQueryService(
     }
 
     fun findAllAttendanceByMeeting(sessionId: Long): List<AttendanceInfoResponse> {
-        val session = meetingGetService.find(sessionId)
+        val session = sessionRepository.findById(sessionId).orElseThrow { MeetingNotFoundException() }
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
         return attendances.map(mapper::toInfoResponse)
     }

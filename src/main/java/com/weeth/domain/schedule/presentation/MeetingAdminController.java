@@ -3,7 +3,7 @@ package com.weeth.domain.schedule.presentation;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.weeth.domain.schedule.application.exception.MeetingErrorCode;
-import com.weeth.domain.schedule.application.usecase.MeetingUseCase;
+import com.weeth.domain.attendance.application.usecase.command.ManageSessionUseCase;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +21,12 @@ import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.MEETIN
 @ApiErrorCodeExample(MeetingErrorCode.class)
 public class MeetingAdminController {
 
-    private final MeetingUseCase meetingUseCase;
+    private final ManageSessionUseCase manageSessionUseCase;
 
     @DeleteMapping("/{meetingId}")
     @Operation(summary = "정기모임 삭제")
     public CommonResponse<Void> delete(@PathVariable Long meetingId) {
-        meetingUseCase.delete(meetingId);
+        manageSessionUseCase.delete(meetingId);
         return CommonResponse.success(MEETING_DELETE_SUCCESS);
     }
 }

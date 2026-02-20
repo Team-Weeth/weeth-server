@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse;
 import com.weeth.domain.schedule.application.exception.EventErrorCode;
 import com.weeth.domain.schedule.application.exception.MeetingErrorCode;
-import com.weeth.domain.schedule.application.usecase.ScheduleUseCase;
+import com.weeth.domain.schedule.application.usecase.query.GetScheduleQueryService;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -29,14 +29,14 @@ import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.SCHEDU
 @ApiErrorCodeExample({EventErrorCode.class, MeetingErrorCode.class})
 public class ScheduleController {
 
-    private final ScheduleUseCase scheduleUseCase;
+    private final GetScheduleQueryService getScheduleQueryService;
 
     @GetMapping("/monthly")
     @Operation(summary="월별 일정 조회")
     public CommonResponse<List<ScheduleResponse>> findByMonthly(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end) {
-        return CommonResponse.success(SCHEDULE_MONTHLY_FIND_SUCCESS, scheduleUseCase.findByMonthly(start, end));
+        return CommonResponse.success(SCHEDULE_MONTHLY_FIND_SUCCESS, getScheduleQueryService.findMonthly(start, end));
     }
 
     @GetMapping("/yearly")
@@ -44,6 +44,6 @@ public class ScheduleController {
     public CommonResponse<Map<Integer, List<ScheduleResponse>>> findByYearly(
             @RequestParam Integer year,
             @RequestParam Integer semester) {
-        return CommonResponse.success(SCHEDULE_YEARLY_FIND_SUCCESS, scheduleUseCase.findByYearly(year, semester));
+        return CommonResponse.success(SCHEDULE_YEARLY_FIND_SUCCESS, getScheduleQueryService.findYearly(year, semester));
     }
 }

@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.weeth.domain.schedule.application.dto.response.SessionResponse;
 import com.weeth.domain.schedule.application.exception.MeetingErrorCode;
-import com.weeth.domain.schedule.application.usecase.MeetingUseCase;
+import com.weeth.domain.attendance.application.usecase.command.ManageSessionUseCase;
 import com.weeth.global.auth.annotation.CurrentUser;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
@@ -24,12 +24,12 @@ import static com.weeth.domain.schedule.presentation.ScheduleResponseCode.MEETIN
 @ApiErrorCodeExample(MeetingErrorCode.class)
 public class MeetingController {
 
-    private final MeetingUseCase meetingUseCase;
+    private final ManageSessionUseCase manageSessionUseCase;
 
     @GetMapping("/{meetingId}")
     @Operation(summary="정기모임 상세 조회")
     public CommonResponse<SessionResponse> find(@Parameter(hidden = true) @CurrentUser Long userId,
                                                 @PathVariable Long meetingId) {
-        return CommonResponse.success(MEETING_FIND_SUCCESS, meetingUseCase.find(userId, meetingId));
+        return CommonResponse.success(MEETING_FIND_SUCCESS, manageSessionUseCase.find(userId, meetingId));
     }
 }
