@@ -2,15 +2,28 @@ package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.entity.Session
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Status
+import jakarta.persistence.LockModeType
+import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
 interface AttendanceRepository : JpaRepository<Attendance, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session = :session AND a.user = :user")
+    fun findBySessionAndUserWithLock(
+        @Param("session") session: Session,
+        @Param("user") user: User,
+    ): Attendance?
+
     @EntityGraph(attributePaths = ["user"])
     fun findAllBySessionAndUserStatus(
         session: Session,
