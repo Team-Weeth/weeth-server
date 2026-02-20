@@ -22,7 +22,7 @@ class GetAttendanceQueryService(
     private val userCardinalGetService: UserCardinalGetService,
     private val sessionRepository: SessionRepository,
     private val attendanceRepository: AttendanceRepository,
-    private val mapper: AttendanceMapper,
+    private val attendanceMapper: AttendanceMapper,
 ) {
     fun findAttendance(userId: Long): AttendanceSummaryResponse {
         val user = userGetService.find(userId)
@@ -35,7 +35,7 @@ class GetAttendanceQueryService(
                 today.plusDays(1).atStartOfDay(),
             )
 
-        return mapper.toSummaryResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
+        return attendanceMapper.toSummaryResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
     }
 
     fun findAllDetailsByCurrentCardinal(userId: Long): AttendanceDetailResponse {
@@ -45,14 +45,14 @@ class GetAttendanceQueryService(
         val responses =
             attendanceRepository
                 .findAllByUserIdAndCardinal(userId, currentCardinal.cardinalNumber)
-                .map(mapper::toResponse)
+                .map(attendanceMapper::toResponse)
 
-        return mapper.toDetailResponse(user, responses)
+        return attendanceMapper.toDetailResponse(user, responses)
     }
 
     fun findAllAttendanceBySession(sessionId: Long): List<AttendanceInfoResponse> {
         val session = sessionRepository.findById(sessionId).orElseThrow { MeetingNotFoundException() }
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
-        return attendances.map(mapper::toInfoResponse)
+        return attendances.map(attendanceMapper::toInfoResponse)
     }
 }
