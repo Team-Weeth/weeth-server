@@ -12,8 +12,8 @@ import com.weeth.domain.schedule.domain.entity.Meeting
 import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.enums.Status
-import com.weeth.domain.user.domain.service.UserCardinalGetService
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -23,16 +23,16 @@ import io.mockk.verify
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
 
-        val userGetService = mockk<UserGetService>()
-        val userCardinalGetService = mockk<UserCardinalGetService>()
+        val userReader = mockk<UserReader>()
+        val userCardinalPolicy = mockk<UserCardinalPolicy>()
         val meetingGetService = mockk<MeetingGetService>()
         val attendanceRepository = mockk<AttendanceRepository>()
         val attendanceMapper = mockk<AttendanceMapper>()
 
         val queryService =
             GetAttendanceQueryService(
-                userGetService,
-                userCardinalGetService,
+                userReader,
+                userCardinalPolicy,
                 meetingGetService,
                 attendanceRepository,
                 attendanceMapper,
@@ -46,7 +46,7 @@ class GetAttendanceQueryServiceTest :
                 val todayAttendance = mockk<Attendance>()
                 val mapped = mockk<AttendanceSummaryResponse>()
 
-                every { userGetService.find(userId) } returns user
+                every { userReader.getById(userId) } returns user
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns todayAttendance
                 every { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance), eq(false)) } returns mapped
 
@@ -60,7 +60,7 @@ class GetAttendanceQueryServiceTest :
                 val user = createActiveUser("이지훈")
                 val mapped = mockk<AttendanceSummaryResponse>()
 
-                every { userGetService.find(userId) } returns user
+                every { userReader.getById(userId) } returns user
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns null
                 every { attendanceMapper.toSummaryResponse(user, null, false) } returns mapped
 
@@ -77,10 +77,10 @@ class GetAttendanceQueryServiceTest :
                 val attendance1 = mockk<Attendance>()
                 val attendance2 = mockk<Attendance>()
 
-                every { userGetService.find(userId) } returns user
+                every { userReader.getById(userId) } returns user
                 val currentCardinal = mockk<Cardinal>()
                 every { currentCardinal.cardinalNumber } returns 1
-                every { userCardinalGetService.getCurrentCardinal(user) } returns currentCardinal
+                every { userCardinalPolicy.getCurrentCardinal(user) } returns currentCardinal
                 every { attendanceRepository.findAllByUserIdAndCardinal(userId, 1) } returns listOf(attendance1, attendance2)
 
                 val response1 = mockk<AttendanceResponse>()

@@ -66,12 +66,11 @@ class CommentConcurrencyTest(
         fun createUsers(size: Int): List<User> =
             (1..size).map { i ->
                 userRepository.save(
-                    User
-                        .builder()
-                        .name("user$i")
-                        .email("user$i@test.com")
-                        .status(Status.ACTIVE)
-                        .build(),
+                    User(
+                        name = "user$i",
+                        email = "user$i@test.com",
+                        status = Status.ACTIVE,
+                    ),
                 )
             }
 

@@ -15,7 +15,7 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 class ManageCommentUseCase(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository,
-    private val userGetService: UserGetService,
+    private val userReader: UserReader,
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val fileMapper: FileMapper,
@@ -34,7 +34,7 @@ class ManageCommentUseCase(
         postId: Long,
         userId: Long,
     ) {
-        val user = userGetService.find(userId)
+        val user = userReader.getById(userId)
         val post = findPostWithLock(postId)
         val parent =
             dto.parentCommentId?.let { parentId ->

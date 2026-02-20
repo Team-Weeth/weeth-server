@@ -4,9 +4,10 @@ import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalRespon
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
-import com.weeth.domain.user.domain.service.CardinalGetService
-import com.weeth.domain.user.domain.service.UserCardinalGetService
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.CardinalReader
+import com.weeth.domain.user.domain.repository.UserCardinalReader
+import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,25 +15,26 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class GetPenaltyQueryService(
     private val penaltyRepository: PenaltyRepository,
-    private val userGetService: UserGetService,
-    private val userCardinalGetService: UserCardinalGetService,
-    private val cardinalGetService: CardinalGetService,
+    private val userReader: UserReader,
+    private val userCardinalReader: UserCardinalReader,
+    private val userCardinalPolicy: UserCardinalPolicy,
+    private val cardinalReader: CardinalReader,
     private val mapper: PenaltyMapper,
 ) {
     fun findAllByCardinal(cardinalNumber: Int?): List<PenaltyByCardinalResponse> {
         val cardinals =
             if (cardinalNumber == null) {
-                cardinalGetService.findAllCardinalNumberDesc()
+                cardinalReader.findAllByCardinalNumberDesc()
             } else {
-                listOf(cardinalGetService.findByAdminSide(cardinalNumber))
+                listOf(cardinalReader.getByCardinalNumber(cardinalNumber))
             }
 
         return cardinals.map { cardinal ->
             val penalties = penaltyRepository.findByCardinalIdOrderByIdDesc(cardinal.id)
             val users = penalties.map { it.user }.distinct()
             val userCardinalsMap =
-                userCardinalGetService
-                    .findAll(users)
+                userCardinalReader
+                    .findAllByUsersOrderByCardinalDesc(users)
                     .groupBy { it.user.id }
 
             val responses =
@@ -49,10 +51,10 @@ class GetPenaltyQueryService(
     }
 
     fun findByUser(userId: Long): PenaltyResponse {
-        val user = userGetService.find(userId)
-        val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
+        val user = userReader.getById(userId)
+        val currentCardinal = userCardinalPolicy.getCurrentCardinal(user)
         val penalties = penaltyRepository.findByUserIdAndCardinalIdOrderByIdDesc(userId, currentCardinal.id)
-        val userCardinals = userCardinalGetService.getUserCardinals(user)
+        val userCardinals = userCardinalReader.findAllByUser(user)
 
         return mapper.toResponse(user, penalties, userCardinals)
     }

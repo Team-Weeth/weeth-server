@@ -13,7 +13,8 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.user.domain.service.CardinalGetService
+import com.weeth.domain.user.domain.entity.Cardinal
+import com.weeth.domain.user.domain.repository.CardinalRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,12 +25,18 @@ class ManageReceiptUseCase(
     private val accountRepository: AccountRepository,
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
-    private val cardinalGetService: CardinalGetService,
+    private val cardinalRepository: CardinalRepository,
     private val fileMapper: FileMapper,
 ) {
+    private fun ensureCardinalExists(cardinalNumber: Int) {
+        cardinalRepository.findByCardinalNumber(cardinalNumber).orElseGet {
+            cardinalRepository.save(Cardinal.create(cardinalNumber = cardinalNumber))
+        }
+    }
+
     @Transactional
     fun save(request: ReceiptSaveRequest) {
-        cardinalGetService.findByAdminSide(request.cardinal)
+        ensureCardinalExists(request.cardinal)
         val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
         val receipt =
             receiptRepository.save(
@@ -44,7 +51,7 @@ class ManageReceiptUseCase(
         receiptId: Long,
         request: ReceiptUpdateRequest,
     ) {
-        cardinalGetService.findByAdminSide(request.cardinal)
+        ensureCardinalExists(request.cardinal)
         val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
         if (receipt.account.id != account.id) throw ReceiptAccountMismatchException()

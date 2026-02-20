@@ -15,7 +15,6 @@ class CommentMapper {
         CommentResponse(
             id = comment.id,
             name = comment.user.name,
-            position = comment.user.position,
             role = comment.user.role,
             content = comment.content,
             time = comment.modifiedAt,

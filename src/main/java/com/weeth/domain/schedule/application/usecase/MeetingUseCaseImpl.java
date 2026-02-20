@@ -18,8 +18,10 @@ import com.weeth.domain.schedule.domain.service.MeetingUpdateService;
 import com.weeth.domain.user.domain.entity.Cardinal;
 import com.weeth.domain.user.domain.entity.User;
 import com.weeth.domain.user.domain.entity.enums.Role;
-import com.weeth.domain.user.domain.service.CardinalGetService;
-import com.weeth.domain.user.domain.service.UserGetService;
+import com.weeth.domain.user.domain.entity.enums.Status;
+import com.weeth.domain.user.domain.repository.CardinalReader;
+import com.weeth.domain.user.domain.repository.UserReader;
+import com.weeth.domain.user.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +33,6 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.Comparator;
 import java.util.List;
 
-import static com.weeth.domain.schedule.application.dto.MeetingDTO.Info;
 import static com.weeth.domain.schedule.application.dto.MeetingDTO.Response;
 
 @Slf4j
@@ -42,21 +43,22 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
     private final MeetingGetService meetingGetService;
     private final MeetingMapper mapper;
     private final MeetingSaveService meetingSaveService;
-    private final UserGetService userGetService;
+    private final UserReader userReader;
+    private final UserRepository userRepository;
     private final MeetingUpdateService meetingUpdateService;
     private final MeetingDeleteService meetingDeleteService;
     private final AttendanceGetService attendanceGetService;
     private final AttendanceSaveService attendanceSaveService;
     private final AttendanceDeleteService attendanceDeleteService;
     private final AttendanceUpdateService attendanceUpdateService;
-    private final CardinalGetService cardinalGetService;
+    private final CardinalReader cardinalReader;
 
     @PersistenceContext
     private EntityManager em;
 
     @Override
     public Response find(Long userId, Long meetingId) {
-        User user = userGetService.find(userId);
+        User user = userReader.getById(userId);
         Meeting meeting = meetingGetService.find(meetingId);
 
         if (Role.ADMIN == user.getRole()) {
@@ -87,10 +89,10 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
     @Override
     @Transactional
     public void save(ScheduleDTO.Save dto, Long userId) {
-        User user = userGetService.find(userId);
-        Cardinal cardinal = cardinalGetService.findByUserSide(dto.cardinal());
+        User user = userReader.getById(userId);
+        Cardinal cardinal = cardinalReader.getByCardinalNumber(dto.cardinal());
 
-        List<User> userList = userGetService.findAllByCardinal(cardinal);
+        List<User> userList = userRepository.findAllByCardinalAndStatus(cardinal, Status.ACTIVE);
 
         Meeting meeting = mapper.from(dto, user);
         meetingSaveService.save(meeting);
@@ -102,7 +104,7 @@ public class MeetingUseCaseImpl implements MeetingUseCase {
     @Transactional
     public void update(ScheduleDTO.Update dto, Long userId, Long meetingId) {
         Meeting meeting = meetingGetService.find(meetingId);
-        User user = userGetService.find(userId);
+        User user = userReader.getById(userId);
         meetingUpdateService.update(dto, user, meeting);
     }
 

@@ -21,7 +21,7 @@ import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -37,7 +37,7 @@ class ManagePostUseCaseTest :
     DescribeSpec({
         val postRepository = mockk<PostRepository>()
         val boardRepository = mockk<BoardRepository>()
-        val userGetService = mockk<UserGetService>()
+        val userReader = mockk<UserReader>()
         val fileRepository = mockk<FileRepository>()
         val fileReader = mockk<FileReader>()
         val fileMapper = mockk<FileMapper>()
@@ -47,7 +47,7 @@ class ManagePostUseCaseTest :
             ManagePostUseCase(
                 postRepository,
                 boardRepository,
-                userGetService,
+                userReader,
                 fileRepository,
                 fileReader,
                 fileMapper,
@@ -71,17 +71,16 @@ class ManagePostUseCaseTest :
             id: Long = 1L,
             role: Role = Role.USER,
         ): User =
-            User
-                .builder()
-                .id(id)
-                .name("적순")
-                .email("test1@test.com")
-                .status(Status.ACTIVE)
-                .role(role)
-                .build()
+            User(
+                id = id,
+                name = "적순",
+                email = "test1@test.com",
+                status = Status.ACTIVE,
+                role = role,
+            )
 
         beforeTest {
-            clearMocks(postRepository, boardRepository, userGetService, fileRepository, fileReader, fileMapper, postMapper)
+            clearMocks(postRepository, boardRepository, userReader, fileRepository, fileReader, fileMapper, postMapper)
             every { postRepository.save(any()) } answers { firstArg() }
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
             every { fileRepository.saveAll(any<List<File>>()) } returns emptyList()
@@ -96,7 +95,7 @@ class ManagePostUseCaseTest :
                 val board = Board(id = 10L, name = "일반", type = BoardType.GENERAL)
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
-                every { userGetService.find(1L) } returns user
+                every { userReader.getById(1L) } returns user
                 every { boardRepository.findByIdAndIsDeletedFalse(10L) } returns board
 
                 val result = useCase.save(10L, request, 1L)
@@ -116,7 +115,7 @@ class ManagePostUseCaseTest :
                     )
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
-                every { userGetService.find(1L) } returns user
+                every { userReader.getById(1L) } returns user
                 every { boardRepository.findByIdAndIsDeletedFalse(20L) } returns board
 
                 shouldThrow<CategoryAccessDeniedException> {
@@ -137,7 +136,7 @@ class ManagePostUseCaseTest :
                     )
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
-                every { userGetService.find(1L) } returns user
+                every { userReader.getById(1L) } returns user
                 every { boardRepository.findByIdAndIsDeletedFalse(21L) } returns board
 
                 shouldThrow<CategoryAccessDeniedException> {
@@ -157,7 +156,7 @@ class ManagePostUseCaseTest :
                         cardinalNumber = 6,
                     )
 
-                every { userGetService.find(1L) } returns user
+                every { userReader.getById(1L) } returns user
                 every { boardRepository.findByIdAndIsDeletedFalse(11L) } returns board
 
                 useCase.save(11L, request, 1L)
@@ -175,7 +174,7 @@ class ManagePostUseCaseTest :
                 val user = createUser(1L, Role.USER)
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
-                every { userGetService.find(1L) } returns user
+                every { userReader.getById(1L) } returns user
                 every { boardRepository.findByIdAndIsDeletedFalse(999L) } returns null
 
                 shouldThrow<BoardNotFoundException> {

@@ -6,7 +6,7 @@ import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.Status
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.every
@@ -17,10 +17,10 @@ class CheckInAttendanceUseCaseTest :
     DescribeSpec({
 
         val userId = 10L
-        val userGetService = mockk<UserGetService>()
+        val userReader = mockk<UserReader>()
         val attendanceRepository = mockk<AttendanceRepository>()
 
-        val useCase = CheckInAttendanceUseCase(userGetService, attendanceRepository)
+        val useCase = CheckInAttendanceUseCase(userReader, attendanceRepository)
 
         describe("checkIn") {
             context("진행 중 정기모임이고 코드 일치하며 상태가 ATTEND가 아닐 때") {
@@ -30,7 +30,7 @@ class CheckInAttendanceUseCaseTest :
                     every { attendance.isWrong(1234) } returns false
                     every { attendance.status } returns Status.PENDING
 
-                    every { userGetService.find(userId) } returns user
+                    every { userReader.getById(userId) } returns user
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns attendance
                     every { user.attend() } returns Unit
 
@@ -44,7 +44,7 @@ class CheckInAttendanceUseCaseTest :
             context("진행 중 정기모임이 없을 때") {
                 it("AttendanceNotFoundException") {
                     val user = mockk<User>()
-                    every { userGetService.find(userId) } returns user
+                    every { userReader.getById(userId) } returns user
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns null
 
                     shouldThrow<AttendanceNotFoundException> {
@@ -59,7 +59,7 @@ class CheckInAttendanceUseCaseTest :
                     val attendance = mockk<Attendance>()
                     every { attendance.isWrong(9999) } returns true
 
-                    every { userGetService.find(userId) } returns user
+                    every { userReader.getById(userId) } returns user
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns attendance
 
                     shouldThrow<AttendanceCodeMismatchException> {
@@ -75,7 +75,7 @@ class CheckInAttendanceUseCaseTest :
                     every { attendance.isWrong(1234) } returns false
                     every { attendance.status } returns Status.ATTEND
 
-                    every { userGetService.find(userId) } returns user
+                    every { userReader.getById(userId) } returns user
                     every { attendanceRepository.findCurrentByUserId(eq(userId), any(), any()) } returns attendance
 
                     useCase.checkIn(userId, 1234)

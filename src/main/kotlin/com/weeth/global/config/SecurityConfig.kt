@@ -13,8 +13,6 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
-import org.springframework.security.crypto.factory.PasswordEncoderFactories
-import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
@@ -43,14 +41,13 @@ class SecurityConfig(
             .authorizeHttpRequests { authorize ->
                 authorize
                     .requestMatchers(
-                        "/api/v1/users/kakao/login",
-                        "/api/v1/users/kakao/register",
-                        "/api/v1/users/kakao/link",
-                        "/api/v1/users/apple/login",
-                        "/api/v1/users/apple/register",
+                        "/api/v4/users/apply",
+                        "/api/v4/users/email",
+                        "/api/v4/users/social/kakao",
+                        "/api/v4/users/social/apple",
+                        "/api/v4/users/social/refresh",
                         "/api/v1/users/apply",
                         "/api/v1/users/email",
-                        "/api/v1/users/refresh",
                     ).permitAll()
                     .requestMatchers("/health-check")
                     .permitAll()
@@ -104,9 +101,6 @@ class SecurityConfig(
             registerCorsConfiguration("/**", configuration)
         }
     }
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder = PasswordEncoderFactories.createDelegatingPasswordEncoder()
 
     @Bean
     fun jwtAuthenticationProcessingFilter(): JwtAuthenticationProcessingFilter =

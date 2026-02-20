@@ -30,9 +30,9 @@ class AttendanceMapper {
         attendances: List<AttendanceResponse>,
     ): AttendanceDetailResponse =
         AttendanceDetailResponse(
-            attendanceCount = user.attendanceCount ?: 0,
-            total = (user.attendanceCount ?: 0) + (user.absenceCount ?: 0),
-            absenceCount = user.absenceCount ?: 0,
+            attendanceCount = user.attendanceCount,
+            total = user.attendanceCount + user.absenceCount,
+            absenceCount = user.absenceCount,
             attendances = attendances,
         )
 
@@ -51,8 +51,7 @@ class AttendanceMapper {
             id = attendance.id,
             status = attendance.status,
             name = attendance.user.name,
-            position = attendance.user.position?.name,
-            department = attendance.user.department?.name,
+            department = attendance.user.department,
             studentId = attendance.user.studentId,
         )
 }

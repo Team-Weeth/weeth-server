@@ -1,12 +1,10 @@
 package com.weeth.domain.board.application.mapper
 
 import com.weeth.domain.board.domain.entity.Post
-import com.weeth.domain.board.domain.entity.enums.BoardType
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.domain.entity.FileStatus
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Position
 import com.weeth.domain.user.domain.entity.enums.Role
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -22,7 +20,6 @@ class PostMapperTest :
         val post = mockk<Post>()
 
         every { user.name } returns "테스터"
-        every { user.position } returns Position.BE
         every { user.role } returns Role.USER
 
         every { post.id } returns 1L
@@ -50,7 +47,6 @@ class PostMapperTest :
                         CommentResponse(
                             id = 10L,
                             name = "댓글작성자",
-                            position = Position.BE,
                             role = Role.USER,
                             content = "댓글",
                             time = LocalDateTime.now(),

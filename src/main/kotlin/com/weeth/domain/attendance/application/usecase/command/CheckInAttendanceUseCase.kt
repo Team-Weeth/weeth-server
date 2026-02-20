@@ -4,14 +4,14 @@ import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchE
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.domain.enums.Status
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Service
 class CheckInAttendanceUseCase(
-    private val userGetService: UserGetService,
+    private val userReader: UserReader,
     private val attendanceRepository: AttendanceRepository,
 ) {
     @Transactional
@@ -19,7 +19,7 @@ class CheckInAttendanceUseCase(
         userId: Long,
         code: Int,
     ) {
-        val user = userGetService.find(userId)
+        val user = userReader.getById(userId)
         val now = LocalDateTime.now()
 
         val todayAttendance =

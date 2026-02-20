@@ -3,7 +3,8 @@ package com.weeth.domain.schedule.application.usecase;
 import com.weeth.domain.schedule.domain.service.EventGetService;
 import com.weeth.domain.schedule.domain.service.MeetingGetService;
 import com.weeth.domain.user.domain.entity.Cardinal;
-import com.weeth.domain.user.domain.service.CardinalGetService;
+import com.weeth.domain.user.application.exception.CardinalNotFoundException;
+import com.weeth.domain.user.domain.repository.CardinalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,7 @@ public class ScheduleUseCaseImpl implements ScheduleUseCase {
 
     private final EventGetService eventGetService;
     private final MeetingGetService meetingGetService;
-    private final CardinalGetService cardinalGetService;
+    private final CardinalRepository cardinalRepository;
 
     @Override
     public List<Response> findByMonthly(LocalDateTime start, LocalDateTime end) {
@@ -36,7 +37,8 @@ public class ScheduleUseCaseImpl implements ScheduleUseCase {
 
     @Override
     public Map<Integer, List<Response>> findByYearly(Integer year, Integer semester) {
-        Cardinal cardinal = cardinalGetService.find(year, semester);
+        Cardinal cardinal = cardinalRepository.findByYearAndSemester(year, semester)
+                .orElseThrow(CardinalNotFoundException::new);
 
         List<Response> events = eventGetService.find(cardinal.getCardinalNumber());
         List<Response> meetings = meetingGetService.findByCardinal(cardinal.getCardinalNumber());
