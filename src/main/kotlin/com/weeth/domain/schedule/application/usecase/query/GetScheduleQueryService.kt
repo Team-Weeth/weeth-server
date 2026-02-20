@@ -12,8 +12,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import java.util.AbstractMap
-import java.util.stream.IntStream
+
 
 @Service
 @Transactional(readOnly = true)
@@ -61,10 +60,7 @@ class GetScheduleQueryService(
         return (events + sessions)
             .sortedBy { it.start }
             .flatMap { schedule ->
-                IntStream
-                    .range(schedule.start.monthValue, schedule.end.monthValue + 1)
-                    .mapToObj { month -> AbstractMap.SimpleEntry(month, schedule) }
-                    .toList()
-            }.groupBy({ it.key }, { it.value })
+                (schedule.start.monthValue..schedule.end.monthValue).map { month -> month to schedule }
+            }.groupBy({ it.first }, { it.second })
     }
 }
