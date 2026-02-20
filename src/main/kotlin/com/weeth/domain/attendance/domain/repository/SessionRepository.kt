@@ -5,7 +5,9 @@ import com.weeth.domain.attendance.domain.entity.enums.SessionStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDateTime
 
-interface SessionRepository : JpaRepository<Session, Long> {
+interface SessionRepository :
+    JpaRepository<Session, Long>,
+    SessionReader {
     fun findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(
         end: LocalDateTime,
         start: LocalDateTime,
