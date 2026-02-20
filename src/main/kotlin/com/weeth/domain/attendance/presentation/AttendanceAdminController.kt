@@ -4,9 +4,7 @@ import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatu
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
 import com.weeth.domain.attendance.application.usecase.command.ManageAttendanceUseCase
-import com.weeth.domain.attendance.application.usecase.command.ManageSessionUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
-import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -23,14 +21,13 @@ import java.time.LocalDate
 
 @Tag(name = "ATTENDANCE ADMIN", description = "[ADMIN] 출석 어드민 API")
 @RestController
-@RequestMapping("/api/v1/admin/attendances")
+@RequestMapping("/api/v4/admin/attendances")
 @ApiErrorCodeExample(AttendanceErrorCode::class)
 class AttendanceAdminController(
     private val manageAttendanceUseCase: ManageAttendanceUseCase,
-    private val manageSessionUseCase: ManageSessionUseCase,
     private val getAttendanceQueryService: GetAttendanceQueryService,
 ) {
-    @PatchMapping
+    @PatchMapping("/close")
     @Operation(summary = "출석 마감")
     fun close(
         @RequestParam now: LocalDate,
@@ -40,21 +37,14 @@ class AttendanceAdminController(
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CLOSE_SUCCESS)
     }
 
-    @GetMapping("/meetings")
-    @Operation(summary = "정기모임 조회")
-    fun getMeetings(
-        @RequestParam(required = false) cardinal: Int?,
-    ): CommonResponse<SessionInfosResponse> =
-        CommonResponse.success(AttendanceResponseCode.MEETING_FIND_SUCCESS, manageSessionUseCase.findInfos(cardinal))
-
-    @GetMapping("/{meetingId}")
+    @GetMapping("/{sessionId}")
     @Operation(summary = "모든 인원 정기모임 출석 정보 조회")
     fun getAllAttendance(
-        @PathVariable meetingId: Long,
+        @PathVariable sessionId: Long,
     ): CommonResponse<List<AttendanceInfoResponse>> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_DETAIL_SUCCESS,
-            getAttendanceQueryService.findAllAttendanceByMeeting(meetingId),
+            getAttendanceQueryService.findAllAttendanceByMeeting(sessionId),
         )
 
     @PatchMapping("/status")

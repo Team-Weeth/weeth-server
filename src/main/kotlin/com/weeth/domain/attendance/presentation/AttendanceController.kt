@@ -13,20 +13,20 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "ATTENDANCE", description = "출석 API")
 @RestController
-@RequestMapping("/api/v1/attendances")
+@RequestMapping("/api/v4/attendances")
 @ApiErrorCodeExample(AttendanceErrorCode::class)
 class AttendanceController(
     private val manageAttendanceUseCase: ManageAttendanceUseCase,
     private val getAttendanceQueryService: GetAttendanceQueryService,
 ) {
-    @PatchMapping
+    @PostMapping("/check-in")
     @Operation(summary = "출석체크")
     fun checkIn(
         @Parameter(hidden = true) @CurrentUser userId: Long,
