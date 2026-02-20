@@ -8,5 +8,5 @@ data class KakaoAccount(
     @field:JsonProperty("is_email_verified")
     val isEmailVerified: Boolean,
     @field:JsonProperty("email")
-    val email: String,
+    val email: String?,
 )
