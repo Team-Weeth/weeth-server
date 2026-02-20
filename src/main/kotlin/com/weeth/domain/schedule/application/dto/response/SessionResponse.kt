@@ -17,7 +17,7 @@ data class SessionResponse(
     val location: String?,
     @field:Schema(description = "작성자 이름", example = "이지훈")
     val name: String?,
-    @field:Schema(description = "기수", example = "8")
+    @field:Schema(description = "기수", example = "4")
     val cardinal: Int,
     @field:Schema(description = "일정 타입", example = "MEETING")
     val type: Type,
