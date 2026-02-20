@@ -8,8 +8,8 @@ import com.weeth.domain.schedule.domain.service.EventGetService;
 import com.weeth.domain.schedule.domain.service.EventSaveService;
 import com.weeth.domain.schedule.domain.service.EventUpdateService;
 import com.weeth.domain.user.domain.entity.User;
-import com.weeth.domain.user.domain.service.CardinalGetService;
-import com.weeth.domain.user.domain.service.UserGetService;
+import com.weeth.domain.user.domain.repository.CardinalReader;
+import com.weeth.domain.user.domain.repository.UserReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,12 +20,12 @@ import static com.weeth.domain.schedule.application.dto.EventDTO.Response;
 @RequiredArgsConstructor
 public class EventUseCaseImpl implements EventUseCase {
 
-    private final UserGetService userGetService;
+    private final UserReader userReader;
     private final EventGetService eventGetService;
     private final EventSaveService eventSaveService;
     private final EventUpdateService eventUpdateService;
     private final EventDeleteService eventDeleteService;
-    private final CardinalGetService cardinalGetService;
+    private final CardinalReader cardinalReader;
     private final EventMapper mapper;
 
     @Override
@@ -36,8 +36,8 @@ public class EventUseCaseImpl implements EventUseCase {
     @Override
     @Transactional
     public void save(ScheduleDTO.Save dto, Long userId) {
-        User user = userGetService.find(userId);
-        cardinalGetService.findByUserSide(dto.cardinal());
+        User user = userReader.getById(userId);
+        cardinalReader.getByCardinalNumber(dto.cardinal());
 
         eventSaveService.save(mapper.from(dto, user));
     }
@@ -45,7 +45,7 @@ public class EventUseCaseImpl implements EventUseCase {
     @Override
     @Transactional
     public void update(Long eventId, ScheduleDTO.Update dto, Long userId) {
-        User user = userGetService.find(userId);
+        User user = userReader.getById(userId);
         Event event = eventGetService.find(eventId);
         eventUpdateService.update(event, dto, user);
     }

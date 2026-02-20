@@ -15,8 +15,7 @@ class AttendanceSaveService(
         meetings: List<Meeting>?,
     ) {
         meetings?.forEach { meeting ->
-            val attendance = attendanceRepository.save(Attendance(meeting, user))
-            user.add(attendance)
+            attendanceRepository.save(Attendance(meeting, user))
         }
     }
 

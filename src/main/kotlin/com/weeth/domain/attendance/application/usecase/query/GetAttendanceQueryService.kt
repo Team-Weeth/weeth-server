@@ -8,8 +8,8 @@ import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
-import com.weeth.domain.user.domain.service.UserCardinalGetService
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -17,14 +17,14 @@ import java.time.LocalDate
 @Service
 @Transactional(readOnly = true)
 class GetAttendanceQueryService(
-    private val userGetService: UserGetService,
-    private val userCardinalGetService: UserCardinalGetService,
+    private val userReader: UserReader,
+    private val userCardinalPolicy: UserCardinalPolicy,
     private val meetingGetService: MeetingGetService,
     private val attendanceRepository: AttendanceRepository,
     private val mapper: AttendanceMapper,
 ) {
     fun findAttendance(userId: Long): AttendanceSummaryResponse {
-        val user = userGetService.find(userId)
+        val user = userReader.getById(userId)
         val today = LocalDate.now()
 
         val todayAttendance =
@@ -38,8 +38,8 @@ class GetAttendanceQueryService(
     }
 
     fun findAllDetailsByCurrentCardinal(userId: Long): AttendanceDetailResponse {
-        val user = userGetService.find(userId)
-        val currentCardinal = userCardinalGetService.getCurrentCardinal(user)
+        val user = userReader.getById(userId)
+        val currentCardinal = userCardinalPolicy.getCurrentCardinal(user)
 
         val responses =
             attendanceRepository
