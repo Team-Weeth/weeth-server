@@ -19,8 +19,8 @@ class AttendanceSaveServiceTest :
         val attendanceSaveService = AttendanceSaveService(attendanceRepository)
 
         describe("init") {
-            it("각 정기모임에 대한 Attendance 저장 후 user.add 호출") {
-                val user = mockk<com.weeth.domain.user.domain.entity.User>(relaxUnitFun = true)
+            it("각 정기모임에 대한 Attendance를 저장한다") {
+                val user = mockk<com.weeth.domain.user.domain.entity.User>()
                 val meetingFirst = createMeeting()
                 val meetingSecond = createMeeting()
 
@@ -29,7 +29,6 @@ class AttendanceSaveServiceTest :
                 attendanceSaveService.init(user, listOf(meetingFirst, meetingSecond))
 
                 verify(exactly = 2) { attendanceRepository.save(any<Attendance>()) }
-                verify(exactly = 2) { user.add(any<Attendance>()) }
             }
         }
 

@@ -44,17 +44,15 @@ class AttendanceRepositoryTest(
             meetingRepository.save(meeting)
 
             activeUser1 =
-                User
-                    .builder()
-                    .name("이지훈")
-                    .status(Status.ACTIVE)
-                    .build()
+                User(
+                    name = "이지훈",
+                    status = Status.ACTIVE,
+                )
             activeUser2 =
-                User
-                    .builder()
-                    .name("이강혁")
-                    .status(Status.ACTIVE)
-                    .build()
+                User(
+                    name = "이강혁",
+                    status = Status.ACTIVE,
+                )
             userRepository.saveAll(listOf(activeUser1, activeUser2))
             activeUser1.accept()
             activeUser2.accept()

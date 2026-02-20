@@ -16,7 +16,7 @@ import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.entity.FileStatus
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -32,7 +32,7 @@ class ManageCommentUseCaseTest :
     DescribeSpec({
         val commentRepository = mockk<CommentRepository>(relaxUnitFun = true)
         val postRepository = mockk<PostRepository>()
-        val userGetService = mockk<UserGetService>()
+        val userReader = mockk<UserReader>()
         val fileReader = mockk<FileReader>()
         val fileRepository = mockk<FileRepository>(relaxed = true)
         val fileMapper = mockk<FileMapper>()
@@ -41,14 +41,14 @@ class ManageCommentUseCaseTest :
             ManageCommentUseCase(
                 commentRepository,
                 postRepository,
-                userGetService,
+                userReader,
                 fileReader,
                 fileRepository,
                 fileMapper,
             )
 
         beforeTest {
-            clearMocks(commentRepository, postRepository, userGetService, fileReader, fileRepository, fileMapper)
+            clearMocks(commentRepository, postRepository, userReader, fileReader, fileRepository, fileMapper)
             every { fileMapper.toFileList(any(), FileOwnerType.COMMENT, any()) } returns emptyList()
             every { commentRepository.save(any()) } answers { firstArg() }
             every { fileReader.findAll(FileOwnerType.COMMENT, any<Long>(), any<FileStatus>()) } returns emptyList()
@@ -61,7 +61,7 @@ class ManageCommentUseCaseTest :
                 val post = PostTestFixture.create(id = 10L, user = user)
                 val dto = CommentSaveRequest(parentCommentId = null, content = "최상위 댓글", files = null)
 
-                every { userGetService.find(1L) } returns user
+                every { userReader.getById(1L) } returns user
                 every { postRepository.findByIdWithLock(10L) } returns post
 
                 useCase.savePostComment(dto, postId = 10L, userId = 1L)
@@ -76,7 +76,7 @@ class ManageCommentUseCaseTest :
                 val post = PostTestFixture.create(id = 10L, user = user)
                 val dto = CommentSaveRequest(parentCommentId = 999L, content = "대댓글", files = null)
 
-                every { userGetService.find(1L) } returns user
+                every { userReader.getById(1L) } returns user
                 every { postRepository.findByIdWithLock(10L) } returns post
                 every { commentRepository.findByIdAndPostId(999L, 10L) } returns null
 
