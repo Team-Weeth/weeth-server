@@ -43,8 +43,7 @@ class GetSessionQueryService(
                 sessionRepository.findAllByCardinalOrderByStartDesc(cardinal)
             }
         val thisWeek = findThisWeek(sessions)
-        val sorted = sessions.sortedByDescending { it.start }
-        return sessionMapper.toInfos(thisWeek, sorted)
+        return sessionMapper.toInfos(thisWeek, sessions)
     }
 
     private fun findThisWeek(sessions: List<Session>): Session? {
