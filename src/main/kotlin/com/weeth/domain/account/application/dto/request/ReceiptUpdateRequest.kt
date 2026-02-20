@@ -22,6 +22,10 @@ data class ReceiptUpdateRequest(
     @field:Schema(description = "기수", example = "4")
     @field:NotNull
     val cardinal: Int,
+    @field:Schema(
+        description = "첨부 파일 변경 규약: null=변경 안 함, []=전체 삭제, 배열 전달=해당 목록으로 교체",
+        nullable = true,
+    )
     @field:Valid
     val files: List<@NotNull FileSaveRequest>?,
 )
