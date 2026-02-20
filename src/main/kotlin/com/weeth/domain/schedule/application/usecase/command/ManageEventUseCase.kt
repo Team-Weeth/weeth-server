@@ -2,7 +2,6 @@ package com.weeth.domain.schedule.application.usecase.command
 
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
-import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
 import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
@@ -18,9 +17,6 @@ class ManageEventUseCase(
     private val cardinalGetService: CardinalGetService,
     private val eventMapper: EventMapper,
 ) {
-    fun find(eventId: Long): EventResponse =
-        eventMapper.toResponse(eventRepository.findById(eventId).orElseThrow { EventNotFoundException() })
-
     @Transactional
     fun create(
         request: ScheduleSaveRequest,

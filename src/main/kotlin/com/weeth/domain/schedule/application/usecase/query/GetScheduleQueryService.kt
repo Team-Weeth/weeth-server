@@ -1,10 +1,14 @@
 package com.weeth.domain.schedule.application.usecase.query
 
 import com.weeth.domain.attendance.domain.repository.SessionRepository
+import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
+import com.weeth.domain.schedule.application.exception.EventNotFoundException
+import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.application.mapper.ScheduleMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
 import com.weeth.domain.user.domain.service.CardinalGetService
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -18,7 +22,13 @@ class GetScheduleQueryService(
     private val sessionRepository: SessionRepository,
     private val cardinalGetService: CardinalGetService,
     private val scheduleMapper: ScheduleMapper,
+    private val eventMapper: EventMapper,
 ) {
+    fun findEvent(eventId: Long): EventResponse =
+        eventRepository.findByIdOrNull(eventId)
+            ?.let { eventMapper.toResponse(it) }
+            ?: throw EventNotFoundException()
+
     fun findMonthly(
         start: LocalDateTime,
         end: LocalDateTime,
