@@ -1,8 +1,9 @@
 package com.weeth.domain.user.application.usecase
 
+import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.entity.Session
-import com.weeth.domain.attendance.domain.service.AttendanceSaveService
-import com.weeth.domain.schedule.domain.service.MeetingGetService
+import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.user.application.dto.request.UserRequestDto
 import com.weeth.domain.user.application.dto.response.UserResponseDto
 import com.weeth.domain.user.application.exception.InvalidUserOrderException
@@ -37,8 +38,8 @@ class UserManageUseCaseTest :
         val userGetService = mockk<UserGetService>()
         val userUpdateService = mockk<UserUpdateService>(relaxUnitFun = true)
         val userDeleteService = mockk<UserDeleteService>(relaxUnitFun = true)
-        val attendanceSaveService = mockk<AttendanceSaveService>(relaxUnitFun = true)
-        val meetingGetService = mockk<MeetingGetService>()
+        val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
+        val sessionRepository = mockk<SessionRepository>()
         val jwtRedisService = mockk<JwtRedisService>(relaxUnitFun = true)
         val cardinalGetService = mockk<CardinalGetService>()
         val userCardinalSaveService = mockk<UserCardinalSaveService>(relaxUnitFun = true)
@@ -51,8 +52,8 @@ class UserManageUseCaseTest :
                 userGetService,
                 userUpdateService,
                 userDeleteService,
-                attendanceSaveService,
-                meetingGetService,
+                attendanceRepository,
+                sessionRepository,
                 jwtRedisService,
                 cardinalGetService,
                 userCardinalSaveService,
@@ -140,16 +141,16 @@ class UserManageUseCaseTest :
                 val user1 = UserTestFixture.createWaitingUser1(1L)
                 val userIds = UserRequestDto.UserId(listOf(1L))
                 val cardinal = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 8, year = 2020, semester = 2)
-                val meetings = listOf(mockk<Session>())
+                val session = mockk<Session>()
 
                 every { userGetService.findAll(userIds.userId()) } returns listOf(user1)
                 every { userCardinalGetService.getCurrentCardinal(user1) } returns cardinal
-                every { meetingGetService.find(8) } returns meetings
+                every { sessionRepository.findAllByCardinalOrderByStartAsc(8) } returns listOf(session)
 
                 useCase.accept(userIds)
 
                 verify { userUpdateService.accept(user1) }
-                verify { attendanceSaveService.init(user1, meetings) }
+                verify { attendanceRepository.saveAll(any<List<Attendance>>()) }
             }
         }
 
@@ -203,17 +204,17 @@ class UserManageUseCaseTest :
                         .build()
                 val nextCardinal = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 4, year = 2020, semester = 2)
                 val request = UserRequestDto.UserApplyOB(1L, 4)
-                val meeting = listOf(mockk<Session>())
+                val session = mockk<Session>()
 
                 every { userGetService.find(1L) } returns user
                 every { cardinalGetService.findByAdminSide(4) } returns nextCardinal
                 every { userCardinalGetService.notContains(user, nextCardinal) } returns true
                 every { userCardinalGetService.isCurrent(user, nextCardinal) } returns true
-                every { meetingGetService.find(4) } returns meeting
+                every { sessionRepository.findAllByCardinalOrderByStartAsc(4) } returns listOf(session)
 
                 useCase.applyOB(listOf(request))
 
-                verify { attendanceSaveService.init(user, meeting) }
+                verify { attendanceRepository.saveAll(any<List<Attendance>>()) }
                 verify { userCardinalSaveService.save(any<UserCardinal>()) }
             }
         }

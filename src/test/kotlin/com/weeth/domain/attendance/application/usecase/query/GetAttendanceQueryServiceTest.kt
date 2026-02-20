@@ -8,8 +8,8 @@ import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
-import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.UserCardinalGetService
@@ -19,13 +19,14 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.util.Optional
 
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
 
         val userGetService = mockk<UserGetService>()
         val userCardinalGetService = mockk<UserCardinalGetService>()
-        val meetingGetService = mockk<MeetingGetService>()
+        val sessionRepository = mockk<SessionRepository>()
         val attendanceRepository = mockk<AttendanceRepository>()
         val attendanceMapper = mockk<AttendanceMapper>()
 
@@ -33,7 +34,7 @@ class GetAttendanceQueryServiceTest :
             GetAttendanceQueryService(
                 userGetService,
                 userCardinalGetService,
-                meetingGetService,
+                sessionRepository,
                 attendanceRepository,
                 attendanceMapper,
             )
@@ -112,7 +113,7 @@ class GetAttendanceQueryServiceTest :
                 val response1 = mockk<AttendanceInfoResponse>()
                 val response2 = mockk<AttendanceInfoResponse>()
 
-                every { meetingGetService.find(sessionId) } returns session
+                every { sessionRepository.findById(sessionId) } returns Optional.of(session)
                 every {
                     attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
                 } returns listOf(attendance1, attendance2)
