@@ -61,5 +61,4 @@ class ManageSessionUseCase(
         attendanceRepository.deleteAllBySession(session)
         sessionRepository.delete(session)
     }
-
 }

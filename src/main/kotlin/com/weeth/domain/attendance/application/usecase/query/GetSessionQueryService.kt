@@ -1,5 +1,6 @@
 package com.weeth.domain.attendance.application.usecase.query
 
+import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
@@ -10,7 +11,6 @@ import com.weeth.domain.user.domain.service.UserGetService
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import com.weeth.domain.attendance.domain.entity.Session
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
@@ -47,9 +47,7 @@ class GetSessionQueryService(
         return sessionMapper.toInfos(thisWeek, sorted)
     }
 
-    private fun findThisWeek(
-        sessions: List<Session>,
-    ): Session? {
+    private fun findThisWeek(sessions: List<Session>): Session? {
         val today = LocalDate.now()
         val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))

@@ -23,5 +23,6 @@ class EventController(
     @Operation(summary = "일정 상세 조회")
     fun getEvent(
         @PathVariable eventId: Long,
-    ): CommonResponse<EventResponse> = CommonResponse.success(ScheduleResponseCode.EVENT_FIND_SUCCESS, getScheduleQueryService.findEvent(eventId))
+    ): CommonResponse<EventResponse> =
+        CommonResponse.success(ScheduleResponseCode.EVENT_FIND_SUCCESS, getScheduleQueryService.findEvent(eventId))
 }

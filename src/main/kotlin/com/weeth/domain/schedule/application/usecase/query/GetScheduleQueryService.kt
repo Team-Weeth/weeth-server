@@ -23,7 +23,8 @@ class GetScheduleQueryService(
     private val eventMapper: EventMapper,
 ) {
     fun findEvent(eventId: Long): EventResponse =
-        eventRepository.findByIdOrNull(eventId)
+        eventRepository
+            .findByIdOrNull(eventId)
             ?.let { eventMapper.toResponse(it) }
             ?: throw EventNotFoundException()
 
