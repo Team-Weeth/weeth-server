@@ -47,14 +47,14 @@ class ManageSessionUseCase(
         request: ScheduleUpdateRequest,
         userId: Long,
     ) {
-        val session = sessionRepository.findById(sessionId).orElseThrow { MeetingNotFoundException() }
+        val session = sessionRepository.findByIdWithLock(sessionId) ?: throw MeetingNotFoundException()
         val user = userGetService.find(userId)
         session.updateInfo(request.title, request.content, request.location, request.start, request.end, user)
     }
 
     @Transactional
     fun delete(sessionId: Long) {
-        val session = sessionRepository.findById(sessionId).orElseThrow { MeetingNotFoundException() }
+        val session = sessionRepository.findByIdWithLock(sessionId) ?: throw MeetingNotFoundException()
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
         attendances.forEach { a ->
             when (a.status) {

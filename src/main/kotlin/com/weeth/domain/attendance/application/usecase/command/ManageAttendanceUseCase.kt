@@ -35,8 +35,11 @@ class ManageAttendanceUseCase(
         if (todayAttendance.isWrong(code)) {
             throw AttendanceCodeMismatchException()
         }
-        if (todayAttendance.status != AttendanceStatus.ATTEND) {
-            todayAttendance.attend()
+        val lockedAttendance =
+            attendanceRepository.findBySessionAndUserWithLock(todayAttendance.session, user)
+                ?: throw AttendanceNotFoundException()
+        if (lockedAttendance.status != AttendanceStatus.ATTEND) {
+            lockedAttendance.attend()
             user.attend()
         }
     }
