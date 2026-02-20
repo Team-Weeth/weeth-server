@@ -112,11 +112,13 @@ class AppleAuthService(
             val appleId = claims.subject
             val email = claims.get("email", String::class.java)
             val emailVerified = parseEmailVerified(claims["email_verified"])
+            val name = claims.get("name", String::class.java)
 
             return AppleUserInfo(
                 appleId = appleId,
                 email = email,
                 emailVerified = emailVerified,
+                name = name,
             )
         } catch (e: AppleAuthenticationException) {
             throw e

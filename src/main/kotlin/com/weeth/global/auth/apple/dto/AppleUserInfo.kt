@@ -4,4 +4,5 @@ data class AppleUserInfo(
     val appleId: String,
     val email: String?,
     val emailVerified: Boolean,
+    val name: String? = null,
 )
