@@ -1,6 +1,7 @@
 package com.weeth.domain.attendance.presentation
 
 import com.weeth.domain.attendance.application.usecase.command.ManageSessionUseCase
+import com.weeth.domain.attendance.application.usecase.query.GetSessionQueryService
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController
 @ApiErrorCodeExample(MeetingErrorCode::class)
 class SessionAdminController(
     private val manageSessionUseCase: ManageSessionUseCase,
+    private val getSessionQueryService: GetSessionQueryService,
 ) {
     @PostMapping
     @Operation(summary = "정기모임 생성")
@@ -61,8 +63,8 @@ class SessionAdminController(
 
     @GetMapping
     @Operation(summary = "정기모임 목록 조회")
-    fun findInfos(
+    fun getSessionInfos(
         @RequestParam(required = false) cardinal: Int?,
     ): CommonResponse<SessionInfosResponse> =
-        CommonResponse.success(AttendanceResponseCode.MEETING_FIND_SUCCESS, manageSessionUseCase.findInfos(cardinal))
+        CommonResponse.success(AttendanceResponseCode.MEETING_FIND_SUCCESS, getSessionQueryService.findSessionInfos(cardinal))
 }

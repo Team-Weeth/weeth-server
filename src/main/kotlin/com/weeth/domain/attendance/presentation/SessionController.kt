@@ -1,6 +1,6 @@
 package com.weeth.domain.attendance.presentation
 
-import com.weeth.domain.attendance.application.usecase.command.ManageSessionUseCase
+import com.weeth.domain.attendance.application.usecase.query.GetSessionQueryService
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
 import com.weeth.domain.schedule.application.exception.MeetingErrorCode
 import com.weeth.global.auth.annotation.CurrentUser
@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v4/sessions")
 @ApiErrorCodeExample(MeetingErrorCode::class)
 class SessionController(
-    private val manageSessionUseCase: ManageSessionUseCase,
+    private val getSessionQueryService: GetSessionQueryService,
 ) {
     @GetMapping("/{sessionId}")
     @Operation(summary = "정기모임 상세 조회")
-    fun find(
+    fun getSession(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable sessionId: Long,
     ): CommonResponse<SessionResponse> =
-        CommonResponse.success(AttendanceResponseCode.SESSION_FIND_SUCCESS, manageSessionUseCase.find(userId, sessionId))
+        CommonResponse.success(AttendanceResponseCode.SESSION_FIND_SUCCESS, getSessionQueryService.findSession(userId, sessionId))
 }
