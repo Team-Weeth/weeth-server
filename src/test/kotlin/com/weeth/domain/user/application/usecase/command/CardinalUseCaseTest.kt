@@ -1,31 +1,29 @@
-package com.weeth.domain.user.application.usecase
+package com.weeth.domain.user.application.usecase.command
 
 import com.weeth.domain.user.application.dto.request.CardinalSaveRequest
 import com.weeth.domain.user.application.dto.request.CardinalUpdateRequest
 import com.weeth.domain.user.application.dto.response.CardinalResponse
 import com.weeth.domain.user.application.mapper.CardinalMapper
+import com.weeth.domain.user.application.usecase.query.GetCardinalQueryService
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.enums.CardinalStatus
-import com.weeth.domain.user.domain.service.CardinalGetService
-import com.weeth.domain.user.domain.service.CardinalSaveService
+import com.weeth.domain.user.domain.repository.CardinalRepository
 import com.weeth.domain.user.fixture.CardinalTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
-import io.mockk.Runs
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
 import java.time.LocalDateTime
+import java.util.Optional
 
 class CardinalUseCaseTest :
     DescribeSpec({
-
-        val cardinalGetService = mockk<CardinalGetService>()
-        val cardinalSaveService = mockk<CardinalSaveService>()
+        val cardinalRepository = mockk<CardinalRepository>()
         val cardinalMapper = mockk<CardinalMapper>()
-        val useCase = CardinalUseCase(cardinalGetService, cardinalSaveService, cardinalMapper)
+        val manageCardinalUseCase = ManageCardinalUseCase(cardinalRepository, cardinalMapper)
+        val getCardinalQueryService = GetCardinalQueryService(cardinalRepository, cardinalMapper)
 
         describe("save") {
             context("진행중이 아닌 기수라면") {
@@ -34,15 +32,15 @@ class CardinalUseCaseTest :
                     val toSave = CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2025, semester = 1)
                     val saved = CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2025, semester = 1)
 
-                    every { cardinalGetService.validateCardinal(7) } just Runs
-                    every { cardinalMapper.from(request) } returns toSave
-                    every { cardinalSaveService.save(toSave) } returns saved
+                    every { cardinalRepository.findByCardinalNumber(7) } returns Optional.empty()
+                    every { cardinalMapper.toEntity(request) } returns toSave
+                    every { cardinalRepository.save(toSave) } returns saved
 
-                    useCase.save(request)
+                    manageCardinalUseCase.save(request)
 
-                    verify { cardinalGetService.validateCardinal(7) }
-                    verify { cardinalSaveService.save(toSave) }
-                    verify(exactly = 0) { cardinalGetService.findInProgress() }
+                    verify { cardinalRepository.findByCardinalNumber(7) }
+                    verify { cardinalRepository.save(toSave) }
+                    verify(exactly = 0) { cardinalRepository.findAllByStatus(CardinalStatus.IN_PROGRESS) }
                 }
             }
 
@@ -56,15 +54,15 @@ class CardinalUseCaseTest :
                     val newCardinalAfterSave =
                         CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2025, semester = 1)
 
-                    every { cardinalGetService.validateCardinal(7) } just Runs
-                    every { cardinalGetService.findInProgress() } returns listOf(oldCardinal)
-                    every { cardinalMapper.from(request) } returns newCardinalBeforeSave
-                    every { cardinalSaveService.save(newCardinalBeforeSave) } returns newCardinalAfterSave
+                    every { cardinalRepository.findByCardinalNumber(7) } returns Optional.empty()
+                    every { cardinalRepository.findAllByStatus(CardinalStatus.IN_PROGRESS) } returns listOf(oldCardinal)
+                    every { cardinalMapper.toEntity(request) } returns newCardinalBeforeSave
+                    every { cardinalRepository.save(newCardinalBeforeSave) } returns newCardinalAfterSave
 
-                    useCase.save(request)
+                    manageCardinalUseCase.save(request)
 
-                    verify { cardinalGetService.findInProgress() }
-                    verify { cardinalSaveService.save(newCardinalBeforeSave) }
+                    verify { cardinalRepository.findAllByStatus(CardinalStatus.IN_PROGRESS) }
+                    verify { cardinalRepository.save(newCardinalBeforeSave) }
 
                     oldCardinal.status shouldBe CardinalStatus.DONE
                     newCardinalAfterSave.status shouldBe CardinalStatus.IN_PROGRESS
@@ -75,9 +73,9 @@ class CardinalUseCaseTest :
         describe("update") {
             it("연도와 학기를 변경한다") {
                 val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2024, semester = 2)
-                val dto = CardinalUpdateRequest(1L, 2025, 1, false)
+                every { cardinalRepository.findById(1L) } returns Optional.of(cardinal)
 
-                cardinal.update(dto)
+                manageCardinalUseCase.update(CardinalUpdateRequest(1L, 2025, 1, false))
 
                 cardinal.year shouldBe 2025
                 cardinal.semester shouldBe 1
@@ -97,18 +95,18 @@ class CardinalUseCaseTest :
                 val response2 =
                     CardinalResponse(2L, 7, 2025, 1, CardinalStatus.IN_PROGRESS, now.minusDays(2), now)
 
-                every { cardinalGetService.findAll() } returns cardinals
-                every { cardinalMapper.to(cardinal1) } returns response1
-                every { cardinalMapper.to(cardinal2) } returns response2
+                every { cardinalRepository.findAllByOrderByCardinalNumberAsc() } returns cardinals
+                every { cardinalMapper.toResponse(cardinal1) } returns response1
+                every { cardinalMapper.toResponse(cardinal2) } returns response2
 
-                val responses = useCase.findAll()
+                val responses = getCardinalQueryService.findAll()
 
-                verify { cardinalGetService.findAll() }
-                verify(exactly = 2) { cardinalMapper.to(any<Cardinal>()) }
+                verify { cardinalRepository.findAllByOrderByCardinalNumberAsc() }
+                verify(exactly = 2) { cardinalMapper.toResponse(any<Cardinal>()) }
 
                 responses shouldHaveSize 2
-                responses.map { it.cardinalNumber() } shouldBe listOf(6, 7)
-                responses.map { it.status() } shouldBe listOf(CardinalStatus.DONE, CardinalStatus.IN_PROGRESS)
+                responses.map { it.cardinalNumber } shouldBe listOf(6, 7)
+                responses.map { it.status } shouldBe listOf(CardinalStatus.DONE, CardinalStatus.IN_PROGRESS)
             }
         }
     })

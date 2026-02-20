@@ -10,14 +10,13 @@ object CardinalTestFixture {
         year: Int,
         semester: Int,
     ): Cardinal =
-        Cardinal
-            .builder()
-            .id(id)
-            .cardinalNumber(cardinalNumber)
-            .year(year)
-            .semester(semester)
-            .status(CardinalStatus.DONE)
-            .build()
+        Cardinal(
+            id = id ?: 0L,
+            cardinalNumber = cardinalNumber,
+            year = year,
+            semester = semester,
+            status = CardinalStatus.DONE,
+        )
 
     fun createCardinalInProgress(
         id: Long? = null,
@@ -25,12 +24,11 @@ object CardinalTestFixture {
         year: Int,
         semester: Int,
     ): Cardinal =
-        Cardinal
-            .builder()
-            .id(id)
-            .cardinalNumber(cardinalNumber)
-            .year(year)
-            .semester(semester)
-            .status(CardinalStatus.IN_PROGRESS)
-            .build()
+        Cardinal(
+            id = id ?: 0L,
+            cardinalNumber = cardinalNumber,
+            year = year,
+            semester = semester,
+            status = CardinalStatus.IN_PROGRESS,
+        )
 }
