@@ -120,7 +120,7 @@ class GetAttendanceQueryServiceTest :
                 every { attendanceMapper.toInfoResponse(attendance1) } returns response1
                 every { attendanceMapper.toInfoResponse(attendance2) } returns response2
 
-                val result = queryService.findAllAttendanceByMeeting(sessionId)
+                val result = queryService.findAllAttendanceBySession(sessionId)
 
                 result shouldBe listOf(response1, response2)
             }
