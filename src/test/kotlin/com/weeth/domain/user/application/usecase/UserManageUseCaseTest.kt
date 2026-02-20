@@ -38,8 +38,8 @@ class UserManageUseCaseTest :
         val userGetService = mockk<UserGetService>()
         val userUpdateService = mockk<UserUpdateService>(relaxUnitFun = true)
         val userDeleteService = mockk<UserDeleteService>(relaxUnitFun = true)
-        val attendanceSaveService = mockk<AttendanceSaveService>(relaxUnitFun = true)
-        val meetingGetService = mockk<MeetingGetService>()
+        val attendanceRepository = mockk<AttendanceRepository>(relaxUnitFun = true)
+        val sessionRepository = mockk<SessionRepository>()
         val refreshTokenStorePort = mockk<RefreshTokenStorePort>(relaxUnitFun = true)
         val cardinalGetService = mockk<CardinalGetService>()
         val userCardinalSaveService = mockk<UserCardinalSaveService>(relaxUnitFun = true)
@@ -52,8 +52,8 @@ class UserManageUseCaseTest :
                 userGetService,
                 userUpdateService,
                 userDeleteService,
-                attendanceSaveService,
-                meetingGetService,
+                attendanceRepository,
+                sessionRepository,
                 refreshTokenStorePort,
                 cardinalGetService,
                 userCardinalSaveService,
