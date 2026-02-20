@@ -6,7 +6,7 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryRes
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.domain.repository.SessionRepository
-import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
+import com.weeth.domain.attendance.application.exception.SessionNotFoundException
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.UserCardinalGetService
@@ -51,7 +51,7 @@ class GetAttendanceQueryService(
     }
 
     fun findAllAttendanceBySession(sessionId: Long): List<AttendanceInfoResponse> {
-        val session = sessionRepository.findById(sessionId).orElseThrow { MeetingNotFoundException() }
+        val session = sessionRepository.findById(sessionId).orElseThrow { SessionNotFoundException() }
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
         return attendances.map(attendanceMapper::toInfoResponse)
     }
