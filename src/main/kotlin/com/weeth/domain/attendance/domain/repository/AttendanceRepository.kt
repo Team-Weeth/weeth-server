@@ -69,7 +69,7 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         @Param("sessions") sessions: List<Session>,
     ): List<Attendance>
 
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Attendance a WHERE a.session = :session")
     fun deleteAllBySession(session: Session)
 }
