@@ -10,7 +10,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +35,14 @@ public class MeetingGetService {
 
     public List<Meeting> find(Integer cardinal) {
         return meetingRepository.findAllByCardinalOrderByStartAsc(cardinal);
+    }
+
+    public Map<Integer, List<Meeting>> findByCardinals(List<Integer> cardinals) {
+        if (cardinals == null || cardinals.isEmpty()) {
+            return Map.of();
+        }
+        return meetingRepository.findAllByCardinalInOrderByCardinalAscStartAsc(cardinals).stream()
+                .collect(Collectors.groupingBy(Meeting::getCardinal, LinkedHashMap::new, Collectors.toList()));
     }
 
     public List<Meeting> findMeetingByCardinal(Integer cardinal) {
