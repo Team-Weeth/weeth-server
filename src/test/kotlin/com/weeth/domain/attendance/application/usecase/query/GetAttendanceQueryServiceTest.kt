@@ -104,7 +104,7 @@ class GetAttendanceQueryServiceTest :
             }
         }
 
-        describe("findAllAttendanceByMeeting") {
+        describe("findAllAttendanceBySession") {
             it("해당 정기모임의 출석 정보를 조회") {
                 val sessionId = 1L
                 val session = mockk<Session>()
