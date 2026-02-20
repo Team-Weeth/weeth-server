@@ -50,6 +50,8 @@ class Session(
         end: LocalDateTime,
         user: User?,
     ) {
+        require(title.isNotBlank()) { "제목은 필수입니다" }
+        require(!end.isBefore(start)) { "종료 시간은 시작 시간 이후여야 합니다" }
         this.title = title
         this.content = content
         this.location = location
