@@ -19,7 +19,7 @@ data class ReceiptSaveRequest(
     @field:Schema(description = "사용 날짜", example = "2024-09-01")
     @field:NotNull
     val date: LocalDate,
-    @field:Schema(description = "기수", example = "40")
+    @field:Schema(description = "기수", example = "4")
     @field:NotNull
     val cardinal: Int,
     @field:Valid

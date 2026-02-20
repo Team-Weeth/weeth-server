@@ -13,7 +13,7 @@ data class AccountSaveRequest(
     @field:NotNull
     @field:Positive
     val totalAmount: Int,
-    @field:Schema(description = "기수", example = "40")
+    @field:Schema(description = "기수", example = "4")
     @field:NotNull
     val cardinal: Int,
 )
