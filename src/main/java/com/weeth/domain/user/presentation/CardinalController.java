@@ -8,7 +8,7 @@ import com.weeth.domain.user.application.dto.request.CardinalUpdateRequest;
 import com.weeth.domain.user.application.dto.response.CardinalResponse;
 import com.weeth.domain.user.application.exception.UserErrorCode;
 import com.weeth.domain.user.application.usecase.CardinalUseCase;
-import com.weeth.global.auth.jwt.exception.JwtErrorCode;
+import com.weeth.global.auth.jwt.application.exception.JwtErrorCode;
 import com.weeth.global.common.exception.ApiErrorCodeExample;
 import com.weeth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;

@@ -20,7 +20,7 @@ import com.weeth.domain.user.domain.service.UserGetService
 import com.weeth.domain.user.domain.service.UserUpdateService
 import com.weeth.domain.user.fixture.CardinalTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture
-import com.weeth.global.auth.jwt.service.JwtRedisService
+import com.weeth.global.auth.jwt.domain.port.RefreshTokenStorePort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -40,7 +40,7 @@ class UserManageUseCaseTest :
         val userDeleteService = mockk<UserDeleteService>(relaxUnitFun = true)
         val attendanceSaveService = mockk<AttendanceSaveService>(relaxUnitFun = true)
         val meetingGetService = mockk<MeetingGetService>()
-        val jwtRedisService = mockk<JwtRedisService>(relaxUnitFun = true)
+        val refreshTokenStorePort = mockk<RefreshTokenStorePort>(relaxUnitFun = true)
         val cardinalGetService = mockk<CardinalGetService>()
         val userCardinalSaveService = mockk<UserCardinalSaveService>(relaxUnitFun = true)
         val userCardinalGetService = mockk<UserCardinalGetService>()
@@ -54,7 +54,7 @@ class UserManageUseCaseTest :
                 userDeleteService,
                 attendanceSaveService,
                 meetingGetService,
-                jwtRedisService,
+                refreshTokenStorePort,
                 cardinalGetService,
                 userCardinalSaveService,
                 userCardinalGetService,
@@ -164,7 +164,7 @@ class UserManageUseCaseTest :
                 useCase.update(listOf(request))
 
                 verify { userUpdateService.update(user1, "ADMIN") }
-                verify { jwtRedisService.updateRole(1L, "ADMIN") }
+                verify { refreshTokenStorePort.updateRole(1L, Role.ADMIN) }
             }
         }
 
@@ -175,7 +175,7 @@ class UserManageUseCaseTest :
 
                 useCase.leave(1L)
 
-                verify { jwtRedisService.delete(1L) }
+                verify { refreshTokenStorePort.delete(1L) }
                 verify { userDeleteService.leave(user1) }
             }
         }
@@ -188,7 +188,7 @@ class UserManageUseCaseTest :
 
                 useCase.ban(ids)
 
-                verify { jwtRedisService.delete(1L) }
+                verify { refreshTokenStorePort.delete(1L) }
                 verify { userDeleteService.ban(user1) }
             }
         }
