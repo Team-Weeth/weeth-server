@@ -1,10 +1,7 @@
 package com.weeth.domain.schedule.presentation
 
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
-import com.weeth.domain.schedule.application.exception.EventErrorCode
-import com.weeth.domain.schedule.application.exception.MeetingErrorCode
 import com.weeth.domain.schedule.application.usecase.query.GetScheduleQueryService
-import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -18,7 +15,6 @@ import java.time.LocalDateTime
 @Tag(name = "SCHEDULE", description = "캘린더 조회 API")
 @RestController
 @RequestMapping("/api/v4/schedules")
-@ApiErrorCodeExample(EventErrorCode::class, MeetingErrorCode::class)
 class ScheduleController(
     private val getScheduleQueryService: GetScheduleQueryService,
 ) {
