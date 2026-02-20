@@ -1,15 +1,14 @@
-package com.weeth.domain.user.application.exception;
+package com.weeth.domain.user.application.exception
 
-import com.weeth.global.common.exception.ErrorCodeInterface;
-import com.weeth.global.common.exception.ExplainError;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import org.springframework.http.HttpStatus;
+import com.weeth.global.common.exception.ErrorCodeInterface
+import com.weeth.global.common.exception.ExplainError
+import org.springframework.http.HttpStatus
 
-@Getter
-@AllArgsConstructor
-public enum UserErrorCode implements ErrorCodeInterface {
-    // User 관련 에러
+enum class UserErrorCode(
+    private val code: Int,
+    private val status: HttpStatus,
+    private val message: String,
+) : ErrorCodeInterface {
     @ExplainError("사용자 ID로 조회했으나 해당 사용자가 존재하지 않을 때 발생합니다.")
     USER_NOT_FOUND(2800, HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),
 
@@ -25,21 +24,18 @@ public enum UserErrorCode implements ErrorCodeInterface {
     @ExplainError("다른 사용자의 리소스에 접근하려고 할 때 발생합니다.")
     USER_NOT_MATCH(2804, HttpStatus.FORBIDDEN, "해당 사용자가 아닙니다."),
 
-    // 인증 관련 에러
     @ExplainError("로그인 시 비밀번호가 일치하지 않을 때 발생합니다.")
     PASSWORD_MISMATCH(2805, HttpStatus.BAD_REQUEST, "비밀번호가 일치하지 않습니다."),
 
     @ExplainError("입력한 이메일로 등록된 사용자가 없을 때 발생합니다.")
     EMAIL_NOT_FOUND(2806, HttpStatus.NOT_FOUND, "이메일을 찾을 수 없습니다."),
 
-    // 검증 에러
     @ExplainError("이미 등록된 학번으로 회원가입을 시도할 때 발생합니다.")
     STUDENT_ID_EXISTS(2807, HttpStatus.BAD_REQUEST, "이미 존재하는 학번입니다."),
 
     @ExplainError("이미 등록된 전화번호로 회원가입을 시도할 때 발생합니다.")
     TEL_EXISTS(2808, HttpStatus.BAD_REQUEST, "이미 존재하는 전화번호입니다."),
 
-    // Cardinal 관련 에러
     @ExplainError("존재하지 않는 기수 정보로 조회할 때 발생합니다.")
     CARDINAL_NOT_FOUND(2809, HttpStatus.NOT_FOUND, "기수를 찾을 수 없습니다."),
 
@@ -49,7 +45,6 @@ public enum UserErrorCode implements ErrorCodeInterface {
     @ExplainError("사용자와 기수 간의 연결 정보를 찾을 수 없을 때 발생합니다.")
     USER_CARDINAL_NOT_FOUND(2811, HttpStatus.NOT_FOUND, "사용자 기수 정보를 찾을 수 없습니다."),
 
-    // Enum 관련 에러
     @ExplainError("잘못된 학과 값이 입력되었을 때 발생합니다.")
     DEPARTMENT_NOT_FOUND(2812, HttpStatus.BAD_REQUEST, "학과를 찾을 수 없습니다."),
 
@@ -60,9 +55,12 @@ public enum UserErrorCode implements ErrorCodeInterface {
     STATUS_NOT_FOUND(2814, HttpStatus.BAD_REQUEST, "상태를 찾을 수 없습니다."),
 
     @ExplainError("사용자 순서 지정 시 잘못된 값이 입력되었을 때 발생합니다.")
-    INVALID_USER_ORDER(2815, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다.");
+    INVALID_USER_ORDER(2815, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
+    ;
 
-    private final int code;
-    private final HttpStatus status;
-    private final String message;
+    override fun getCode(): Int = code
+
+    override fun getStatus(): HttpStatus = status
+
+    override fun getMessage(): String = message
 }
