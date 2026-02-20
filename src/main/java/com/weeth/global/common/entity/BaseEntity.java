@@ -18,11 +18,13 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 @SuperBuilder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+// NOTE: Java 엔티티들의 Lombok @SuperBuilder 체인(BaseEntityBuilder) 호환을 위해 현재는 Java로 유지한다.
 public class BaseEntity {
 
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
     @LastModifiedDate
     private LocalDateTime modifiedAt;
 }

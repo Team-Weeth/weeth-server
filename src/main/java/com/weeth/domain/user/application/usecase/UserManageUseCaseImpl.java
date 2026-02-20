@@ -13,7 +13,7 @@ import com.weeth.domain.user.domain.entity.UserCardinal;
 import com.weeth.domain.user.domain.entity.enums.StatusPriority;
 import com.weeth.domain.user.domain.entity.enums.UsersOrderBy;
 import com.weeth.domain.user.domain.service.*;
-import com.weeth.global.auth.jwt.service.JwtRedisService;
+import com.weeth.global.auth.jwt.domain.port.RefreshTokenStorePort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,9 +34,9 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
     private final UserUpdateService userUpdateService;
     private final UserDeleteService userDeleteService;
 
-    private final AttendanceRepository attendanceRepository;
-    private final SessionRepository sessionRepository;
-    private final JwtRedisService jwtRedisService;
+    private final AttendanceSaveService attendanceSaveService;
+    private final MeetingGetService meetingGetService;
+    private final RefreshTokenStorePort refreshTokenStorePort;
     private final CardinalGetService cardinalGetService;
     private final UserCardinalSaveService userCardinalSaveService;
     private final UserCardinalGetService userCardinalGetService;
@@ -112,7 +112,7 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
             User user = userGetService.find(request.userId());
 
             userUpdateService.update(user, request.role().name());
-            jwtRedisService.updateRole(user.getId(), request.role().name());
+            refreshTokenStorePort.updateRole(user.getId(), request.role());
         });
     }
 
@@ -120,7 +120,7 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
     public void leave(Long userId) {
         User user = userGetService.find(userId);
         // 탈퇴하는 경우 리프레시 토큰 삭제
-        jwtRedisService.delete(user.getId());
+        refreshTokenStorePort.delete(user.getId());
         userDeleteService.leave(user);
     }
 
@@ -129,7 +129,7 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
         List<User> users = userGetService.findAll(userIds.userId());
 
         users.forEach(user -> {
-            jwtRedisService.delete(user.getId());
+            refreshTokenStorePort.delete(user.getId());
             userDeleteService.ban(user);
         });
     }
