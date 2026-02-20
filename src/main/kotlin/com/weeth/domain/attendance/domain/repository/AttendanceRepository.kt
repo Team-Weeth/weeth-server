@@ -77,6 +77,7 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         @Param("cardinal") cardinal: Int,
     ): List<Attendance>
 
+    // TODO: QR 코드 출석 기능 구현 시 사용 예정 (여러 세션의 출석자 배치 조회)
     @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session IN :sessions")
     fun findAllBySessionIn(
         @Param("sessions") sessions: List<Session>,
