@@ -1,7 +1,6 @@
 package com.weeth.domain.user.domain.entity;
 
 import jakarta.persistence.*;
-import com.weeth.domain.attendance.domain.entity.Attendance;
 import com.weeth.domain.board.domain.entity.enums.Part;
 import com.weeth.domain.user.domain.entity.enums.Department;
 import com.weeth.domain.user.domain.entity.enums.Position;
@@ -14,9 +13,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.weeth.domain.user.application.dto.request.UserRequestDto.Update;
 
@@ -70,9 +66,6 @@ public class User extends BaseEntity {
     private Integer penaltyCount;
 
     private Integer warningCount;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    private List<Attendance> attendances = new ArrayList<>();
 
     @PrePersist
     public void init() {
@@ -128,12 +121,7 @@ public class User extends BaseEntity {
         this.password = passwordEncoder.encode(studentId);
     }
 
-    public void add(Attendance attendance) {
-        this.attendances.add(attendance);
-    }
-
     public void initAttendance() {
-        this.attendances.clear();
         this.attendanceCount = 0;
         this.absenceCount = 0;
         this.attendanceRate = 0;

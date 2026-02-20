@@ -3,11 +3,8 @@ package com.weeth.domain.attendance.presentation
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
-import com.weeth.domain.attendance.application.usecase.command.CloseAttendanceUseCase
-import com.weeth.domain.attendance.application.usecase.command.UpdateAttendanceStatusUseCase
+import com.weeth.domain.attendance.application.usecase.command.ManageAttendanceUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
-import com.weeth.domain.schedule.application.dto.MeetingDTO
-import com.weeth.domain.schedule.application.usecase.MeetingUseCase
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -24,41 +21,30 @@ import java.time.LocalDate
 
 @Tag(name = "ATTENDANCE ADMIN", description = "[ADMIN] 출석 어드민 API")
 @RestController
-@RequestMapping("/api/v1/admin/attendances")
+@RequestMapping("/api/v4/admin/attendances")
 @ApiErrorCodeExample(AttendanceErrorCode::class)
 class AttendanceAdminController(
-    private val closeAttendanceUseCase: CloseAttendanceUseCase,
-    private val updateAttendanceStatusUseCase: UpdateAttendanceStatusUseCase,
+    private val manageAttendanceUseCase: ManageAttendanceUseCase,
     private val getAttendanceQueryService: GetAttendanceQueryService,
-    private val meetingUseCase: MeetingUseCase,
 ) {
-    @PatchMapping
+    @PatchMapping("/close")
     @Operation(summary = "출석 마감")
     fun close(
         @RequestParam now: LocalDate,
         @RequestParam cardinal: Int,
     ): CommonResponse<Void?> {
-        closeAttendanceUseCase.close(now, cardinal)
+        manageAttendanceUseCase.close(now, cardinal)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CLOSE_SUCCESS)
     }
 
-    @GetMapping("/meetings")
-    @Operation(summary = "정기모임 조회")
-    fun getMeetings(
-        @RequestParam(required = false) cardinal: Int?,
-    ): CommonResponse<MeetingDTO.Infos> {
-        val response = meetingUseCase.find(cardinal)
-        return CommonResponse.success(AttendanceResponseCode.MEETING_FIND_SUCCESS, response)
-    }
-
-    @GetMapping("/{meetingId}")
+    @GetMapping("/{sessionId}")
     @Operation(summary = "모든 인원 정기모임 출석 정보 조회")
     fun getAllAttendance(
-        @PathVariable meetingId: Long,
+        @PathVariable sessionId: Long,
     ): CommonResponse<List<AttendanceInfoResponse>> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_DETAIL_SUCCESS,
-            getAttendanceQueryService.findAllAttendanceByMeeting(meetingId),
+            getAttendanceQueryService.findAllAttendanceBySession(sessionId),
         )
 
     @PatchMapping("/status")
@@ -66,7 +52,7 @@ class AttendanceAdminController(
     fun updateAttendanceStatus(
         @RequestBody @Valid attendanceUpdates: List<UpdateAttendanceStatusRequest>,
     ): CommonResponse<Void?> {
-        updateAttendanceStatusUseCase.updateStatus(attendanceUpdates)
+        manageAttendanceUseCase.updateStatus(attendanceUpdates)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_UPDATED_SUCCESS)
     }
 }

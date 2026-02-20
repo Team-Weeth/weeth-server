@@ -1,10 +1,9 @@
 package com.weeth.domain.attendance.application.mapper
 
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUserWithAttendances
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUserWithAttendances
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDayMeeting
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDaySession
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.enrichUserProfile
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setUserAttendanceStats
@@ -23,9 +22,9 @@ class AttendanceMapperTest :
         describe("toSummaryResponse") {
             it("사용자 + 당일 출석 객체를 MainResponse로 매핑한다") {
                 val today = LocalDate.now()
-                val meeting = createOneDayMeeting(today, 1, 1111, "Today")
-                val user = createActiveUserWithAttendances("이지훈", listOf(meeting))
-                val attendance = user.attendances[0]
+                val meeting = createOneDaySession(today, 1, 1111, "Today")
+                val user = createActiveUser("이지훈")
+                val attendance = createAttendance(meeting, user)
 
                 val main = mapper.toSummaryResponse(user, attendance)
 
@@ -51,9 +50,9 @@ class AttendanceMapperTest :
 
             it("일반 유저는 출석 코드가 null로 매핑된다") {
                 val today = LocalDate.now()
-                val meeting = createOneDayMeeting(today, 1, 1234, "Today")
-                val user = createActiveUserWithAttendances("일반유저", listOf(meeting))
-                val attendance = user.attendances[0]
+                val meeting = createOneDaySession(today, 1, 1234, "Today")
+                val user = createActiveUser("일반유저")
+                val attendance = createAttendance(meeting, user)
 
                 val main = mapper.toSummaryResponse(user, attendance)
 
@@ -66,9 +65,9 @@ class AttendanceMapperTest :
             it("ADMIN 유저는 출석 코드가 포함된다") {
                 val today = LocalDate.now()
                 val expectedCode = 1234
-                val meeting = createOneDayMeeting(today, 1, expectedCode, "Today")
-                val adminUser = createAdminUserWithAttendances("관리자", listOf(meeting))
-                val attendance = adminUser.attendances[0]
+                val meeting = createOneDaySession(today, 1, expectedCode, "Today")
+                val adminUser = createAdminUser("관리자")
+                val attendance = createAttendance(meeting, adminUser)
 
                 val main = mapper.toSummaryResponse(adminUser, attendance, isAdmin = true)
 
@@ -83,7 +82,7 @@ class AttendanceMapperTest :
 
         describe("toResponse") {
             it("단일 출석을 AttendanceResponse로 매핑한다") {
-                val meeting = createOneDayMeeting(LocalDate.now().minusDays(1), 1, 2222, "D-1")
+                val meeting = createOneDaySession(LocalDate.now().minusDays(1), 1, 2222, "D-1")
                 val user = createActiveUser("사용자A")
                 val attendance = createAttendance(meeting, user)
 
@@ -100,8 +99,8 @@ class AttendanceMapperTest :
         describe("toDetailResponse") {
             it("사용자 + Response 리스트를 DetailResponse로 매핑(total = attend + absence)") {
                 val base = LocalDate.now()
-                val m1 = createOneDayMeeting(base.minusDays(2), 1, 1000, "D-2")
-                val m2 = createOneDayMeeting(base.minusDays(1), 1, 1001, "D-1")
+                val m1 = createOneDaySession(base.minusDays(2), 1, 1000, "D-2")
+                val m2 = createOneDaySession(base.minusDays(1), 1, 1001, "D-1")
                 val user = createActiveUser("이지훈")
                 setUserAttendanceStats(user, 3, 2)
 
@@ -121,7 +120,7 @@ class AttendanceMapperTest :
 
         describe("toInfoResponse") {
             it("Attendance를 InfoResponse로 매핑") {
-                val meeting = createOneDayMeeting(LocalDate.now(), 1, 3333, "Info")
+                val meeting = createOneDaySession(LocalDate.now(), 1, 3333, "Info")
                 val user = createActiveUser("유저B")
                 enrichUserProfile(user, Position.BE, "컴퓨터공학과", "20201234")
 

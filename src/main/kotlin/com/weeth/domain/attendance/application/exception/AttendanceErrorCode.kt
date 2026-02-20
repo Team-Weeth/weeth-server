@@ -17,6 +17,9 @@ enum class AttendanceErrorCode(
 
     @ExplainError("사용자가 출석 일정을 직접 수정하려고 시도할 때 발생합니다. (출석 로직 위반)")
     ATTENDANCE_EVENT_TYPE_NOT_MATCH(2202, HttpStatus.BAD_REQUEST, "출석일정은 직접 수정할 수 없습니다."),
+
+    @ExplainError("세션 ID로 조회했으나 해당 세션이 존재하지 않을 때 발생합니다.")
+    SESSION_NOT_FOUND(2203, HttpStatus.NOT_FOUND, "존재하지 않는 세션입니다."),
     ;
 
     override fun getCode(): Int = code

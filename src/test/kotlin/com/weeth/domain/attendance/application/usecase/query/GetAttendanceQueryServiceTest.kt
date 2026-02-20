@@ -6,10 +6,10 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
-import com.weeth.domain.schedule.domain.entity.Meeting
-import com.weeth.domain.schedule.domain.service.MeetingGetService
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.UserCardinalGetService
@@ -19,13 +19,14 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.util.Optional
 
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
 
         val userGetService = mockk<UserGetService>()
         val userCardinalGetService = mockk<UserCardinalGetService>()
-        val meetingGetService = mockk<MeetingGetService>()
+        val sessionRepository = mockk<SessionRepository>()
         val attendanceRepository = mockk<AttendanceRepository>()
         val attendanceMapper = mockk<AttendanceMapper>()
 
@@ -33,7 +34,7 @@ class GetAttendanceQueryServiceTest :
             GetAttendanceQueryService(
                 userGetService,
                 userCardinalGetService,
-                meetingGetService,
+                sessionRepository,
                 attendanceRepository,
                 attendanceMapper,
             )
@@ -103,23 +104,23 @@ class GetAttendanceQueryServiceTest :
             }
         }
 
-        describe("findAllAttendanceByMeeting") {
+        describe("findAllAttendanceBySession") {
             it("해당 정기모임의 출석 정보를 조회") {
-                val meetingId = 1L
-                val meeting = mockk<Meeting>()
+                val sessionId = 1L
+                val session = mockk<Session>()
                 val attendance1 = mockk<Attendance>()
                 val attendance2 = mockk<Attendance>()
                 val response1 = mockk<AttendanceInfoResponse>()
                 val response2 = mockk<AttendanceInfoResponse>()
 
-                every { meetingGetService.find(meetingId) } returns meeting
+                every { sessionRepository.findById(sessionId) } returns Optional.of(session)
                 every {
-                    attendanceRepository.findAllByMeetingAndUserStatus(meeting, Status.ACTIVE)
+                    attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
                 } returns listOf(attendance1, attendance2)
                 every { attendanceMapper.toInfoResponse(attendance1) } returns response1
                 every { attendanceMapper.toInfoResponse(attendance2) } returns response2
 
-                val result = queryService.findAllAttendanceByMeeting(meetingId)
+                val result = queryService.findAllAttendanceBySession(sessionId)
 
                 result shouldBe listOf(response1, response2)
             }

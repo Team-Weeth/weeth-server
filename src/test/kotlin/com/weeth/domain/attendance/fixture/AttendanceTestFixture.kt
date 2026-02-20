@@ -1,7 +1,7 @@
 package com.weeth.domain.attendance.fixture
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.schedule.domain.entity.Meeting
+import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Department
 import com.weeth.domain.user.domain.entity.enums.Position
@@ -27,67 +27,39 @@ object AttendanceTestFixture {
             .role(Role.ADMIN)
             .build()
 
-    fun createActiveUserWithAttendances(
-        name: String,
-        meetings: List<Meeting>,
-    ): User {
-        val user = createActiveUser(name)
-        initAttendancesField(user)
-        meetings.forEach { meeting ->
-            val attendance = createAttendance(meeting, user)
-            user.add(attendance)
-        }
-        return user
-    }
-
-    fun createAdminUserWithAttendances(
-        name: String,
-        meetings: List<Meeting>,
-    ): User {
-        val user = createAdminUser(name)
-        initAttendancesField(user)
-        meetings.forEach { meeting ->
-            val attendance = createAttendance(meeting, user)
-            user.add(attendance)
-        }
-        return user
-    }
-
     fun createAttendance(
-        meeting: Meeting,
+        session: Session,
         user: User,
-    ): Attendance = Attendance(meeting, user)
+    ): Attendance = Attendance.create(session, user)
 
-    fun createOneDayMeeting(
+    fun createOneDaySession(
         date: LocalDate,
         cardinal: Int,
         code: Int,
         title: String,
-    ): Meeting =
-        Meeting
-            .builder()
-            .title(title)
-            .location("Test Location")
-            .start(date.atTime(10, 0))
-            .end(date.atTime(12, 0))
-            .code(code)
-            .cardinal(cardinal)
-            .build()
+    ): Session =
+        Session(
+            title = title,
+            location = "Test Location",
+            start = date.atTime(10, 0),
+            end = date.atTime(12, 0),
+            code = code,
+            cardinal = cardinal,
+        )
 
-    fun createInProgressMeeting(
+    fun createInProgressSession(
         cardinal: Int,
         code: Int,
         title: String,
-    ): Meeting =
-        Meeting
-            .builder()
-            .title(title)
-            .location("Test Location")
-            .start(LocalDateTime.now().minusMinutes(5))
-            .end(LocalDateTime.now().plusMinutes(5))
-            .code(code)
-            .cardinal(cardinal)
-            .build()
+    ): Session =
+        Session(
+            title = title,
+            location = "Test Location",
+            start = LocalDateTime.now().minusMinutes(5),
+            end = LocalDateTime.now().plusMinutes(5),
+            code = code,
+            cardinal = cardinal,
+        )
 
     fun setAttendanceId(
         attendance: Attendance,
@@ -126,11 +98,5 @@ object AttendanceTestFixture {
         val department = Department.to(departmentKoreanValue)
         ReflectionTestUtils.setField(user, "department", department)
         ReflectionTestUtils.setField(user, "studentId", studentId)
-    }
-
-    private fun initAttendancesField(user: User) {
-        if (user.attendances == null) {
-            ReflectionTestUtils.setField(user, "attendances", mutableListOf<Attendance>())
-        }
     }
 }
