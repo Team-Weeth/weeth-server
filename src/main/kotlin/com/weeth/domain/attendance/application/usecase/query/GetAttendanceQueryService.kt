@@ -50,7 +50,7 @@ class GetAttendanceQueryService(
         return mapper.toDetailResponse(user, responses)
     }
 
-    fun findAllAttendanceByMeeting(sessionId: Long): List<AttendanceInfoResponse> {
+    fun findAllAttendanceBySession(sessionId: Long): List<AttendanceInfoResponse> {
         val session = sessionRepository.findById(sessionId).orElseThrow { MeetingNotFoundException() }
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
         return attendances.map(mapper::toInfoResponse)

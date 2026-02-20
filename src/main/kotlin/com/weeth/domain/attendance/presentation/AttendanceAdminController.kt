@@ -44,7 +44,7 @@ class AttendanceAdminController(
     ): CommonResponse<List<AttendanceInfoResponse>> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_DETAIL_SUCCESS,
-            getAttendanceQueryService.findAllAttendanceByMeeting(sessionId),
+            getAttendanceQueryService.findAllAttendanceBySession(sessionId),
         )
 
     @PatchMapping("/status")
