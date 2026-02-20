@@ -3,6 +3,7 @@ package com.weeth.domain.account.application.usecase.command
 import com.weeth.domain.account.application.dto.request.ReceiptSaveRequest
 import com.weeth.domain.account.application.dto.request.ReceiptUpdateRequest
 import com.weeth.domain.account.application.exception.AccountNotFoundException
+import com.weeth.domain.account.application.exception.ReceiptAccountMismatchException
 import com.weeth.domain.account.application.exception.ReceiptNotFoundException
 import com.weeth.domain.account.domain.entity.Receipt
 import com.weeth.domain.account.domain.repository.AccountRepository
@@ -46,6 +47,7 @@ class ManageReceiptUseCase(
         cardinalGetService.findByAdminSide(request.cardinal)
         val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
+        if (receipt.account.id != account.id) throw ReceiptAccountMismatchException()
         account.adjustSpend(Money.of(receipt.amount), Money.of(request.amount))
         if (request.files != null) {
             fileRepository.deleteAll(fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null))

@@ -17,6 +17,9 @@ enum class AccountErrorCode(
 
     @ExplainError("요청한 영수증 내역이 존재하지 않을 때 발생합니다.")
     RECEIPT_NOT_FOUND(2102, HttpStatus.NOT_FOUND, "존재하지 않는 내역입니다."),
+
+    @ExplainError("영수증이 요청한 기수의 장부에 속하지 않을 때 발생합니다.")
+    RECEIPT_ACCOUNT_MISMATCH(2103, HttpStatus.BAD_REQUEST, "영수증이 해당 기수의 장부에 속하지 않습니다."),
     ;
 
     override fun getCode(): Int = code

@@ -3,6 +3,7 @@ package com.weeth.domain.account.application.usecase.command
 import com.weeth.domain.account.application.dto.request.ReceiptSaveRequest
 import com.weeth.domain.account.application.dto.request.ReceiptUpdateRequest
 import com.weeth.domain.account.application.exception.AccountNotFoundException
+import com.weeth.domain.account.application.exception.ReceiptAccountMismatchException
 import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.ReceiptRepository
 import com.weeth.domain.account.domain.vo.Money
@@ -43,7 +44,7 @@ class ManageReceiptUseCaseTest :
             )
 
         beforeTest {
-            clearMocks(receiptRepository, accountRepository, fileReader, cardinalGetService, fileMapper)
+            clearMocks(receiptRepository, accountRepository, fileReader, fileRepository, cardinalGetService, fileMapper)
         }
 
         describe("save") {
@@ -133,6 +134,20 @@ class ManageReceiptUseCaseTest :
 
                 verify(exactly = 1) { fileRepository.deleteAll(oldFiles) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
+            }
+
+            it("다른 기수의 장부에 속한 영수증을 수정하면 ReceiptAccountMismatchException을 던진다") {
+                val receiptId = 20L
+                val accountA = AccountTestFixture.createAccount(id = 1L, cardinal = 40)
+                val accountB = AccountTestFixture.createAccount(id = 2L, cardinal = 41)
+                val receipt = ReceiptTestFixture.createReceipt(id = receiptId, amount = 1_000, account = accountB)
+                val dto = ReceiptUpdateRequest("desc", "source", 2_000, LocalDate.of(2026, 1, 1), 40, null)
+
+                every { cardinalGetService.findByAdminSide(dto.cardinal) } returns mockk()
+                every { accountRepository.findByCardinal(dto.cardinal) } returns accountA
+                every { receiptRepository.findById(receiptId) } returns Optional.of(receipt)
+
+                shouldThrow<ReceiptAccountMismatchException> { useCase.update(receiptId, dto) }
             }
 
             it("빈 리스트로 업데이트 시 기존 파일을 모두 삭제한다") {
