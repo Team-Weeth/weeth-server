@@ -46,6 +46,10 @@ class Attendance(
     // 기존 close() 는 absent() 로 대체 (AttendanceUpdateService 호환 유지)
     fun close() = absent()
 
+    fun adminOverride(newStatus: AttendanceStatus) {
+        status = newStatus
+    }
+
     fun isPending(): Boolean = status == AttendanceStatus.PENDING
 
     fun isWrong(code: Int): Boolean = !session.isCodeMatch(code)

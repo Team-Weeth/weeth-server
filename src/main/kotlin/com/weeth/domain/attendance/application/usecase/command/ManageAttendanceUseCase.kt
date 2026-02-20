@@ -76,13 +76,16 @@ class ManageAttendanceUseCase(
                     ?: throw AttendanceNotFoundException()
             val user = attendance.user
             val newStatus = AttendanceStatus.valueOf(update.status)
+
+            if (attendance.status == newStatus) return@forEach
+
+            val prevStatus = attendance.status
+            attendance.adminOverride(newStatus)
             if (newStatus == AttendanceStatus.ABSENT) {
-                attendance.close()
-                user.removeAttend()
+                if (prevStatus == AttendanceStatus.ATTEND) user.removeAttend()
                 user.absent()
             } else {
-                attendance.attend()
-                user.removeAbsent()
+                if (prevStatus == AttendanceStatus.ABSENT) user.removeAbsent()
                 user.attend()
             }
         }
