@@ -27,32 +27,6 @@ object AttendanceTestFixture {
             .role(Role.ADMIN)
             .build()
 
-    fun createActiveUserWithAttendances(
-        name: String,
-        sessions: List<Session>,
-    ): User {
-        val user = createActiveUser(name)
-        initAttendancesField(user)
-        sessions.forEach { session ->
-            val attendance = createAttendance(session, user)
-            user.add(attendance)
-        }
-        return user
-    }
-
-    fun createAdminUserWithAttendances(
-        name: String,
-        sessions: List<Session>,
-    ): User {
-        val user = createAdminUser(name)
-        initAttendancesField(user)
-        sessions.forEach { session ->
-            val attendance = createAttendance(session, user)
-            user.add(attendance)
-        }
-        return user
-    }
-
     fun createAttendance(
         session: Session,
         user: User,
@@ -124,11 +98,5 @@ object AttendanceTestFixture {
         val department = Department.to(departmentKoreanValue)
         ReflectionTestUtils.setField(user, "department", department)
         ReflectionTestUtils.setField(user, "studentId", studentId)
-    }
-
-    private fun initAttendancesField(user: User) {
-        if (user.attendances == null) {
-            ReflectionTestUtils.setField(user, "attendances", mutableListOf<Attendance>())
-        }
     }
 }

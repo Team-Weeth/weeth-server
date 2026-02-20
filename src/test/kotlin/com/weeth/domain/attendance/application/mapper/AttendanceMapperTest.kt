@@ -1,8 +1,7 @@
 package com.weeth.domain.attendance.application.mapper
 
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUserWithAttendances
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUserWithAttendances
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDaySession
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.enrichUserProfile
@@ -24,8 +23,8 @@ class AttendanceMapperTest :
             it("사용자 + 당일 출석 객체를 MainResponse로 매핑한다") {
                 val today = LocalDate.now()
                 val meeting = createOneDaySession(today, 1, 1111, "Today")
-                val user = createActiveUserWithAttendances("이지훈", listOf(meeting))
-                val attendance = user.attendances[0]
+                val user = createActiveUser("이지훈")
+                val attendance = createAttendance(meeting, user)
 
                 val main = mapper.toSummaryResponse(user, attendance)
 
@@ -52,8 +51,8 @@ class AttendanceMapperTest :
             it("일반 유저는 출석 코드가 null로 매핑된다") {
                 val today = LocalDate.now()
                 val meeting = createOneDaySession(today, 1, 1234, "Today")
-                val user = createActiveUserWithAttendances("일반유저", listOf(meeting))
-                val attendance = user.attendances[0]
+                val user = createActiveUser("일반유저")
+                val attendance = createAttendance(meeting, user)
 
                 val main = mapper.toSummaryResponse(user, attendance)
 
@@ -67,8 +66,8 @@ class AttendanceMapperTest :
                 val today = LocalDate.now()
                 val expectedCode = 1234
                 val meeting = createOneDaySession(today, 1, expectedCode, "Today")
-                val adminUser = createAdminUserWithAttendances("관리자", listOf(meeting))
-                val attendance = adminUser.attendances[0]
+                val adminUser = createAdminUser("관리자")
+                val attendance = createAttendance(meeting, adminUser)
 
                 val main = mapper.toSummaryResponse(adminUser, attendance, isAdmin = true)
 

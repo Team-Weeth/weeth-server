@@ -15,8 +15,7 @@ class AttendanceSaveService(
         sessions: List<Session>?,
     ) {
         sessions?.forEach { session ->
-            val attendance = attendanceRepository.save(Attendance.create(session, user))
-            user.add(attendance)
+            attendanceRepository.save(Attendance.create(session, user))
         }
     }
 

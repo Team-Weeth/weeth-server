@@ -30,7 +30,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.LocalDateTime
-import java.util.ArrayList
 
 class UserManageUseCaseTest :
     DescribeSpec({
@@ -201,7 +200,6 @@ class UserManageUseCaseTest :
                         .id(1L)
                         .name("aaa")
                         .status(Status.ACTIVE)
-                        .attendances(ArrayList())
                         .build()
                 val nextCardinal = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 4, year = 2020, semester = 2)
                 val request = UserRequestDto.UserApplyOB(1L, 4)
