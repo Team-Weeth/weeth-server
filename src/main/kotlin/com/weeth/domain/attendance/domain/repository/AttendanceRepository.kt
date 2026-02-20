@@ -64,6 +64,11 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         @Param("cardinal") cardinal: Int,
     ): List<Attendance>
 
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session IN :sessions")
+    fun findAllBySessionIn(
+        @Param("sessions") sessions: List<Session>,
+    ): List<Attendance>
+
     @Modifying
     @Query("DELETE FROM Attendance a WHERE a.session = :session")
     fun deleteAllBySession(session: Session)
