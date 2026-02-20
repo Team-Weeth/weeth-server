@@ -34,8 +34,8 @@ public class UserManageUseCaseImpl implements UserManageUseCase {
     private final UserUpdateService userUpdateService;
     private final UserDeleteService userDeleteService;
 
-    private final AttendanceSaveService attendanceSaveService;
-    private final MeetingGetService meetingGetService;
+    private final AttendanceRepository attendanceRepository;
+    private final SessionRepository sessionRepository;
     private final RefreshTokenStorePort refreshTokenStorePort;
     private final CardinalGetService cardinalGetService;
     private final UserCardinalSaveService userCardinalSaveService;
