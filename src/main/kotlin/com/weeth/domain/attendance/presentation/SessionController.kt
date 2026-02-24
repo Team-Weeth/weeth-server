@@ -1,8 +1,8 @@
 package com.weeth.domain.attendance.presentation
 
+import com.weeth.domain.attendance.application.exception.SessionErrorCode
 import com.weeth.domain.attendance.application.usecase.query.GetSessionQueryService
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
-import com.weeth.domain.schedule.application.exception.SessionErrorCode
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse

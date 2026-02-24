@@ -3,12 +3,12 @@ package com.weeth.domain.attendance.application.usecase.command
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
+import com.weeth.domain.attendance.application.exception.SessionNotFoundException
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.entity.enums.SessionStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.domain.repository.SessionRepository
-import com.weeth.domain.schedule.application.exception.SessionNotFoundException
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.UserGetService
 import org.springframework.stereotype.Service
