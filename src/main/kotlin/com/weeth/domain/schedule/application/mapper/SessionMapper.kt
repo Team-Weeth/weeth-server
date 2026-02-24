@@ -19,7 +19,7 @@ class SessionMapper {
             location = session.location,
             name = session.user?.name,
             cardinal = session.cardinal,
-            type = Type.MEETING,
+            type = Type.SESSION,
             code = null,
             start = session.start,
             end = session.end,
@@ -35,7 +35,7 @@ class SessionMapper {
             location = session.location,
             name = session.user?.name,
             cardinal = session.cardinal,
-            type = Type.MEETING,
+            type = Type.SESSION,
             code = session.code,
             start = session.start,
             end = session.end,
@@ -57,7 +57,7 @@ class SessionMapper {
     ): SessionInfosResponse =
         SessionInfosResponse(
             thisWeek = thisWeek?.let { toInfo(it) },
-            meetings = sessions.map { toInfo(it) },
+            sessions = sessions.map { toInfo(it) },
         )
 
     fun toEntity(

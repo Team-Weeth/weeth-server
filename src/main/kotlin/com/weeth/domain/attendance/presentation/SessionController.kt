@@ -2,7 +2,7 @@ package com.weeth.domain.attendance.presentation
 
 import com.weeth.domain.attendance.application.usecase.query.GetSessionQueryService
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
-import com.weeth.domain.schedule.application.exception.MeetingErrorCode
+import com.weeth.domain.schedule.application.exception.SessionErrorCode
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "SESSION", description = "정기모임 API")
 @RestController
 @RequestMapping("/api/v4/sessions")
-@ApiErrorCodeExample(MeetingErrorCode::class)
+@ApiErrorCodeExample(SessionErrorCode::class)
 class SessionController(
     private val getSessionQueryService: GetSessionQueryService,
 ) {

@@ -5,7 +5,7 @@ import com.weeth.domain.attendance.application.usecase.query.GetSessionQueryServ
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
-import com.weeth.domain.schedule.application.exception.MeetingErrorCode
+import com.weeth.domain.schedule.application.exception.SessionErrorCode
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "SESSION ADMIN", description = "[ADMIN] 정기모임 어드민 API")
 @RestController
 @RequestMapping("/api/v4/admin/sessions")
-@ApiErrorCodeExample(MeetingErrorCode::class)
+@ApiErrorCodeExample(SessionErrorCode::class)
 class SessionAdminController(
     private val manageSessionUseCase: ManageSessionUseCase,
     private val getSessionQueryService: GetSessionQueryService,
@@ -66,5 +66,5 @@ class SessionAdminController(
     fun getSessionInfos(
         @RequestParam(required = false) cardinal: Int?,
     ): CommonResponse<SessionInfosResponse> =
-        CommonResponse.success(AttendanceResponseCode.MEETING_FIND_SUCCESS, getSessionQueryService.findSessionInfos(cardinal))
+        CommonResponse.success(AttendanceResponseCode.SESSION_INFOS_FIND_SUCCESS, getSessionQueryService.findSessionInfos(cardinal))
 }

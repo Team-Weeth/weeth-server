@@ -9,25 +9,25 @@ import org.springframework.stereotype.Component
 class ScheduleMapper {
     fun toResponse(
         event: Event,
-        isMeeting: Boolean,
+        isSession: Boolean,
     ): ScheduleResponse =
         ScheduleResponse(
             id = event.id,
             title = event.title,
             start = event.start,
             end = event.end,
-            isMeeting = isMeeting,
+            isSession = isSession,
         )
 
     fun toResponse(
         session: Session,
-        isMeeting: Boolean,
+        isSession: Boolean,
     ): ScheduleResponse =
         ScheduleResponse(
             id = session.id,
             title = session.title,
             start = session.start,
             end = session.end,
-            isMeeting = isMeeting,
+            isSession = isSession,
         )
 }

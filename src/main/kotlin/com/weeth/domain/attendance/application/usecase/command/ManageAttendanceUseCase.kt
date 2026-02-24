@@ -8,7 +8,7 @@ import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.entity.enums.SessionStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.domain.repository.SessionRepository
-import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
+import com.weeth.domain.schedule.application.exception.SessionNotFoundException
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.UserGetService
 import org.springframework.stereotype.Service
@@ -53,7 +53,7 @@ class ManageAttendanceUseCase(
             sessionRepository
                 .findAllByCardinalOrderByStartAsc(cardinal)
                 .firstOrNull { session -> session.start.toLocalDate().isEqual(now) && session.end.toLocalDate().isEqual(now) }
-                ?: throw MeetingNotFoundException()
+                ?: throw SessionNotFoundException()
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(targetSession, Status.ACTIVE)
         closePendingAttendances(attendances)
     }

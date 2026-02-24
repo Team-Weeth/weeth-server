@@ -13,5 +13,5 @@ data class ScheduleResponse(
     @field:Schema(description = "종료 시간")
     val end: LocalDateTime,
     @field:Schema(description = "정기모임 여부")
-    val isMeeting: Boolean,
+    val isSession: Boolean,
 )

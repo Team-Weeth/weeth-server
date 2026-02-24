@@ -4,7 +4,7 @@ import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
-import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
+import com.weeth.domain.schedule.application.exception.SessionNotFoundException
 import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.service.UserGetService
@@ -27,7 +27,7 @@ class GetSessionQueryService(
         sessionId: Long,
     ): SessionResponse {
         val user = userGetService.find(userId)
-        val session = sessionRepository.findByIdOrNull(sessionId) ?: throw MeetingNotFoundException()
+        val session = sessionRepository.findByIdOrNull(sessionId) ?: throw SessionNotFoundException()
         return if (user.role == Role.ADMIN) {
             sessionMapper.toAdminResponse(session)
         } else {

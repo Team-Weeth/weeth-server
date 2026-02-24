@@ -6,12 +6,11 @@ import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
-import com.weeth.domain.schedule.application.exception.MeetingNotFoundException
+import com.weeth.domain.schedule.application.exception.SessionNotFoundException
 import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.service.CardinalGetService
 import com.weeth.domain.user.domain.service.UserGetService
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -42,14 +41,14 @@ class ManageSessionUseCase(
         request: ScheduleUpdateRequest,
         userId: Long,
     ) {
-        val session = sessionRepository.findByIdWithLock(sessionId) ?: throw MeetingNotFoundException()
+        val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         val user = userGetService.find(userId)
         session.updateInfo(request.title, request.content, request.location, request.start, request.end, user)
     }
 
     @Transactional
     fun delete(sessionId: Long) {
-        val session = sessionRepository.findByIdWithLock(sessionId) ?: throw MeetingNotFoundException()
+        val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
         attendances.forEach { a ->
             when (a.status) {
