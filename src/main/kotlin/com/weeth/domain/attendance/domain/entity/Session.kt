@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 @Table(name = "meeting")
 class Session(
     var title: String,
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 500)
     var content: String? = null,
     var location: String? = null,
     var cardinal: Int,

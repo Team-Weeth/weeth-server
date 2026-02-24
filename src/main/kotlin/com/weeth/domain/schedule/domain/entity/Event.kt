@@ -15,7 +15,7 @@ import java.time.LocalDateTime
 @Entity
 class Event(
     var title: String,
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 500)
     var content: String,
     var location: String,
     var cardinal: Int,
