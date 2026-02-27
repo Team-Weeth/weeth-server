@@ -17,7 +17,6 @@ import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Position
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
@@ -47,14 +46,13 @@ class CommentQueryPerformanceTest(
 
         fun createUser(): User =
             userRepository.save(
-                User
-                    .builder()
-                    .name("perf-user")
-                    .email("perf-user@test.com")
-                    .status(Status.ACTIVE)
-                    .position(Position.BE)
-                    .role(Role.USER)
-                    .build(),
+                User(
+                    name = "perf-user",
+                    email = "perf-user@test.com",
+                    department = "컴퓨터공학과",
+                    status = Status.ACTIVE,
+                    role = Role.USER,
+                ),
             )
 
         fun createBoard(): Board =
