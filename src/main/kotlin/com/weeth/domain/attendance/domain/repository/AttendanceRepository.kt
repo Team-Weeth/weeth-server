@@ -30,6 +30,14 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         status: Status,
     ): List<Attendance>
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session = :session AND a.user.status = :status")
+    fun findAllBySessionAndUserStatusWithLock(
+        @Param("session") session: Session,
+        @Param("status") status: Status,
+    ): List<Attendance>
+
     @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.id = :id")
     fun findByIdWithUser(id: Long): Attendance?
 

@@ -49,7 +49,7 @@ class ManageSessionUseCase(
     @Transactional
     fun delete(sessionId: Long) {
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
-        val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
+        val attendances = attendanceRepository.findAllBySessionAndUserStatusWithLock(session, Status.ACTIVE)
         attendances.forEach { a ->
             when (a.status) {
                 AttendanceStatus.ATTEND -> a.user.removeAttend()
