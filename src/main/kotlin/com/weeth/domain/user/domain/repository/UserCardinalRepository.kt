@@ -11,6 +11,8 @@ interface UserCardinalRepository :
     UserCardinalReader {
     fun findAllByUserOrderByCardinalCardinalNumberDesc(user: User): List<UserCardinal>
 
+    fun findTopByUserOrderByCardinalCardinalNumberDesc(user: User): UserCardinal?
+
     @Query("SELECT uc FROM UserCardinal uc WHERE uc.user IN :users ORDER BY uc.user.id, uc.cardinal.cardinalNumber DESC")
     fun findAllByUsers(
         @Param("users") users: List<User>,
@@ -34,5 +36,5 @@ interface UserCardinalRepository :
 
     override fun findAllByUsersOrderByCardinalDesc(users: List<User>): List<UserCardinal> = findAllByUsers(users)
 
-    override fun getCardinalNumbers(user: User): List<Int> = findCardinalNumbersByUser(user)
+    override fun findTopByUserOrderByCardinalNumberDesc(user: User): UserCardinal? = findTopByUserOrderByCardinalCardinalNumberDesc(user)
 }

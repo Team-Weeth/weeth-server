@@ -12,8 +12,7 @@ class UserCardinalPolicy(
 ) {
     fun getCurrentCardinal(user: User): Cardinal =
         userCardinalReader
-            .findAllByUser(user)
-            .maxByOrNull { it.cardinal.cardinalNumber }
+            .findTopByUserOrderByCardinalNumberDesc(user)
             ?.cardinal
             ?: throw CardinalNotFoundException()
 

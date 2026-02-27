@@ -21,21 +21,17 @@ class UserCardinalPolicyTest :
         describe("getCurrentCardinal") {
             it("가장 큰 기수 번호를 반환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val cardinal3 = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 3, year = 2024, semester = 1)
                 val cardinal5 = CardinalTestFixture.createCardinal(id = 2L, cardinalNumber = 5, year = 2025, semester = 1)
 
-                every { userCardinalReader.findAllByUser(user) } returns
-                    listOf(
-                        UserCardinalTestFixture.linkUserCardinal(user, cardinal3),
-                        UserCardinalTestFixture.linkUserCardinal(user, cardinal5),
-                    )
+                every { userCardinalReader.findTopByUserOrderByCardinalNumberDesc(user) } returns
+                    UserCardinalTestFixture.linkUserCardinal(user, cardinal5)
 
                 policy.getCurrentCardinal(user).cardinalNumber shouldBe 5
             }
 
             it("기수 이력이 없으면 예외를 던진다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                every { userCardinalReader.findAllByUser(user) } returns emptyList()
+                every { userCardinalReader.findTopByUserOrderByCardinalNumberDesc(user) } returns null
 
                 shouldThrow<CardinalNotFoundException> {
                     policy.getCurrentCardinal(user)
@@ -58,7 +54,8 @@ class UserCardinalPolicyTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val current = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 4, year = 2024, semester = 2)
                 val next = CardinalTestFixture.createCardinal(id = 2L, cardinalNumber = 5, year = 2025, semester = 1)
-                every { userCardinalReader.findAllByUser(user) } returns listOf(UserCardinalTestFixture.linkUserCardinal(user, current))
+                every { userCardinalReader.findTopByUserOrderByCardinalNumberDesc(user) } returns
+                    UserCardinalTestFixture.linkUserCardinal(user, current)
 
                 policy.isCurrent(user, next).shouldBeTrue()
             }

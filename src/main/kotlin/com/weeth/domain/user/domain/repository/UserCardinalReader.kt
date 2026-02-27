@@ -8,5 +8,5 @@ interface UserCardinalReader {
 
     fun findAllByUsersOrderByCardinalDesc(users: List<User>): List<UserCardinal>
 
-    fun getCardinalNumbers(user: User): List<Int>
+    fun findTopByUserOrderByCardinalNumberDesc(user: User): UserCardinal?
 }
