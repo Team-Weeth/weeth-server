@@ -33,7 +33,7 @@ private const val SWAGGER_DESCRIPTION =
         "| Domain | Success | Error |\n" +
         "|--------|---------|------|\n" +
         "| Account | 11xx | 21xx |\n" +
-        "| Attendance | 12xx | 22xx |\n" +
+        "| Attendance/Session | 12xx | 22xx |\n" +
         "| Board | 13xx | 23xx |\n" +
         "| Comment | 14xx | 24xx |\n" +
         "| File | 15xx | 25xx |\n" +
