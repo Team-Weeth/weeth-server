@@ -18,7 +18,7 @@ import com.weeth.domain.file.domain.entity.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional
 class ManagePostUseCase(
     private val postRepository: PostRepository,
     private val boardRepository: BoardRepository, // 동일 도메인
-    private val userGetService: UserGetService,
+    private val userReader: UserReader,
     private val fileRepository: FileRepository,
     private val fileReader: FileReader,
     private val fileMapper: FileMapper,
@@ -38,7 +38,7 @@ class ManagePostUseCase(
         request: CreatePostRequest,
         userId: Long,
     ): PostSaveResponse {
-        val user = userGetService.find(userId) // todo: Reader 인터페이스로 수정
+        val user = userReader.getById(userId)
         val board = findBoard(boardId)
         checkWritePermission(board, user)
 

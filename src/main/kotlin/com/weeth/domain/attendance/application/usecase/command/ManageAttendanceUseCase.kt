@@ -10,7 +10,7 @@ import com.weeth.domain.attendance.domain.entity.enums.SessionStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.user.domain.entity.enums.Status
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 
 @Service
 class ManageAttendanceUseCase(
-    private val userGetService: UserGetService,
+    private val userReader: UserReader,
     private val sessionRepository: SessionRepository,
     private val attendanceRepository: AttendanceRepository,
 ) {
@@ -27,7 +27,7 @@ class ManageAttendanceUseCase(
         userId: Long,
         code: Int,
     ) {
-        val user = userGetService.find(userId)
+        val user = userReader.getById(userId)
         val now = LocalDateTime.now()
         val todayAttendance =
             attendanceRepository.findCurrentByUserId(userId, now, now.plusMinutes(10))

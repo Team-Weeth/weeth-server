@@ -7,7 +7,6 @@ import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDaySes
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.enrichUserProfile
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setUserAttendanceStats
-import com.weeth.domain.user.domain.entity.enums.Position
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -16,7 +15,6 @@ import java.time.LocalDate
 
 class AttendanceMapperTest :
     DescribeSpec({
-
         val mapper = AttendanceMapper()
 
         describe("toSummaryResponse") {
@@ -122,7 +120,7 @@ class AttendanceMapperTest :
             it("Attendance를 InfoResponse로 매핑") {
                 val session = createOneDaySession(LocalDate.now(), 1, 3333, "Info")
                 val user = createActiveUser("유저B")
-                enrichUserProfile(user, Position.BE, "컴퓨터공학과", "20201234")
+                enrichUserProfile(user, "컴퓨터공학과", "20201234")
 
                 val attendance = createAttendance(session, user)
                 setAttendanceId(attendance, 10L)
@@ -133,6 +131,7 @@ class AttendanceMapperTest :
                 info.id shouldBe attendance.id
                 info.status shouldBe attendance.status
                 info.name shouldBe user.name
+                info.department shouldBe user.department
             }
         }
     })

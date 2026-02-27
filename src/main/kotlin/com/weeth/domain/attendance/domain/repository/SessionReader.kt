@@ -9,4 +9,8 @@ interface SessionReader {
         start: LocalDateTime,
         end: LocalDateTime,
     ): List<Session>
+
+    fun findAllByCardinal(cardinal: Int): List<Session>
+
+    fun findAllByCardinalIn(cardinals: List<Int>): List<Session>
 }

@@ -5,8 +5,8 @@ import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
 import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
-import com.weeth.domain.user.domain.service.CardinalGetService
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.CardinalReader
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ManageEventUseCase(
     private val eventRepository: EventRepository,
-    private val userGetService: UserGetService,
-    private val cardinalGetService: CardinalGetService,
+    private val userReader: UserReader,
+    private val cardinalReader: CardinalReader,
     private val eventMapper: EventMapper,
 ) {
     @Transactional
@@ -23,8 +23,8 @@ class ManageEventUseCase(
         request: ScheduleSaveRequest,
         userId: Long,
     ) {
-        val user = userGetService.find(userId)
-        cardinalGetService.findByUserSide(request.cardinal)
+        val user = userReader.getById(userId)
+        cardinalReader.getByCardinalNumber(request.cardinal)
         eventRepository.save(eventMapper.toEntity(request, user))
     }
 
@@ -34,7 +34,7 @@ class ManageEventUseCase(
         request: ScheduleUpdateRequest,
         userId: Long,
     ) {
-        val user = userGetService.find(userId)
+        val user = userReader.getById(userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
         event.update(request.title, request.content, request.location, request.start, request.end, user)
     }

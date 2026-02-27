@@ -6,7 +6,7 @@ import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
 import com.weeth.domain.user.application.exception.UserNotFoundException
 import com.weeth.domain.user.domain.repository.UserRepository
-import com.weeth.domain.user.domain.service.UserCardinalGetService
+import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 class SavePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
     private val userRepository: UserRepository,
-    private val userCardinalGetService: UserCardinalGetService,
+    private val userCardinalPolicy: UserCardinalPolicy,
     private val mapper: PenaltyMapper,
 ) {
     companion object {
@@ -27,7 +27,7 @@ class SavePenaltyUseCase(
             userRepository
                 .findByIdWithLock(request.userId)
                 .orElseThrow { UserNotFoundException() }
-        val cardinal = userCardinalGetService.getCurrentCardinal(user)
+        val cardinal = userCardinalPolicy.getCurrentCardinal(user)
 
         val penalty = mapper.toEntity(request, user, cardinal)
         penaltyRepository.save(penalty)

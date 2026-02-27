@@ -3,29 +3,26 @@ package com.weeth.domain.attendance.fixture
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Department
-import com.weeth.domain.user.domain.entity.enums.Position
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.vo.AttendanceStats
 import org.springframework.test.util.ReflectionTestUtils
 import java.time.LocalDate
 import java.time.LocalDateTime
 
 object AttendanceTestFixture {
     fun createActiveUser(name: String): User =
-        User
-            .builder()
-            .name(name)
-            .status(Status.ACTIVE)
-            .build()
+        User(
+            name = name,
+            status = Status.ACTIVE,
+        )
 
     fun createAdminUser(name: String): User =
-        User
-            .builder()
-            .name(name)
-            .status(Status.ACTIVE)
-            .role(Role.ADMIN)
-            .build()
+        User(
+            name = name,
+            status = Status.ACTIVE,
+            role = Role.ADMIN,
+        )
 
     fun createAttendance(
         session: Session,
@@ -73,29 +70,22 @@ object AttendanceTestFixture {
         attendanceCount: Int,
         absenceCount: Int,
     ) {
-        ReflectionTestUtils.setField(user, "attendanceCount", attendanceCount)
-        ReflectionTestUtils.setField(user, "absenceCount", absenceCount)
+        ReflectionTestUtils.setField(
+            user,
+            "attendanceStats",
+            AttendanceStats(
+                attendanceCount = attendanceCount,
+                absenceCount = absenceCount,
+                attendanceRate = if (attendanceCount + absenceCount > 0) (attendanceCount * 100) / (attendanceCount + absenceCount) else 0,
+            ),
+        )
     }
 
     fun enrichUserProfile(
         user: User,
-        position: Position,
-        department: Department,
+        department: String,
         studentId: String,
     ) {
-        ReflectionTestUtils.setField(user, "position", position)
-        ReflectionTestUtils.setField(user, "department", department)
-        ReflectionTestUtils.setField(user, "studentId", studentId)
-    }
-
-    fun enrichUserProfile(
-        user: User,
-        position: Position,
-        departmentKoreanValue: String,
-        studentId: String,
-    ) {
-        ReflectionTestUtils.setField(user, "position", position)
-        val department = Department.to(departmentKoreanValue)
         ReflectionTestUtils.setField(user, "department", department)
         ReflectionTestUtils.setField(user, "studentId", studentId)
     }

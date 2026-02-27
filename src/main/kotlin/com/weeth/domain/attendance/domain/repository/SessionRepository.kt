@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
+import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
 interface SessionRepository :
@@ -27,7 +28,7 @@ interface SessionRepository :
 
     fun findAllByCardinalOrderByStartDesc(cardinal: Int): List<Session>
 
-    fun findAllByCardinal(cardinal: Int): List<Session>
+    override fun findAllByCardinal(cardinal: Int): List<Session>
 
     fun findAllByStatusAndEndBeforeOrderByEndAsc(
         status: SessionStatus,
@@ -35,4 +36,9 @@ interface SessionRepository :
     ): List<Session>
 
     fun findAllByOrderByStartDesc(): List<Session>
+
+    @Query("SELECT s FROM Session s WHERE s.cardinal IN :cardinals")
+    override fun findAllByCardinalIn(
+        @Param("cardinals") cardinals: List<Int>,
+    ): List<Session>
 }

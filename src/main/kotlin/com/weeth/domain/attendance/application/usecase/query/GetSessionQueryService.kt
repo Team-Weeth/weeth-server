@@ -7,7 +7,7 @@ import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
 import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.user.domain.entity.enums.Role
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,14 +19,14 @@ import java.time.temporal.TemporalAdjusters
 @Transactional(readOnly = true)
 class GetSessionQueryService(
     private val sessionRepository: SessionRepository,
-    private val userGetService: UserGetService,
+    private val userReader: UserReader,
     private val sessionMapper: SessionMapper,
 ) {
     fun findSession(
         userId: Long,
         sessionId: Long,
     ): SessionResponse {
-        val user = userGetService.find(userId)
+        val user = userReader.getById(userId)
         val session = sessionRepository.findByIdOrNull(sessionId) ?: throw SessionNotFoundException()
         return if (user.role == Role.ADMIN) {
             sessionMapper.toAdminResponse(session)

@@ -9,8 +9,8 @@ import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.user.domain.entity.enums.Status
-import com.weeth.domain.user.domain.service.CardinalGetService
-import com.weeth.domain.user.domain.service.UserGetService
+import com.weeth.domain.user.domain.repository.CardinalReader
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,8 +18,8 @@ import org.springframework.transaction.annotation.Transactional
 class ManageSessionUseCase(
     private val sessionRepository: SessionRepository,
     private val attendanceRepository: AttendanceRepository,
-    private val userGetService: UserGetService,
-    private val cardinalGetService: CardinalGetService,
+    private val userReader: UserReader,
+    private val cardinalReader: CardinalReader,
     private val sessionMapper: SessionMapper,
 ) {
     @Transactional
@@ -27,9 +27,9 @@ class ManageSessionUseCase(
         request: ScheduleSaveRequest,
         userId: Long,
     ) {
-        val user = userGetService.find(userId)
-        val cardinal = cardinalGetService.findByUserSide(request.cardinal)
-        val users = userGetService.findAllByCardinal(cardinal)
+        val user = userReader.getById(userId)
+        val cardinal = cardinalReader.getByCardinalNumber(request.cardinal)
+        val users = userReader.findAllByCardinalAndStatus(cardinal, Status.ACTIVE)
         val session = sessionMapper.toEntity(request, user)
         sessionRepository.save(session)
         attendanceRepository.saveAll(users.map { Attendance.create(session, it) })
@@ -42,7 +42,7 @@ class ManageSessionUseCase(
         userId: Long,
     ) {
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
-        val user = userGetService.find(userId)
+        val user = userReader.getById(userId)
         session.updateInfo(request.title, request.content, request.location, request.start, request.end, user)
     }
 

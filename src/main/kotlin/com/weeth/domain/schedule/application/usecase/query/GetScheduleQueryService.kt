@@ -7,7 +7,7 @@ import com.weeth.domain.schedule.application.exception.EventNotFoundException
 import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.application.mapper.ScheduleMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
-import com.weeth.domain.user.domain.service.CardinalGetService
+import com.weeth.domain.user.domain.repository.CardinalReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,7 +18,7 @@ import java.time.LocalDateTime
 class GetScheduleQueryService(
     private val eventRepository: EventRepository,
     private val sessionRepository: SessionRepository,
-    private val cardinalGetService: CardinalGetService,
+    private val cardinalReader: CardinalReader,
     private val scheduleMapper: ScheduleMapper,
     private val eventMapper: EventMapper,
 ) {
@@ -47,7 +47,7 @@ class GetScheduleQueryService(
         year: Int,
         semester: Int,
     ): Map<Int, List<ScheduleResponse>> {
-        val cardinal = cardinalGetService.find(year, semester)
+        val cardinal = cardinalReader.getByYearAndSemester(year, semester)
         val events =
             eventRepository
                 .findAllByCardinal(cardinal.cardinalNumber)
