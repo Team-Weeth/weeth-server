@@ -1,8 +1,8 @@
-package com.weeth.domain.attendance.presentation
+package com.weeth.domain.session.presentation
 
-import com.weeth.domain.attendance.application.exception.SessionErrorCode
-import com.weeth.domain.attendance.application.usecase.query.GetSessionQueryService
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
+import com.weeth.domain.session.application.exception.SessionErrorCode
+import com.weeth.domain.session.application.usecase.query.GetSessionQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -27,5 +27,5 @@ class SessionController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable sessionId: Long,
     ): CommonResponse<SessionResponse> =
-        CommonResponse.success(AttendanceResponseCode.SESSION_FIND_SUCCESS, getSessionQueryService.findSession(userId, sessionId))
+        CommonResponse.success(SessionResponseCode.SESSION_FIND_SUCCESS, getSessionQueryService.findSession(userId, sessionId))
 }

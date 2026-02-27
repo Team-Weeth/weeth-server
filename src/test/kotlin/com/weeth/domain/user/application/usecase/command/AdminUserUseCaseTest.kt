@@ -1,9 +1,9 @@
 package com.weeth.domain.user.application.usecase.command
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.domain.repository.SessionReader
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.application.dto.request.UserApplyObRequest
 import com.weeth.domain.user.application.dto.request.UserIdsRequest
 import com.weeth.domain.user.application.dto.request.UserRoleUpdateRequest

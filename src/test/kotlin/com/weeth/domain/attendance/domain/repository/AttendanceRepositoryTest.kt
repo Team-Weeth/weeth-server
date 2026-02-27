@@ -2,8 +2,9 @@ package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.Session
-import com.weeth.domain.attendance.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository

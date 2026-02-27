@@ -1,13 +1,13 @@
-package com.weeth.domain.attendance.application.usecase.command
+package com.weeth.domain.session.application.usecase.command
 
-import com.weeth.domain.attendance.application.exception.SessionNotFoundException
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.mapper.SessionMapper
+import com.weeth.domain.session.application.exception.SessionNotFoundException
+import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserReader
@@ -32,7 +32,7 @@ class ManageSessionUseCase(
         val users = userReader.findAllByCardinalAndStatus(cardinal, Status.ACTIVE)
         val session = sessionMapper.toEntity(request, user)
         sessionRepository.save(session)
-        attendanceRepository.saveAll(users.map { Attendance.create(session, it) })
+        attendanceRepository.saveAll(users.map { Attendance.Companion.create(session, it) })
     }
 
     @Transactional

@@ -3,10 +3,10 @@ package com.weeth.domain.attendance.application.mapper
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDaySession
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.enrichUserProfile
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setUserAttendanceStats
+import com.weeth.domain.session.fixture.SessionTestFixture.createOneDaySession
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull

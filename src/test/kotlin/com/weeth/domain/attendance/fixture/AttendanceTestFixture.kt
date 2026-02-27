@@ -1,14 +1,12 @@
 package com.weeth.domain.attendance.fixture
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.Session
+import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.vo.AttendanceStats
 import org.springframework.test.util.ReflectionTestUtils
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 object AttendanceTestFixture {
     fun createActiveUser(name: String): User =
@@ -28,35 +26,6 @@ object AttendanceTestFixture {
         session: Session,
         user: User,
     ): Attendance = Attendance.create(session, user)
-
-    fun createOneDaySession(
-        date: LocalDate,
-        cardinal: Int,
-        code: Int,
-        title: String,
-    ): Session =
-        Session(
-            title = title,
-            location = "Test Location",
-            start = date.atTime(10, 0),
-            end = date.atTime(12, 0),
-            code = code,
-            cardinal = cardinal,
-        )
-
-    fun createInProgressSession(
-        cardinal: Int,
-        code: Int,
-        title: String,
-    ): Session =
-        Session(
-            title = title,
-            location = "Test Location",
-            start = LocalDateTime.now().minusMinutes(5),
-            end = LocalDateTime.now().plusMinutes(5),
-            code = code,
-            cardinal = cardinal,
-        )
 
     fun setAttendanceId(
         attendance: Attendance,

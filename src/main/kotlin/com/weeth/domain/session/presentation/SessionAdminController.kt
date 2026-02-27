@@ -1,11 +1,11 @@
-package com.weeth.domain.attendance.presentation
+package com.weeth.domain.session.presentation
 
-import com.weeth.domain.attendance.application.exception.SessionErrorCode
-import com.weeth.domain.attendance.application.usecase.command.ManageSessionUseCase
-import com.weeth.domain.attendance.application.usecase.query.GetSessionQueryService
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
+import com.weeth.domain.session.application.exception.SessionErrorCode
+import com.weeth.domain.session.application.usecase.command.ManageSessionUseCase
+import com.weeth.domain.session.application.usecase.query.GetSessionQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -38,7 +38,7 @@ class SessionAdminController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
         manageSessionUseCase.create(dto, userId)
-        return CommonResponse.success(AttendanceResponseCode.SESSION_SAVE_SUCCESS)
+        return CommonResponse.success(SessionResponseCode.SESSION_SAVE_SUCCESS)
     }
 
     @PatchMapping("/{sessionId}")
@@ -49,7 +49,7 @@ class SessionAdminController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
         manageSessionUseCase.update(sessionId, dto, userId)
-        return CommonResponse.success(AttendanceResponseCode.SESSION_UPDATE_SUCCESS)
+        return CommonResponse.success(SessionResponseCode.SESSION_UPDATE_SUCCESS)
     }
 
     @DeleteMapping("/{sessionId}")
@@ -58,7 +58,7 @@ class SessionAdminController(
         @PathVariable sessionId: Long,
     ): CommonResponse<Void?> {
         manageSessionUseCase.delete(sessionId)
-        return CommonResponse.success(AttendanceResponseCode.SESSION_DELETE_SUCCESS)
+        return CommonResponse.success(SessionResponseCode.SESSION_DELETE_SUCCESS)
     }
 
     @GetMapping
@@ -66,5 +66,8 @@ class SessionAdminController(
     fun getSessionInfos(
         @RequestParam(required = false) cardinal: Int?,
     ): CommonResponse<SessionInfosResponse> =
-        CommonResponse.success(AttendanceResponseCode.SESSION_INFOS_FIND_SUCCESS, getSessionQueryService.findSessionInfos(cardinal))
+        CommonResponse.success(
+            SessionResponseCode.SESSION_INFOS_FIND_SUCCESS,
+            getSessionQueryService.findSessionInfos(cardinal),
+        )
 }

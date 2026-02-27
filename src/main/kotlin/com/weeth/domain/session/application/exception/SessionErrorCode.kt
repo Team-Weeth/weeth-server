@@ -1,4 +1,4 @@
-package com.weeth.domain.attendance.application.exception
+package com.weeth.domain.session.application.exception
 
 import com.weeth.global.common.exception.ErrorCodeInterface
 import com.weeth.global.common.exception.ExplainError

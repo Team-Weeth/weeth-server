@@ -1,12 +1,12 @@
 package com.weeth.domain.schedule.application.usecase.query
 
-import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
 import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.application.mapper.ScheduleMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.repository.CardinalReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 class GetScheduleQueryService(
     private val eventRepository: EventRepository,
-    private val sessionRepository: SessionRepository,
+    private val sessionReader: SessionReader,
     private val cardinalReader: CardinalReader,
     private val scheduleMapper: ScheduleMapper,
     private val eventMapper: EventMapper,
@@ -37,7 +37,7 @@ class GetScheduleQueryService(
                 .findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start)
                 .map { scheduleMapper.toResponse(it, false) }
         val sessions =
-            sessionRepository
+            sessionReader
                 .findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start)
                 .map { scheduleMapper.toResponse(it, true) }
         return (events + sessions).sortedBy { it.start }
@@ -53,7 +53,7 @@ class GetScheduleQueryService(
                 .findAllByCardinal(cardinal.cardinalNumber)
                 .map { scheduleMapper.toResponse(it, false) }
         val sessions =
-            sessionRepository
+            sessionReader
                 .findAllByCardinal(cardinal.cardinalNumber)
                 .map { scheduleMapper.toResponse(it, true) }
 

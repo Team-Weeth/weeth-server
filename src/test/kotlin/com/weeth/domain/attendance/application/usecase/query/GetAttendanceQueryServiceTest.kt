@@ -6,10 +6,10 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.domain.repository.SessionRepository
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
@@ -19,14 +19,13 @@ import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.util.Optional
 
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
 
         val userReader = mockk<UserReader>()
         val userCardinalPolicy = mockk<UserCardinalPolicy>()
-        val sessionRepository = mockk<SessionRepository>()
+        val sessionReader = mockk<SessionReader>()
         val attendanceRepository = mockk<AttendanceRepository>()
         val attendanceMapper = mockk<AttendanceMapper>()
 
@@ -34,7 +33,7 @@ class GetAttendanceQueryServiceTest :
             GetAttendanceQueryService(
                 userReader,
                 userCardinalPolicy,
-                sessionRepository,
+                sessionReader,
                 attendanceRepository,
                 attendanceMapper,
             )
@@ -113,7 +112,7 @@ class GetAttendanceQueryServiceTest :
                 val response1 = mockk<AttendanceInfoResponse>()
                 val response2 = mockk<AttendanceInfoResponse>()
 
-                every { sessionRepository.findById(sessionId) } returns Optional.of(session)
+                every { sessionReader.getById(sessionId) } returns session
                 every {
                     attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
                 } returns listOf(attendance1, attendance2)

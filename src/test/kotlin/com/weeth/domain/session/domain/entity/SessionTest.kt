@@ -1,7 +1,7 @@
-package com.weeth.domain.attendance.domain.entity
+package com.weeth.domain.session.domain.entity
 
-import com.weeth.domain.attendance.domain.entity.enums.SessionStatus
-import com.weeth.domain.schedule.fixture.ScheduleTestFixture
+import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.fixture.SessionTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -9,7 +9,7 @@ import io.kotest.matchers.shouldBe
 class SessionTest :
     StringSpec({
         "close는 status를 CLOSED로 변경한다" {
-            val session = ScheduleTestFixture.createSession(status = SessionStatus.OPEN)
+            val session = SessionTestFixture.createSession(status = SessionStatus.OPEN)
 
             session.close()
 
@@ -17,7 +17,7 @@ class SessionTest :
         }
 
         "이미 CLOSED 상태에서 close 호출 시 예외가 발생한다" {
-            val session = ScheduleTestFixture.createSession(status = SessionStatus.CLOSED)
+            val session = SessionTestFixture.createSession(status = SessionStatus.CLOSED)
 
             shouldThrow<IllegalStateException> {
                 session.close()

@@ -3,10 +3,9 @@ package com.weeth.domain.attendance.application.usecase.query
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
-import com.weeth.domain.attendance.application.exception.SessionNotFoundException
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.domain.repository.SessionRepository
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
@@ -20,7 +19,7 @@ import java.time.LocalDate
 class GetAttendanceQueryService(
     private val userReader: UserReader,
     private val userCardinalPolicy: UserCardinalPolicy,
-    private val sessionRepository: SessionRepository,
+    private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
     private val attendanceMapper: AttendanceMapper,
 ) {
@@ -51,7 +50,7 @@ class GetAttendanceQueryService(
     }
 
     fun findAllAttendanceBySession(sessionId: Long): List<AttendanceInfoResponse> {
-        val session = sessionRepository.findById(sessionId).orElseThrow { SessionNotFoundException() }
+        val session = sessionReader.getById(sessionId)
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
         return attendances.map(attendanceMapper::toInfoResponse)
     }

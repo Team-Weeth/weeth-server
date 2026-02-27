@@ -2,11 +2,11 @@ package com.weeth.global.common.controller
 
 import com.weeth.domain.account.application.exception.AccountErrorCode
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
-import com.weeth.domain.attendance.application.exception.SessionErrorCode
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.comment.application.exception.CommentErrorCode
 import com.weeth.domain.penalty.application.exception.PenaltyErrorCode
 import com.weeth.domain.schedule.application.exception.EventErrorCode
+import com.weeth.domain.session.application.exception.SessionErrorCode
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample

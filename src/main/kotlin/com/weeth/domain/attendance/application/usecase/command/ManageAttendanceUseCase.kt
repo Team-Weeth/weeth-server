@@ -3,12 +3,12 @@ package com.weeth.domain.attendance.application.usecase.command
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
-import com.weeth.domain.attendance.application.exception.SessionNotFoundException
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
-import com.weeth.domain.attendance.domain.entity.enums.SessionStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.domain.repository.SessionRepository
+import com.weeth.domain.session.application.exception.SessionNotFoundException
+import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
@@ -19,7 +19,7 @@ import java.time.LocalDateTime
 @Service
 class ManageAttendanceUseCase(
     private val userReader: UserReader,
-    private val sessionRepository: SessionRepository,
+    private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
 ) {
     @Transactional
@@ -50,7 +50,7 @@ class ManageAttendanceUseCase(
         cardinal: Int,
     ) {
         val targetSession =
-            sessionRepository
+            sessionReader
                 .findAllByCardinalOrderByStartAsc(cardinal)
                 .firstOrNull { session -> session.start.toLocalDate().isEqual(now) && session.end.toLocalDate().isEqual(now) }
                 ?: throw SessionNotFoundException()
@@ -60,7 +60,7 @@ class ManageAttendanceUseCase(
 
     @Transactional
     fun autoClose() {
-        val sessions = sessionRepository.findAllByStatusAndEndBeforeOrderByEndAsc(SessionStatus.OPEN, LocalDateTime.now())
+        val sessions = sessionReader.findAllByStatusAndEndBeforeOrderByEndAsc(SessionStatus.OPEN, LocalDateTime.now())
         sessions.forEach { session ->
             session.close()
             val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)

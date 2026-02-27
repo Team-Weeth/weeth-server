@@ -1,8 +1,8 @@
 package com.weeth.domain.schedule.application.mapper
 
-import com.weeth.domain.attendance.domain.entity.Session
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
 import com.weeth.domain.schedule.domain.entity.Event
+import com.weeth.domain.session.domain.entity.Session
 import org.springframework.stereotype.Component
 
 @Component

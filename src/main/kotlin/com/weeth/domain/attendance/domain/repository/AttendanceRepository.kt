@@ -1,7 +1,7 @@
 package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.attendance.domain.entity.Session
+import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Status
 import jakarta.persistence.LockModeType

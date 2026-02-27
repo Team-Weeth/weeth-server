@@ -1,6 +1,7 @@
 package com.weeth.domain.attendance.domain.entity
 
 import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
+import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
