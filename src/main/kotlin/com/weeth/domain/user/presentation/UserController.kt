@@ -128,7 +128,7 @@ class UserController(
     fun leave(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
-        adminUserUseCase.leave(userId)
+        authUserUseCase.leave(userId)
         return CommonResponse.success(UserResponseCode.USER_LEAVE_SUCCESS)
     }
 }

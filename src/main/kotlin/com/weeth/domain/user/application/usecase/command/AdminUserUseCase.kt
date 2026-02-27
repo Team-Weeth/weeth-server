@@ -48,12 +48,6 @@ class AdminUserUseCase(
     }
 
     @Transactional
-    fun leave(userId: Long) {
-        val user = userReader.getById(userId)
-        user.leave()
-    }
-
-    @Transactional
     fun ban(request: UserIdsRequest) {
         val users = userReader.findAllByIds(request.userId)
         users.forEach { user ->

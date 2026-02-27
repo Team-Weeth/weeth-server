@@ -8,6 +8,7 @@ import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.application.mapper.UserMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
+import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
 import com.weeth.domain.user.domain.repository.UserReader
@@ -104,6 +105,17 @@ class AuthUserUseCaseTest :
 
                 user.name shouldBe "변경이름"
                 user.department shouldBe "경영학과"
+            }
+        }
+
+        describe("leave") {
+            it("회원 탈퇴 시 상태를 LEFT로 변경한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                every { userReader.getById(1L) } returns user
+
+                useCase.leave(1L)
+
+                user.status shouldBe Status.LEFT
             }
         }
 

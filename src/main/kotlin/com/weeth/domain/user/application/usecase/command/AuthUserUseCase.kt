@@ -63,6 +63,12 @@ class AuthUserUseCase(
     }
 
     @Transactional
+    fun leave(userId: Long) {
+        val user = userReader.getById(userId)
+        user.leave()
+    }
+
+    @Transactional
     fun socialLoginByKakao(request: SocialLoginRequest): SocialLoginResponse { // todo: 리팩토링
         val kakaoToken = kakaoAuthService.getKakaoToken(request.authCode)
         val userInfo = kakaoAuthService.getUserInfo(kakaoToken.accessToken)

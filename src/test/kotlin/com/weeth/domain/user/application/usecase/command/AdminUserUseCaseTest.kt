@@ -8,6 +8,7 @@ import com.weeth.domain.user.application.dto.request.UserIdsRequest
 import com.weeth.domain.user.application.dto.request.UserRoleUpdateRequest
 import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.CardinalRepository
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
 import com.weeth.domain.user.domain.repository.UserReader
@@ -64,6 +65,7 @@ class AdminUserUseCaseTest :
                 useCase.accept(UserIdsRequest(listOf(1L)))
 
                 verify(exactly = 1) { attendanceSaveService.init(user, meetings) }
+                user.status shouldBe Status.ACTIVE
             }
         }
 
@@ -78,17 +80,6 @@ class AdminUserUseCaseTest :
             }
         }
 
-        describe("leave") {
-            it("회원 탈퇴 시 상태를 변경한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
-                every { userReader.getById(1L) } returns user
-
-                useCase.leave(1L)
-
-                user.isInactive() shouldBe true
-            }
-        }
-
         describe("ban") {
             it("회원 추방 시 상태를 BANNED로 변경한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
@@ -96,7 +87,7 @@ class AdminUserUseCaseTest :
 
                 useCase.ban(UserIdsRequest(listOf(1L)))
 
-                user.isInactive() shouldBe true
+                user.status shouldBe Status.BANNED
             }
         }
 
@@ -117,7 +108,7 @@ class AdminUserUseCaseTest :
                 useCase.applyOb(request)
 
                 verify(exactly = 1) { attendanceSaveService.init(user, meetings) }
-                verify(exactly = 1) { userCardinalRepository.save(any()) }
+                verify(exactly = 1) { userCardinalRepository.save(match { it.user == user && it.cardinal == nextCardinal }) }
             }
 
             it("이미 해당 기수를 보유한 유저는 저장을 스킵한다") {
@@ -161,7 +152,7 @@ class AdminUserUseCaseTest :
 
                 verify(exactly = 1) { cardinalRepository.save(any()) }
                 verify(exactly = 1) { attendanceSaveService.init(user, meetings) }
-                verify(exactly = 1) { userCardinalRepository.save(any()) }
+                verify(exactly = 1) { userCardinalRepository.save(match { it.user == user && it.cardinal == createdCardinal }) }
             }
         }
     })
