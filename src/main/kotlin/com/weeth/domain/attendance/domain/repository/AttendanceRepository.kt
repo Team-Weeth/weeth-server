@@ -1,20 +1,41 @@
 package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.schedule.domain.entity.Meeting
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Status
+import jakarta.persistence.LockModeType
+import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
 interface AttendanceRepository : JpaRepository<Attendance, Long> {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session = :session AND a.user = :user")
+    fun findBySessionAndUserWithLock(
+        @Param("session") session: Session,
+        @Param("user") user: User,
+    ): Attendance?
+
     @EntityGraph(attributePaths = ["user"])
-    fun findAllByMeetingAndUserStatus(
-        meeting: Meeting,
+    fun findAllBySessionAndUserStatus(
+        session: Session,
         status: Status,
+    ): List<Attendance>
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session = :session AND a.user.status = :status")
+    fun findAllBySessionAndUserStatusWithLock(
+        @Param("session") session: Session,
+        @Param("status") status: Status,
     ): List<Attendance>
 
     @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.id = :id")
@@ -23,10 +44,10 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
     @Query(
         """
         SELECT a FROM Attendance a
-        JOIN FETCH a.meeting m
+        JOIN FETCH a.session s
         WHERE a.user.id = :userId
-        AND m.start <= :checkInEnd
-        AND m.end > :now
+        AND s.start <= :checkInEnd
+        AND s.end > :now
         """,
     )
     fun findCurrentByUserId(
@@ -38,10 +59,10 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
     @Query(
         """
         SELECT a FROM Attendance a
-        JOIN FETCH a.meeting m
+        JOIN FETCH a.session s
         WHERE a.user.id = :userId
-        AND m.start >= :dayStart
-        AND m.end < :dayEnd
+        AND s.start >= :dayStart
+        AND s.end < :dayEnd
         """,
     )
     fun findTodayByUserId(
@@ -53,10 +74,10 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
     @Query(
         """
         SELECT a FROM Attendance a
-        JOIN FETCH a.meeting m
+        JOIN FETCH a.session s
         WHERE a.user.id = :userId
-        AND m.cardinal = :cardinal
-        ORDER BY m.start
+        AND s.cardinal = :cardinal
+        ORDER BY s.start
         """,
     )
     fun findAllByUserIdAndCardinal(
@@ -64,7 +85,13 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         @Param("cardinal") cardinal: Int,
     ): List<Attendance>
 
-    @Modifying
-    @Query("DELETE FROM Attendance a WHERE a.meeting = :meeting")
-    fun deleteAllByMeeting(meeting: Meeting)
+    // TODO: QR 코드 출석 기능 구현 시 사용 예정 (여러 세션의 출석자 배치 조회)
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session IN :sessions")
+    fun findAllBySessionIn(
+        @Param("sessions") sessions: List<Session>,
+    ): List<Attendance>
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Attendance a WHERE a.session = :session")
+    fun deleteAllBySession(session: Session)
 }

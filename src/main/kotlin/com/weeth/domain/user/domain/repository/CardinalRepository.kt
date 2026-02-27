@@ -27,6 +27,11 @@ interface CardinalRepository :
     override fun getByCardinalNumber(cardinalNumber: Int): Cardinal =
         findByCardinalNumber(cardinalNumber).orElseThrow { CardinalNotFoundException() }
 
+    override fun getByYearAndSemester(
+        year: Int,
+        semester: Int,
+    ): Cardinal = findByYearAndSemester(year, semester).orElseThrow { CardinalNotFoundException() }
+
     override fun findByIdOrNull(cardinalId: Long): Cardinal? = findById(cardinalId).orElse(null)
 
     override fun findAllByCardinalNumberDesc(): List<Cardinal> = findAllByOrderByCardinalNumberDesc()

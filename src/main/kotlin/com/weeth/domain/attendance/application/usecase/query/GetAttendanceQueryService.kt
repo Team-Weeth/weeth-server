@@ -5,7 +5,7 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceInfoRespon
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.schedule.domain.service.MeetingGetService
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
@@ -19,9 +19,9 @@ import java.time.LocalDate
 class GetAttendanceQueryService(
     private val userReader: UserReader,
     private val userCardinalPolicy: UserCardinalPolicy,
-    private val meetingGetService: MeetingGetService,
+    private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
-    private val mapper: AttendanceMapper,
+    private val attendanceMapper: AttendanceMapper,
 ) {
     fun findAttendance(userId: Long): AttendanceSummaryResponse {
         val user = userReader.getById(userId)
@@ -34,7 +34,7 @@ class GetAttendanceQueryService(
                 today.plusDays(1).atStartOfDay(),
             )
 
-        return mapper.toSummaryResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
+        return attendanceMapper.toSummaryResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
     }
 
     fun findAllDetailsByCurrentCardinal(userId: Long): AttendanceDetailResponse {
@@ -44,14 +44,14 @@ class GetAttendanceQueryService(
         val responses =
             attendanceRepository
                 .findAllByUserIdAndCardinal(userId, currentCardinal.cardinalNumber)
-                .map(mapper::toResponse)
+                .map(attendanceMapper::toResponse)
 
-        return mapper.toDetailResponse(user, responses)
+        return attendanceMapper.toDetailResponse(user, responses)
     }
 
-    fun findAllAttendanceByMeeting(meetingId: Long): List<AttendanceInfoResponse> {
-        val meeting = meetingGetService.find(meetingId)
-        val attendances = attendanceRepository.findAllByMeetingAndUserStatus(meeting, Status.ACTIVE)
-        return attendances.map(mapper::toInfoResponse)
+    fun findAllAttendanceBySession(sessionId: Long): List<AttendanceInfoResponse> {
+        val session = sessionReader.getById(sessionId)
+        val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
+        return attendances.map(attendanceMapper::toInfoResponse)
     }
 }

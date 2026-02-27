@@ -17,12 +17,12 @@ class AttendanceMapper {
     ): AttendanceSummaryResponse =
         AttendanceSummaryResponse(
             attendanceRate = user.attendanceRate,
-            title = attendance?.meeting?.title,
+            title = attendance?.session?.title,
             status = attendance?.status,
-            code = if (isAdmin) attendance?.meeting?.code else null,
-            start = attendance?.meeting?.start,
-            end = attendance?.meeting?.end,
-            location = attendance?.meeting?.location,
+            code = if (isAdmin) attendance?.session?.code else null,
+            start = attendance?.session?.start,
+            end = attendance?.session?.end,
+            location = attendance?.session?.location,
         )
 
     fun toDetailResponse(
@@ -40,10 +40,10 @@ class AttendanceMapper {
         AttendanceResponse(
             id = attendance.id,
             status = attendance.status,
-            title = attendance.meeting.title,
-            start = attendance.meeting.start,
-            end = attendance.meeting.end,
-            location = attendance.meeting.location,
+            title = attendance.session.title,
+            start = attendance.session.start,
+            end = attendance.session.end,
+            location = attendance.session.location,
         )
 
     fun toInfoResponse(attendance: Attendance): AttendanceInfoResponse =

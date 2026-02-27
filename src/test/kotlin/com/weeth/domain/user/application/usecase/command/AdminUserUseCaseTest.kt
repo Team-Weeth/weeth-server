@@ -1,8 +1,9 @@
 package com.weeth.domain.user.application.usecase.command
 
-import com.weeth.domain.attendance.domain.service.AttendanceSaveService
-import com.weeth.domain.schedule.domain.entity.Meeting
-import com.weeth.domain.schedule.domain.service.MeetingGetService
+import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.application.dto.request.UserApplyObRequest
 import com.weeth.domain.user.application.dto.request.UserIdsRequest
 import com.weeth.domain.user.application.dto.request.UserRoleUpdateRequest
@@ -25,8 +26,8 @@ import io.mockk.verify
 class AdminUserUseCaseTest :
     DescribeSpec({
         val userReader = mockk<UserReader>()
-        val attendanceSaveService = mockk<AttendanceSaveService>(relaxUnitFun = true)
-        val meetingGetService = mockk<MeetingGetService>()
+        val sessionReader = mockk<SessionReader>()
+        val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
         val cardinalRepository = mockk<CardinalRepository>()
         val userCardinalRepository = mockk<UserCardinalRepository>(relaxUnitFun = true)
         val userCardinalPolicy = mockk<UserCardinalPolicy>()
@@ -34,8 +35,8 @@ class AdminUserUseCaseTest :
         val useCase =
             AdminUserUseCase(
                 userReader,
-                attendanceSaveService,
-                meetingGetService,
+                sessionReader,
+                attendanceRepository,
                 cardinalRepository,
                 userCardinalRepository,
                 userCardinalPolicy,
@@ -44,8 +45,8 @@ class AdminUserUseCaseTest :
         beforeTest {
             clearMocks(
                 userReader,
-                attendanceSaveService,
-                meetingGetService,
+                sessionReader,
+                attendanceRepository,
                 cardinalRepository,
                 userCardinalRepository,
                 userCardinalPolicy,
@@ -56,15 +57,15 @@ class AdminUserUseCaseTest :
             it("비활성 유저 승인 시 출석 초기화를 수행한다") {
                 val user = UserTestFixture.createWaitingUser1(1L)
                 val currentCardinal = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 8, year = 2025, semester = 1)
-                val meetings = listOf(mockk<Meeting>())
+                val sessions = listOf(mockk<Session>())
 
                 every { userReader.findAllByIds(listOf(1L)) } returns listOf(user)
                 every { userCardinalPolicy.getCurrentCardinal(user) } returns currentCardinal
-                every { meetingGetService.find(8) } returns meetings
+                every { sessionReader.findAllByCardinal(8) } returns sessions
 
                 useCase.accept(UserIdsRequest(listOf(1L)))
 
-                verify(exactly = 1) { attendanceSaveService.init(user, meetings) }
+                verify(exactly = 1) { attendanceRepository.saveAll(any<List<Attendance>>()) }
                 user.status shouldBe Status.ACTIVE
             }
         }
@@ -96,18 +97,19 @@ class AdminUserUseCaseTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val currentCardinal = CardinalTestFixture.createCardinal(id = 10L, cardinalNumber = 3, year = 2024, semester = 2)
                 val nextCardinal = CardinalTestFixture.createCardinal(id = 11L, cardinalNumber = 4, year = 2025, semester = 1)
-                val meetings = listOf(mockk<Meeting>())
+                val session = mockk<Session>()
+                every { session.cardinal } returns 4
                 val request = listOf(UserApplyObRequest(1L, 4))
 
                 every { userReader.findAllByIds(listOf(1L)) } returns listOf(user)
                 every { userCardinalRepository.findAllByUsers(listOf(user)) } returns listOf(UserCardinal(user, currentCardinal))
                 every { cardinalRepository.findAllByCardinalNumberIn(listOf(4)) } returns listOf(nextCardinal)
-                every { meetingGetService.findByCardinals(listOf(4)) } returns mapOf(4 to meetings)
+                every { sessionReader.findAllByCardinalIn(listOf(4)) } returns listOf(session)
                 every { userCardinalRepository.save(any()) } answers { firstArg() }
 
                 useCase.applyOb(request)
 
-                verify(exactly = 1) { attendanceSaveService.init(user, meetings) }
+                verify(exactly = 1) { attendanceRepository.saveAll(any<List<Attendance>>()) }
                 verify(exactly = 1) { userCardinalRepository.save(match { it.user == user && it.cardinal == nextCardinal }) }
             }
 
@@ -122,9 +124,9 @@ class AdminUserUseCaseTest :
 
                 useCase.applyOb(request)
 
-                verify(exactly = 0) { meetingGetService.findByCardinals(any()) }
+                verify(exactly = 0) { sessionReader.findAllByCardinalIn(any()) }
                 verify(exactly = 0) { userCardinalRepository.save(any()) }
-                verify(exactly = 0) { attendanceSaveService.init(any(), any()) }
+                verify(exactly = 0) { attendanceRepository.saveAll(any<List<Attendance>>()) }
             }
 
             it("요청 목록이 비어 있으면 아무 처리도 하지 않는다") {
@@ -138,20 +140,21 @@ class AdminUserUseCaseTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val currentCardinal = CardinalTestFixture.createCardinal(id = 10L, cardinalNumber = 3, year = 2024, semester = 2)
                 val createdCardinal = CardinalTestFixture.createCardinal(id = 12L, cardinalNumber = 5, year = 2025, semester = 2)
-                val meetings = listOf(mockk<Meeting>())
+                val session = mockk<Session>()
+                every { session.cardinal } returns 5
                 val request = listOf(UserApplyObRequest(1L, 5))
 
                 every { userReader.findAllByIds(listOf(1L)) } returns listOf(user)
                 every { userCardinalRepository.findAllByUsers(listOf(user)) } returns listOf(UserCardinal(user, currentCardinal))
                 every { cardinalRepository.findAllByCardinalNumberIn(listOf(5)) } returns emptyList()
                 every { cardinalRepository.save(any()) } returns createdCardinal
-                every { meetingGetService.findByCardinals(listOf(5)) } returns mapOf(5 to meetings)
+                every { sessionReader.findAllByCardinalIn(listOf(5)) } returns listOf(session)
                 every { userCardinalRepository.save(any()) } answers { firstArg() }
 
                 useCase.applyOb(request)
 
                 verify(exactly = 1) { cardinalRepository.save(any()) }
-                verify(exactly = 1) { attendanceSaveService.init(user, meetings) }
+                verify(exactly = 1) { attendanceRepository.saveAll(any<List<Attendance>>()) }
                 verify(exactly = 1) { userCardinalRepository.save(match { it.user == user && it.cardinal == createdCardinal }) }
             }
         }

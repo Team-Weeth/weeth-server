@@ -6,7 +6,7 @@ import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.comment.application.exception.CommentErrorCode
 import com.weeth.domain.penalty.application.exception.PenaltyErrorCode
 import com.weeth.domain.schedule.application.exception.EventErrorCode
-import com.weeth.domain.schedule.application.exception.MeetingErrorCode
+import com.weeth.domain.session.application.exception.SessionErrorCode
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample
@@ -28,7 +28,7 @@ class ExceptionDocController {
 
     @GetMapping("/attendance")
     @Operation(summary = "Attendance 도메인 에러 코드 목록")
-    @ApiErrorCodeExample(AttendanceErrorCode::class)
+    @ApiErrorCodeExample(AttendanceErrorCode::class, SessionErrorCode::class)
     fun attendanceErrorCodes() {
     }
 
@@ -46,7 +46,7 @@ class ExceptionDocController {
 
     @GetMapping("/schedule")
     @Operation(summary = "Schedule 도메인 에러 코드 목록")
-    @ApiErrorCodeExample(EventErrorCode::class, MeetingErrorCode::class)
+    @ApiErrorCodeExample(EventErrorCode::class)
     fun scheduleErrorCodes() {
     }
 

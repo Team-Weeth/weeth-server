@@ -2,9 +2,9 @@ package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.schedule.domain.entity.Meeting
-import com.weeth.domain.schedule.domain.entity.enums.MeetingStatus
-import com.weeth.domain.schedule.domain.repository.MeetingRepository
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
@@ -22,26 +22,25 @@ import java.time.LocalDateTime
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class AttendanceRepositoryTest(
     private val attendanceRepository: AttendanceRepository,
-    private val meetingRepository: MeetingRepository,
+    private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository,
 ) : DescribeSpec({
 
-        lateinit var meeting: Meeting
+        lateinit var session: Session
         lateinit var activeUser1: User
         lateinit var activeUser2: User
 
         beforeEach {
-            meeting =
-                Meeting
-                    .builder()
-                    .title("1차 정기모임")
-                    .start(LocalDateTime.now().minusHours(1))
-                    .end(LocalDateTime.now().plusHours(1))
-                    .code(1234)
-                    .cardinal(1)
-                    .meetingStatus(MeetingStatus.OPEN)
-                    .build()
-            meetingRepository.save(meeting)
+            session =
+                Session(
+                    title = "1차 정기모임",
+                    start = LocalDateTime.now().minusHours(1),
+                    end = LocalDateTime.now().plusHours(1),
+                    code = 1234,
+                    cardinal = 1,
+                    status = SessionStatus.OPEN,
+                )
+            sessionRepository.save(session)
 
             activeUser1 =
                 User(
@@ -58,22 +57,22 @@ class AttendanceRepositoryTest(
             activeUser2.accept()
             userRepository.saveAll(listOf(activeUser1, activeUser2))
 
-            attendanceRepository.save(Attendance(meeting, activeUser1))
-            attendanceRepository.save(Attendance(meeting, activeUser2))
+            attendanceRepository.save(Attendance.create(session, activeUser1))
+            attendanceRepository.save(Attendance.create(session, activeUser2))
         }
 
-        describe("findAllByMeetingAndUserStatus") {
-            it("특정 정기모임 + 사용자 상태로 출석 목록 조회") {
-                val attendances = attendanceRepository.findAllByMeetingAndUserStatus(meeting, Status.ACTIVE)
+        describe("findAllBySessionAndUserStatus") {
+            it("특정 세션 + 사용자 상태로 출석 목록 조회") {
+                val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
 
                 attendances shouldHaveSize 2
                 attendances.map { it.user.name } shouldContainExactlyInAnyOrder listOf("이지훈", "이강혁")
             }
         }
 
-        describe("deleteAllByMeeting") {
-            it("특정 정기모임의 모든 출석 레코드 삭제") {
-                attendanceRepository.deleteAllByMeeting(meeting)
+        describe("deleteAllBySession") {
+            it("특정 세션의 모든 출석 레코드 삭제") {
+                attendanceRepository.deleteAllBySession(session)
 
                 attendanceRepository.findAll().shouldBeEmpty()
             }

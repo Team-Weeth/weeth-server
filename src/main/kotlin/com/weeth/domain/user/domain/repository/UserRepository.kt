@@ -55,7 +55,7 @@ interface UserRepository :
     fun findAllByOrderByNameAsc(): List<User>
 
     @Query("SELECT uc.user FROM UserCardinal uc WHERE uc.cardinal = :cardinal AND uc.user.status = :status")
-    fun findAllByCardinalAndStatus(
+    override fun findAllByCardinalAndStatus(
         @Param("cardinal") cardinal: Cardinal,
         @Param("status") status: Status,
     ): List<User>

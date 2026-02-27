@@ -1,13 +1,13 @@
 package com.weeth.domain.attendance.application.dto.response
 
-import com.weeth.domain.attendance.domain.enums.Status
+import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class AttendanceInfoResponse(
     @field:Schema(description = "출석 ID", example = "1")
     val id: Long,
     @field:Schema(description = "출석 상태", example = "ATTEND")
-    val status: Status?,
+    val status: AttendanceStatus?,
     @field:Schema(description = "사용자 이름", example = "이지훈")
     val name: String?,
     @field:Schema(description = "소속 학과", example = "컴퓨터공학과")

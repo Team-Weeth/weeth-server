@@ -1,8 +1,8 @@
 package com.weeth.domain.user.application.usecase.command
 
-import com.weeth.domain.attendance.domain.service.AttendanceSaveService
-import com.weeth.domain.schedule.domain.entity.Meeting
-import com.weeth.domain.schedule.domain.service.MeetingGetService
+import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.application.dto.request.UserApplyObRequest
 import com.weeth.domain.user.application.dto.request.UserIdsRequest
 import com.weeth.domain.user.application.dto.request.UserRoleUpdateRequest
@@ -20,8 +20,8 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AdminUserUseCase(
     private val userReader: UserReader,
-    private val attendanceSaveService: AttendanceSaveService,
-    private val meetingGetService: MeetingGetService,
+    private val sessionReader: SessionReader,
+    private val attendanceRepository: AttendanceRepository,
     private val cardinalRepository: CardinalRepository,
     private val userCardinalRepository: UserCardinalRepository,
     private val userCardinalPolicy: UserCardinalPolicy,
@@ -33,8 +33,8 @@ class AdminUserUseCase(
             val cardinal = userCardinalPolicy.getCurrentCardinal(user).cardinalNumber
             if (user.isInactive()) {
                 user.accept()
-                val meetings: List<Meeting> = meetingGetService.find(cardinal)
-                attendanceSaveService.init(user, meetings)
+                val sessions = sessionReader.findAllByCardinal(cardinal)
+                attendanceRepository.saveAll(sessions.map { Attendance.create(it, user) })
             }
         }
     }
@@ -88,10 +88,13 @@ class AdminUserUseCase(
         }
 
         if (initNeededByCardinal.isNotEmpty()) {
-            val meetingsMap = meetingGetService.findByCardinals(initNeededByCardinal.keys.toList())
+            val sessionsByCardinal =
+                sessionReader.findAllByCardinalIn(initNeededByCardinal.keys.toList()).groupBy { it.cardinal }
             initNeededByCardinal.forEach { (cardinalNumber, usersToInit) ->
-                val meetings = meetingsMap[cardinalNumber] ?: emptyList()
-                usersToInit.forEach { attendanceSaveService.init(it, meetings) }
+                val sessions = sessionsByCardinal[cardinalNumber] ?: emptyList()
+                usersToInit.forEach { user ->
+                    attendanceRepository.saveAll(sessions.map { Attendance.create(it, user) })
+                }
             }
         }
 

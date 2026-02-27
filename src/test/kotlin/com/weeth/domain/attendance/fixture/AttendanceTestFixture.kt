@@ -1,14 +1,12 @@
 package com.weeth.domain.attendance.fixture
 
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.schedule.domain.entity.Meeting
+import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.enums.Role
 import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.vo.AttendanceStats
 import org.springframework.test.util.ReflectionTestUtils
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 object AttendanceTestFixture {
     fun createActiveUser(name: String): User =
@@ -25,40 +23,9 @@ object AttendanceTestFixture {
         )
 
     fun createAttendance(
-        meeting: Meeting,
+        session: Session,
         user: User,
-    ): Attendance = Attendance(meeting, user)
-
-    fun createOneDayMeeting(
-        date: LocalDate,
-        cardinal: Int,
-        code: Int,
-        title: String,
-    ): Meeting =
-        Meeting
-            .builder()
-            .title(title)
-            .location("Test Location")
-            .start(date.atTime(10, 0))
-            .end(date.atTime(12, 0))
-            .code(code)
-            .cardinal(cardinal)
-            .build()
-
-    fun createInProgressMeeting(
-        cardinal: Int,
-        code: Int,
-        title: String,
-    ): Meeting =
-        Meeting
-            .builder()
-            .title(title)
-            .location("Test Location")
-            .start(LocalDateTime.now().minusMinutes(5))
-            .end(LocalDateTime.now().plusMinutes(5))
-            .code(code)
-            .cardinal(cardinal)
-            .build()
+    ): Attendance = Attendance.create(session, user)
 
     fun setAttendanceId(
         attendance: Attendance,
