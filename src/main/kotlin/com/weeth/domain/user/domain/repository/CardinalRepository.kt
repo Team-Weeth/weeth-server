@@ -20,8 +20,6 @@ interface CardinalRepository :
 
     fun findAllByStatus(cardinalStatus: CardinalStatus): List<Cardinal>
 
-    fun findFirstByStatusOrderByCardinalNumberDesc(status: CardinalStatus): Cardinal?
-
     fun findAllByOrderByCardinalNumberAsc(): List<Cardinal>
 
     fun findAllByOrderByCardinalNumberDesc(): List<Cardinal>
