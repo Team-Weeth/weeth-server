@@ -14,4 +14,3 @@ data class PhoneNumber private constructor(
         }
     }
 }
-
