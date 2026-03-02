@@ -17,73 +17,74 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 
-class ManageAttendanceUseCaseTest : DescribeSpec({
-    val userReader = mockk<UserReader>()
-    val sessionReader = mockk<SessionReader>()
-    val attendanceRepository = mockk<AttendanceRepository>()
-    val qrAttendancePort = mockk<QrAttendancePort>()
+class ManageAttendanceUseCaseTest :
+    DescribeSpec({
+        val userReader = mockk<UserReader>()
+        val sessionReader = mockk<SessionReader>()
+        val attendanceRepository = mockk<AttendanceRepository>()
+        val qrAttendancePort = mockk<QrAttendancePort>()
 
-    val useCase = ManageAttendanceUseCase(userReader, sessionReader, attendanceRepository, qrAttendancePort)
+        val useCase = ManageAttendanceUseCase(userReader, sessionReader, attendanceRepository, qrAttendancePort)
 
-    beforeTest { clearMocks(userReader, sessionReader, attendanceRepository, qrAttendancePort) }
+        beforeTest { clearMocks(userReader, sessionReader, attendanceRepository, qrAttendancePort) }
 
-    describe("checkIn") {
-        val userId = 1L
-        val code = 123456
-        val sessionId = 10L
+        describe("checkIn") {
+            val userId = 1L
+            val code = 123456
+            val sessionId = 10L
 
-        context("유효한 코드 + PENDING 상태") {
-            it("출석 상태를 ATTEND로 변경하고 user.attend()를 호출한다") {
-                val session = SessionTestFixture.createSession(id = sessionId, code = code)
-                val user = AttendanceTestFixture.createActiveUser("홍길동")
-                val attendance = AttendanceTestFixture.createAttendance(session, user)
+            context("유효한 코드 + PENDING 상태") {
+                it("출석 상태를 ATTEND로 변경하고 user.attend()를 호출한다") {
+                    val session = SessionTestFixture.createSession(id = sessionId, code = code)
+                    val user = AttendanceTestFixture.createActiveUser("홍길동")
+                    val attendance = AttendanceTestFixture.createAttendance(session, user)
 
-                every { qrAttendancePort.getSessionId(code) } returns sessionId
-                every { sessionReader.getById(sessionId) } returns session
-                every { userReader.getById(userId) } returns user
-                every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns attendance
+                    every { qrAttendancePort.getSessionId(code) } returns sessionId
+                    every { sessionReader.getById(sessionId) } returns session
+                    every { userReader.getById(userId) } returns user
+                    every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns attendance
 
-                useCase.checkIn(userId, code)
+                    useCase.checkIn(userId, code)
 
-                attendance.status shouldBe AttendanceStatus.ATTEND
+                    attendance.status shouldBe AttendanceStatus.ATTEND
+                }
+            }
+
+            context("만료된 코드 (Redis miss)") {
+                it("QrTokenExpiredException을 던진다") {
+                    every { qrAttendancePort.getSessionId(code) } returns null
+
+                    shouldThrow<QrTokenExpiredException> { useCase.checkIn(userId, code) }
+                }
+            }
+
+            context("이미 ATTEND 상태인 출석") {
+                it("AlreadyAttendedException을 던진다") {
+                    val session = SessionTestFixture.createSession(id = sessionId, code = code)
+                    val user = AttendanceTestFixture.createActiveUser("홍길동")
+                    val attendance = AttendanceTestFixture.createAttendance(session, user).also { it.attend() }
+
+                    every { qrAttendancePort.getSessionId(code) } returns sessionId
+                    every { sessionReader.getById(sessionId) } returns session
+                    every { userReader.getById(userId) } returns user
+                    every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns attendance
+
+                    shouldThrow<AlreadyAttendedException> { useCase.checkIn(userId, code) }
+                }
+            }
+
+            context("Attendance 레코드가 없는 경우") {
+                it("AttendanceNotFoundException을 던진다") {
+                    val session = SessionTestFixture.createSession(id = sessionId, code = code)
+                    val user = AttendanceTestFixture.createActiveUser("홍길동")
+
+                    every { qrAttendancePort.getSessionId(code) } returns sessionId
+                    every { sessionReader.getById(sessionId) } returns session
+                    every { userReader.getById(userId) } returns user
+                    every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns null
+
+                    shouldThrow<AttendanceNotFoundException> { useCase.checkIn(userId, code) }
+                }
             }
         }
-
-        context("만료된 코드 (Redis miss)") {
-            it("QrTokenExpiredException을 던진다") {
-                every { qrAttendancePort.getSessionId(code) } returns null
-
-                shouldThrow<QrTokenExpiredException> { useCase.checkIn(userId, code) }
-            }
-        }
-
-        context("이미 ATTEND 상태인 출석") {
-            it("AlreadyAttendedException을 던진다") {
-                val session = SessionTestFixture.createSession(id = sessionId, code = code)
-                val user = AttendanceTestFixture.createActiveUser("홍길동")
-                val attendance = AttendanceTestFixture.createAttendance(session, user).also { it.attend() }
-
-                every { qrAttendancePort.getSessionId(code) } returns sessionId
-                every { sessionReader.getById(sessionId) } returns session
-                every { userReader.getById(userId) } returns user
-                every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns attendance
-
-                shouldThrow<AlreadyAttendedException> { useCase.checkIn(userId, code) }
-            }
-        }
-
-        context("Attendance 레코드가 없는 경우") {
-            it("AttendanceNotFoundException을 던진다") {
-                val session = SessionTestFixture.createSession(id = sessionId, code = code)
-                val user = AttendanceTestFixture.createActiveUser("홍길동")
-
-                every { qrAttendancePort.getSessionId(code) } returns sessionId
-                every { sessionReader.getById(sessionId) } returns session
-                every { userReader.getById(userId) } returns user
-                every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns null
-
-                shouldThrow<AttendanceNotFoundException> { useCase.checkIn(userId, code) }
-            }
-        }
-    }
-})
+    })
