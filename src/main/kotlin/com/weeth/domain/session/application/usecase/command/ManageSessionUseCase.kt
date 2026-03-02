@@ -14,6 +14,9 @@ import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+/**
+ * Todo: 개행을 추가해 가독성 개선
+ */
 @Service
 class ManageSessionUseCase(
     private val sessionRepository: SessionRepository,

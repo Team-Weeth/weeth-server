@@ -16,6 +16,10 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+/**
+ * Todo: 개행을 추가해 가독성 개선
+ * Todo: if 문 가독성 개선
+ */
 @Service
 class ManageAttendanceUseCase(
     private val userReader: UserReader,

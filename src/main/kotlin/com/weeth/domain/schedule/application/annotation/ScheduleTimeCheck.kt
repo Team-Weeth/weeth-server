@@ -5,6 +5,9 @@ import jakarta.validation.Constraint
 import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
+/**
+ * Todo: 사용처 있는지 확인하고 없으면 제거
+ */
 @Target(AnnotationTarget.FIELD)
 @Retention(AnnotationRetention.RUNTIME)
 @Constraint(validatedBy = [ScheduleTimeCheckValidator::class])

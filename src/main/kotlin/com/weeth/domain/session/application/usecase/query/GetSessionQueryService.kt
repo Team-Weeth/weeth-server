@@ -15,6 +15,9 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
+/**
+ * Todo: 개행을 추가해 가독성 개선
+ */
 @Service
 @Transactional(readOnly = true)
 class GetSessionQueryService(

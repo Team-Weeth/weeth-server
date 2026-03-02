@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ManageCommentUseCase(
     private val commentRepository: CommentRepository,
-    private val postRepository: PostRepository,
+    private val postRepository: PostRepository, // 타 도메인 이므로 Reader 사용 검토
     private val userReader: UserReader,
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,

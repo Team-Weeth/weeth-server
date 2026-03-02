@@ -17,6 +17,8 @@ class ManageAccountUseCase(
     @Transactional
     fun save(request: AccountSaveRequest) {
         if (accountRepository.existsByCardinal(request.cardinal)) throw AccountExistsException()
+
+        // 기수가 없는 경우 생성
         cardinalRepository.findByCardinalNumber(request.cardinal).orElseGet {
             cardinalRepository.save(Cardinal.create(cardinalNumber = request.cardinal))
         }

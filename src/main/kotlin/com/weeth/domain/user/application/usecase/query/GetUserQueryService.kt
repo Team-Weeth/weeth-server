@@ -26,7 +26,7 @@ import java.util.LinkedHashMap
 @Transactional(readOnly = true)
 class GetUserQueryService(
     private val userRepository: UserRepository,
-    private val userReader: UserReader,
+    private val userReader: UserReader, // todo: 동일 도메인이므로 UserRespository 단일 사용)
     private val cardinalReader: CardinalReader,
     private val userCardinalRepository: UserCardinalRepository,
     private val userCardinalReader: UserCardinalReader,

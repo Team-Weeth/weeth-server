@@ -20,6 +20,10 @@ import jakarta.persistence.Id
 import jakarta.persistence.PrePersist
 import jakarta.persistence.Table
 
+/**
+ * Todo: private set 설정
+ * Todo: 생성자 리팩토링
+ */
 @Entity
 @Table(name = "users")
 class User(

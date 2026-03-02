@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ManagePostUseCase(
     private val postRepository: PostRepository,
-    private val boardRepository: BoardRepository, // 동일 도메인
+    private val boardRepository: BoardRepository,
     private val userReader: UserReader,
     private val fileRepository: FileRepository,
     private val fileReader: FileReader,

@@ -17,7 +17,7 @@ import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "meeting")
+@Table(name = "meeting") // 테이블명 Session으로 수정
 class Session(
     var title: String,
     @Column(length = 500)

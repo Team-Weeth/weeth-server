@@ -14,8 +14,11 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class DeletePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepository, // 타 도메인이므로 Reader 사용 검토 (조회 시에는 Reader, 업데이트 시에는 Repository)
 ) {
+    /**
+     * Todo: 코드 가독성 개선 및 트랜잭션 범위 축소
+     */
     @Transactional
     fun delete(penaltyId: Long) {
         val penalty =
