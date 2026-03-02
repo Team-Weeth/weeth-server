@@ -4,9 +4,12 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResp
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
+import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 @Component
 class AttendanceMapper {
@@ -53,5 +56,14 @@ class AttendanceMapper {
             name = attendance.user.name,
             department = attendance.user.department,
             studentId = attendance.user.studentId,
+        )
+
+    fun toQrTokenResponse(
+        session: Session,
+        expiredAt: LocalDateTime,
+    ): QrTokenResponse =
+        QrTokenResponse(
+            code = session.code,
+            expiredAt = expiredAt,
         )
 }
