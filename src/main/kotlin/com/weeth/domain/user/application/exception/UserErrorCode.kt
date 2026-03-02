@@ -36,24 +36,18 @@ enum class UserErrorCode(
     @ExplainError("이미 등록된 전화번호로 회원가입을 시도할 때 발생합니다.")
     TEL_EXISTS(2808, HttpStatus.BAD_REQUEST, "이미 존재하는 전화번호입니다."),
 
-    @ExplainError("존재하지 않는 기수 정보로 조회할 때 발생합니다.")
-    CARDINAL_NOT_FOUND(2809, HttpStatus.NOT_FOUND, "기수를 찾을 수 없습니다."),
-
-    @ExplainError("이미 존재하는 기수를 생성하려고 할 때 발생합니다.")
-    DUPLICATE_CARDINAL(2810, HttpStatus.BAD_REQUEST, "이미 존재하는 기수입니다."),
-
     @ExplainError("사용자와 기수 간의 연결 정보를 찾을 수 없을 때 발생합니다.")
-    USER_CARDINAL_NOT_FOUND(2811, HttpStatus.NOT_FOUND, "사용자 기수 정보를 찾을 수 없습니다."),
+    USER_CARDINAL_NOT_FOUND(2809, HttpStatus.NOT_FOUND, "사용자 기수 정보를 찾을 수 없습니다."),
 
     @ExplainError("잘못된 학과 값이 입력되었을 때 발생합니다.")
-    DEPARTMENT_NOT_FOUND(2812, HttpStatus.BAD_REQUEST, "학과를 찾을 수 없습니다."),
+    DEPARTMENT_NOT_FOUND(2810, HttpStatus.BAD_REQUEST, "학과를 찾을 수 없습니다."),
 
     @ExplainError("잘못된 권한 값이 입력되었을 때 발생합니다.")
-    ROLE_NOT_FOUND(2813, HttpStatus.BAD_REQUEST, "권한을 찾을 수 없습니다."),
+    ROLE_NOT_FOUND(2811, HttpStatus.BAD_REQUEST, "권한을 찾을 수 없습니다."),
 
     @ExplainError("잘못된 상태 값이 입력되었을 때 발생합니다.")
-    STATUS_NOT_FOUND(2814, HttpStatus.BAD_REQUEST, "상태를 찾을 수 없습니다."),
+    STATUS_NOT_FOUND(2812, HttpStatus.BAD_REQUEST, "상태를 찾을 수 없습니다."),
 
     @ExplainError("사용자 순서 지정 시 잘못된 값이 입력되었을 때 발생합니다.")
-    INVALID_USER_ORDER(2815, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
+    INVALID_USER_ORDER(2813, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
 }

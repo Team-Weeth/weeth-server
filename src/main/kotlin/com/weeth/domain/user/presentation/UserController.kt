@@ -1,16 +1,15 @@
 package com.weeth.domain.user.presentation
 
-import com.weeth.domain.user.application.dto.request.SignUpRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
 import com.weeth.domain.user.application.dto.response.UserDetailsResponse
-import com.weeth.domain.user.application.dto.response.UserInfoResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
-import com.weeth.domain.user.application.usecase.command.AdminUserUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
+import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
+import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
 import com.weeth.domain.user.application.usecase.query.GetUserQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.dto.JwtDto
@@ -38,7 +37,8 @@ import org.springframework.web.bind.annotation.RestController
 @ApiErrorCodeExample(UserErrorCode::class, JwtErrorCode::class)
 class UserController(
     private val authUserUseCase: AuthUserUseCase,
-    private val adminUserUseCase: AdminUserUseCase,
+    private val socialLoginUseCase: SocialLoginUseCase,
+    private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val getUserQueryService: GetUserQueryService,
 ) {
     @PostMapping("/social/kakao")
@@ -46,28 +46,19 @@ class UserController(
     fun socialLoginByKakao(
         @RequestBody @Valid request: SocialLoginRequest,
     ): CommonResponse<SocialLoginResponse> =
-        CommonResponse.success(UserResponseCode.SOCIAL_LOGIN_SUCCESS, authUserUseCase.socialLoginByKakao(request))
+        CommonResponse.success(UserResponseCode.SOCIAL_LOGIN_SUCCESS, socialLoginUseCase.socialLoginByKakao(request))
 
     @PostMapping("/social/apple")
     @Operation(summary = "애플 소셜 로그인(auth code flow)")
     fun socialLoginByApple(
         @RequestBody @Valid request: SocialLoginRequest,
     ): CommonResponse<SocialLoginResponse> =
-        CommonResponse.success(UserResponseCode.SOCIAL_LOGIN_SUCCESS, authUserUseCase.socialLoginByApple(request))
+        CommonResponse.success(UserResponseCode.SOCIAL_LOGIN_SUCCESS, socialLoginUseCase.socialLoginByApple(request))
 
     @PostMapping("/social/refresh")
     @Operation(summary = "토큰 재발급")
     fun refreshToken(request: HttpServletRequest): CommonResponse<JwtDto> =
         CommonResponse.success(UserResponseCode.JWT_REFRESH_SUCCESS, authUserUseCase.refreshToken(request))
-
-    @PostMapping("/apply")
-    @Operation(summary = "동아리 지원 신청")
-    fun apply(
-        @RequestBody @Valid request: SignUpRequest,
-    ): CommonResponse<Void> {
-        authUserUseCase.apply(request)
-        return CommonResponse.success(UserResponseCode.USER_APPLY_SUCCESS)
-    }
 
     @GetMapping("/email")
     @Operation(summary = "이메일 중복 확인")
@@ -113,7 +104,7 @@ class UserController(
     @Operation(summary = "전역 내 정보 조회 API")
     fun findMyInfo(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<UserInfoResponse> =
+    ): CommonResponse<UserSummaryResponse> =
         CommonResponse.success(UserResponseCode.USER_FIND_BY_ID_SUCCESS, getUserQueryService.findMyInfo(userId))
 
     @PatchMapping
@@ -122,7 +113,7 @@ class UserController(
         @RequestBody @Valid request: UpdateUserProfileRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
-        authUserUseCase.updateProfile(request, userId)
+        updateUserProfileUseCase.updateProfile(request, userId)
         return CommonResponse.success(UserResponseCode.USER_UPDATE_SUCCESS)
     }
 
