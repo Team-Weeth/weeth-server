@@ -1,10 +1,12 @@
 package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
-import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
+import com.weeth.domain.attendance.application.exception.AlreadyAttendedException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
+import com.weeth.domain.attendance.application.exception.QrTokenExpiredException
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
+import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.enums.SessionStatus
@@ -25,27 +27,22 @@ class ManageAttendanceUseCase(
     private val userReader: UserReader,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
+    private val qrAttendancePort: QrAttendancePort,
 ) {
     @Transactional
     fun checkIn(
         userId: Long,
         code: Int,
     ) {
+        val sessionId = qrAttendancePort.getSessionId(code) ?: throw QrTokenExpiredException()
+        val session = sessionReader.getById(sessionId)
         val user = userReader.getById(userId)
-        val now = LocalDateTime.now()
-        val todayAttendance =
-            attendanceRepository.findCurrentByUserId(userId, now, now.plusMinutes(10))
-                ?: throw AttendanceNotFoundException()
-        if (todayAttendance.isWrong(code)) {
-            throw AttendanceCodeMismatchException()
-        }
         val lockedAttendance =
-            attendanceRepository.findBySessionAndUserWithLock(todayAttendance.session, user)
+            attendanceRepository.findBySessionAndUserWithLock(session, user)
                 ?: throw AttendanceNotFoundException()
-        if (lockedAttendance.status != AttendanceStatus.ATTEND) {
-            lockedAttendance.attend()
-            user.attend()
-        }
+        if (lockedAttendance.status == AttendanceStatus.ATTEND) throw AlreadyAttendedException()
+        lockedAttendance.attend()
+        user.attend()
     }
 
     @Transactional
