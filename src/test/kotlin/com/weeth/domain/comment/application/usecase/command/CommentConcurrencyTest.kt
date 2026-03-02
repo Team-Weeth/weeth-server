@@ -13,6 +13,7 @@ import com.weeth.domain.comment.domain.repository.CommentRepository
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
+import com.weeth.domain.user.domain.vo.Email
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import jakarta.persistence.EntityManager
@@ -68,7 +69,7 @@ class CommentConcurrencyTest(
                 userRepository.save(
                     User(
                         name = "user$i",
-                        email = "user$i@test.com",
+                        email = Email.from("user$i@test.com"),
                         status = Status.ACTIVE,
                     ),
                 )

@@ -4,7 +4,7 @@ import com.weeth.domain.account.application.dto.request.AccountSaveRequest
 import com.weeth.domain.account.application.exception.AccountExistsException
 import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
-import com.weeth.domain.user.fixture.CardinalTestFixture
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.clearMocks

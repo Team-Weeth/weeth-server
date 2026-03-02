@@ -22,6 +22,7 @@ import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.domain.vo.Email
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -74,7 +75,7 @@ class ManagePostUseCaseTest :
             User(
                 id = id,
                 name = "적순",
-                email = "test1@test.com",
+                email = Email.from("test1@test.com"),
                 status = Status.ACTIVE,
                 role = role,
             )

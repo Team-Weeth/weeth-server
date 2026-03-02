@@ -10,17 +10,16 @@ import org.springframework.test.util.ReflectionTestUtils
 
 object AttendanceTestFixture {
     fun createActiveUser(name: String): User =
-        User(
-            name = name,
-            status = Status.ACTIVE,
-        )
+        User
+            .create(
+                name = name,
+                email = "$name@test.com",
+                studentId = "",
+                tel = "",
+                department = "",
+            ).also { it.accept() }
 
-    fun createAdminUser(name: String): User =
-        User(
-            name = name,
-            status = Status.ACTIVE,
-            role = Role.ADMIN,
-        )
+    fun createAdminUser(name: String): User = createActiveUser(name).also { it.updateRole(Role.ADMIN) }
 
     fun createAttendance(
         session: Session,

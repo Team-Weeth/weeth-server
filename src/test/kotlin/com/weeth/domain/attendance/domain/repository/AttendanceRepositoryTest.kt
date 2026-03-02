@@ -43,14 +43,20 @@ class AttendanceRepositoryTest(
             sessionRepository.save(session)
 
             activeUser1 =
-                User(
+                User.create(
                     name = "이지훈",
-                    status = Status.ACTIVE,
+                    email = "lee.jihoon@test.com",
+                    studentId = "",
+                    tel = "",
+                    department = "",
                 )
             activeUser2 =
-                User(
+                User.create(
                     name = "이강혁",
-                    status = Status.ACTIVE,
+                    email = "lee.ganghyuk@test.com",
+                    studentId = "",
+                    tel = "",
+                    department = "",
                 )
             userRepository.saveAll(listOf(activeUser1, activeUser2))
             activeUser1.accept()

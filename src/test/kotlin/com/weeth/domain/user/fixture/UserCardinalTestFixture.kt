@@ -8,5 +8,5 @@ object UserCardinalTestFixture {
     fun linkUserCardinal(
         user: User,
         cardinal: Cardinal,
-    ): UserCardinal = UserCardinal(user, cardinal)
+    ): UserCardinal = UserCardinal.create(user, cardinal)
 }

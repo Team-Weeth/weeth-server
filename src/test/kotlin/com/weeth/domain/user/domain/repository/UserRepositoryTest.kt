@@ -2,8 +2,8 @@ package com.weeth.domain.user.domain.repository
 
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.user.domain.enums.Status
-import com.weeth.domain.user.fixture.CardinalTestFixture
 import com.weeth.domain.user.fixture.UserCardinalTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
