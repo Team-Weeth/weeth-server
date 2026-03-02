@@ -2,8 +2,8 @@ package com.weeth.domain.user.domain.repository
 
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.user.domain.entity.UserCardinal
-import com.weeth.domain.user.fixture.CardinalTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -41,9 +41,9 @@ class UserCardinalRepositoryTest(
 
                 userCardinalRepository.saveAll(
                     listOf(
-                        UserCardinal(user, cardinal1),
-                        UserCardinal(user, cardinal2),
-                        UserCardinal(user, cardinal3),
+                        UserCardinal.create(user, cardinal1),
+                        UserCardinal.create(user, cardinal2),
+                        UserCardinal.create(user, cardinal3),
                     ),
                 )
 
@@ -82,14 +82,14 @@ class UserCardinalRepositoryTest(
 
                 userCardinalRepository.saveAll(
                     listOf(
-                        UserCardinal(user1, c3),
-                        UserCardinal(user1, c2),
+                        UserCardinal.create(user1, c3),
+                        UserCardinal.create(user1, c2),
                     ),
                 )
                 userCardinalRepository.saveAll(
                     listOf(
-                        UserCardinal(user2, c4),
-                        UserCardinal(user2, c1),
+                        UserCardinal.create(user2, c4),
+                        UserCardinal.create(user2, c1),
                     ),
                 )
 
