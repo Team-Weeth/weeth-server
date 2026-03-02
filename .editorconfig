@@ -13,3 +13,7 @@ max_line_length = 120
 ktlint_standard_no-wildcard-imports = enabled
 ij_kotlin_name_count_to_use_star_import = 999
 ij_kotlin_name_count_to_use_star_import_for_members = 999
+
+# trailing comma 설정
+ktlint_standard_trailing-comma-on-call-site = enabled
+ktlint_standard_trailing-comma-on-declaration-site = enabled
