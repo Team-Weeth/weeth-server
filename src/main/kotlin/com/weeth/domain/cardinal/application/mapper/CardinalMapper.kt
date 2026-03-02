@@ -1,14 +1,14 @@
-package com.weeth.domain.user.application.mapper
+package com.weeth.domain.cardinal.application.mapper
 
-import com.weeth.domain.user.application.dto.request.CardinalSaveRequest
-import com.weeth.domain.user.application.dto.response.CardinalResponse
-import com.weeth.domain.user.domain.entity.Cardinal
+import com.weeth.domain.cardinal.application.dto.request.CardinalSaveRequest
+import com.weeth.domain.cardinal.application.dto.response.CardinalResponse
+import com.weeth.domain.cardinal.domain.entity.Cardinal
 import org.springframework.stereotype.Component
 
 @Component
 class CardinalMapper {
     fun toEntity(request: CardinalSaveRequest): Cardinal =
-        Cardinal(
+        Cardinal.create(
             cardinalNumber = request.cardinalNumber,
             year = request.year,
             semester = request.semester,

@@ -1,10 +1,10 @@
 package com.weeth.domain.penalty.application.usecase.query
 
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
-import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalReader
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.domain.service.UserCardinalPolicy

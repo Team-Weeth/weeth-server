@@ -1,7 +1,7 @@
 package com.weeth.domain.penalty.domain.entity
 
+import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.penalty.domain.enums.PenaltyType
-import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column

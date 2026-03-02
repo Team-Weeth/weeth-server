@@ -1,11 +1,11 @@
 package com.weeth.domain.schedule.application.usecase.command
 
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
 import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
-import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service

@@ -1,6 +1,7 @@
 package com.weeth.domain.user.domain.repository
 
 import com.weeth.config.TestContainersConfig
+import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.fixture.CardinalTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture

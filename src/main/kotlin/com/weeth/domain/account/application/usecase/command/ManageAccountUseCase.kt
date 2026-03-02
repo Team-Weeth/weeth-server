@@ -4,24 +4,19 @@ import com.weeth.domain.account.application.dto.request.AccountSaveRequest
 import com.weeth.domain.account.application.exception.AccountExistsException
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.repository.AccountRepository
-import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.repository.CardinalRepository
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ManageAccountUseCase(
     private val accountRepository: AccountRepository,
-    private val cardinalRepository: CardinalRepository,
+    private val cardinalReader: CardinalReader,
 ) {
     @Transactional
     fun save(request: AccountSaveRequest) {
         if (accountRepository.existsByCardinal(request.cardinal)) throw AccountExistsException()
-
-        // 기수가 없는 경우 생성
-        cardinalRepository.findByCardinalNumber(request.cardinal).orElseGet {
-            cardinalRepository.save(Cardinal.create(cardinalNumber = request.cardinal))
-        }
+        cardinalReader.getByCardinalNumber(request.cardinal)
         accountRepository.save(Account.create(request.description, request.totalAmount, request.cardinal))
     }
 }

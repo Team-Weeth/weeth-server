@@ -1,5 +1,6 @@
 package com.weeth.domain.schedule.application.usecase.query
 
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
@@ -7,7 +8,6 @@ import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.application.mapper.ScheduleMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
 import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.user.domain.repository.CardinalReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

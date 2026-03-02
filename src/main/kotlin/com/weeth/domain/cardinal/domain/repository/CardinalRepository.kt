@@ -1,9 +1,14 @@
-package com.weeth.domain.user.domain.repository
+package com.weeth.domain.cardinal.domain.repository
 
-import com.weeth.domain.user.application.exception.CardinalNotFoundException
-import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.enums.CardinalStatus
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
+import com.weeth.domain.cardinal.domain.entity.Cardinal
+import com.weeth.domain.cardinal.domain.enums.CardinalStatus
+import jakarta.persistence.LockModeType
+import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import java.util.Optional
 
 interface CardinalRepository :
@@ -19,6 +24,11 @@ interface CardinalRepository :
     ): Optional<Cardinal>
 
     fun findAllByStatus(cardinalStatus: CardinalStatus): List<Cardinal>
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT c FROM Cardinal c WHERE c.status = 'IN_PROGRESS'")
+    fun findAllInProgressWithLock(): List<Cardinal>
 
     fun findAllByOrderByCardinalNumberAsc(): List<Cardinal>
 

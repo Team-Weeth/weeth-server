@@ -1,13 +1,15 @@
 package com.weeth.domain.user.application.usecase.command
 
-import com.weeth.domain.user.application.dto.request.CardinalSaveRequest
-import com.weeth.domain.user.application.dto.request.CardinalUpdateRequest
-import com.weeth.domain.user.application.dto.response.CardinalResponse
-import com.weeth.domain.user.application.mapper.CardinalMapper
-import com.weeth.domain.user.application.usecase.query.GetCardinalQueryService
-import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.enums.CardinalStatus
-import com.weeth.domain.user.domain.repository.CardinalRepository
+import com.weeth.domain.cardinal.application.dto.request.CardinalSaveRequest
+import com.weeth.domain.cardinal.application.dto.request.CardinalUpdateRequest
+import com.weeth.domain.cardinal.application.dto.response.CardinalResponse
+import com.weeth.domain.cardinal.application.mapper.CardinalMapper
+import com.weeth.domain.cardinal.application.usecase.command.ManageCardinalUseCase
+import com.weeth.domain.cardinal.application.usecase.query.GetCardinalQueryService
+import com.weeth.domain.cardinal.domain.entity.Cardinal
+import com.weeth.domain.cardinal.domain.enums.CardinalStatus
+import com.weeth.domain.cardinal.domain.repository.CardinalRepository
+import com.weeth.domain.cardinal.domain.service.CardinalStatusPolicy
 import com.weeth.domain.user.fixture.CardinalTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -22,7 +24,8 @@ class CardinalUseCaseTest :
     DescribeSpec({
         val cardinalRepository = mockk<CardinalRepository>()
         val cardinalMapper = mockk<CardinalMapper>()
-        val manageCardinalUseCase = ManageCardinalUseCase(cardinalRepository, cardinalMapper)
+        val cardinalStatusPolicy = CardinalStatusPolicy(cardinalRepository)
+        val manageCardinalUseCase = ManageCardinalUseCase(cardinalRepository, cardinalMapper, cardinalStatusPolicy)
         val getCardinalQueryService = GetCardinalQueryService(cardinalRepository, cardinalMapper)
 
         describe("save") {
@@ -40,7 +43,7 @@ class CardinalUseCaseTest :
 
                     verify { cardinalRepository.findByCardinalNumber(7) }
                     verify { cardinalRepository.save(toSave) }
-                    verify(exactly = 0) { cardinalRepository.findAllByStatus(CardinalStatus.IN_PROGRESS) }
+                    verify(exactly = 0) { cardinalRepository.findAllInProgressWithLock() }
                 }
             }
 
@@ -55,13 +58,13 @@ class CardinalUseCaseTest :
                         CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2025, semester = 1)
 
                     every { cardinalRepository.findByCardinalNumber(7) } returns Optional.empty()
-                    every { cardinalRepository.findAllByStatus(CardinalStatus.IN_PROGRESS) } returns listOf(oldCardinal)
+                    every { cardinalRepository.findAllInProgressWithLock() } returns listOf(oldCardinal)
                     every { cardinalMapper.toEntity(request) } returns newCardinalBeforeSave
                     every { cardinalRepository.save(newCardinalBeforeSave) } returns newCardinalAfterSave
 
                     manageCardinalUseCase.save(request)
 
-                    verify { cardinalRepository.findAllByStatus(CardinalStatus.IN_PROGRESS) }
+                    verify { cardinalRepository.findAllInProgressWithLock() }
                     verify { cardinalRepository.save(newCardinalBeforeSave) }
 
                     oldCardinal.status shouldBe CardinalStatus.DONE

@@ -8,9 +8,9 @@ import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
+import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.domain.service.UserCardinalPolicy
