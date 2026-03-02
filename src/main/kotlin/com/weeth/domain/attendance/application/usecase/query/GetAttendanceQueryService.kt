@@ -51,6 +51,7 @@ class GetAttendanceQueryService(
 
     fun findAllAttendanceBySession(sessionId: Long): List<AttendanceInfoResponse> {
         val session = sessionReader.getById(sessionId)
+
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
         return attendances.map(attendanceMapper::toInfoResponse)
     }
