@@ -8,9 +8,9 @@ import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.mapper.UserMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
-import com.weeth.domain.user.domain.entity.enums.Status
-import com.weeth.domain.user.domain.entity.enums.StatusPriority
-import com.weeth.domain.user.domain.entity.enums.UsersOrderBy
+import com.weeth.domain.user.domain.enums.Status
+import com.weeth.domain.user.domain.enums.StatusPriority
+import com.weeth.domain.user.domain.enums.UsersOrderBy
 import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalRepository

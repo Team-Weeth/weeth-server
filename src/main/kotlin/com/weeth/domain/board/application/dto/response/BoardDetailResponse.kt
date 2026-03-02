@@ -1,8 +1,8 @@
 package com.weeth.domain.board.application.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.weeth.domain.board.domain.entity.enums.BoardType
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.user.domain.enums.Role
 import io.swagger.v3.oas.annotations.media.Schema
 
 @JsonInclude(JsonInclude.Include.NON_NULL)

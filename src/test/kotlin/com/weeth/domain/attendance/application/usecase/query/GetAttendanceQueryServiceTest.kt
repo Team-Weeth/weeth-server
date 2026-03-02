@@ -11,7 +11,7 @@ import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUse
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import io.kotest.core.spec.style.DescribeSpec

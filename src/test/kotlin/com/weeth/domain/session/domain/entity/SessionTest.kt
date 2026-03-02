@@ -1,6 +1,6 @@
 package com.weeth.domain.session.domain.entity
 
-import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.fixture.SessionTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec

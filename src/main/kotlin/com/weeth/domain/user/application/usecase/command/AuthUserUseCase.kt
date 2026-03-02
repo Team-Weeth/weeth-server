@@ -12,8 +12,8 @@ import com.weeth.domain.user.application.mapper.UserMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.domain.entity.UserSocialAccount
-import com.weeth.domain.user.domain.entity.enums.SocialProvider
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.SocialProvider
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
 import com.weeth.domain.user.domain.repository.UserReader

@@ -1,6 +1,6 @@
 package com.weeth.domain.user.application.dto.response
 
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class UserProfileResponse(

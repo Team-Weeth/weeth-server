@@ -1,8 +1,8 @@
 package com.weeth.domain.file.domain.repository
 
 import com.weeth.domain.file.domain.entity.File
-import com.weeth.domain.file.domain.entity.FileOwnerType
-import com.weeth.domain.file.domain.entity.FileStatus
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface FileRepository :

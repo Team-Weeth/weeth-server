@@ -8,8 +8,8 @@ import com.weeth.domain.user.application.dto.request.UserApplyObRequest
 import com.weeth.domain.user.application.dto.request.UserIdsRequest
 import com.weeth.domain.user.application.dto.request.UserRoleUpdateRequest
 import com.weeth.domain.user.domain.entity.UserCardinal
-import com.weeth.domain.user.domain.entity.enums.Role
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.CardinalRepository
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
 import com.weeth.domain.user.domain.repository.UserReader

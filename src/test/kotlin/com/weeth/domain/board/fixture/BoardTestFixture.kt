@@ -1,9 +1,9 @@
 package com.weeth.domain.board.fixture
 
 import com.weeth.domain.board.domain.entity.Board
-import com.weeth.domain.board.domain.entity.enums.BoardType
+import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 
 object BoardTestFixture {
     fun create(

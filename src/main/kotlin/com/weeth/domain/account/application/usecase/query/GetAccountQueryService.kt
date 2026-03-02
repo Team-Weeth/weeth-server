@@ -7,7 +7,7 @@ import com.weeth.domain.account.application.mapper.ReceiptMapper
 import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.ReceiptRepository
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional

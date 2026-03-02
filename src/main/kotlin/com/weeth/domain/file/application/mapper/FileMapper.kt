@@ -4,7 +4,7 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.application.dto.response.UrlResponse
 import com.weeth.domain.file.domain.entity.File
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import org.springframework.stereotype.Component
 

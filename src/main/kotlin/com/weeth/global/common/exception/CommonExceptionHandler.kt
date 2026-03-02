@@ -18,13 +18,7 @@ class CommonExceptionHandler {
         log.warn("예외 처리(BaseException)", ex)
         log.warn(LOG_FORMAT, ex::class.simpleName, ex.statusCode, ex.message)
 
-        val errorCode = ex.errorCode
-        val response: CommonResponse<Void?> =
-            if (errorCode != null) {
-                CommonResponse.error(errorCode)
-            } else {
-                CommonResponse.createFailure(ex.statusCode, ex.message ?: "")
-            }
+        val response = CommonResponse.error(ex.errorCode)
 
         return ResponseEntity
             .status(ex.statusCode)

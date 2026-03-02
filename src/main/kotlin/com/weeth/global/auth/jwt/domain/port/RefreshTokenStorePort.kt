@@ -1,6 +1,6 @@
 package com.weeth.global.auth.jwt.domain.port
 
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 
 interface RefreshTokenStorePort {
     fun save(

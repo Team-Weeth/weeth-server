@@ -1,6 +1,6 @@
 package com.weeth.domain.file.application.dto.response
 
-import com.weeth.domain.file.domain.entity.FileStatus
+import com.weeth.domain.file.domain.enums.FileStatus
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class FileResponse(

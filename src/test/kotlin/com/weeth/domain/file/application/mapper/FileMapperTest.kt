@@ -1,7 +1,7 @@
 package com.weeth.domain.file.application.mapper
 
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize

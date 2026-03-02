@@ -6,8 +6,8 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryRes
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.user.domain.entity.enums.Role
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import org.springframework.stereotype.Service

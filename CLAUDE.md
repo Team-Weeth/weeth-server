@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Weeth Server is a community platform backend built with Spring Boot 3.5.10. The codebase is in active **Java → Kotlin migration** — new code should be written in Kotlin, while ~271 Java files remain. Lombok and MapStruct are temporary dependencies being phased out in favor of Kotlin idioms and manual mappers.
+Weeth Server is a community platform backend built with Spring Boot 3.5.10. The codebase has completed **Java → Kotlin migration** — all code is Kotlin.
 
 ## Build & Development Commands
 
@@ -52,8 +52,8 @@ domain/{name}/
 │   └── service/            # Multi-entity logic only (no thin wrappers)
 ├── infrastructure/         # Port implementations
 └── presentation/
-    ├── {Domain}Controller.java
-    └── {Domain}ResponseCode.java
+    ├── {Domain}Controller.kt
+    └── {Domain}ResponseCode.kt
 ```
 
 ### Key Patterns
@@ -91,13 +91,31 @@ JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser`
 - **Fixture pattern**: `{Entity}TestFixture` objects with factory methods in `fixture/` directories
 - Test architecture mirrors source: mock Repository/Reader/Port in UseCase tests, mock Port (not adapter) in application tests
 
-## Kotlin Migration Notes
+## Kotlin Migration Status
 
-- New code: Kotlin. Existing Java code migrated incrementally.
-- Replace Lombok with Kotlin data classes/properties
-- Replace MapStruct with manual `@Component` Mapper classes (see `.claude/rules/mapper-dto.md`)
+**✅ Complete** — 294 Kotlin files (100%)
+
+- Java → Kotlin migration fully complete
+- Lombok and MapStruct dependencies removed
+- All 13 mappers migrated to manual `@Component` Mapper classes (see `.claude/rules/mapper-dto.md`)
+- Entity fields use `private set` for Rich Domain Model pattern (see architecture.md)
+- OSIV disabled: `spring.jpa.open-in-view: false` in `application.yml`
+
+## Kotlin Conventions
+
 - Use `?.`, `?:`, `requireNotNull` — avoid `!!`
 - Entities: regular `class` (not `data class`); DTOs: `data class`
+- Entity setters: `private set` to enforce business logic via named methods
+- Example:
+  ```kotlin
+  var name: String
+      private set
+
+  fun updateName(newName: String) {
+      require(newName.isNotBlank()) { "Name cannot be empty" }
+      this.name = newName
+  }
+  ```
 
 ## Detailed Rules
 

@@ -5,9 +5,9 @@ import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.application.mapper.CommentMapper
 import com.weeth.domain.comment.fixture.CommentTestFixture
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe

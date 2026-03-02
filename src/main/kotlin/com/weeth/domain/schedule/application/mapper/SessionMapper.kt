@@ -4,7 +4,7 @@ import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.response.SessionInfoResponse
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
-import com.weeth.domain.schedule.domain.entity.enums.Type
+import com.weeth.domain.schedule.domain.enums.Type
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
 import org.springframework.stereotype.Component

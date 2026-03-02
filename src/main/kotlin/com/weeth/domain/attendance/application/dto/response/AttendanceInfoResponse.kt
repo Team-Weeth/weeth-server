@@ -1,6 +1,6 @@
 package com.weeth.domain.attendance.application.dto.response
 
-import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class AttendanceInfoResponse(

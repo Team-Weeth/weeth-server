@@ -1,6 +1,6 @@
 package com.weeth.domain.user.application.dto.response
 
-import com.weeth.domain.user.domain.entity.enums.CardinalStatus
+import com.weeth.domain.user.domain.enums.CardinalStatus
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 

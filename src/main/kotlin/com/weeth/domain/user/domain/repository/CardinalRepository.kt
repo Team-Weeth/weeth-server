@@ -2,7 +2,7 @@ package com.weeth.domain.user.domain.repository
 
 import com.weeth.domain.user.application.exception.CardinalNotFoundException
 import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.entity.enums.CardinalStatus
+import com.weeth.domain.user.domain.enums.CardinalStatus
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 

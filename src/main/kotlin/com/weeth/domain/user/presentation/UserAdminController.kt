@@ -7,7 +7,7 @@ import com.weeth.domain.user.application.dto.response.AdminUserResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.command.AdminUserUseCase
 import com.weeth.domain.user.application.usecase.query.GetUserQueryService
-import com.weeth.domain.user.domain.entity.enums.UsersOrderBy
+import com.weeth.domain.user.domain.enums.UsersOrderBy
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse

@@ -1,6 +1,6 @@
 package com.weeth.domain.file.domain.port
 
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 
 /** [FileUploadUrlPort.generateUploadUrl] 반환 타입 */
 data class FileUploadUrl(

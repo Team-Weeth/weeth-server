@@ -1,8 +1,8 @@
 package com.weeth.domain.file.domain.entity
 
 import com.weeth.domain.file.application.exception.UnsupportedFileContentTypeException
-import com.weeth.domain.file.domain.entity.FileOwnerType
-import com.weeth.domain.file.domain.entity.FileStatus
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe

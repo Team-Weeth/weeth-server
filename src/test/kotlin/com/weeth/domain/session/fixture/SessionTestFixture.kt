@@ -1,7 +1,7 @@
 package com.weeth.domain.session.fixture
 
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.enums.SessionStatus
 import org.springframework.test.util.ReflectionTestUtils
 import java.time.LocalDate
 import java.time.LocalDateTime

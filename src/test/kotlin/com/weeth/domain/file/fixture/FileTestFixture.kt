@@ -1,7 +1,7 @@
 package com.weeth.domain.file.fixture
 
 import com.weeth.domain.file.domain.entity.File
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.vo.FileContentType
 import com.weeth.domain.file.domain.vo.StorageKey
 

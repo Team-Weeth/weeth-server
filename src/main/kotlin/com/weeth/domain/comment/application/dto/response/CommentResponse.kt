@@ -1,7 +1,7 @@
 package com.weeth.domain.comment.application.dto.response
 
 import com.weeth.domain.file.application.dto.response.FileResponse
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 

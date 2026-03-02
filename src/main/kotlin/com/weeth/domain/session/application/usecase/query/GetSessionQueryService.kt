@@ -6,7 +6,7 @@ import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionRepository
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service

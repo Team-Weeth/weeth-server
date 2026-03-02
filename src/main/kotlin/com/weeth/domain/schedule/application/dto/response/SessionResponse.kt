@@ -1,7 +1,7 @@
 package com.weeth.domain.schedule.application.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.weeth.domain.schedule.domain.entity.enums.Type
+import com.weeth.domain.schedule.domain.enums.Type
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 

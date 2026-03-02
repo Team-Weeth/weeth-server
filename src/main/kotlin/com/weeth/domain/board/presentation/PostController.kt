@@ -8,7 +8,7 @@ import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.command.ManagePostUseCase
 import com.weeth.domain.board.application.usecase.query.GetPostQueryService
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.annotation.CurrentUserRole
 import com.weeth.global.common.exception.ApiErrorCodeExample

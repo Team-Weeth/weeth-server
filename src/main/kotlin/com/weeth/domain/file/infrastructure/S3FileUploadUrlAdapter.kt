@@ -1,7 +1,7 @@
 package com.weeth.domain.file.infrastructure
 
 import com.weeth.domain.file.application.exception.PresignedUrlGenerationException
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileUploadUrl
 import com.weeth.domain.file.domain.port.FileUploadUrlPort
 import com.weeth.domain.file.domain.vo.FileName

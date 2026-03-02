@@ -3,8 +3,8 @@ package com.weeth.domain.attendance.fixture
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Role
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.AttendanceStats
 import org.springframework.test.util.ReflectionTestUtils
 

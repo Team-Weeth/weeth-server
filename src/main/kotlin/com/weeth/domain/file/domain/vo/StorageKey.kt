@@ -1,6 +1,6 @@
 package com.weeth.domain.file.domain.vo
 
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 
 @JvmInline
 value class StorageKey(

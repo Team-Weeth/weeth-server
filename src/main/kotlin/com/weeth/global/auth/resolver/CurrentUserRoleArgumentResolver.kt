@@ -1,6 +1,6 @@
 package com.weeth.global.auth.resolver
 
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.annotation.CurrentUserRole
 import com.weeth.global.auth.jwt.application.exception.AnonymousAuthenticationException
 import com.weeth.global.auth.model.AuthenticatedUser

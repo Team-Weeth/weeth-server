@@ -6,7 +6,7 @@ import com.weeth.domain.user.application.dto.response.CardinalResponse
 import com.weeth.domain.user.application.mapper.CardinalMapper
 import com.weeth.domain.user.application.usecase.query.GetCardinalQueryService
 import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.entity.enums.CardinalStatus
+import com.weeth.domain.user.domain.enums.CardinalStatus
 import com.weeth.domain.user.domain.repository.CardinalRepository
 import com.weeth.domain.user.fixture.CardinalTestFixture
 import io.kotest.core.spec.style.DescribeSpec

@@ -1,4 +1,4 @@
-package com.weeth.domain.user.domain.entity.enums
+package com.weeth.domain.user.domain.enums
 
 import com.weeth.domain.user.application.exception.StatusNotFoundException
 

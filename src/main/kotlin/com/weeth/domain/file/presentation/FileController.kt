@@ -3,7 +3,7 @@ package com.weeth.domain.file.presentation
 import com.weeth.domain.file.application.dto.response.UrlResponse
 import com.weeth.domain.file.application.exception.FileErrorCode
 import com.weeth.domain.file.application.usecase.command.GenerateFileUrlUsecase
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation

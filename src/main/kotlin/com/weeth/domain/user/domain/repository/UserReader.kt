@@ -2,7 +2,7 @@ package com.weeth.domain.user.domain.repository
 
 import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Status
 
 interface UserReader {
     fun getById(userId: Long): User

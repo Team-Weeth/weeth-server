@@ -2,7 +2,7 @@ package com.weeth.domain.file.application.usecase.command
 
 import com.weeth.domain.file.application.dto.response.UrlResponse
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileUploadUrl
 import com.weeth.domain.file.domain.port.FileUploadUrlPort
 import io.kotest.assertions.throwables.shouldThrow
