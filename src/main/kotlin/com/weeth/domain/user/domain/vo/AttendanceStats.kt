@@ -5,13 +5,22 @@ import jakarta.persistence.Embeddable
 
 @Embeddable
 class AttendanceStats(
-    @Column(name = "attendance_count")
-    var attendanceCount: Int = 0,
-    @Column(name = "absence_count")
-    var absenceCount: Int = 0,
-    @Column(name = "attendance_rate")
-    var attendanceRate: Int = 0,
+    attendanceCount: Int = 0,
+    absenceCount: Int = 0,
+    attendanceRate: Int = 0,
 ) {
+    @Column(name = "attendance_count")
+    var attendanceCount: Int = attendanceCount
+        private set
+
+    @Column(name = "absence_count")
+    var absenceCount: Int = absenceCount
+        private set
+
+    @Column(name = "attendance_rate")
+    var attendanceRate: Int = attendanceRate
+        private set
+
     fun reset() {
         attendanceCount = 0
         absenceCount = 0

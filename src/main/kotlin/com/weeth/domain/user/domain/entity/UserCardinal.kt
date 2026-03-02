@@ -1,5 +1,6 @@
 package com.weeth.domain.user.domain.entity
 
+import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -9,26 +10,39 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
+@Table(
+    name = "user_cardinal",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_user_id_cardinal_id",
+            columnNames = ["user_id", "cardinal_id"],
+        ),
+    ],
+)
 class UserCardinal(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_cardinal_id")
     val id: Long = 0L,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     val user: User,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cardinal_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "cardinal_id", nullable = false)
     val cardinal: Cardinal,
 ) : BaseEntity() {
-    constructor(
-        user: User,
-        cardinal: Cardinal,
-    ) : this(
-        id = 0L,
-        user = user,
-        cardinal = cardinal,
-    )
+    companion object {
+        fun create(
+            user: User,
+            cardinal: Cardinal,
+        ) = UserCardinal(
+            id = 0L,
+            user = user,
+            cardinal = cardinal,
+        )
+    }
 }
