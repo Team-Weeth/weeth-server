@@ -23,5 +23,4 @@ enum class JwtErrorCode(
 
     @ExplainError("Apple 인증 과정에서 토큰 교환 또는 검증에 실패했을 때 발생합니다.")
     APPLE_AUTHENTICATION_FAILED(2904, HttpStatus.UNAUTHORIZED, "애플 로그인에 실패했습니다."),
-    ;
 }

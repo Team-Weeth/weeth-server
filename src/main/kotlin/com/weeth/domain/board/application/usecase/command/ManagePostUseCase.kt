@@ -88,9 +88,11 @@ class ManagePostUseCase(
         post.markDeleted()
     }
 
-    private fun findBoard(boardId: Long): Board = boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
+    private fun findBoard(boardId: Long): Board =
+        boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 
-    private fun findPost(postId: Long): Post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
+    private fun findPost(postId: Long): Post =
+        postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
 
     private fun validateOwner(
         post: Post,

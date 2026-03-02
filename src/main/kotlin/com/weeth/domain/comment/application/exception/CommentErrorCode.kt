@@ -17,5 +17,4 @@ enum class CommentErrorCode(
 
     @ExplainError("이미 삭제된 댓글에 대해 삭제를 재시도할 때 발생합니다.")
     COMMENT_ALREADY_DELETED(2402, HttpStatus.BAD_REQUEST, "이미 삭제된 댓글입니다."),
-    ;
 }

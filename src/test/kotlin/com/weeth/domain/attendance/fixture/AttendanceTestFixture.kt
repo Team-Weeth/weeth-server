@@ -45,7 +45,14 @@ object AttendanceTestFixture {
             AttendanceStats(
                 attendanceCount = attendanceCount,
                 absenceCount = absenceCount,
-                attendanceRate = if (attendanceCount + absenceCount > 0) (attendanceCount * 100) / (attendanceCount + absenceCount) else 0,
+                attendanceRate =
+                    if (attendanceCount + absenceCount >
+                        0
+                    ) {
+                        (attendanceCount * 100) / (attendanceCount + absenceCount)
+                    } else {
+                        0
+                    },
             ),
         )
     }

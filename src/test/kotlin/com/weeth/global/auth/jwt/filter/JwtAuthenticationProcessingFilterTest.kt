@@ -40,7 +40,8 @@ class JwtAuthenticationProcessingFilterTest :
 
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
-                every { jwtService.extractClaims("access-token") } returns JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", Role.ADMIN)
+                every { jwtService.extractClaims("access-token") } returns
+                    JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", Role.ADMIN)
 
                 filter.doFilter(request, response, chain)
 

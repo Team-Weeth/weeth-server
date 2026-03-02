@@ -52,7 +52,10 @@ class ManageAttendanceUseCase(
         val targetSession =
             sessionReader
                 .findAllByCardinalOrderByStartAsc(cardinal)
-                .firstOrNull { session -> session.start.toLocalDate().isEqual(now) && session.end.toLocalDate().isEqual(now) }
+                .firstOrNull { session ->
+                    session.start.toLocalDate().isEqual(now) &&
+                        session.end.toLocalDate().isEqual(now)
+                }
                 ?: throw SessionNotFoundException()
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(targetSession, Status.ACTIVE)
         closePendingAttendances(attendances)

@@ -56,7 +56,13 @@ class AdminUserUseCaseTest :
         describe("accept") {
             it("비활성 유저 승인 시 출석 초기화를 수행한다") {
                 val user = UserTestFixture.createWaitingUser1(1L)
-                val currentCardinal = CardinalTestFixture.createCardinal(id = 1L, cardinalNumber = 8, year = 2025, semester = 1)
+                val currentCardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 1L,
+                        cardinalNumber = 8,
+                        year = 2025,
+                        semester = 1,
+                    )
                 val sessions = listOf(mockk<Session>())
 
                 every { userReader.findAllByIds(listOf(1L)) } returns listOf(user)
@@ -95,14 +101,27 @@ class AdminUserUseCaseTest :
         describe("applyOb") {
             it("다음 기수로 OB 신청 시 출석을 초기화하고 user-cardinal을 저장한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val currentCardinal = CardinalTestFixture.createCardinal(id = 10L, cardinalNumber = 3, year = 2024, semester = 2)
-                val nextCardinal = CardinalTestFixture.createCardinal(id = 11L, cardinalNumber = 4, year = 2025, semester = 1)
+                val currentCardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 10L,
+                        cardinalNumber = 3,
+                        year = 2024,
+                        semester = 2,
+                    )
+                val nextCardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 11L,
+                        cardinalNumber = 4,
+                        year = 2025,
+                        semester = 1,
+                    )
                 val session = mockk<Session>()
                 every { session.cardinal } returns 4
                 val request = listOf(UserApplyObRequest(1L, 4))
 
                 every { userReader.findAllByIds(listOf(1L)) } returns listOf(user)
-                every { userCardinalRepository.findAllByUsers(listOf(user)) } returns listOf(UserCardinal(user, currentCardinal))
+                every { userCardinalRepository.findAllByUsers(listOf(user)) } returns
+                    listOf(UserCardinal(user, currentCardinal))
                 every { cardinalRepository.findAllByCardinalNumberIn(listOf(4)) } returns listOf(nextCardinal)
                 every { sessionReader.findAllByCardinalIn(listOf(4)) } returns listOf(session)
                 every { userCardinalRepository.save(any()) } answers { firstArg() }
@@ -110,16 +129,25 @@ class AdminUserUseCaseTest :
                 useCase.applyOb(request)
 
                 verify(exactly = 1) { attendanceRepository.saveAll(any<List<Attendance>>()) }
-                verify(exactly = 1) { userCardinalRepository.save(match { it.user == user && it.cardinal == nextCardinal }) }
+                verify(
+                    exactly = 1,
+                ) { userCardinalRepository.save(match { it.user == user && it.cardinal == nextCardinal }) }
             }
 
             it("이미 해당 기수를 보유한 유저는 저장을 스킵한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val cardinal = CardinalTestFixture.createCardinal(id = 11L, cardinalNumber = 4, year = 2025, semester = 1)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 11L,
+                        cardinalNumber = 4,
+                        year = 2025,
+                        semester = 1,
+                    )
                 val request = listOf(UserApplyObRequest(1L, 4))
 
                 every { userReader.findAllByIds(listOf(1L)) } returns listOf(user)
-                every { userCardinalRepository.findAllByUsers(listOf(user)) } returns listOf(UserCardinal(user, cardinal))
+                every { userCardinalRepository.findAllByUsers(listOf(user)) } returns
+                    listOf(UserCardinal(user, cardinal))
                 every { cardinalRepository.findAllByCardinalNumberIn(listOf(4)) } returns listOf(cardinal)
 
                 useCase.applyOb(request)
@@ -138,14 +166,27 @@ class AdminUserUseCaseTest :
 
             it("존재하지 않는 기수라면 새로 생성한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val currentCardinal = CardinalTestFixture.createCardinal(id = 10L, cardinalNumber = 3, year = 2024, semester = 2)
-                val createdCardinal = CardinalTestFixture.createCardinal(id = 12L, cardinalNumber = 5, year = 2025, semester = 2)
+                val currentCardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 10L,
+                        cardinalNumber = 3,
+                        year = 2024,
+                        semester = 2,
+                    )
+                val createdCardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 12L,
+                        cardinalNumber = 5,
+                        year = 2025,
+                        semester = 2,
+                    )
                 val session = mockk<Session>()
                 every { session.cardinal } returns 5
                 val request = listOf(UserApplyObRequest(1L, 5))
 
                 every { userReader.findAllByIds(listOf(1L)) } returns listOf(user)
-                every { userCardinalRepository.findAllByUsers(listOf(user)) } returns listOf(UserCardinal(user, currentCardinal))
+                every { userCardinalRepository.findAllByUsers(listOf(user)) } returns
+                    listOf(UserCardinal(user, currentCardinal))
                 every { cardinalRepository.findAllByCardinalNumberIn(listOf(5)) } returns emptyList()
                 every { cardinalRepository.save(any()) } returns createdCardinal
                 every { sessionReader.findAllByCardinalIn(listOf(5)) } returns listOf(session)
@@ -155,7 +196,14 @@ class AdminUserUseCaseTest :
 
                 verify(exactly = 1) { cardinalRepository.save(any()) }
                 verify(exactly = 1) { attendanceRepository.saveAll(any<List<Attendance>>()) }
-                verify(exactly = 1) { userCardinalRepository.save(match { it.user == user && it.cardinal == createdCardinal }) }
+                verify(exactly = 1) {
+                    userCardinalRepository.save(
+                        match {
+                            it.user == user &&
+                                it.cardinal == createdCardinal
+                        },
+                    )
+                }
             }
         }
     })

@@ -81,7 +81,8 @@ class GetAttendanceQueryServiceTest :
                 val currentCardinal = mockk<Cardinal>()
                 every { currentCardinal.cardinalNumber } returns 1
                 every { userCardinalPolicy.getCurrentCardinal(user) } returns currentCardinal
-                every { attendanceRepository.findAllByUserIdAndCardinal(userId, 1) } returns listOf(attendance1, attendance2)
+                every { attendanceRepository.findAllByUserIdAndCardinal(userId, 1) } returns
+                    listOf(attendance1, attendance2)
 
                 val response1 = mockk<AttendanceResponse>()
                 val response2 = mockk<AttendanceResponse>()

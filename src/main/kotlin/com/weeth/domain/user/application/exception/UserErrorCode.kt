@@ -56,5 +56,4 @@ enum class UserErrorCode(
 
     @ExplainError("사용자 순서 지정 시 잘못된 값이 입력되었을 때 발생합니다.")
     INVALID_USER_ORDER(2815, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
-    ;
 }

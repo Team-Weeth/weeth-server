@@ -14,5 +14,4 @@ enum class PenaltyErrorCode(
 
     @ExplainError("시스템에 의해 자동 부여된 패널티를 수동으로 삭제하려 할 때 발생합니다.")
     AUTO_PENALTY_DELETE_NOT_ALLOWED(2601, HttpStatus.BAD_REQUEST, "자동 생성된 패널티는 삭제할 수 없습니다"),
-    ;
 }

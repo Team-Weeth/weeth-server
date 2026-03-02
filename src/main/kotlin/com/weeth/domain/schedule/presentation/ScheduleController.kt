@@ -24,7 +24,10 @@ class ScheduleController(
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) start: LocalDateTime,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) end: LocalDateTime,
     ): CommonResponse<List<ScheduleResponse>> =
-        CommonResponse.success(ScheduleResponseCode.SCHEDULE_MONTHLY_FIND_SUCCESS, getScheduleQueryService.findMonthly(start, end))
+        CommonResponse.success(
+            ScheduleResponseCode.SCHEDULE_MONTHLY_FIND_SUCCESS,
+            getScheduleQueryService.findMonthly(start, end),
+        )
 
     @GetMapping("/yearly")
     @Operation(summary = "연도별 일정 조회")
@@ -32,5 +35,8 @@ class ScheduleController(
         @RequestParam year: Int,
         @RequestParam semester: Int,
     ): CommonResponse<Map<Int, List<ScheduleResponse>>> =
-        CommonResponse.success(ScheduleResponseCode.SCHEDULE_YEARLY_FIND_SUCCESS, getScheduleQueryService.findYearly(year, semester))
+        CommonResponse.success(
+            ScheduleResponseCode.SCHEDULE_YEARLY_FIND_SUCCESS,
+            getScheduleQueryService.findYearly(year, semester),
+        )
 }

@@ -17,7 +17,8 @@ abstract class JsonConverter<T>(
             }
     }
 
-    override fun convertToDatabaseColumn(attribute: T?): String? = attribute?.let { objectMapper.writeValueAsString(it) }
+    override fun convertToDatabaseColumn(attribute: T?): String? =
+        attribute?.let { objectMapper.writeValueAsString(it) }
 
     override fun convertToEntityAttribute(dbData: String?): T? = dbData?.let { objectMapper.readValue(it, typeRef) }
 }

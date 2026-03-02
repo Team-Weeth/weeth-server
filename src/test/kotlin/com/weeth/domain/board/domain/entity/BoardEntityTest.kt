@@ -83,7 +83,8 @@ class BoardEntityTest :
         }
 
         "canWriteBy는 비공개/관리자 전용 설정을 모두 고려한다" {
-            val privateBoard = Board(id = 24L, name = "비공개", type = BoardType.GENERAL, config = BoardConfig(isPrivate = true))
+            val privateBoard =
+                Board(id = 24L, name = "비공개", type = BoardType.GENERAL, config = BoardConfig(isPrivate = true))
             val adminOnlyBoard =
                 Board(
                     id = 25L,

@@ -24,5 +24,6 @@ class AccountController(
     @Operation(summary = "회비 내역 조회")
     fun find(
         @PathVariable cardinal: Int,
-    ): CommonResponse<AccountResponse> = CommonResponse.success(ACCOUNT_FIND_SUCCESS, getAccountQueryService.findByCardinal(cardinal))
+    ): CommonResponse<AccountResponse> =
+        CommonResponse.success(ACCOUNT_FIND_SUCCESS, getAccountQueryService.findByCardinal(cardinal))
 }

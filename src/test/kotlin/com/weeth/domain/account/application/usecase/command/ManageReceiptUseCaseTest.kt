@@ -89,7 +89,8 @@ class ManageReceiptUseCaseTest :
                     stubExistingCardinal(40)
                     every { accountRepository.findByCardinal(40) } returns account
                     every { receiptRepository.save(any()) } returns savedReceipt
-                    every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, savedReceipt.id) } returns emptyList()
+                    every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, savedReceipt.id) } returns
+                        emptyList()
 
                     useCase.save(request)
 

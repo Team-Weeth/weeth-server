@@ -153,5 +153,6 @@ class ManageCommentUseCase(
         }
     }
 
-    private fun findPostWithLock(postId: Long): Post = postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
+    private fun findPostWithLock(postId: Long): Post =
+        postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
 }

@@ -46,7 +46,8 @@ class S3FileUploadUrlAdapterTest :
                 val s3Presigner = mockk<S3Presigner>()
                 val adapter = S3FileUploadUrlAdapter(s3Presigner, awsS3Properties, 5)
 
-                every { s3Presigner.presignPutObject(any<PutObjectPresignRequest>()) } throws RuntimeException("s3 unavailable")
+                every { s3Presigner.presignPutObject(any<PutObjectPresignRequest>()) } throws
+                    RuntimeException("s3 unavailable")
 
                 shouldThrow<PresignedUrlGenerationException> {
                     adapter.generateUploadUrl(FileOwnerType.POST, "file.png")

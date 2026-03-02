@@ -23,9 +23,10 @@ object QueryCountUtil {
         val elapsedTimeMs: Double,
     ) {
         override fun toString(): String =
-            "queries=$queryCount, entityLoads=$entityLoadCount, collectionLoads=$collectionLoadCount, elapsedMs=%.3f".format(
-                elapsedTimeMs,
-            )
+            "queries=$queryCount, entityLoads=$entityLoadCount, collectionLoads=$collectionLoadCount, elapsedMs=%.3f"
+                .format(
+                    elapsedTimeMs,
+                )
     }
 
     fun count(

@@ -106,4 +106,9 @@ private fun createTestFile(
             }
         }
 
-private fun Map<String, Any?>.valueBy(key: String): String = entries.first { it.key.equals(key, ignoreCase = true) }.value.toString()
+private fun Map<String, Any?>.valueBy(key: String): String =
+    entries
+        .first {
+            it.key.equals(key, ignoreCase = true)
+        }.value
+        .toString()

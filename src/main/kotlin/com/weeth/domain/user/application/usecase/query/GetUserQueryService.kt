@@ -102,10 +102,14 @@ class GetUserQueryService(
             UsersOrderBy.CARDINAL_DESCENDING -> {
                 userCardinalMap.entries
                     .sortedWith(
-                        compareBy<Map.Entry<User, List<UserCardinal>>> { StatusPriority.fromStatus(it.key.status).priority }
-                            .thenByDescending { entry ->
-                                entry.value.maxOfOrNull { it.cardinal.cardinalNumber } ?: -1
-                            },
+                        compareBy<Map.Entry<User, List<UserCardinal>>> {
+                            StatusPriority
+                                .fromStatus(
+                                    it.key.status,
+                                ).priority
+                        }.thenByDescending { entry ->
+                            entry.value.maxOfOrNull { it.cardinal.cardinalNumber } ?: -1
+                        },
                     ).map { entry ->
                         mapper.toAdminUserResponse(entry.key, entry.value)
                     }

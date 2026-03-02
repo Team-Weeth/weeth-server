@@ -26,5 +26,4 @@ enum class BoardErrorCode(
 
     @ExplainError("게시글 작성자가 아닌 사용자가 수정/삭제를 시도할 때 발생합니다.")
     POST_NOT_OWNED(2305, HttpStatus.FORBIDDEN, "게시글 작성자만 수정/삭제할 수 있습니다."),
-    ;
 }

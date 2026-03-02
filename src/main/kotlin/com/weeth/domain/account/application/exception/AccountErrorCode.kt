@@ -20,5 +20,4 @@ enum class AccountErrorCode(
 
     @ExplainError("영수증이 요청한 기수의 장부에 속하지 않을 때 발생합니다.")
     RECEIPT_ACCOUNT_MISMATCH(2103, HttpStatus.BAD_REQUEST, "영수증이 해당 기수의 장부에 속하지 않습니다."),
-    ;
 }

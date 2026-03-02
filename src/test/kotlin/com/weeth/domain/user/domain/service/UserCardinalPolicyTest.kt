@@ -21,7 +21,13 @@ class UserCardinalPolicyTest :
         describe("getCurrentCardinal") {
             it("가장 큰 기수 번호를 반환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val cardinal5 = CardinalTestFixture.createCardinal(id = 2L, cardinalNumber = 5, year = 2025, semester = 1)
+                val cardinal5 =
+                    CardinalTestFixture.createCardinal(
+                        id = 2L,
+                        cardinalNumber = 5,
+                        year = 2025,
+                        semester = 1,
+                    )
 
                 every { userCardinalReader.findTopByUserOrderByCardinalNumberDesc(user) } returns
                     UserCardinalTestFixture.linkUserCardinal(user, cardinal5)
@@ -42,8 +48,15 @@ class UserCardinalPolicyTest :
         describe("notContains") {
             it("이미 포함된 기수면 false를 반환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val cardinal = CardinalTestFixture.createCardinal(id = 2L, cardinalNumber = 5, year = 2025, semester = 1)
-                every { userCardinalReader.findAllByUser(user) } returns listOf(UserCardinalTestFixture.linkUserCardinal(user, cardinal))
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 2L,
+                        cardinalNumber = 5,
+                        year = 2025,
+                        semester = 1,
+                    )
+                every { userCardinalReader.findAllByUser(user) } returns
+                    listOf(UserCardinalTestFixture.linkUserCardinal(user, cardinal))
 
                 policy.notContains(user, cardinal).shouldBeFalse()
             }

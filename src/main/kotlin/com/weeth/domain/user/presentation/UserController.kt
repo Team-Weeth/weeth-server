@@ -83,7 +83,10 @@ class UserController(
         @RequestParam("pageSize") pageSize: Int,
         @RequestParam(required = false) cardinal: Int?,
     ): CommonResponse<Slice<UserSummaryResponse>> =
-        CommonResponse.success(UserResponseCode.USER_FIND_ALL_SUCCESS, getUserQueryService.findAllUser(pageNumber, pageSize, cardinal))
+        CommonResponse.success(
+            UserResponseCode.USER_FIND_ALL_SUCCESS,
+            getUserQueryService.findAllUser(pageNumber, pageSize, cardinal),
+        )
 
     @GetMapping("/search")
     @Operation(summary = "동아리 멤버 검색")

@@ -27,7 +27,8 @@ class GetBoardQueryServiceTest :
                         updateConfig(config.copy(isPrivate = true))
                     }
 
-                every { boardRepository.findAllByIsDeletedFalseOrderByIdAsc() } returns listOf(publicBoard, privateBoard)
+                every { boardRepository.findAllByIsDeletedFalseOrderByIdAsc() } returns
+                    listOf(publicBoard, privateBoard)
 
                 val result = queryService.findBoards(Role.USER)
 
@@ -42,7 +43,8 @@ class GetBoardQueryServiceTest :
                         updateConfig(config.copy(isPrivate = true))
                     }
 
-                every { boardRepository.findAllByIsDeletedFalseOrderByIdAsc() } returns listOf(publicBoard, privateBoard)
+                every { boardRepository.findAllByIsDeletedFalseOrderByIdAsc() } returns
+                    listOf(publicBoard, privateBoard)
 
                 val result = queryService.findBoards(Role.ADMIN)
 
