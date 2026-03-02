@@ -6,9 +6,7 @@ import jakarta.validation.constraints.NotNull
 
 data class UserRoleUpdateRequest(
     @field:Schema(description = "대상 사용자 ID", example = "1")
-    @field:NotNull
     val userId: Long,
     @field:Schema(description = "변경할 권한", example = "ADMIN")
-    @field:NotNull
     val role: Role,
 )

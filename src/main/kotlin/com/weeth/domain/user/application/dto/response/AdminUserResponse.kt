@@ -32,8 +32,6 @@ data class AdminUserResponse(
     val attendanceRate: Int,
     @field:Schema(description = "패널티 횟수", example = "1")
     val penaltyCount: Int,
-    @field:Schema(description = "경고 횟수", example = "0")
-    val warningCount: Int,
     @field:Schema(description = "생성 시각")
     val createdAt: LocalDateTime?,
     @field:Schema(description = "수정 시각")
