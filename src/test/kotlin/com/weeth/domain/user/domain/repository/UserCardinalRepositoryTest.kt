@@ -25,9 +25,18 @@ class UserCardinalRepositoryTest(
                 val user = UserTestFixture.createActiveUser1()
                 userRepository.save(user)
 
-                val cardinal1 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 5, year = 2023, semester = 1))
-                val cardinal2 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2023, semester = 2))
-                val cardinal3 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2024, semester = 1))
+                val cardinal1 =
+                    cardinalRepository.save(
+                        CardinalTestFixture.createCardinal(cardinalNumber = 5, year = 2023, semester = 1),
+                    )
+                val cardinal2 =
+                    cardinalRepository.save(
+                        CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2023, semester = 2),
+                    )
+                val cardinal3 =
+                    cardinalRepository.save(
+                        CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2024, semester = 1),
+                    )
 
                 userCardinalRepository.saveAll(
                     listOf(
@@ -53,10 +62,22 @@ class UserCardinalRepositoryTest(
                 userRepository.save(user1)
                 userRepository.save(user2)
 
-                val c1 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 5, year = 2023, semester = 1))
-                val c2 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2023, semester = 2))
-                val c3 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2024, semester = 1))
-                val c4 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 8, year = 2024, semester = 2))
+                val c1 =
+                    cardinalRepository.save(
+                        CardinalTestFixture.createCardinal(cardinalNumber = 5, year = 2023, semester = 1),
+                    )
+                val c2 =
+                    cardinalRepository.save(
+                        CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2023, semester = 2),
+                    )
+                val c3 =
+                    cardinalRepository.save(
+                        CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2024, semester = 1),
+                    )
+                val c4 =
+                    cardinalRepository.save(
+                        CardinalTestFixture.createCardinal(cardinalNumber = 8, year = 2024, semester = 2),
+                    )
 
                 userCardinalRepository.saveAll(
                     listOf(

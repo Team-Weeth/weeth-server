@@ -8,7 +8,7 @@ import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.application.mapper.UserMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
 import com.weeth.domain.user.domain.repository.UserReader
@@ -67,7 +67,13 @@ class AuthUserUseCaseTest :
             it("유저와 유저-기수 연관관계를 저장한다") {
                 val request = SignUpRequest("홍길동", "a@test.com", "20201234", "01012345678", "컴퓨터공학과", 7)
                 val user = UserTestFixture.createActiveUser1(1L)
-                val cardinal = CardinalTestFixture.createCardinal(id = 10L, cardinalNumber = 7, year = 2025, semester = 1)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 10L,
+                        cardinalNumber = 7,
+                        year = 2025,
+                        semester = 1,
+                    )
 
                 every { userRepository.existsByStudentId(request.studentId) } returns false
                 every { userRepository.existsByTelValue(request.tel) } returns false
@@ -132,10 +138,12 @@ class AuthUserUseCaseTest :
 
                 every { kakaoAuthService.getKakaoToken("auth-code") } returns tokenResponse
                 every { kakaoAuthService.getUserInfo("kakao-access") } returns userInfo
-                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns Optional.empty()
+                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns
+                    Optional.empty()
                 every { userRepository.findByEmailValue("a@test.com") } returns Optional.of(user)
                 every { userSocialAccountRepository.save(any()) } answers { firstArg() }
-                every { jwtManageUseCase.create(user.id, user.emailValue, user.role) } returns JwtDto("access", "refresh")
+                every { jwtManageUseCase.create(user.id, user.emailValue, user.role) } returns
+                    JwtDto("access", "refresh")
 
                 val result = useCase.socialLoginByKakao(request)
 
@@ -163,10 +171,12 @@ class AuthUserUseCaseTest :
 
                 every { kakaoAuthService.getKakaoToken("auth-code") } returns tokenResponse
                 every { kakaoAuthService.getUserInfo("kakao-access") } returns userInfo
-                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns Optional.empty()
+                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns
+                    Optional.empty()
                 every { userRepository.findByEmailValue("a@test.com") } returns Optional.of(user)
                 every { userSocialAccountRepository.save(any()) } answers { firstArg() }
-                every { jwtManageUseCase.create(user.id, user.emailValue, user.role) } returns JwtDto("access", "refresh")
+                every { jwtManageUseCase.create(user.id, user.emailValue, user.role) } returns
+                    JwtDto("access", "refresh")
 
                 useCase.socialLoginByKakao(request)
 
@@ -179,13 +189,26 @@ class AuthUserUseCaseTest :
                 val userInfo =
                     KakaoUserInfoResponse(
                         id = 1L,
-                        kakaoAccount = KakaoAccount(isEmailValid = true, isEmailVerified = true, email = "new@test.com"),
+                        kakaoAccount =
+                            KakaoAccount(
+                                isEmailValid = true,
+                                isEmailVerified = true,
+                                email = "new@test.com",
+                            ),
                     )
-                val createdUser = User.create(name = "", email = "new@test.com", studentId = "", tel = "", department = "")
+                val createdUser =
+                    User.create(
+                        name = "",
+                        email = "new@test.com",
+                        studentId = "",
+                        tel = "",
+                        department = "",
+                    )
 
                 every { kakaoAuthService.getKakaoToken("auth-code") } returns tokenResponse
                 every { kakaoAuthService.getUserInfo("kakao-access") } returns userInfo
-                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns Optional.empty()
+                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns
+                    Optional.empty()
                 every { userRepository.findByEmailValue("new@test.com") } returns Optional.empty()
                 every { userRepository.save(any()) } returns createdUser
                 every { userSocialAccountRepository.save(any()) } answers { firstArg() }
@@ -214,13 +237,19 @@ class AuthUserUseCaseTest :
                 val userInfo =
                     KakaoUserInfoResponse(
                         id = 1L,
-                        kakaoAccount = KakaoAccount(isEmailValid = true, isEmailVerified = true, email = "ban@test.com"),
+                        kakaoAccount =
+                            KakaoAccount(
+                                isEmailValid = true,
+                                isEmailVerified = true,
+                                email = "ban@test.com",
+                            ),
                     )
                 val bannedUser = UserTestFixture.createActiveUser1(1L).also { it.ban() }
 
                 every { kakaoAuthService.getKakaoToken("auth-code") } returns tokenResponse
                 every { kakaoAuthService.getUserInfo("kakao-access") } returns userInfo
-                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns Optional.empty()
+                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns
+                    Optional.empty()
                 every { userRepository.findByEmailValue("ban@test.com") } returns Optional.of(bannedUser)
                 every { userSocialAccountRepository.save(any()) } answers { firstArg() }
 
@@ -239,10 +268,12 @@ class AuthUserUseCaseTest :
 
                 every { appleAuthService.getAppleToken("apple-code") } returns tokenResponse
                 every { appleAuthService.verifyAndDecodeIdToken("id-token") } returns userInfo
-                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns Optional.empty()
+                every { userSocialAccountRepository.findByProviderAndProviderUserId(any(), any()) } returns
+                    Optional.empty()
                 every { userRepository.findByEmailValue("apple@test.com") } returns Optional.of(user)
                 every { userSocialAccountRepository.save(any()) } answers { firstArg() }
-                every { jwtManageUseCase.create(user.id, user.emailValue, user.role) } returns JwtDto("access", "refresh")
+                every { jwtManageUseCase.create(user.id, user.emailValue, user.role) } returns
+                    JwtDto("access", "refresh")
 
                 val result = useCase.socialLoginByApple(request)
 

@@ -2,7 +2,7 @@ package com.weeth.domain.session.domain.repository
 
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.enums.SessionStatus
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.JpaRepository

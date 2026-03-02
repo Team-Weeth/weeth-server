@@ -14,7 +14,7 @@ import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ManagePostUseCase(
     private val postRepository: PostRepository,
-    private val boardRepository: BoardRepository, // 동일 도메인
+    private val boardRepository: BoardRepository,
     private val userReader: UserReader,
     private val fileRepository: FileRepository,
     private val fileReader: FileReader,
@@ -88,9 +88,11 @@ class ManagePostUseCase(
         post.markDeleted()
     }
 
-    private fun findBoard(boardId: Long): Board = boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
+    private fun findBoard(boardId: Long): Board =
+        boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 
-    private fun findPost(postId: Long): Post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
+    private fun findPost(postId: Long): Post =
+        postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
 
     private fun validateOwner(
         post: Post,

@@ -51,8 +51,8 @@ data class CommonResponse<T>(
         @JvmStatic
         fun error(errorCode: ErrorCodeInterface): CommonResponse<Void?> =
             CommonResponse(
-                code = errorCode.getCode(),
-                message = errorCode.getMessage(),
+                code = errorCode.code,
+                message = errorCode.message,
                 data = null,
             )
 
@@ -62,7 +62,7 @@ data class CommonResponse<T>(
             message: String,
         ): CommonResponse<Void?> =
             CommonResponse(
-                code = errorCode.getCode(),
+                code = errorCode.code,
                 message = message,
                 data = null,
             )
@@ -73,8 +73,8 @@ data class CommonResponse<T>(
             data: T,
         ): CommonResponse<T> =
             CommonResponse(
-                code = errorCode.getCode(),
-                message = errorCode.getMessage(),
+                code = errorCode.code,
+                message = errorCode.message,
                 data = data,
             )
 

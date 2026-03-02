@@ -2,7 +2,7 @@ package com.weeth.domain.file.infrastructure
 
 import com.weeth.domain.file.application.exception.PresignedUrlGenerationException
 import com.weeth.domain.file.application.exception.UnsupportedFileExtensionException
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.global.config.properties.AwsS3Properties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -46,7 +46,8 @@ class S3FileUploadUrlAdapterTest :
                 val s3Presigner = mockk<S3Presigner>()
                 val adapter = S3FileUploadUrlAdapter(s3Presigner, awsS3Properties, 5)
 
-                every { s3Presigner.presignPutObject(any<PutObjectPresignRequest>()) } throws RuntimeException("s3 unavailable")
+                every { s3Presigner.presignPutObject(any<PutObjectPresignRequest>()) } throws
+                    RuntimeException("s3 unavailable")
 
                 shouldThrow<PresignedUrlGenerationException> {
                     adapter.generateUploadUrl(FileOwnerType.POST, "file.png")

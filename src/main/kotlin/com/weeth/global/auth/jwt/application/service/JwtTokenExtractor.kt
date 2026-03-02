@@ -1,6 +1,6 @@
 package com.weeth.global.auth.jwt.application.service
 
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.config.properties.JwtProperties
@@ -35,7 +35,8 @@ class JwtTokenExtractor(
             ?.takeIf { it.startsWith(BEARER) }
             ?.removePrefix(BEARER)
 
-    fun extractEmail(accessToken: String): String? = extractClaim(accessToken, JwtTokenProvider.EMAIL_CLAIM, String::class.java)
+    fun extractEmail(accessToken: String): String? =
+        extractClaim(accessToken, JwtTokenProvider.EMAIL_CLAIM, String::class.java)
 
     fun extractId(token: String): Long? = extractClaim(token, JwtTokenProvider.ID_CLAIM, Long::class.javaObjectType)
 

@@ -2,7 +2,7 @@ package com.weeth.domain.file.application.usecase.command
 
 import com.weeth.domain.file.application.dto.response.UrlResponse
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileUploadUrl
 import com.weeth.domain.file.domain.port.FileUploadUrlPort
 import io.kotest.assertions.throwables.shouldThrow
@@ -37,8 +37,10 @@ class GenerateFileUrlUsecaseTest :
 
                 every { preSignedService.generateUploadUrl(ownerType, "a.png") } returns firstPresigned
                 every { preSignedService.generateUploadUrl(ownerType, "b.pdf") } returns secondPresigned
-                every { fileMapper.toUrlResponse("a.png", "https://presigned/a", "POST/2026-02/a.png") } returns responses[0]
-                every { fileMapper.toUrlResponse("b.pdf", "https://presigned/b", "POST/2026-02/b.pdf") } returns responses[1]
+                every { fileMapper.toUrlResponse("a.png", "https://presigned/a", "POST/2026-02/a.png") } returns
+                    responses[0]
+                every { fileMapper.toUrlResponse("b.pdf", "https://presigned/b", "POST/2026-02/b.pdf") } returns
+                    responses[1]
 
                 val result = useCase.generateFileUploadUrls(ownerType, fileNames)
 

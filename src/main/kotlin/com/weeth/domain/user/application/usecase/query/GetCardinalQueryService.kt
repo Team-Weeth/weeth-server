@@ -12,5 +12,6 @@ class GetCardinalQueryService(
     private val cardinalRepository: CardinalRepository,
     private val cardinalMapper: CardinalMapper,
 ) {
-    fun findAll(): List<CardinalResponse> = cardinalRepository.findAllByOrderByCardinalNumberAsc().map(cardinalMapper::toResponse)
+    fun findAll(): List<CardinalResponse> =
+        cardinalRepository.findAllByOrderByCardinalNumberAsc().map(cardinalMapper::toResponse)
 }

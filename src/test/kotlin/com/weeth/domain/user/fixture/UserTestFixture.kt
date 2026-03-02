@@ -1,8 +1,8 @@
 package com.weeth.domain.user.fixture
 
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Role
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.user.domain.enums.Status
 
 object UserTestFixture {
     fun createActiveUser1(id: Long? = null): User =

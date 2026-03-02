@@ -1,7 +1,7 @@
 package com.weeth.domain.user.domain.repository
 
 import com.weeth.config.TestContainersConfig
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.fixture.CardinalTestFixture
 import com.weeth.domain.user.fixture.UserCardinalTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -26,8 +26,14 @@ class UserRepositoryTest(
         lateinit var cardinal8: com.weeth.domain.user.domain.entity.Cardinal
 
         beforeEach {
-            cardinal7 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2026, semester = 1))
-            cardinal8 = cardinalRepository.save(CardinalTestFixture.createCardinal(cardinalNumber = 8, year = 2026, semester = 2))
+            cardinal7 =
+                cardinalRepository.save(
+                    CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2026, semester = 1),
+                )
+            cardinal8 =
+                cardinalRepository.save(
+                    CardinalTestFixture.createCardinal(cardinalNumber = 8, year = 2026, semester = 2),
+                )
 
             val user1 = userRepository.save(UserTestFixture.createActiveUser1())
             val user2 = userRepository.save(UserTestFixture.createActiveUser2())

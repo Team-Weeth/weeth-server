@@ -5,7 +5,7 @@ import com.weeth.domain.board.application.dto.response.BoardListResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

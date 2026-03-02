@@ -1,5 +1,7 @@
 package com.weeth.domain.file.domain.entity
 
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.vo.FileContentType
 import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.global.common.entity.BaseEntity

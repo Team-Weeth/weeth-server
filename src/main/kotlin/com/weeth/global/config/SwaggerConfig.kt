@@ -115,12 +115,12 @@ class SwaggerConfig(
             errorCodes
                 .map { errorCode ->
                     val enumName = (errorCode as Enum<*>).name
-                    val description = runCatching { errorCode.getExplainError() }.getOrDefault(errorCode.getMessage())
+                    val description = runCatching { errorCode.getExplainError() }.getOrDefault(errorCode.message)
 
                     ExampleHolder(
                         holder = getSwaggerExample(description, errorCode),
-                        code = errorCode.getStatus().value(),
-                        name = "[$enumName] ${errorCode.getMessage()}",
+                        code = errorCode.status.value(),
+                        name = "[$enumName] ${errorCode.message}",
                     )
                 }.groupBy { it.code }
 
@@ -131,7 +131,7 @@ class SwaggerConfig(
         description: String,
         errorCode: ErrorCodeInterface,
     ): Example {
-        val errorResponse = CommonResponse.Companion.createFailure(errorCode.getCode(), errorCode.getMessage())
+        val errorResponse = CommonResponse.Companion.createFailure(errorCode.code, errorCode.message)
         return Example()
             .description(description)
             .value(errorResponse)

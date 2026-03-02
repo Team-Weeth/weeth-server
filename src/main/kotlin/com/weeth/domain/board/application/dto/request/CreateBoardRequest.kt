@@ -1,7 +1,7 @@
 package com.weeth.domain.board.application.dto.request
 
-import com.weeth.domain.board.domain.entity.enums.BoardType
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.user.domain.enums.Role
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull

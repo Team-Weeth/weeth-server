@@ -1,6 +1,6 @@
 package com.weeth.domain.board.domain.vo
 
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 
 data class BoardConfig(
     val commentEnabled: Boolean = true,

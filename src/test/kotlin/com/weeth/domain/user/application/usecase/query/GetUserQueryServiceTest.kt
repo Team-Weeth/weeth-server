@@ -46,7 +46,13 @@ class GetUserQueryServiceTest :
         describe("findUserDetails") {
             it("user와 cardinal 목록을 조회해 UserDetailsResponse로 매핑한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val cardinal = CardinalTestFixture.createCardinal(id = 10L, cardinalNumber = 6, year = 2024, semester = 2)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 10L,
+                        cardinalNumber = 6,
+                        year = 2024,
+                        semester = 2,
+                    )
                 val userCardinals = listOf(UserCardinal(user, cardinal))
                 val response =
                     UserDetailsResponse(
@@ -70,7 +76,13 @@ class GetUserQueryServiceTest :
         describe("findMyProfile") {
             it("내 프로필을 UserProfileResponse로 매핑한다") {
                 val user = UserTestFixture.createActiveUser1(2L)
-                val cardinal = CardinalTestFixture.createCardinal(id = 11L, cardinalNumber = 7, year = 2025, semester = 1)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 11L,
+                        cardinalNumber = 7,
+                        year = 2025,
+                        semester = 1,
+                    )
                 val userCardinals = listOf(UserCardinal(user, cardinal))
                 val response =
                     UserProfileResponse(

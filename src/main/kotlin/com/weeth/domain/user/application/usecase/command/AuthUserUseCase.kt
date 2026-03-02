@@ -12,8 +12,8 @@ import com.weeth.domain.user.application.mapper.UserMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.domain.entity.UserSocialAccount
-import com.weeth.domain.user.domain.entity.enums.SocialProvider
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.SocialProvider
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
 import com.weeth.domain.user.domain.repository.UserReader
@@ -142,7 +142,12 @@ class AuthUserUseCase(
         providerName: String?,
         request: SocialLoginRequest,
     ): SocialLoginResponse {
-        val socialAccount = userSocialAccountRepository.findByProviderAndProviderUserId(provider, providerUserId).orElse(null)
+        val socialAccount =
+            userSocialAccountRepository
+                .findByProviderAndProviderUserId(
+                    provider,
+                    providerUserId,
+                ).orElse(null)
         val (user, isNewUser) =
             if (socialAccount != null) {
                 socialAccount.user to false
@@ -191,7 +196,9 @@ class AuthUserUseCase(
                     department = "",
                 ),
             )
-        userSocialAccountRepository.save(UserSocialAccount(provider = provider, providerUserId = providerUserId, user = user))
+        userSocialAccountRepository.save(
+            UserSocialAccount(provider = provider, providerUserId = providerUserId, user = user),
+        )
         return user to (existingUser == null)
     }
 
@@ -222,7 +229,9 @@ class AuthUserUseCase(
         ) {
             throw StudentIdExistsException()
         }
-        if (nextTel != user.telValue && nextTel.isNotBlank() && userRepository.existsByTelAndIdIsNotValue(nextTel, user.id)) {
+        if (nextTel != user.telValue && nextTel.isNotBlank() &&
+            userRepository.existsByTelAndIdIsNotValue(nextTel, user.id)
+        ) {
             throw TelExistsException()
         }
 

@@ -254,7 +254,8 @@ class AppleAuthService(
             throw AppleAuthenticationException()
         }
 
-    private fun decodeBase64Url(value: String): String = String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8)
+    private fun decodeBase64Url(value: String): String =
+        String(Base64.getUrlDecoder().decode(value), StandardCharsets.UTF_8)
 
     private fun parseEmailVerified(raw: Any?): Boolean =
         when (raw) {

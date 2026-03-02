@@ -1,4 +1,4 @@
-package com.weeth.domain.board.domain.entity.enums
+package com.weeth.domain.board.domain.enums
 
 enum class BoardType {
     NOTICE,

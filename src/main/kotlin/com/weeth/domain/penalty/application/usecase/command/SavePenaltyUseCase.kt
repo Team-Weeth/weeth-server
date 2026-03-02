@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class SavePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
-    private val userRepository: UserRepository,
+    private val userRepository: UserRepository, // 타 도메인이므로 Reader 사용 검토
     private val userCardinalPolicy: UserCardinalPolicy,
     private val mapper: PenaltyMapper,
 ) {

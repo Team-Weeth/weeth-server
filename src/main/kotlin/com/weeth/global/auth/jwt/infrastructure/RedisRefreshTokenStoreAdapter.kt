@@ -1,6 +1,6 @@
 package com.weeth.global.auth.jwt.infrastructure
 
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.auth.jwt.application.exception.RedisTokenNotFoundException
 import com.weeth.global.auth.jwt.domain.port.RefreshTokenStorePort

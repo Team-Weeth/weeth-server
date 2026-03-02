@@ -8,7 +8,6 @@ plugins {
     kotlin("jvm") version "2.1.0"
     kotlin("plugin.spring") version "2.1.0"
     kotlin("plugin.jpa") version "2.1.0"
-    kotlin("plugin.lombok") version "2.1.0"
 
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
 }
@@ -38,21 +37,7 @@ val testcontainersBomVersion = "2.0.3"
 val kotestVersion = "5.9.1"
 val mockkVersion = "1.13.14"
 val springmockkVersion = "4.0.2"
-val lombokVersion = "1.18.36"
-val mapstructVersion = "1.6.3"
-
 dependencies {
-    // --- Lombok (temporary, will be removed during Kotlin migration) ---
-    compileOnly("org.projectlombok:lombok:$lombokVersion")
-    annotationProcessor("org.projectlombok:lombok:$lombokVersion")
-    testCompileOnly("org.projectlombok:lombok:$lombokVersion")
-    testAnnotationProcessor("org.projectlombok:lombok:$lombokVersion")
-
-    // --- MapStruct (temporary, will be removed during Kotlin migration) ---
-    implementation("org.mapstruct:mapstruct:$mapstructVersion")
-    annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
-    testAnnotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
-
     // --- Kotlin ---
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

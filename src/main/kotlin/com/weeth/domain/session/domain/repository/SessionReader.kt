@@ -1,7 +1,7 @@
 package com.weeth.domain.session.domain.repository
 
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.enums.SessionStatus
 import java.time.LocalDateTime
 
 interface SessionReader {

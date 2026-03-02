@@ -4,14 +4,14 @@ import com.weeth.config.QueryCountUtil
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
-import com.weeth.domain.board.domain.entity.enums.BoardType
+import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.comment.application.dto.request.CommentSaveRequest
 import com.weeth.domain.comment.domain.entity.Comment
 import com.weeth.domain.comment.domain.repository.CommentRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -250,7 +250,14 @@ class CommentConcurrencyTest(
                         "atomicThroughput=${"%.2f".format(atomicSummary.medianThroughput)} ops/s, " +
                         "pessimisticThroughput=${"%.2f".format(pessimisticSummary.medianThroughput)} ops/s",
                 )
-                val winner = if (atomicSummary.medianElapsedMs < pessimisticSummary.medianElapsedMs) "atomic" else "pessimistic"
+                val winner =
+                    if (atomicSummary.medianElapsedMs <
+                        pessimisticSummary.medianElapsedMs
+                    ) {
+                        "atomic"
+                    } else {
+                        "pessimistic"
+                    }
                 println("[CommentBenchmark][winner] $winner")
             }
         }
@@ -276,7 +283,8 @@ class AtomicCommentCountCommand(
                     val post = entityManager.getReference(Post::class.java, postId)
                     val parent =
                         dto.parentCommentId?.let { parentId ->
-                            commentRepository.findByIdAndPostId(parentId, postId) ?: throw IllegalArgumentException("parent not found")
+                            commentRepository.findByIdAndPostId(parentId, postId)
+                                ?: throw IllegalArgumentException("parent not found")
                         }
 
                     commentRepository.save(

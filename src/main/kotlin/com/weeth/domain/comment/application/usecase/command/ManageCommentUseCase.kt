@@ -12,7 +12,7 @@ import com.weeth.domain.comment.domain.entity.Comment
 import com.weeth.domain.comment.domain.repository.CommentRepository
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.repository.UserReader
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ManageCommentUseCase(
     private val commentRepository: CommentRepository,
-    private val postRepository: PostRepository,
+    private val postRepository: PostRepository, // 타 도메인 이므로 Reader 사용 검토
     private val userReader: UserReader,
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
@@ -153,5 +153,6 @@ class ManageCommentUseCase(
         }
     }
 
-    private fun findPostWithLock(postId: Long): Post = postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
+    private fun findPostWithLock(postId: Long): Post =
+        postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
 }

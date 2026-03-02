@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.Query
 import java.time.LocalDateTime
 
 interface PenaltyRepository : JpaRepository<Penalty, Long> {
-    @Query("SELECT p FROM Penalty p JOIN FETCH p.cardinal WHERE p.user.id = :userId AND p.cardinal.id = :cardinalId ORDER BY p.id DESC")
+    @Query(
+        "SELECT p FROM Penalty p JOIN FETCH p.cardinal WHERE p.user.id = :userId AND p.cardinal.id = :cardinalId ORDER BY p.id DESC",
+    )
     fun findByUserIdAndCardinalIdOrderByIdDesc(
         userId: Long,
         cardinalId: Long,
@@ -30,6 +32,8 @@ interface PenaltyRepository : JpaRepository<Penalty, Long> {
         pageable: Pageable,
     ): List<Penalty>
 
-    @Query("SELECT p FROM Penalty p JOIN FETCH p.user JOIN FETCH p.cardinal WHERE p.cardinal.id = :cardinalId ORDER BY p.id DESC")
+    @Query(
+        "SELECT p FROM Penalty p JOIN FETCH p.user JOIN FETCH p.cardinal WHERE p.cardinal.id = :cardinalId ORDER BY p.id DESC",
+    )
     fun findByCardinalIdOrderByIdDesc(cardinalId: Long): List<Penalty>
 }

@@ -1,8 +1,8 @@
 package com.weeth.domain.board.domain.entity
 
-import com.weeth.domain.board.domain.entity.enums.BoardType
+import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -83,7 +83,8 @@ class BoardEntityTest :
         }
 
         "canWriteBy는 비공개/관리자 전용 설정을 모두 고려한다" {
-            val privateBoard = Board(id = 24L, name = "비공개", type = BoardType.GENERAL, config = BoardConfig(isPrivate = true))
+            val privateBoard =
+                Board(id = 24L, name = "비공개", type = BoardType.GENERAL, config = BoardConfig(isPrivate = true))
             val adminOnlyBoard =
                 Board(
                     id = 25L,

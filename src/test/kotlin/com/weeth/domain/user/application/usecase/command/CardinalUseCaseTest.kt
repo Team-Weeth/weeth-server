@@ -6,7 +6,7 @@ import com.weeth.domain.user.application.dto.response.CardinalResponse
 import com.weeth.domain.user.application.mapper.CardinalMapper
 import com.weeth.domain.user.application.usecase.query.GetCardinalQueryService
 import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.entity.enums.CardinalStatus
+import com.weeth.domain.user.domain.enums.CardinalStatus
 import com.weeth.domain.user.domain.repository.CardinalRepository
 import com.weeth.domain.user.fixture.CardinalTestFixture
 import io.kotest.core.spec.style.DescribeSpec
@@ -91,7 +91,8 @@ class CardinalUseCaseTest :
                 val cardinals = listOf(cardinal1, cardinal2)
                 val now = LocalDateTime.now()
 
-                val response1 = CardinalResponse(1L, 6, 2024, 2, CardinalStatus.DONE, now.minusDays(5), now.minusDays(3))
+                val response1 =
+                    CardinalResponse(1L, 6, 2024, 2, CardinalStatus.DONE, now.minusDays(5), now.minusDays(3))
                 val response2 =
                     CardinalResponse(2L, 7, 2025, 1, CardinalStatus.IN_PROGRESS, now.minusDays(2), now)
 

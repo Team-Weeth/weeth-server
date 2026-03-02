@@ -1,6 +1,6 @@
 package com.weeth.global.auth.jwt.filter
 
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.model.AuthenticatedUser
@@ -40,7 +40,8 @@ class JwtAuthenticationProcessingFilterTest :
 
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
-                every { jwtService.extractClaims("access-token") } returns JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", Role.ADMIN)
+                every { jwtService.extractClaims("access-token") } returns
+                    JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", Role.ADMIN)
 
                 filter.doFilter(request, response, chain)
 

@@ -10,7 +10,7 @@ import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.ReceiptRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.file.application.mapper.FileMapper
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.Cardinal
@@ -19,6 +19,9 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+/**
+ * Todo: 개행을 추가해 가독성 개선
+ */
 @Service
 class ManageReceiptUseCase(
     private val receiptRepository: ReceiptRepository,
@@ -28,6 +31,7 @@ class ManageReceiptUseCase(
     private val cardinalRepository: CardinalRepository,
     private val fileMapper: FileMapper,
 ) {
+    // 기수가 없는 경우 생성
     private fun ensureCardinalExists(cardinalNumber: Int) {
         cardinalRepository.findByCardinalNumber(cardinalNumber).orElseGet {
             cardinalRepository.save(Cardinal.create(cardinalNumber = cardinalNumber))

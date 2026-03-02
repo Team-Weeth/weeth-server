@@ -8,9 +8,9 @@ import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.mapper.UserMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
-import com.weeth.domain.user.domain.entity.enums.Status
-import com.weeth.domain.user.domain.entity.enums.StatusPriority
-import com.weeth.domain.user.domain.entity.enums.UsersOrderBy
+import com.weeth.domain.user.domain.enums.Status
+import com.weeth.domain.user.domain.enums.StatusPriority
+import com.weeth.domain.user.domain.enums.UsersOrderBy
 import com.weeth.domain.user.domain.repository.CardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
@@ -26,7 +26,7 @@ import java.util.LinkedHashMap
 @Transactional(readOnly = true)
 class GetUserQueryService(
     private val userRepository: UserRepository,
-    private val userReader: UserReader,
+    private val userReader: UserReader, // todo: 동일 도메인이므로 UserRespository 단일 사용)
     private val cardinalReader: CardinalReader,
     private val userCardinalRepository: UserCardinalRepository,
     private val userCardinalReader: UserCardinalReader,
@@ -102,10 +102,14 @@ class GetUserQueryService(
             UsersOrderBy.CARDINAL_DESCENDING -> {
                 userCardinalMap.entries
                     .sortedWith(
-                        compareBy<Map.Entry<User, List<UserCardinal>>> { StatusPriority.fromStatus(it.key.status).priority }
-                            .thenByDescending { entry ->
-                                entry.value.maxOfOrNull { it.cardinal.cardinalNumber } ?: -1
-                            },
+                        compareBy<Map.Entry<User, List<UserCardinal>>> {
+                            StatusPriority
+                                .fromStatus(
+                                    it.key.status,
+                                ).priority
+                        }.thenByDescending { entry ->
+                            entry.value.maxOfOrNull { it.cardinal.cardinalNumber } ?: -1
+                        },
                     ).map { entry ->
                         mapper.toAdminUserResponse(entry.key, entry.value)
                     }

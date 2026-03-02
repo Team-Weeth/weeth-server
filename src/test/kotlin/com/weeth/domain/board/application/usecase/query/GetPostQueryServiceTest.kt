@@ -7,7 +7,7 @@ import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
-import com.weeth.domain.board.domain.entity.enums.BoardType
+import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.comment.application.dto.response.CommentResponse
@@ -16,10 +16,10 @@ import com.weeth.domain.comment.domain.repository.CommentReader
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
-import com.weeth.domain.file.domain.entity.FileOwnerType
-import com.weeth.domain.file.domain.entity.FileStatus
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.repository.FileReader
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -133,7 +133,8 @@ class GetPostQueryServiceTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val privateBoard = Board(id = 2L, name = "비공개", type = BoardType.GENERAL)
                 privateBoard.updateConfig(privateBoard.config.copy(isPrivate = true))
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = privateBoard, commentCount = 0)
+                val post =
+                    Post(id = 1L, title = "제목", content = "내용", user = user, board = privateBoard, commentCount = 0)
 
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
@@ -145,7 +146,8 @@ class GetPostQueryServiceTest :
             it("삭제된 게시판의 게시글은 조회할 수 없다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val deletedBoard = Board(id = 3L, name = "삭제", type = BoardType.GENERAL, isDeleted = true)
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = deletedBoard, commentCount = 0)
+                val post =
+                    Post(id = 1L, title = "제목", content = "내용", user = user, board = deletedBoard, commentCount = 0)
 
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
@@ -160,7 +162,8 @@ class GetPostQueryServiceTest :
                 val pageable = PageRequest.of(0, 10)
                 val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
-                every { postRepository.searchByBoardId(1L, "키워드", any()) } returns SliceImpl(emptyList(), pageable, false)
+                every { postRepository.searchByBoardId(1L, "키워드", any()) } returns
+                    SliceImpl(emptyList(), pageable, false)
 
                 shouldThrow<NoSearchResultException> {
                     queryService.searchPosts(1L, "키워드", 0, 10, Role.USER)

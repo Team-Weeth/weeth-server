@@ -11,7 +11,7 @@ import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUse
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.entity.enums.Status
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import io.kotest.core.spec.style.DescribeSpec
@@ -81,7 +81,8 @@ class GetAttendanceQueryServiceTest :
                 val currentCardinal = mockk<Cardinal>()
                 every { currentCardinal.cardinalNumber } returns 1
                 every { userCardinalPolicy.getCurrentCardinal(user) } returns currentCardinal
-                every { attendanceRepository.findAllByUserIdAndCardinal(userId, 1) } returns listOf(attendance1, attendance2)
+                every { attendanceRepository.findAllByUserIdAndCardinal(userId, 1) } returns
+                    listOf(attendance1, attendance2)
 
                 val response1 = mockk<AttendanceResponse>()
                 val response2 = mockk<AttendanceResponse>()

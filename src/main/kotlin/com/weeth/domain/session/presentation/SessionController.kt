@@ -27,5 +27,8 @@ class SessionController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable sessionId: Long,
     ): CommonResponse<SessionResponse> =
-        CommonResponse.success(SessionResponseCode.SESSION_FIND_SUCCESS, getSessionQueryService.findSession(userId, sessionId))
+        CommonResponse.success(
+            SessionResponseCode.SESSION_FIND_SUCCESS,
+            getSessionQueryService.findSession(userId, sessionId),
+        )
 }

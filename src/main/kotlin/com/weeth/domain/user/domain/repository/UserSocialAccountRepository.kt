@@ -1,7 +1,7 @@
 package com.weeth.domain.user.domain.repository
 
 import com.weeth.domain.user.domain.entity.UserSocialAccount
-import com.weeth.domain.user.domain.entity.enums.SocialProvider
+import com.weeth.domain.user.domain.enums.SocialProvider
 import org.springframework.data.jpa.repository.JpaRepository
 import java.util.Optional
 

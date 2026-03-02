@@ -1,6 +1,6 @@
 package com.weeth.domain.user.domain.entity
 
-import com.weeth.domain.user.domain.entity.enums.CardinalStatus
+import com.weeth.domain.user.domain.enums.CardinalStatus
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity

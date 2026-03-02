@@ -1,7 +1,7 @@
 package com.weeth.domain.board.domain.converter
 
 import com.weeth.domain.board.domain.vo.BoardConfig
-import com.weeth.domain.user.domain.entity.enums.Role
+import com.weeth.domain.user.domain.enums.Role
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe

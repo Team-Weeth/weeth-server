@@ -1,6 +1,6 @@
 package com.weeth.domain.attendance.domain.entity
 
-import com.weeth.domain.attendance.domain.entity.enums.AttendanceStatus
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
 import com.weeth.domain.session.fixture.SessionTestFixture.createOneDaySession

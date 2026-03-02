@@ -1,6 +1,6 @@
 package com.weeth.domain.session.domain.entity
 
-import com.weeth.domain.session.domain.entity.enums.SessionStatus
+import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
@@ -17,7 +17,7 @@ import jakarta.persistence.Table
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "meeting")
+@Table(name = "meeting") // 테이블명 Session으로 수정
 class Session(
     var title: String,
     @Column(length = 500)

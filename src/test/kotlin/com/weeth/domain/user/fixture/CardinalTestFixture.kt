@@ -1,7 +1,7 @@
 package com.weeth.domain.user.fixture
 
 import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.entity.enums.CardinalStatus
+import com.weeth.domain.user.domain.enums.CardinalStatus
 
 object CardinalTestFixture {
     fun createCardinal(

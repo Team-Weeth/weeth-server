@@ -12,7 +12,7 @@ import com.weeth.domain.account.fixture.ReceiptTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
-import com.weeth.domain.file.domain.entity.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.Cardinal
@@ -89,7 +89,8 @@ class ManageReceiptUseCaseTest :
                     stubExistingCardinal(40)
                     every { accountRepository.findByCardinal(40) } returns account
                     every { receiptRepository.save(any()) } returns savedReceipt
-                    every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, savedReceipt.id) } returns emptyList()
+                    every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, savedReceipt.id) } returns
+                        emptyList()
 
                     useCase.save(request)
 

@@ -3,7 +3,7 @@ package com.weeth.domain.schedule.application.mapper
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.domain.entity.Event
-import com.weeth.domain.schedule.domain.entity.enums.Type
+import com.weeth.domain.schedule.domain.enums.Type
 import com.weeth.domain.user.domain.entity.User
 import org.springframework.stereotype.Component
 
