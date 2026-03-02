@@ -2,9 +2,12 @@ package com.weeth.domain.attendance.presentation
 
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
+import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
+import com.weeth.domain.attendance.application.usecase.command.GenerateQrTokenUseCase
 import com.weeth.domain.attendance.application.usecase.command.ManageAttendanceUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
+import com.weeth.domain.session.application.exception.SessionErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
@@ -13,6 +16,7 @@ import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -22,10 +26,11 @@ import java.time.LocalDate
 @Tag(name = "ATTENDANCE ADMIN", description = "[ADMIN] 출석 어드민 API")
 @RestController
 @RequestMapping("/api/v4/admin/attendances")
-@ApiErrorCodeExample(AttendanceErrorCode::class)
+@ApiErrorCodeExample(AttendanceErrorCode::class, SessionErrorCode::class)
 class AttendanceAdminController(
     private val manageAttendanceUseCase: ManageAttendanceUseCase,
     private val getAttendanceQueryService: GetAttendanceQueryService,
+    private val generateQrTokenUseCase: GenerateQrTokenUseCase,
 ) {
     @PatchMapping("/close")
     @Operation(summary = "출석 마감")
@@ -55,4 +60,14 @@ class AttendanceAdminController(
         manageAttendanceUseCase.updateStatus(attendanceUpdates)
         return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_UPDATED_SUCCESS)
     }
+
+    @PostMapping("/{sessionId}/qr")
+    @Operation(summary = "QR 코드 생성")
+    fun generateQr(
+        @PathVariable sessionId: Long,
+    ): CommonResponse<QrTokenResponse> =
+        CommonResponse.success(
+            AttendanceResponseCode.QR_TOKEN_GENERATE_SUCCESS,
+            generateQrTokenUseCase.execute(sessionId),
+        )
 }
