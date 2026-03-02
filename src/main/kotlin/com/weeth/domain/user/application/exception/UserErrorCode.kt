@@ -5,9 +5,9 @@ import com.weeth.global.common.exception.ExplainError
 import org.springframework.http.HttpStatus
 
 enum class UserErrorCode(
-    private val code: Int,
-    private val status: HttpStatus,
-    private val message: String,
+    override val code: Int,
+    override val status: HttpStatus,
+    override val message: String,
 ) : ErrorCodeInterface {
     @ExplainError("사용자 ID로 조회했으나 해당 사용자가 존재하지 않을 때 발생합니다.")
     USER_NOT_FOUND(2800, HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),
@@ -57,10 +57,4 @@ enum class UserErrorCode(
     @ExplainError("사용자 순서 지정 시 잘못된 값이 입력되었을 때 발생합니다.")
     INVALID_USER_ORDER(2815, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
     ;
-
-    override fun getCode(): Int = code
-
-    override fun getStatus(): HttpStatus = status
-
-    override fun getMessage(): String = message
 }

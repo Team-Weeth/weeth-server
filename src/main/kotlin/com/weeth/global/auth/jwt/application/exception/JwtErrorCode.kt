@@ -5,9 +5,9 @@ import com.weeth.global.common.exception.ExplainError
 import org.springframework.http.HttpStatus
 
 enum class JwtErrorCode(
-    private val code: Int,
-    private val status: HttpStatus,
-    private val message: String,
+    override val code: Int,
+    override val status: HttpStatus,
+    override val message: String,
 ) : ErrorCodeInterface {
     @ExplainError("토큰의 구조가 올바르지 않거나(Malformed), 서명이 유효하지 않은 경우 발생합니다. 토큰을 재발급 받아주세요.")
     INVALID_TOKEN(2900, HttpStatus.BAD_REQUEST, "올바르지 않은 Token 입니다."),
@@ -24,10 +24,4 @@ enum class JwtErrorCode(
     @ExplainError("Apple 인증 과정에서 토큰 교환 또는 검증에 실패했을 때 발생합니다.")
     APPLE_AUTHENTICATION_FAILED(2904, HttpStatus.UNAUTHORIZED, "애플 로그인에 실패했습니다."),
     ;
-
-    override fun getCode(): Int = code
-
-    override fun getStatus(): HttpStatus = status
-
-    override fun getMessage(): String = message
 }
