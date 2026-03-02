@@ -18,10 +18,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-/**
- * Todo: 개행을 추가해 가독성 개선
- * Todo: if 문 가독성 개선
- */
 @Service
 class ManageAttendanceUseCase(
     private val userReader: UserReader,
@@ -35,12 +31,16 @@ class ManageAttendanceUseCase(
         code: Int,
     ) {
         val sessionId = qrAttendancePort.getSessionId(code) ?: throw QrTokenExpiredException()
+
         val session = sessionReader.getById(sessionId)
         val user = userReader.getById(userId)
+
         val lockedAttendance =
             attendanceRepository.findBySessionAndUserWithLock(session, user)
                 ?: throw AttendanceNotFoundException()
+
         if (lockedAttendance.status == AttendanceStatus.ATTEND) throw AlreadyAttendedException()
+
         lockedAttendance.attend()
         user.attend()
     }
@@ -58,6 +58,7 @@ class ManageAttendanceUseCase(
                         session.end.toLocalDate().isEqual(now)
                 }
                 ?: throw SessionNotFoundException()
+
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(targetSession, Status.ACTIVE)
         closePendingAttendances(attendances)
     }
@@ -65,6 +66,7 @@ class ManageAttendanceUseCase(
     @Transactional
     fun autoClose() {
         val sessions = sessionReader.findAllByStatusAndEndBeforeOrderByEndAsc(SessionStatus.OPEN, LocalDateTime.now())
+
         sessions.forEach { session ->
             session.close()
             val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
@@ -78,6 +80,7 @@ class ManageAttendanceUseCase(
             val attendance =
                 attendanceRepository.findByIdWithUser(update.attendanceId)
                     ?: throw AttendanceNotFoundException()
+
             val user = attendance.user
             val newStatus = AttendanceStatus.valueOf(update.status)
 
@@ -85,12 +88,17 @@ class ManageAttendanceUseCase(
 
             val prevStatus = attendance.status
             attendance.adminOverride(newStatus)
-            if (newStatus == AttendanceStatus.ABSENT) {
-                if (prevStatus == AttendanceStatus.ATTEND) user.removeAttend()
-                user.absent()
-            } else {
-                if (prevStatus == AttendanceStatus.ABSENT) user.removeAbsent()
-                user.attend()
+
+            when (newStatus) {
+                AttendanceStatus.ABSENT -> {
+                    if (prevStatus == AttendanceStatus.ATTEND) user.removeAttend()
+                    user.absent()
+                }
+
+                else -> {
+                    if (prevStatus == AttendanceStatus.ABSENT) user.removeAbsent()
+                    user.attend()
+                }
             }
         }
     }
