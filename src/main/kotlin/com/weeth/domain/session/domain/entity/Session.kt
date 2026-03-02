@@ -88,6 +88,6 @@ class Session(
             )
         }
 
-        private fun generateCode(): Int = (1000..9999).random()
+        private fun generateCode(): Int = (100000..999999).random()
     }
 }
