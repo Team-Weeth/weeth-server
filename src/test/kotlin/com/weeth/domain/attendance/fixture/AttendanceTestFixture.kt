@@ -7,13 +7,14 @@ import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.AttendanceStats
 import org.springframework.test.util.ReflectionTestUtils
+import java.util.UUID
 
 object AttendanceTestFixture {
     fun createActiveUser(name: String): User =
         User
             .create(
                 name = name,
-                email = "$name@test.com",
+                email = "attendance-${UUID.randomUUID()}@test.com",
                 studentId = "",
                 tel = "",
                 department = "",
