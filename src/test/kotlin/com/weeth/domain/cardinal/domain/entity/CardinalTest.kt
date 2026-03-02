@@ -1,6 +1,5 @@
-package com.weeth.domain.user.domain.entity
+package com.weeth.domain.cardinal.domain.entity
 
-import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

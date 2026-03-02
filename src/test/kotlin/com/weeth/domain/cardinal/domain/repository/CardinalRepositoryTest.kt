@@ -1,8 +1,7 @@
-package com.weeth.domain.user.domain.repository
+package com.weeth.domain.cardinal.domain.repository
 
 import com.weeth.config.TestContainersConfig
-import com.weeth.domain.cardinal.domain.repository.CardinalRepository
-import com.weeth.domain.user.fixture.CardinalTestFixture
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.optional.shouldBePresent
 import io.kotest.matchers.shouldBe

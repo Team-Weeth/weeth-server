@@ -1,4 +1,4 @@
-package com.weeth.domain.user.fixture
+package com.weeth.domain.cardinal.fixture
 
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus

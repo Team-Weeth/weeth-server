@@ -1,16 +1,15 @@
-package com.weeth.domain.user.application.usecase.command
+package com.weeth.domain.cardinal.application.usecase.command
 
 import com.weeth.domain.cardinal.application.dto.request.CardinalSaveRequest
 import com.weeth.domain.cardinal.application.dto.request.CardinalUpdateRequest
 import com.weeth.domain.cardinal.application.dto.response.CardinalResponse
 import com.weeth.domain.cardinal.application.mapper.CardinalMapper
-import com.weeth.domain.cardinal.application.usecase.command.ManageCardinalUseCase
 import com.weeth.domain.cardinal.application.usecase.query.GetCardinalQueryService
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.cardinal.domain.service.CardinalStatusPolicy
-import com.weeth.domain.user.fixture.CardinalTestFixture
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
