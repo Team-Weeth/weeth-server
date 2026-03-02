@@ -6,7 +6,6 @@ import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
 import com.weeth.domain.user.application.exception.UserNotFoundException
 import com.weeth.domain.user.domain.repository.UserRepository
-import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -37,25 +36,6 @@ class DeletePenaltyUseCase(
         when (penalty.penaltyType) {
             PenaltyType.PENALTY -> {
                 user.decrementPenaltyCount()
-            }
-
-            PenaltyType.WARNING -> {
-                if (user.warningCount % 2 == 0) {
-                    val relatedAutoPenalty =
-                        penaltyRepository
-                            .findFirstAutoPenaltyAfter(
-                                penalty.user.id,
-                                penalty.cardinal.id,
-                                PenaltyType.AUTO_PENALTY,
-                                penalty.createdAt,
-                                Pageable.ofSize(1),
-                            ).firstOrNull()
-                    if (relatedAutoPenalty != null) {
-                        penaltyRepository.deleteById(relatedAutoPenalty.id)
-                    }
-                    user.decrementPenaltyCount()
-                }
-                user.decrementWarningCount()
             }
 
             else -> {}

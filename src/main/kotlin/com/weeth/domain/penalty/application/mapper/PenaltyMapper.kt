@@ -46,7 +46,6 @@ class PenaltyMapper {
             userId = user.id,
             name = user.name,
             penaltyCount = user.penaltyCount,
-            warningCount = user.warningCount,
             cardinals = userCardinals.map { it.cardinal.cardinalNumber },
             penalties = penalties.map(::toDetailResponse),
         )

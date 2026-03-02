@@ -17,10 +17,6 @@ class SavePenaltyUseCase(
     private val userCardinalPolicy: UserCardinalPolicy,
     private val mapper: PenaltyMapper,
 ) {
-    companion object {
-        private const val AUTO_PENALTY_DESCRIPTION = "누적경고 %d회"
-    }
-
     @Transactional
     fun save(request: SavePenaltyRequest) {
         val user =
@@ -37,19 +33,7 @@ class SavePenaltyUseCase(
                 user.incrementPenaltyCount()
             }
 
-            PenaltyType.WARNING -> {
-                user.incrementWarningCount()
-
-                val warningCount = user.warningCount
-                if (warningCount % 2 == 0) {
-                    val description = AUTO_PENALTY_DESCRIPTION.format(warningCount)
-                    val autoPenalty = mapper.toAutoPenalty(description, user, cardinal)
-                    penaltyRepository.save(autoPenalty)
-                    user.incrementPenaltyCount()
-                }
-            }
-
-            else -> {}
+            else -> {} // BONUS 등 다른 유형은 카운트 변경 없음
         }
     }
 }
