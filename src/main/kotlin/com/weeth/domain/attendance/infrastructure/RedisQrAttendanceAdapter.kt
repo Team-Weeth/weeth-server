@@ -16,8 +16,7 @@ class RedisQrAttendanceAdapter(
         redisTemplate.opsForValue().set(key(code), sessionId.toString(), TTL_SECONDS, TimeUnit.SECONDS)
     }
 
-    override fun getSessionId(code: Int): Long? =
-        redisTemplate.opsForValue().get(key(code))?.toLongOrNull()
+    override fun getSessionId(code: Int): Long? = redisTemplate.opsForValue().get(key(code))?.toLongOrNull()
 
     private fun key(code: Int) = "$PREFIX$code"
 
