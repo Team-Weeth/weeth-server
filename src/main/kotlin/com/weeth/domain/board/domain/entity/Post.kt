@@ -55,16 +55,6 @@ class Post(
         likeCount--
     }
 
-    fun updateContent(
-        newTitle: String,
-        newContent: String,
-    ) {
-        require(newTitle.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
-        require(newContent.isNotBlank()) { "내용은 비어 있을 수 없습니다" }
-        title = newTitle
-        content = newContent
-    }
-
     fun isOwnedBy(userId: Long): Boolean = user.id == userId
 
     fun update(
