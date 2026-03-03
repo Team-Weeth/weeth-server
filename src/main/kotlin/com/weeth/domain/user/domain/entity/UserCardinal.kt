@@ -24,10 +24,6 @@ import jakarta.persistence.UniqueConstraint
     ],
 )
 class UserCardinal(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_cardinal_id")
-    val id: Long = 0L,
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
@@ -35,12 +31,16 @@ class UserCardinal(
     @JoinColumn(name = "cardinal_id", nullable = false)
     val cardinal: Cardinal,
 ) : BaseEntity() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_cardinal_id")
+    val id: Long = 0L
+
     companion object {
         fun create(
             user: User,
             cardinal: Cardinal,
         ) = UserCardinal(
-            id = 0L,
             user = user,
             cardinal = cardinal,
         )
