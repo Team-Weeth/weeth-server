@@ -13,7 +13,7 @@ class RedisQrAttendanceAdapter(
         sessionId: Long,
         code: Int,
     ) {
-        redisTemplate.opsForValue().set(key(sessionId), code.toString(), TTL_SECONDS, TimeUnit.SECONDS)
+        redisTemplate.opsForValue().set(key(sessionId), code.toString(), QrAttendancePort.TTL_SECONDS, TimeUnit.SECONDS)
     }
 
     override fun getCode(sessionId: Long): Int? = redisTemplate.opsForValue().get(key(sessionId))?.toIntOrNull()
@@ -22,6 +22,5 @@ class RedisQrAttendanceAdapter(
 
     companion object {
         private const val PREFIX = "qr:"
-        private const val TTL_SECONDS = 600L
     }
 }

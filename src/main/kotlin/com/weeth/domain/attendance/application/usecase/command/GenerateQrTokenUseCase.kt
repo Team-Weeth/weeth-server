@@ -17,13 +17,9 @@ class GenerateQrTokenUseCase(
     fun execute(sessionId: Long): QrTokenResponse {
         val session = sessionReader.getById(sessionId)
 
-        val expiredAt = LocalDateTime.now().plusSeconds(TTL_SECONDS)
+        val expiredAt = LocalDateTime.now().plusSeconds(QrAttendancePort.TTL_SECONDS)
         qrAttendancePort.store(sessionId, session.code)
 
         return attendanceMapper.toQrTokenResponse(session, expiredAt)
-    }
-
-    companion object {
-        private const val TTL_SECONDS = 600L
     }
 }

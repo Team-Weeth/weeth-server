@@ -1,6 +1,10 @@
 package com.weeth.domain.attendance.domain.port
 
 interface QrAttendancePort {
+    companion object {
+        const val TTL_SECONDS = 600L
+    }
+
     /**
      * QR 출석 코드를 Redis에 저장합니다.
      * key: sessionId, value: code (TTL 10분)
