@@ -66,6 +66,12 @@ class Session(
 
     fun isInProgress(now: LocalDateTime): Boolean = !now.isBefore(start) && !now.isAfter(end)
 
+    fun isCheckInAllowed(now: LocalDateTime): Boolean {
+        val from = start.minusMinutes(10)
+        val to = end.plusMinutes(10)
+        return !now.isBefore(from) && !now.isAfter(to)
+    }
+
     companion object {
         private val secureRandom = SecureRandom().asKotlinRandom()
 

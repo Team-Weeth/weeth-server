@@ -9,6 +9,7 @@ import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.session.application.exception.SessionNotFoundException
+import com.weeth.domain.session.application.exception.SessionNotInProgressException
 import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.enums.Status
@@ -33,6 +34,9 @@ class ManageAttendanceUseCase(
         val sessionId = qrAttendancePort.getSessionId(code) ?: throw QrTokenExpiredException()
 
         val session = sessionReader.getById(sessionId)
+
+        if (!session.isCheckInAllowed(LocalDateTime.now())) throw SessionNotInProgressException()
+
         val user = userReader.getById(userId)
 
         val lockedAttendance =
