@@ -24,23 +24,24 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.web.method.HandlerMethod
 
 private const val SWAGGER_DESCRIPTION =
-    "## Response Code 규칙\n" +
-        "- Success: **1xxx**\n" +
-        "- Domain Error: **2xxx**\n" +
-        "- Server Error: **3xxx**\n" +
-        "- Client Error: **4xxx**\n\n" +
+    "## Response Code 규칙 (5자리: XDDNN)\n" +
+        "- **X**: 1=Success, 2=Domain Error, 3=Infra/Server Error, 4=Client/Validation Error\n" +
+        "- **DD**: 도메인 ID (2자리)\n" +
+        "- **NN**: 도메인 내 순번 (00~99)\n\n" +
         "## 도메인별 코드 범위\n" +
-        "| Domain | Success | Error |\n" +
-        "|--------|---------|------|\n" +
-        "| Account | 11xx | 21xx |\n" +
-        "| Attendance/Session | 12xx | 22xx |\n" +
-        "| Board | 13xx | 23xx |\n" +
-        "| Comment | 14xx | 24xx |\n" +
-        "| File | 15xx | 25xx |\n" +
-        "| Penalty | 16xx | 26xx |\n" +
-        "| Schedule | 17xx | 27xx |\n" +
-        "| User | 18xx | 28xx |\n" +
-        "| Auth/JWT (Global) | - | 29xx |\n\n" +
+        "| Domain | DD | Success | Domain Error | Infra Error |\n" +
+        "|--------|----|---------|-------------|-------------|\n" +
+        "| Account | 01 | 101xx | 201xx | — |\n" +
+        "| Attendance | 02 | 102xx | 202xx | — |\n" +
+        "| Session | 03 | 103xx | 203xx | — |\n" +
+        "| Board | 04 | 104xx | 204xx | — |\n" +
+        "| Comment | 05 | 105xx | 205xx | — |\n" +
+        "| File | 06 | 106xx | 206xx | 306xx |\n" +
+        "| Penalty | 07 | 107xx | 207xx | — |\n" +
+        "| Schedule | 08 | 108xx | 208xx | — |\n" +
+        "| User | 09 | 109xx | 209xx | — |\n" +
+        "| Cardinal | 10 | 110xx | 210xx | — |\n" +
+        "| Auth/JWT | 90 | — | 290xx | — |\n\n" +
         "> 각 API의 상세 응답 예시는 Swagger의 **Responses** 섹션에서 확인하세요."
 
 @Configuration
