@@ -27,5 +27,4 @@ class BoardController(
         @Parameter(hidden = true) @CurrentUserRole role: Role,
     ): CommonResponse<List<BoardListResponse>> =
         CommonResponse.success(BoardResponseCode.BOARD_FIND_ALL_SUCCESS, getBoardQueryService.findBoards(role))
-
 }
