@@ -10,15 +10,15 @@ class RedisQrAttendanceAdapter(
     private val redisTemplate: RedisTemplate<String, String>,
 ) : QrAttendancePort {
     override fun store(
-        code: Int,
         sessionId: Long,
+        code: Int,
     ) {
-        redisTemplate.opsForValue().set(key(code), sessionId.toString(), TTL_SECONDS, TimeUnit.SECONDS)
+        redisTemplate.opsForValue().set(key(sessionId), code.toString(), TTL_SECONDS, TimeUnit.SECONDS)
     }
 
-    override fun getSessionId(code: Int): Long? = redisTemplate.opsForValue().get(key(code))?.toLongOrNull()
+    override fun getCode(sessionId: Long): Int? = redisTemplate.opsForValue().get(key(sessionId))?.toIntOrNull()
 
-    private fun key(code: Int) = "$PREFIX$code"
+    private fun key(sessionId: Long) = "$PREFIX$sessionId"
 
     companion object {
         private const val PREFIX = "qr:"

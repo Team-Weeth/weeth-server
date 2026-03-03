@@ -2,9 +2,9 @@ package com.weeth.domain.attendance.domain.port
 
 interface QrAttendancePort {
     fun store(
-        code: Int,
         sessionId: Long,
+        code: Int,
     )
 
-    fun getSessionId(code: Int): Long?
+    fun getCode(sessionId: Long): Int?
 }

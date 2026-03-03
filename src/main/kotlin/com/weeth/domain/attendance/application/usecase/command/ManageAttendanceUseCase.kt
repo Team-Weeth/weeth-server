@@ -3,6 +3,7 @@ package com.weeth.domain.attendance.application.usecase.command
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.exception.AlreadyAttendedException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
+import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.QrTokenExpiredException
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
@@ -29,9 +30,11 @@ class ManageAttendanceUseCase(
     @Transactional
     fun checkIn(
         userId: Long,
+        sessionId: Long,
         code: Int,
     ) {
-        val sessionId = qrAttendancePort.getSessionId(code) ?: throw QrTokenExpiredException()
+        val storedCode = qrAttendancePort.getCode(sessionId) ?: throw QrTokenExpiredException()
+        if (storedCode != code) throw AttendanceCodeMismatchException()
 
         val session = sessionReader.getById(sessionId)
 

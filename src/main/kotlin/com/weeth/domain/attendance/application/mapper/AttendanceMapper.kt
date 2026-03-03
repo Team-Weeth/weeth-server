@@ -63,6 +63,7 @@ class AttendanceMapper {
         expiredAt: LocalDateTime,
     ): QrTokenResponse =
         QrTokenResponse(
+            sessionId = session.id,
             code = session.code,
             expiredAt = expiredAt,
         )
