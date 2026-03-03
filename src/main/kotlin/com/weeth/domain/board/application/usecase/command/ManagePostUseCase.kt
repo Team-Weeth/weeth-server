@@ -65,7 +65,6 @@ class ManagePostUseCase(
         val post = findPost(postId)
         validateOwner(post, userId)
 
-        // TODO: PATCH 규칙 - title/content/cardinalNumber는 실제 변경된 경우에만 반영하도록 수정 필요
         post.update(
             newTitle = request.title,
             newContent = request.content,
@@ -92,7 +91,7 @@ class ManagePostUseCase(
         boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 
     private fun findPost(postId: Long): Post =
-        postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
+        postRepository.findActivePostById(postId) ?: throw PostNotFoundException()
 
     private fun validateOwner(
         post: Post,

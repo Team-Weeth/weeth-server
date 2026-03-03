@@ -42,7 +42,7 @@ class Post(
     }
 
     fun decreaseCommentCount() {
-        check(commentCount > 0) { "comment count cannot be negative" }
+        check(commentCount > 0) { "댓글 수는 0보다 작아질 수 없습니다" }
         commentCount--
     }
 
@@ -51,7 +51,7 @@ class Post(
     }
 
     fun decreaseLikeCount() {
-        check(likeCount > 0) { "like count cannot be negative" }
+        check(likeCount > 0) { "좋아요 수는 0보다 작아질 수 없습니다" }
         likeCount--
     }
 
@@ -59,8 +59,8 @@ class Post(
         newTitle: String,
         newContent: String,
     ) {
-        require(newTitle.isNotBlank()) { "title must not be blank" }
-        require(newContent.isNotBlank()) { "content must not be blank" }
+        require(newTitle.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+        require(newContent.isNotBlank()) { "내용은 비어 있을 수 없습니다" }
         title = newTitle
         content = newContent
     }
@@ -68,12 +68,19 @@ class Post(
     fun isOwnedBy(userId: Long): Boolean = user.id == userId
 
     fun update(
-        newTitle: String,
-        newContent: String,
+        newTitle: String?,
+        newContent: String?,
         newCardinalNumber: Int?,
     ) {
-        updateContent(newTitle, newContent)
-        cardinalNumber = newCardinalNumber
+        newTitle?.let {
+            require(it.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+            title = it
+        }
+        newContent?.let {
+            require(it.isNotBlank()) { "내용은 비어 있을 수 없습니다" }
+            content = it
+        }
+        newCardinalNumber?.let { cardinalNumber = it }
     }
 
     fun markDeleted() {
@@ -92,8 +99,8 @@ class Post(
             board: Board,
             cardinalNumber: Int? = null,
         ): Post {
-            require(title.isNotBlank()) { "title must not be blank" }
-            require(content.isNotBlank()) { "content must not be blank" }
+            require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+            require(content.isNotBlank()) { "내용은 비어 있을 수 없습니다" }
             return Post(
                 title = title,
                 content = content,

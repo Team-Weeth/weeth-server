@@ -5,6 +5,7 @@ import com.weeth.domain.board.application.dto.request.UpdatePostRequest
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
+import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
@@ -191,7 +192,7 @@ class ManagePostUseCaseTest :
                 val post = Post.create("제목", "내용", user, board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
-                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+                every { postRepository.findActivePostById(1L) } returns post
 
                 useCase.update(1L, request, 1L)
 
@@ -223,7 +224,7 @@ class ManagePostUseCaseTest :
                             ),
                     )
 
-                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+                every { postRepository.findActivePostById(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns listOf(oldFile)
                 every { fileMapper.toFileList(request.files, FileOwnerType.POST, 1L) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
@@ -235,6 +236,43 @@ class ManagePostUseCaseTest :
                 post.content shouldBe "수정"
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
+
+            it("title이 null이면 기존 제목을 유지한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val post = Post.create("원래 제목", "원래 내용", user, board)
+                val request = UpdatePostRequest(content = "수정된 내용")
+
+                every { postRepository.findActivePostById(1L) } returns post
+
+                useCase.update(1L, request, 1L)
+
+                post.title shouldBe "원래 제목"
+                post.content shouldBe "수정된 내용"
+            }
+
+            it("content가 null이면 기존 내용을 유지한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val post = Post.create("원래 제목", "원래 내용", user, board)
+                val request = UpdatePostRequest(title = "수정된 제목")
+
+                every { postRepository.findActivePostById(1L) } returns post
+
+                useCase.update(1L, request, 1L)
+
+                post.title shouldBe "수정된 제목"
+                post.content shouldBe "원래 내용"
+            }
+
+            it("삭제된 Board 소속 Post를 수정하면 예외를 던진다") {
+                // findActivePostById는 Board 삭제 상태도 함께 확인하므로 null 반환
+                every { postRepository.findActivePostById(1L) } returns null
+
+                shouldThrow<PostNotFoundException> {
+                    useCase.update(1L, UpdatePostRequest(title = "수정"), 1L)
+                }
+            }
         }
 
         describe("delete") {
@@ -244,7 +282,7 @@ class ManagePostUseCaseTest :
                 val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
                 val oldFile = createUploadedPostFile("old.png")
 
-                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+                every { postRepository.findActivePostById(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns listOf(oldFile)
 
                 useCase.delete(1L, 1L)
@@ -252,6 +290,15 @@ class ManagePostUseCaseTest :
                 oldFile.status.name shouldBe "DELETED"
                 post.isDeleted shouldBe true
                 verify(exactly = 0) { postRepository.delete(any()) }
+            }
+
+            it("삭제된 Board 소속 Post를 삭제하면 예외를 던진다") {
+                // findActivePostById는 Board 삭제 상태도 함께 확인하므로 null 반환
+                every { postRepository.findActivePostById(1L) } returns null
+
+                shouldThrow<PostNotFoundException> {
+                    useCase.delete(1L, 1L)
+                }
             }
         }
 
@@ -262,7 +309,7 @@ class ManagePostUseCaseTest :
                 val post = Post(id = 1L, title = "제목", content = "내용", user = owner, board = board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
-                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+                every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<com.weeth.domain.board.application.exception.PostNotOwnedException> {
                     useCase.update(1L, request, 2L)
