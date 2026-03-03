@@ -38,12 +38,13 @@ class ManageAttendanceUseCaseTest :
 
             context("유효한 코드 + PENDING 상태 + 출석 가능 시간") {
                 it("출석 상태를 ATTEND로 변경하고 user.attend()를 호출한다") {
-                    val session = SessionTestFixture.createSession(
-                        id = sessionId,
-                        code = code,
-                        start = LocalDateTime.now().minusMinutes(5),
-                        end = LocalDateTime.now().plusMinutes(55),
-                    )
+                    val session =
+                        SessionTestFixture.createSession(
+                            id = sessionId,
+                            code = code,
+                            start = LocalDateTime.now().minusMinutes(5),
+                            end = LocalDateTime.now().plusMinutes(55),
+                        )
                     val user = AttendanceTestFixture.createActiveUser("홍길동")
                     val attendance = AttendanceTestFixture.createAttendance(session, user)
 
@@ -76,12 +77,13 @@ class ManageAttendanceUseCaseTest :
 
             context("출석 가능 시간 외 (세션 시작 10분 전 ~ 종료 10분 후 범위 초과)") {
                 it("SessionNotInProgressException을 던진다") {
-                    val session = SessionTestFixture.createSession(
-                        id = sessionId,
-                        code = code,
-                        start = LocalDateTime.now().minusHours(3),
-                        end = LocalDateTime.now().minusHours(1),
-                    )
+                    val session =
+                        SessionTestFixture.createSession(
+                            id = sessionId,
+                            code = code,
+                            start = LocalDateTime.now().minusHours(3),
+                            end = LocalDateTime.now().minusHours(1),
+                        )
 
                     every { qrAttendancePort.getCode(sessionId) } returns code
                     every { sessionReader.getById(sessionId) } returns session
@@ -92,12 +94,13 @@ class ManageAttendanceUseCaseTest :
 
             context("이미 ATTEND 상태인 출석") {
                 it("AlreadyAttendedException을 던진다") {
-                    val session = SessionTestFixture.createSession(
-                        id = sessionId,
-                        code = code,
-                        start = LocalDateTime.now().minusMinutes(5),
-                        end = LocalDateTime.now().plusMinutes(55),
-                    )
+                    val session =
+                        SessionTestFixture.createSession(
+                            id = sessionId,
+                            code = code,
+                            start = LocalDateTime.now().minusMinutes(5),
+                            end = LocalDateTime.now().plusMinutes(55),
+                        )
                     val user = AttendanceTestFixture.createActiveUser("홍길동")
                     val attendance = AttendanceTestFixture.createAttendance(session, user).also { it.attend() }
 
@@ -112,12 +115,13 @@ class ManageAttendanceUseCaseTest :
 
             context("Attendance 레코드가 없는 경우") {
                 it("AttendanceNotFoundException을 던진다") {
-                    val session = SessionTestFixture.createSession(
-                        id = sessionId,
-                        code = code,
-                        start = LocalDateTime.now().minusMinutes(5),
-                        end = LocalDateTime.now().plusMinutes(55),
-                    )
+                    val session =
+                        SessionTestFixture.createSession(
+                            id = sessionId,
+                            code = code,
+                            start = LocalDateTime.now().minusMinutes(5),
+                            end = LocalDateTime.now().plusMinutes(55),
+                        )
                     val user = AttendanceTestFixture.createActiveUser("홍길동")
 
                     every { qrAttendancePort.getCode(sessionId) } returns code
