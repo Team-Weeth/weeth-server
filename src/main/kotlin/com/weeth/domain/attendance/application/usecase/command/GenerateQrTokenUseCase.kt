@@ -14,7 +14,6 @@ class GenerateQrTokenUseCase(
     private val qrAttendancePort: QrAttendancePort,
     private val attendanceMapper: AttendanceMapper,
 ) {
-    @Transactional
     fun execute(sessionId: Long): QrTokenResponse {
         val session = sessionReader.getById(sessionId)
 
