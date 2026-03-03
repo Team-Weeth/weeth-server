@@ -36,18 +36,19 @@ class GenerateQrTokenUseCaseTest :
                     val session = SessionTestFixture.createSession(id = sessionId, code = code)
                     val expectedResponse =
                         QrTokenResponse(
+                            sessionId = sessionId,
                             code = code,
                             expiredAt = LocalDateTime.now().plusSeconds(600),
                         )
 
                     every { sessionReader.getById(sessionId) } returns session
-                    every { qrAttendancePort.store(code, sessionId) } just Runs
+                    every { qrAttendancePort.store(sessionId, code) } just Runs
                     every { attendanceMapper.toQrTokenResponse(eq(session), any()) } returns expectedResponse
 
                     val result = useCase.execute(sessionId)
 
                     result shouldBe expectedResponse
-                    verify(exactly = 1) { qrAttendancePort.store(code, sessionId) }
+                    verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
                 }
             }
 
