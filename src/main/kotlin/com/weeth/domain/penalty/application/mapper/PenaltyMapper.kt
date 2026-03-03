@@ -1,12 +1,12 @@
 package com.weeth.domain.penalty.application.mapper
 
+import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
 import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyDetailResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.domain.entity.Penalty
 import com.weeth.domain.penalty.domain.enums.PenaltyType
-import com.weeth.domain.user.domain.entity.Cardinal
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserCardinal
 import org.springframework.stereotype.Component
@@ -46,7 +46,6 @@ class PenaltyMapper {
             userId = user.id,
             name = user.name,
             penaltyCount = user.penaltyCount,
-            warningCount = user.warningCount,
             cardinals = userCardinals.map { it.cardinal.cardinalNumber },
             penalties = penalties.map(::toDetailResponse),
         )

@@ -68,17 +68,18 @@ All API responses wrapped in `CommonResponse<T>` with code/message/data. Success
 
 ### Error Code Ranges
 
-| Domain | Success | Error |
-|--------|---------|-------|
-| Account | 11xx | 21xx |
-| Attendance | 12xx | 22xx |
-| Board | 13xx | 23xx |
-| Comment | 140xx | 240x |
-| File | 15xx | 25xx |
-| Penalty | 160xx | 260x |
-| Schedule | 17xx | 27xx |
-| User | 18xx | 28xx |
-| JWT (Global) | — | 29xx |
+| Domain       | Success | Error |
+|--------------|---------|-------|
+| Account      | 11xx    | 21xx  |
+| Attendance   | 12xx    | 22xx  |
+| Board        | 13xx    | 23xx  |
+| Comment      | 140xx   | 240x  |
+| File         | 15xx    | 25xx  |
+| Penalty      | 160xx   | 260x  |
+| Schedule     | 17xx    | 27xx  |
+| User         | 18xx    | 28xx  |
+| Cardinal     | 185x    | 285x  |
+| JWT (Global) | —       | 29xx  |
 
 ### Authentication
 JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser` annotation injects authenticated user ID into controller methods.

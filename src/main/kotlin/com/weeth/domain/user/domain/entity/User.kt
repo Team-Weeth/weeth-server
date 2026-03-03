@@ -17,65 +17,80 @@ import jakarta.persistence.Enumerated
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.PrePersist
 import jakarta.persistence.Table
 
-/**
- * Todo: private set 설정
- * Todo: 생성자 리팩토링
- */
 @Entity
 @Table(name = "users")
-class User(
+class User protected constructor() : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    var id: Long = 0L,
-    var name: String = "",
+    var id: Long = 0L
+        private set
+
+    @Column(nullable = false, length = 50)
+    lateinit var name: String
+        private set
+
     @Convert(converter = EmailConverter::class)
-    @Column(name = "email")
-    var email: Email = Email.from(""),
-    var studentId: String = "",
+    @Column(name = "email", nullable = false, length = 255)
+    lateinit var email: Email
+        private set
+
+    @Column(nullable = false, length = 20)
+    lateinit var studentId: String
+        private set
+
     @Convert(converter = PhoneNumberConverter::class)
-    @Column(name = "tel")
-    var tel: PhoneNumber = PhoneNumber.from(""),
-    var department: String = "",
+    @Column(name = "tel", nullable = false, length = 20)
+    lateinit var tel: PhoneNumber
+        private set
+
+    @Column(nullable = false, length = 100)
+    lateinit var department: String
+        private set
+
     @Enumerated(EnumType.STRING)
-    var status: Status = Status.WAITING,
+    @Column(nullable = false, length = 20)
+    var status: Status = Status.WAITING
+        private set
+
     @Enumerated(EnumType.STRING)
-    var role: Role = Role.USER,
+    @Column(nullable = false, length = 20)
+    var role: Role = Role.USER
+        private set
+
     @Embedded
-    var attendanceStats: AttendanceStats = AttendanceStats(),
-    var penaltyCount: Int = 0,
-    var warningCount: Int = 0, // todo: 경고시 자동 페널티 기능도 제거
-) : BaseEntity() {
+    var attendanceStats: AttendanceStats = AttendanceStats()
+        private set
+
+    @Column(nullable = false)
+    var penaltyCount: Int = 0
+        private set
+
     constructor(
         id: Long = 0L,
-        name: String = "",
-        email: String = "",
+        name: String,
+        email: Email,
         studentId: String = "",
-        tel: String = "",
+        tel: PhoneNumber = PhoneNumber.from(""),
         department: String = "",
         status: Status = Status.WAITING,
         role: Role = Role.USER,
-        attendanceCount: Int = 0,
-        absenceCount: Int = 0,
-        attendanceRate: Int = 0,
+        attendanceStats: AttendanceStats = AttendanceStats(),
         penaltyCount: Int = 0,
-        warningCount: Int = 0,
-    ) : this(
-        id = id,
-        name = name,
-        email = Email.from(email),
-        studentId = studentId,
-        tel = PhoneNumber.from(tel),
-        department = department,
-        status = status,
-        role = role,
-        attendanceStats = AttendanceStats(attendanceCount, absenceCount, attendanceRate),
-        penaltyCount = penaltyCount,
-        warningCount = warningCount,
-    )
+    ) : this() {
+        this.id = id
+        this.name = name.trim()
+        this.email = email
+        this.studentId = studentId
+        this.tel = tel
+        this.department = department
+        this.status = status
+        this.role = role
+        this.attendanceStats = attendanceStats
+        this.penaltyCount = penaltyCount
+    }
 
     val emailValue: String
         get() = email.value
@@ -92,20 +107,15 @@ class User(
     val attendanceRate: Int
         get() = attendanceStats.attendanceRate
 
-    @PrePersist
-    fun init() {
-        status = Status.WAITING
-        role = Role.USER
-        attendanceStats.reset()
-        penaltyCount = 0
-        warningCount = 0
-    }
-
     fun leave() {
         status = Status.LEFT
     }
 
-    fun isInactive(): Boolean = status != Status.ACTIVE
+    fun isActive(): Boolean = status == Status.ACTIVE
+
+    fun isInactive(): Boolean = !isActive()
+
+    fun isBannedOrLeft(): Boolean = status == Status.BANNED || status == Status.LEFT
 
     fun isProfileCompleted(): Boolean =
         name.isNotBlank() &&
@@ -115,15 +125,16 @@ class User(
 
     fun update(
         name: String,
-        email: String,
+        email: Email,
         studentId: String,
-        tel: String,
+        tel: PhoneNumber,
         department: String,
     ) {
-        this.name = name
-        this.email = Email.from(email)
+        require(name.isNotBlank()) { "이름은 공백일 수 없습니다." }
+        this.name = name.trim()
+        this.email = email
         this.studentId = studentId
-        this.tel = PhoneNumber.from(tel)
+        this.tel = tel
         this.department = department
     }
 
@@ -169,25 +180,16 @@ class User(
         }
     }
 
-    fun incrementWarningCount() {
-        warningCount++
-    }
-
-    fun decrementWarningCount() {
-        if (warningCount > 0) {
-            warningCount--
-        }
-    }
-
     fun hasRole(role: Role): Boolean = this.role == role
 
     companion object {
         fun create(
             name: String,
             email: String,
-            studentId: String,
-            tel: String,
-            department: String,
+            studentId: String = "",
+            tel: String = "",
+            department: String = "",
+            status: Status = Status.WAITING,
         ): User =
             User(
                 name = name,
@@ -195,6 +197,7 @@ class User(
                 studentId = studentId,
                 tel = PhoneNumber.from(tel),
                 department = department,
+                status = status,
             )
     }
 }
