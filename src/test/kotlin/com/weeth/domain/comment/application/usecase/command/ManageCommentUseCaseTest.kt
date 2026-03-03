@@ -151,8 +151,7 @@ class ManageCommentUseCaseTest :
         describe("deletePostComment") {
             it("리프 댓글 삭제 시 hard delete 되고 댓글 수가 감소한다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = owner, title = "title")
-                post.commentCount = 1
+                val post = PostTestFixture.create(id = 10L, user = owner, title = "title", commentCount = 1)
                 val comment = Comment(id = 310L, content = "leaf", post = post, user = owner)
 
                 every { postRepository.findByIdWithLock(10L) } returns post
@@ -166,8 +165,7 @@ class ManageCommentUseCaseTest :
 
             it("자식이 있는 댓글 삭제 시 soft delete 된다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = owner)
-                post.commentCount = 2
+                val post = PostTestFixture.create(id = 10L, user = owner, commentCount = 2)
 
                 val comment = Comment(id = 300L, content = "target", post = post, user = owner)
                 val child = Comment(id = 301L, content = "child", post = post, user = owner, parent = comment)

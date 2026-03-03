@@ -15,28 +15,54 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "post")
 class Post(
+    title: String,
+    content: String,
+    user: User,
+    board: Board,
+    commentCount: Int = 0,
+    likeCount: Int = 0,
+    cardinalNumber: Int? = null,
+    isDeleted: Boolean = false,
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0L
+        private set
+
     @Column(nullable = false)
-    var title: String,
+    var title: String = title
+        private set
+
     @Column(columnDefinition = "TEXT", nullable = false)
-    var content: String,
+    var content: String = content
+        private set
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    val user: User,
+    var user: User = user
+        private set
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "board_id")
-    val board: Board,
+    var board: Board = board
+        private set
+
     @Column(nullable = false)
-    var commentCount: Int = 0,
+    var commentCount: Int = commentCount
+        private set
+
     @Column(nullable = false)
-    var likeCount: Int = 0,
+    var likeCount: Int = likeCount
+        private set
+
     @Column
-    var cardinalNumber: Int? = null,
+    var cardinalNumber: Int? = cardinalNumber
+        private set
+
     @Column(nullable = false)
-    var isDeleted: Boolean = false,
-) : BaseEntity() {
+    var isDeleted: Boolean = isDeleted
+        private set
+
     fun increaseCommentCount() {
         commentCount++
     }

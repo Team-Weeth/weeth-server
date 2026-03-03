@@ -10,6 +10,7 @@ object PostTestFixture {
         title: String = "게시글",
         content: String = "내용",
         user: User = UserTestFixture.createActiveUser1(1L),
+        commentCount: Int = 0,
     ): Post =
         Post(
             id = id,
@@ -17,5 +18,6 @@ object PostTestFixture {
             content = content,
             user = user,
             board = BoardTestFixture.create(),
+            commentCount = commentCount,
         )
 }

@@ -18,20 +18,34 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "board")
 class Board(
+    name: String,
+    type: BoardType,
+    config: BoardConfig = BoardConfig(),
+    isDeleted: Boolean = false,
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0L
+        private set
+
     @Column(nullable = false)
-    var name: String,
+    var name: String = name
+        private set
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val type: BoardType,
+    var type: BoardType = type
+        private set
+
     @Column(columnDefinition = "JSON") // Json 속성 사용으로 인한 커스텀 컨버터 적용
     @Convert(converter = BoardConfigConverter::class)
-    var config: BoardConfig = BoardConfig(),
+    var config: BoardConfig = config
+        private set
+
     @Column(nullable = false)
-    var isDeleted: Boolean = false,
-) : BaseEntity() {
+    var isDeleted: Boolean = isDeleted
+        private set
+
     val isCommentEnabled: Boolean
         get() = config.commentEnabled
 
