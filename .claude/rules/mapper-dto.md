@@ -2,18 +2,15 @@
 
 ## Mapper Pattern
 
-AS-IS (Java): MapStruct 사용 → TO-BE (Kotlin): 수동 Mapper 패턴으로 마이그레이션
+Manual `@Component` Mapper pattern (no MapStruct).
 
 ```kotlin
 @Component
-class UserMapper(
-    private val profileMapper: ProfileMapper
-) {
+class UserMapper {
     fun toResponse(user: User) = UserResponse(
         id = user.id,
         name = user.name,
         email = user.email,
-        profile = profileMapper.toResponse(user.profile)
     )
 
     fun toEntity(request: CreateUserRequest) = User(
@@ -82,7 +79,9 @@ data class UserResponse(
 - Use non-nullable types for required fields
 - Use nullable types with default `null` for optional fields
 
-## List Response with Pagination
+## List Response with Pagination (pattern example)
+
+Follow the pattern below when introducing a pagination response DTO.
 
 ```kotlin
 data class UserListResponse(
@@ -114,12 +113,11 @@ data class PageResponse(
 
 ## Mapper Dependencies
 
-Mappers can inject other mappers:
+Mappers can inject other mappers when needed:
 
 ```kotlin
 @Component
-class UserMapper(
-    private val profileMapper: ProfileMapper,
-    private val addressMapper: AddressMapper
+class PostMapper(
+    private val commentMapper: CommentMapper
 )
 ```

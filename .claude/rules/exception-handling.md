@@ -6,7 +6,7 @@
 RuntimeException
     └── BaseException (abstract)
             ├── UserNotFoundException
-            ├── OrderNotFoundException
+            ├── BoardNotFoundException
             └── ... (domain-specific exceptions)
 ```
 
@@ -50,7 +50,9 @@ enum class UserErrorCode(
 }
 ```
 
-## Common Error Codes
+## Common Error Codes (pattern example, not yet implemented)
+
+Follow the pattern below when introducing a common error code enum. Currently, `CommonExceptionHandler` uses `CommonResponse.createFailure()` directly.
 
 ```kotlin
 enum class CommonErrorCode(

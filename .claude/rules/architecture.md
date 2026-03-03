@@ -3,7 +3,7 @@
 ## Package Structure
 
 ```text
-src/main/kotlin/weeth/
+src/main/kotlin/com/weeth/
 ├── domain/{domain-name}/
 │   ├── application/
 │   │   ├── dto/request/, dto/response/
