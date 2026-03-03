@@ -19,7 +19,7 @@ class GetBoardQueryService(
     fun findBoards(role: Role): List<BoardListResponse> =
         boardRepository
             .findAllByIsDeletedFalseOrderByIdAsc()
-            .filter { it.isAccessibleBy(role) }
+            .filter { it.isAccessibleBy(role) } // todo: Club 기반 쿼리로 개선 시 DB 레벨 필터링으로 전환
             .map(boardMapper::toListResponse)
 
     fun findBoardDetailForAdmin(boardId: Long): BoardDetailResponse {
