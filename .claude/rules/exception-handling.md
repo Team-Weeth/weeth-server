@@ -40,13 +40,13 @@ enum class UserErrorCode(
     override val message: String
 ) : ErrorCodeInterface {
     @ExplainError("사용자 ID로 조회했으나 해당 사용자가 존재하지 않을 때 발생합니다.")
-    USER_NOT_FOUND(2100, HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
-    
-    @ExplainError("사용자 설정을 조회했으나 설정 정보가 존재하지 않을 때 발생합니다.")
-    USER_SETTING_NOT_FOUND(2101, HttpStatus.NOT_FOUND, "존재하지 않는 사용자 설정입니다."),
-    
-    @ExplainError("이미 탈퇴 처리된 사용자 계정에 접근을 시도할 때 발생합니다.")
-    USER_ALREADY_LEAVE(2102, HttpStatus.BAD_REQUEST, "이미 탈퇴한 사용자입니다."),
+    USER_NOT_FOUND(20900, HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),
+
+    @ExplainError("가입 승인 대기 중인 사용자가 접근을 시도할 때 발생합니다.")
+    USER_INACTIVE(20901, HttpStatus.FORBIDDEN, "가입 승인이 허가되지 않은 계정입니다."),
+
+    @ExplainError("이미 가입된 이메일로 회원가입을 시도할 때 발생합니다.")
+    USER_EXISTS(20902, HttpStatus.BAD_REQUEST, "이미 가입된 사용자입니다."),
 }
 ```
 
@@ -58,13 +58,13 @@ enum class CommonErrorCode(
     override val status: HttpStatus,
     override val message: String
 ) : ErrorCodeInterface {
-    // 3XXX: Server errors
-    INTERNAL_SERVER_ERROR(3001, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
-    JSON_PROCESSING_ERROR(3002, HttpStatus.INTERNAL_SERVER_ERROR, "JSON processing error"),
+    // 3DDNN: Infra/Server errors (DD=99 for common)
+    INTERNAL_SERVER_ERROR(39901, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
+    JSON_PROCESSING_ERROR(39902, HttpStatus.INTERNAL_SERVER_ERROR, "JSON processing error"),
 
-    // 4XXX: Client errors
-    INVALID_ARGUMENT(4001, HttpStatus.BAD_REQUEST, "Invalid argument"),
-    RESOURCE_NOT_FOUND(4003, HttpStatus.NOT_FOUND, "Resource not found"),
+    // 4DDNN: Client/Validation errors (DD=99 for common)
+    INVALID_ARGUMENT(49901, HttpStatus.BAD_REQUEST, "Invalid argument"),
+    RESOURCE_NOT_FOUND(49903, HttpStatus.NOT_FOUND, "Resource not found"),
 }
 ```
 
@@ -115,8 +115,8 @@ enum class UserErrorCode(
     override val status: HttpStatus,
     override val message: String
 ) : ErrorCodeInterface {
-    @ExplainError("Raised when no user exists for the given user ID.")
-    USER_NOT_FOUND(2100, HttpStatus.NOT_FOUND, "존재하지 않는 사용자입니다."),
+    @ExplainError("사용자 ID로 조회했으나 해당 사용자가 존재하지 않을 때 발생합니다.")
+    USER_NOT_FOUND(20900, HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),
 }
 ```
 

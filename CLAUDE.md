@@ -64,22 +64,7 @@ domain/{name}/
 - **`@Transactional` on UseCase only** — Domain Services have no transaction annotations
 
 ### Response Format
-All API responses wrapped in `CommonResponse<T>` with code/message/data. Success codes use `ResponseCodeInterface` enums (1xxx range), error codes use `ErrorCodeInterface` enums (2xxx domain errors, 3xxx server, 4xxx client).
-
-### Error Code Ranges
-
-| Domain       | Success | Error |
-|--------------|---------|-------|
-| Account      | 11xx    | 21xx  |
-| Attendance   | 12xx    | 22xx  |
-| Board        | 13xx    | 23xx  |
-| Comment      | 140xx   | 240x  |
-| File         | 15xx    | 25xx  |
-| Penalty      | 160xx   | 260x  |
-| Schedule     | 17xx    | 27xx  |
-| User         | 18xx    | 28xx  |
-| Cardinal     | 185x    | 285x  |
-| JWT (Global) | —       | 29xx  |
+All API responses wrapped in `CommonResponse<T>` with code/message/data. 5-digit code format `XDDNN`: X=category (1=Success, 2=Domain Error, 3=Infra Error, 4=Client Error), DD=domain ID, NN=sequence. See `.claude/rules/api-design.md` for full domain ID mapping and code ranges.
 
 ### Authentication
 JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser` annotation injects authenticated user ID into controller methods.

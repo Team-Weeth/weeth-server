@@ -8,5 +8,5 @@ enum class FileResponseCode(
     override val status: HttpStatus,
     override val message: String,
 ) : ResponseCodeInterface {
-    PRESIGNED_URL_GET_SUCCESS(1500, HttpStatus.OK, "Presigned Url 반환에 성공했습니다"),
+    PRESIGNED_URL_GET_SUCCESS(10600, HttpStatus.OK, "Presigned Url 반환에 성공했습니다"),
 }
