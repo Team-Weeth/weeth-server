@@ -6,6 +6,7 @@ import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.user.domain.enums.Role
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -21,16 +22,9 @@ class GetBoardQueryService(
             .filter { it.isAccessibleBy(role) }
             .map(boardMapper::toListResponse)
 
-    fun findBoard(
-        boardId: Long,
-        role: Role,
-    ): BoardDetailResponse {
-        val board =
-            boardRepository
-                .findByIdAndIsDeletedFalse(boardId)
-                ?.takeIf { it.isAccessibleBy(role) }
-                ?: throw BoardNotFoundException()
-        return boardMapper.toDetailResponse(board)
+    fun findBoardDetailForAdmin(boardId: Long): BoardDetailResponse {
+        val board = boardRepository.findByIdOrNull(boardId) ?: throw BoardNotFoundException()
+        return boardMapper.toDetailResponseForAdmin(board)
     }
 
     fun findAllBoardsForAdmin(): List<BoardDetailResponse> =
