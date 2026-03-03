@@ -38,9 +38,6 @@ class Board(
     val isAdminOnly: Boolean
         get() = config.writePermission == Role.ADMIN
 
-    val isRestricted: Boolean
-        get() = isAdminOnly || config.isPrivate
-
     fun isAccessibleBy(role: Role): Boolean = role == Role.ADMIN || !config.isPrivate
 
     fun canWriteBy(role: Role): Boolean = isAccessibleBy(role) && (!isAdminOnly || role == Role.ADMIN)

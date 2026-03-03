@@ -41,34 +41,6 @@ class BoardEntityTest :
             board.isAdminOnly shouldBe true
         }
 
-        "isRestricted는 ADMIN 전용 또는 비공개 게시판이면 true를 반환한다" {
-            val adminOnlyBoard =
-                Board(
-                    id = 21L,
-                    name = "공지",
-                    type = BoardType.NOTICE,
-                    config = BoardConfig(writePermission = Role.ADMIN),
-                )
-            val privateBoard =
-                Board(
-                    id = 22L,
-                    name = "비공개",
-                    type = BoardType.GENERAL,
-                    config = BoardConfig(isPrivate = true),
-                )
-            val publicBoard =
-                Board(
-                    id = 23L,
-                    name = "일반",
-                    type = BoardType.GENERAL,
-                    config = BoardConfig(),
-                )
-
-            adminOnlyBoard.isRestricted shouldBe true
-            privateBoard.isRestricted shouldBe true
-            publicBoard.isRestricted shouldBe false
-        }
-
         "isAccessibleBy는 비공개 게시판을 ADMIN에게만 허용한다" {
             val privateBoard =
                 Board(
