@@ -52,6 +52,36 @@ class GetBoardQueryServiceTest :
             }
         }
 
+        describe("findAllBoardsForAdmin") {
+            it("삭제된 게시판을 포함해 전체 목록을 반환한다") {
+                val activeBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val deletedBoard =
+                    Board(id = 2L, name = "삭제됨", type = BoardType.GENERAL).apply {
+                        markDeleted()
+                    }
+
+                every { boardRepository.findAllByOrderByIdAsc() } returns listOf(activeBoard, deletedBoard)
+
+                val result = queryService.findAllBoardsForAdmin()
+
+                result shouldHaveSize 2
+            }
+
+            it("활성 게시판과 비공개 게시판도 모두 포함해 반환한다") {
+                val publicBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val privateBoard =
+                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                        updateConfig(config.copy(isPrivate = true))
+                    }
+
+                every { boardRepository.findAllByOrderByIdAsc() } returns listOf(publicBoard, privateBoard)
+
+                val result = queryService.findAllBoardsForAdmin()
+
+                result shouldHaveSize 2
+            }
+        }
+
         describe("findBoard") {
             it("일반 사용자가 비공개 게시판 상세를 조회하면 예외를 던진다") {
                 val privateBoard =

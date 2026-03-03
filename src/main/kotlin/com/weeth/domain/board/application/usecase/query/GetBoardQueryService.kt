@@ -35,6 +35,6 @@ class GetBoardQueryService(
 
     fun findAllBoardsForAdmin(): List<BoardDetailResponse> =
         boardRepository
-            .findAllByIsDeletedFalseOrderByIdAsc()
+            .findAllByOrderByIdAsc()
             .map(boardMapper::toDetailResponseForAdmin)
 }
