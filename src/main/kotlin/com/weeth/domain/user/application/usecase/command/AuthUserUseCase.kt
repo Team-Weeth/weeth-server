@@ -20,7 +20,6 @@ class AuthUserUseCase(
         user.leave()
     }
 
-    @Transactional(readOnly = true)
     fun refreshToken(httpServletRequest: HttpServletRequest): JwtDto {
         val refreshToken = jwtTokenExtractor.extractRefreshToken(httpServletRequest)
         return jwtManageUseCase.reIssueToken(refreshToken)
