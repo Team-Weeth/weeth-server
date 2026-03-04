@@ -85,20 +85,16 @@ presentation → application → domain (owns Port)
 
 ### Constructor Pattern
 
-Primary constructor takes **business creation params only** — JPA-managed fields (`id`, `isDeleted`) belong in the body. Body properties use `private set`.
+Primary constructor takes **business creation params only** (non-property) — JPA-managed fields (`id`, `isDeleted`) belong in the body with `private set` and default values.
 
 ```kotlin
 @Entity
-class Post internal constructor(
+class Post(
     title: String,
     content: String,
     user: User,
     board: Board,
 ) : BaseEntity() {
-
-    init {
-        require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
-    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -108,6 +104,13 @@ class Post internal constructor(
     var title: String = title
         private set
     // ...
+
+    companion object {
+        fun create(title: String, content: String, user: User, board: Board): Post {
+            require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+            return Post(title = title, content = content, user = user, board = board)
+        }
+    }
 }
 ```
 
@@ -115,13 +118,10 @@ class Post internal constructor(
 |---------|----------|
 | JPA-managed fields (`id`, `isDeleted`) | Body, `private set`, default value |
 | Business creation params | Primary constructor (non-property) |
-| Invariant validation | `init` block — JPA plugin no-arg bypasses `init`, so DB reconstruction is safe |
+| Validation | `create()` / named mutation methods — not constructor |
 
-### Factory Method vs `init`
-
-- **`init` block**: Enforces invariants regardless of creation path. Sufficient for simple entities (e.g., `Board`).
-- **`internal constructor` + factory method**: Use when creation logic is complex or multiple creation paths exist. `internal` blocks external modules while allowing test code (same module) to access the constructor.
-- **Factory method location**: `companion object` — delegates validation to `init`, `create()` expresses creation intent.
+- **Factory method** (`companion object`): use when the entity has creation logic or validation. Expresses domain intent.
+- **Simple entities** (e.g., `Board`): public constructor is fine; no factory method needed if creation is trivial.
 
 ## Value Object (VO)
 
