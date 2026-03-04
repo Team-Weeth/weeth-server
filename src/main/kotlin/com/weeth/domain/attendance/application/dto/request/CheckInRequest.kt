@@ -3,6 +3,8 @@ package com.weeth.domain.attendance.application.dto.request
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class CheckInRequest(
-    @field:Schema(description = "출석 코드", example = "1234")
+    @field:Schema(description = "세션 ID", example = "1")
+    val sessionId: Long,
+    @field:Schema(description = "출석 코드", example = "123456")
     val code: Int,
 )

@@ -17,4 +17,10 @@ enum class AttendanceErrorCode(
 
     @ExplainError("사용자가 출석 일정을 직접 수정하려고 시도할 때 발생합니다. (출석 로직 위반)")
     ATTENDANCE_EVENT_TYPE_NOT_MATCH(20202, HttpStatus.BAD_REQUEST, "출석일정은 직접 수정할 수 없습니다."),
+
+    @ExplainError("QR 코드가 만료되었거나 어드민이 아직 QR을 생성하지 않았을 때 발생합니다.")
+    QR_TOKEN_EXPIRED(20203, HttpStatus.BAD_REQUEST, "QR 코드가 만료되었거나 존재하지 않습니다."),
+
+    @ExplainError("해당 세션에 이미 출석 처리된 사용자가 다시 출석을 시도할 때 발생합니다.")
+    ALREADY_ATTENDED(20204, HttpStatus.CONFLICT, "이미 출석 처리된 세션입니다."),
 }

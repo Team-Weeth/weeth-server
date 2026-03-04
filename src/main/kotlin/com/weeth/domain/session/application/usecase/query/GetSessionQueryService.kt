@@ -15,9 +15,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 
-/**
- * Todo: 개행을 추가해 가독성 개선
- */
 @Service
 @Transactional(readOnly = true)
 class GetSessionQueryService(
@@ -31,6 +28,7 @@ class GetSessionQueryService(
     ): SessionResponse {
         val user = userReader.getById(userId)
         val session = sessionRepository.findByIdOrNull(sessionId) ?: throw SessionNotFoundException()
+
         return if (user.role == Role.ADMIN) {
             sessionMapper.toAdminResponse(session)
         } else {
@@ -45,6 +43,7 @@ class GetSessionQueryService(
             } else {
                 sessionRepository.findAllByCardinalOrderByStartDesc(cardinal)
             }
+
         val thisWeek = findThisWeek(sessions)
         return sessionMapper.toInfos(thisWeek, sessions)
     }
@@ -53,6 +52,7 @@ class GetSessionQueryService(
         val today = LocalDate.now()
         val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
+
         return sessions.firstOrNull { s ->
             val d = s.start.toLocalDate()
             !d.isBefore(startOfWeek) && !d.isAfter(endOfWeek)

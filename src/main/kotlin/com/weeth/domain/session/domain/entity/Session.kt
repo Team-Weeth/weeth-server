@@ -14,7 +14,9 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import java.security.SecureRandom
 import java.time.LocalDateTime
+import kotlin.random.asKotlinRandom
 
 @Entity
 @Table(name = "meeting") // 테이블명 Session으로 수정
@@ -64,7 +66,15 @@ class Session(
 
     fun isInProgress(now: LocalDateTime): Boolean = !now.isBefore(start) && !now.isAfter(end)
 
+    fun isCheckInAllowed(now: LocalDateTime): Boolean {
+        val from = start.minusMinutes(10)
+        val to = end.plusMinutes(10)
+        return !now.isBefore(from) && !now.isAfter(to)
+    }
+
     companion object {
+        private val secureRandom = SecureRandom().asKotlinRandom()
+
         fun create(
             title: String,
             content: String?,
@@ -88,6 +98,6 @@ class Session(
             )
         }
 
-        private fun generateCode(): Int = (1000..9999).random()
+        private fun generateCode(): Int = (100000..999999).random(secureRandom)
     }
 }

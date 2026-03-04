@@ -13,7 +13,7 @@ object SessionTestFixture {
         content: String = "Test Content",
         location: String = "Test Location",
         cardinal: Int = 1,
-        code: Int = 1234,
+        code: Int = 123456,
         status: SessionStatus = SessionStatus.OPEN,
         start: LocalDateTime = LocalDateTime.of(2026, 3, 1, 10, 0),
         end: LocalDateTime = LocalDateTime.of(2026, 3, 1, 12, 0),

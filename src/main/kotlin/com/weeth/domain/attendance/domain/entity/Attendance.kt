@@ -26,13 +26,16 @@ class Attendance(
     @JoinColumn(name = "user_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     val user: User,
-    @Enumerated(EnumType.STRING)
-    var status: AttendanceStatus = AttendanceStatus.PENDING,
+    status: AttendanceStatus = AttendanceStatus.PENDING,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "attendance_id")
     val id: Long = 0
+
+    @Enumerated(EnumType.STRING)
+    var status: AttendanceStatus = status
+        private set
 
     fun attend() {
         check(status == AttendanceStatus.PENDING) { "이미 처리된 출석입니다" }

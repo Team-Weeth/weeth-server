@@ -14,9 +14,6 @@ import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/**
- * Todo: 개행을 추가해 가독성 개선
- */
 @Service
 class ManageSessionUseCase(
     private val sessionRepository: SessionRepository,
@@ -33,8 +30,10 @@ class ManageSessionUseCase(
         val user = userReader.getById(userId)
         val cardinal = cardinalReader.getByCardinalNumber(request.cardinal)
         val users = userReader.findAllByCardinalAndStatus(cardinal, Status.ACTIVE)
+
         val session = sessionMapper.toEntity(request, user)
         sessionRepository.save(session)
+
         attendanceRepository.saveAll(users.map { Attendance.Companion.create(session, it) })
     }
 
@@ -46,6 +45,7 @@ class ManageSessionUseCase(
     ) {
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         val user = userReader.getById(userId)
+
         session.updateInfo(request.title, request.content, request.location, request.start, request.end, user)
     }
 
@@ -53,6 +53,7 @@ class ManageSessionUseCase(
     fun delete(sessionId: Long) {
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         val attendances = attendanceRepository.findAllBySessionAndUserStatusWithLock(session, Status.ACTIVE)
+
         attendances.forEach { a ->
             when (a.status) {
                 AttendanceStatus.ATTEND -> a.user.removeAttend()
@@ -60,6 +61,7 @@ class ManageSessionUseCase(
                 else -> Unit
             }
         }
+
         attendanceRepository.deleteAllBySession(session)
         sessionRepository.delete(session)
     }
