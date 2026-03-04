@@ -41,12 +41,10 @@ class SecurityConfig(
             .authorizeHttpRequests { authorize ->
                 authorize
                     .requestMatchers(
-                        "/api/v4/users/apply",
                         "/api/v4/users/email",
                         "/api/v4/users/social/kakao",
                         "/api/v4/users/social/apple",
                         "/api/v4/users/social/refresh",
-                        "/api/v1/users/apply",
                         "/api/v1/users/email",
                     ).permitAll()
                     .requestMatchers("/health-check")

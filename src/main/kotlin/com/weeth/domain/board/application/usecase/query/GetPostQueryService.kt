@@ -111,7 +111,7 @@ class GetPostQueryService(
         return postIds.associateWith { filesGrouped.containsKey(it) }
     }
 
-    private fun validateBoardVisibility(
+    private fun validateBoardVisibility( // todo: 볼 권한이 없는 경우 권한 관련 예외를 던져주는게 나을지 UX 상의 후 결정
         boardId: Long,
         role: Role,
     ) {

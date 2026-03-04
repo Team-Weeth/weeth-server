@@ -9,14 +9,14 @@ import com.weeth.domain.account.domain.repository.ReceiptRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.account.fixture.ReceiptTestFixture
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.user.domain.entity.Cardinal
-import com.weeth.domain.user.domain.repository.CardinalRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.clearMocks
@@ -32,7 +32,7 @@ class ManageReceiptUseCaseTest :
         val accountRepository = mockk<AccountRepository>()
         val fileReader = mockk<FileReader>()
         val fileRepository = mockk<FileRepository>(relaxed = true)
-        val cardinalRepository = mockk<CardinalRepository>(relaxed = true)
+        val cardinalReader = mockk<CardinalReader>(relaxed = true)
         val fileMapper = mockk<FileMapper>()
         val useCase =
             ManageReceiptUseCase(
@@ -40,16 +40,17 @@ class ManageReceiptUseCaseTest :
                 accountRepository,
                 fileReader,
                 fileRepository,
-                cardinalRepository,
+                cardinalReader,
                 fileMapper,
             )
 
         beforeTest {
-            clearMocks(receiptRepository, accountRepository, fileReader, fileRepository, cardinalRepository, fileMapper)
+            clearMocks(receiptRepository, accountRepository, fileReader, fileRepository, cardinalReader, fileMapper)
         }
 
         fun stubExistingCardinal(cardinalNumber: Int) {
-            every { cardinalRepository.findByCardinalNumber(cardinalNumber) } returns Optional.of(mockk<Cardinal>())
+            every { cardinalReader.getByCardinalNumber(cardinalNumber) } returns
+                CardinalTestFixture.createCardinal(cardinalNumber = cardinalNumber, year = 2026, semester = 1)
         }
 
         describe("save") {

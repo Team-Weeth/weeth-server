@@ -30,6 +30,19 @@ interface PostRepository : JpaRepository<Post, Long> {
 
     fun findByIdAndIsDeletedFalse(id: Long): Post?
 
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.id = :id
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        """,
+    )
+    fun findActivePostById(
+        @Param("id") id: Long,
+    ): Post?
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(

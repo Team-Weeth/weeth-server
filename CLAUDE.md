@@ -35,7 +35,7 @@ presentation → application → domain ← infrastructure
 - **infrastructure/**: Port implementations (Adapters for S3, external APIs, etc.)
 
 ### Domain Package Layout
-Each of the 8 domains (`user`, `attendance`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`) follows:
+Each of the 10 domains (`user`, `attendance`, `session`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`, `cardinal`) follows:
 ```
 domain/{name}/
 ├── application/
@@ -64,21 +64,7 @@ domain/{name}/
 - **`@Transactional` on UseCase only** — Domain Services have no transaction annotations
 
 ### Response Format
-All API responses wrapped in `CommonResponse<T>` with code/message/data. Success codes use `ResponseCodeInterface` enums (1xxx range), error codes use `ErrorCodeInterface` enums (2xxx domain errors, 3xxx server, 4xxx client).
-
-### Error Code Ranges
-
-| Domain | Success | Error |
-|--------|---------|-------|
-| Account | 11xx | 21xx |
-| Attendance | 12xx | 22xx |
-| Board | 13xx | 23xx |
-| Comment | 140xx | 240x |
-| File | 15xx | 25xx |
-| Penalty | 160xx | 260x |
-| Schedule | 17xx | 27xx |
-| User | 18xx | 28xx |
-| JWT (Global) | — | 29xx |
+All API responses wrapped in `CommonResponse<T>` with code/message/data. 5-digit code format `XDDNN`: X=category (1=Success, 2=Domain Error, 3=Infra Error, 4=Client Error), DD=domain ID, NN=sequence. See `.claude/rules/api-design.md` for full domain ID mapping and code ranges.
 
 ### Authentication
 JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser` annotation injects authenticated user ID into controller methods.
@@ -93,7 +79,7 @@ JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser`
 
 ## Kotlin Migration Status
 
-**✅ Complete** — 294 Kotlin files (100%)
+**✅ Complete** — 305 Kotlin files (100%)
 
 - Java → Kotlin migration fully complete
 - Lombok and MapStruct dependencies removed
@@ -119,4 +105,4 @@ JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser`
 
 ## Detailed Rules
 
-Architecture, code style, testing, API design, exception handling, transactions, git conventions, and logging rules are documented in `.claude/rules/`. Refer to those files for comprehensive guidance on each topic.
+Architecture, code style, testing, API design, exception handling, transactions, and git conventions are documented in `.claude/rules/`. Refer to those files for comprehensive guidance on each topic.

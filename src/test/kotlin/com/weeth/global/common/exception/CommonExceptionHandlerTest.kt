@@ -18,7 +18,7 @@ class CommonExceptionHandlerTest :
                 val response = handler.handle(ex)
 
                 response.statusCode.value() shouldBe 404
-                response.body?.code shouldBe 2902
+                response.body?.code shouldBe JwtErrorCode.TOKEN_NOT_FOUND.code
             }
         }
 

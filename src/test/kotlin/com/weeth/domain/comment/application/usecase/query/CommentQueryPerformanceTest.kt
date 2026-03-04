@@ -20,6 +20,7 @@ import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
+import com.weeth.domain.user.domain.vo.Email
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.longs.shouldBeLessThan
 import io.kotest.matchers.shouldBe
@@ -48,7 +49,7 @@ class CommentQueryPerformanceTest(
             userRepository.save(
                 User(
                     name = "perf-user",
-                    email = "perf-user@test.com",
+                    email = Email.from("perf-user@test.com"),
                     department = "컴퓨터공학과",
                     status = Status.ACTIVE,
                     role = Role.USER,

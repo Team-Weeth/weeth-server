@@ -1,8 +1,8 @@
 package com.weeth.domain.user.application.usecase.query
 
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.user.application.dto.response.AdminUserResponse
 import com.weeth.domain.user.application.dto.response.UserDetailsResponse
-import com.weeth.domain.user.application.dto.response.UserInfoResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.mapper.UserMapper
@@ -11,10 +11,7 @@ import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.enums.StatusPriority
 import com.weeth.domain.user.domain.enums.UsersOrderBy
-import com.weeth.domain.user.domain.repository.CardinalReader
-import com.weeth.domain.user.domain.repository.UserCardinalReader
 import com.weeth.domain.user.domain.repository.UserCardinalRepository
-import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.domain.repository.UserRepository
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
@@ -26,10 +23,8 @@ import java.util.LinkedHashMap
 @Transactional(readOnly = true)
 class GetUserQueryService(
     private val userRepository: UserRepository,
-    private val userReader: UserReader, // todo: 동일 도메인이므로 UserRespository 단일 사용)
     private val cardinalReader: CardinalReader,
     private val userCardinalRepository: UserCardinalRepository,
-    private val userCardinalReader: UserCardinalReader,
     private val mapper: UserMapper,
 ) {
     fun existsByEmail(email: String): Boolean = userRepository.existsByEmailValue(email)
@@ -48,7 +43,7 @@ class GetUserQueryService(
                 userRepository.findAllByCardinalOrderByNameAsc(Status.ACTIVE, inputCardinal, pageable)
             }
 
-        val allUserCardinals = userCardinalReader.findAllByUsersOrderByCardinalDesc(users.content)
+        val allUserCardinals = userCardinalRepository.findAllByUsers(users.content)
         val userCardinalMap = allUserCardinals.groupBy { it.user.id }
         return users.map { user ->
             val userCardinals = userCardinalMap[user.id] ?: emptyList()
@@ -58,7 +53,7 @@ class GetUserQueryService(
 
     fun searchUser(keyword: String): List<UserSummaryResponse> {
         val users = userRepository.findAllByNameContainingAndStatus(keyword, Status.ACTIVE)
-        val allUserCardinals = userCardinalReader.findAllByUsersOrderByCardinalDesc(users)
+        val allUserCardinals = userCardinalRepository.findAllByUsers(users)
         val userCardinalMap = allUserCardinals.groupBy { it.user.id }
         return users.map { user ->
             val userCardinals = userCardinalMap[user.id] ?: emptyList()
@@ -67,27 +62,27 @@ class GetUserQueryService(
     }
 
     fun findUserDetails(userId: Long): UserDetailsResponse {
-        val user = userReader.getById(userId)
-        val userCardinals = userCardinalReader.findAllByUser(user)
+        val user = userRepository.getById(userId)
+        val userCardinals = userCardinalRepository.findAllByUser(user)
         return mapper.toUserDetailsResponse(user, userCardinals)
     }
 
     fun findMyProfile(userId: Long): UserProfileResponse {
-        val user = userReader.getById(userId)
-        val userCardinals = userCardinalReader.findAllByUser(user)
+        val user = userRepository.getById(userId)
+        val userCardinals = userCardinalRepository.findAllByUser(user)
         return mapper.toUserProfileResponse(user, userCardinals)
     }
 
-    fun findMyInfo(userId: Long): UserInfoResponse {
-        val user = userReader.getById(userId)
-        val userCardinals = userCardinalReader.findAllByUser(user)
-        return mapper.toUserInfoResponse(user, userCardinals)
+    fun findMyInfo(userId: Long): UserSummaryResponse {
+        val user = userRepository.getById(userId)
+        val userCardinals = userCardinalRepository.findAllByUser(user)
+        return mapper.toUserSummaryResponse(user, userCardinals)
     }
 
     fun findAllByAdmin(orderBy: UsersOrderBy): List<AdminUserResponse> {
         val userCardinalMap: LinkedHashMap<User, List<UserCardinal>> =
             LinkedHashMap(
-                userCardinalRepository.findAllByOrderByUserNameAsc().groupBy { it.user },
+                userCardinalRepository.findAllWithUserAndCardinal().groupBy { it.user },
             )
 
         return when (orderBy) {

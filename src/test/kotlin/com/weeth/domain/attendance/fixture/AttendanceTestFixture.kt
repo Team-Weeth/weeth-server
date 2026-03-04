@@ -7,20 +7,20 @@ import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.AttendanceStats
 import org.springframework.test.util.ReflectionTestUtils
+import java.util.UUID
 
 object AttendanceTestFixture {
     fun createActiveUser(name: String): User =
-        User(
-            name = name,
-            status = Status.ACTIVE,
-        )
+        User
+            .create(
+                name = name,
+                email = "attendance-${UUID.randomUUID()}@test.com",
+                studentId = "",
+                tel = "",
+                department = "",
+            ).also { it.accept() }
 
-    fun createAdminUser(name: String): User =
-        User(
-            name = name,
-            status = Status.ACTIVE,
-            role = Role.ADMIN,
-        )
+    fun createAdminUser(name: String): User = createActiveUser(name).also { it.updateRole(Role.ADMIN) }
 
     fun createAttendance(
         session: Session,

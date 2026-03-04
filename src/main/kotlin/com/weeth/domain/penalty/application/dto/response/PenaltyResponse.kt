@@ -9,8 +9,6 @@ data class PenaltyResponse(
     val name: String,
     @field:Schema(description = "패널티 횟수", example = "2")
     val penaltyCount: Int,
-    @field:Schema(description = "경고 횟수", example = "3")
-    val warningCount: Int,
     @field:Schema(description = "소속 기수 목록", example = "[3, 4]")
     val cardinals: List<Int>,
     @field:Schema(description = "패널티 상세 목록")

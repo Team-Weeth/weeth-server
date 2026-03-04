@@ -25,7 +25,7 @@ class GetCommentQueryServiceTest :
         val service = GetCommentQueryService(fileReader, fileMapper, commentMapper)
 
         val user = UserTestFixture.createActiveUser1(1L)
-        val post = PostTestFixture.create(id = 10L, user = user)
+        val post = PostTestFixture.create(user = user)
 
         beforeTest {
             clearMocks(fileReader, fileMapper, commentMapper)

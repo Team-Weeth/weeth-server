@@ -48,7 +48,7 @@ class ManageBoardUseCaseTest :
 
         describe("update") {
             it("일부 필드만 전달되면 해당 필드만 갱신한다") {
-                val board = Board(id = 1L, name = "기존", type = BoardType.GENERAL)
+                val board = Board(name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
                 val result = useCase.update(1L, UpdateBoardRequest(name = "변경", isPrivate = true))
@@ -57,6 +57,18 @@ class ManageBoardUseCaseTest :
                 result.commentEnabled shouldBe true
                 result.writePermission shouldBe Role.USER
                 result.isPrivate shouldBe true
+            }
+
+            it("아무 필드도 전달되지 않으면 기존 값이 그대로 유지된다") {
+                val board = Board(name = "기존", type = BoardType.GENERAL)
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
+
+                val result = useCase.update(1L, UpdateBoardRequest())
+
+                result.name shouldBe "기존"
+                result.commentEnabled shouldBe true
+                result.writePermission shouldBe Role.USER
+                result.isPrivate shouldBe false
             }
 
             it("존재하지 않는 게시판이면 예외를 던진다") {
@@ -70,7 +82,7 @@ class ManageBoardUseCaseTest :
 
         describe("delete") {
             it("게시판을 soft delete 처리한다") {
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val board = Board(name = "일반", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
                 useCase.delete(1L)

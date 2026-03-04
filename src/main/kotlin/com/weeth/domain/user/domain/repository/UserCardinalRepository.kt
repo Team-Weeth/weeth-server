@@ -14,13 +14,28 @@ interface UserCardinalRepository :
     fun findTopByUserOrderByCardinalCardinalNumberDesc(user: User): UserCardinal?
 
     @Query(
-        "SELECT uc FROM UserCardinal uc WHERE uc.user IN :users ORDER BY uc.user.id, uc.cardinal.cardinalNumber DESC",
+        """
+            SELECT uc
+              FROM UserCardinal uc
+              JOIN FETCH uc.cardinal
+             WHERE uc.user IN :users
+          ORDER BY uc.user.id, uc.cardinal.cardinalNumber DESC
+        """,
     )
     fun findAllByUsers(
         @Param("users") users: List<User>,
     ): List<UserCardinal>
 
-    fun findAllByOrderByUserNameAsc(): List<UserCardinal>
+    @Query(
+        """
+            SELECT uc
+              FROM UserCardinal uc
+              JOIN FETCH uc.user
+              JOIN FETCH uc.cardinal
+          ORDER BY uc.user.name ASC
+        """,
+    )
+    fun findAllWithUserAndCardinal(): List<UserCardinal>
 
     @Query(
         """

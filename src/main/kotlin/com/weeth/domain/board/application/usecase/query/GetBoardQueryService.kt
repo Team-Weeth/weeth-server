@@ -6,6 +6,7 @@ import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.user.domain.enums.Role
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,23 +19,16 @@ class GetBoardQueryService(
     fun findBoards(role: Role): List<BoardListResponse> =
         boardRepository
             .findAllByIsDeletedFalseOrderByIdAsc()
-            .filter { it.isAccessibleBy(role) }
+            .filter { it.isAccessibleBy(role) } // todo: Club 기반 쿼리로 개선 시 DB 레벨 필터링으로 전환
             .map(boardMapper::toListResponse)
 
-    fun findBoard(
-        boardId: Long,
-        role: Role,
-    ): BoardDetailResponse {
-        val board =
-            boardRepository
-                .findByIdAndIsDeletedFalse(boardId)
-                ?.takeIf { it.isAccessibleBy(role) }
-                ?: throw BoardNotFoundException()
-        return boardMapper.toDetailResponse(board)
+    fun findBoardDetailForAdmin(boardId: Long): BoardDetailResponse {
+        val board = boardRepository.findByIdOrNull(boardId) ?: throw BoardNotFoundException()
+        return boardMapper.toDetailResponseForAdmin(board)
     }
 
     fun findAllBoardsForAdmin(): List<BoardDetailResponse> =
         boardRepository
-            .findAllByIsDeletedFalseOrderByIdAsc()
+            .findAllByOrderByIdAsc()
             .map(boardMapper::toDetailResponseForAdmin)
 }

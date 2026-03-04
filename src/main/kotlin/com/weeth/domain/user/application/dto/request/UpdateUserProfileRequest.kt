@@ -3,7 +3,6 @@ package com.weeth.domain.user.application.dto.request
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 
 data class UpdateUserProfileRequest(
     @field:Schema(description = "이름", example = "홍길동")
@@ -20,6 +19,6 @@ data class UpdateUserProfileRequest(
     @field:NotBlank
     val tel: String,
     @field:Schema(description = "학과", example = "컴퓨터공학과")
-    @field:NotNull
+    @field:NotBlank
     val department: String,
 )

@@ -26,10 +26,6 @@ import jakarta.persistence.UniqueConstraint
     ],
 )
 class UserSocialAccount(
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_social_account_id")
-    val id: Long = 0L,
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     val provider: SocialProvider,
@@ -38,4 +34,9 @@ class UserSocialAccount(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     val user: User,
-) : BaseEntity()
+) : BaseEntity() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_social_account_id")
+    val id: Long = 0L
+}

@@ -40,11 +40,11 @@ class ManageBoardUseCase(
     ): BoardDetailResponse {
         val board = findBoard(boardId)
 
-        // TODO: PATCH 규칙 - 요청 값이 현재 값과 다를 때만 반영하도록 수정 필요
         request.name?.let { board.rename(it) }
 
+        // BoardConfig는 불변 VO이므로 개별 필드 수정이 불가능하여 copy()로 새 객체를 만들어 통째로 교체한다. null이면 기존 값을 명시적으로 채운다.
+        // 바깥 if 문은 config 관련 필드가 전부 null인 요청에서 불필요한 VO 생성을 방지한다.
         if (request.commentEnabled != null || request.writePermission != null || request.isPrivate != null) {
-            // TODO: PATCH 규칙 - 각 필드별로 변경 여부를 비교해 바뀐 값만 업데이트하도록 수정 필요
             board.updateConfig(
                 board.config.copy(
                     commentEnabled = request.commentEnabled ?: board.config.commentEnabled,
