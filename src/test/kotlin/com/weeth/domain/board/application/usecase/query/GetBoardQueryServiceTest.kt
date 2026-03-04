@@ -84,37 +84,35 @@ class GetBoardQueryServiceTest :
         }
 
         describe("findBoardDetailForAdmin") {
-            context("관리자라면") {
-                it("삭제된 게시판도 조회할 수 있다") {
-                    val deletedBoard =
-                        Board(name = "삭제됨", type = BoardType.GENERAL).apply {
-                            markDeleted()
-                        }
-                    every { boardRepository.findByIdOrNull(3L) } returns deletedBoard
-
-                    val result = queryService.findBoardDetailForAdmin(3L)
-
-                    result.isDeleted shouldBe true
-                }
-
-                it("비공개 게시판도 조회할 수 있다") {
-                    val privateBoard =
-                        Board(name = "운영", type = BoardType.NOTICE).apply {
-                            updateConfig(config.copy(isPrivate = true))
-                        }
-                    every { boardRepository.findByIdOrNull(2L) } returns privateBoard
-
-                    val result = queryService.findBoardDetailForAdmin(2L)
-
-                    result.isPrivate shouldBe true
-                }
-
-                it("존재하지 않는 boardId면 예외를 던진다") {
-                    every { boardRepository.findByIdOrNull(999L) } returns null
-
-                    shouldThrow<BoardNotFoundException> {
-                        queryService.findBoardDetailForAdmin(999L)
+            it("삭제된 게시판도 조회할 수 있다") {
+                val deletedBoard =
+                    Board(name = "삭제됨", type = BoardType.GENERAL).apply {
+                        markDeleted()
                     }
+                every { boardRepository.findByIdOrNull(3L) } returns deletedBoard
+
+                val result = queryService.findBoardDetailForAdmin(3L)
+
+                result.isDeleted shouldBe true
+            }
+
+            it("비공개 게시판도 조회할 수 있다") {
+                val privateBoard =
+                    Board(name = "운영", type = BoardType.NOTICE).apply {
+                        updateConfig(config.copy(isPrivate = true))
+                    }
+                every { boardRepository.findByIdOrNull(2L) } returns privateBoard
+
+                val result = queryService.findBoardDetailForAdmin(2L)
+
+                result.isPrivate shouldBe true
+            }
+
+            it("존재하지 않는 boardId면 예외를 던진다") {
+                every { boardRepository.findByIdOrNull(999L) } returns null
+
+                shouldThrow<BoardNotFoundException> {
+                    queryService.findBoardDetailForAdmin(999L)
                 }
             }
         }
