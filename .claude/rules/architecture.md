@@ -79,10 +79,49 @@ presentation → application → domain (owns Port)
 
 ## Entity (Rich Domain Model)
 
-- **Factory method**: `companion object` with `create()` / `of()` including validation
 - **State changes**: named methods (`publish()`, `softDelete()`) — no public setters
 - **Validation**: `require` for argument checks, `check` for state preconditions
 - **Business decisions**: `isEditableBy()`, `canPublish()` belong to Entity
+
+### Constructor Pattern
+
+Primary constructor takes **business creation params only** — JPA-managed fields (`id`, `isDeleted`) belong in the body. Body properties use `private set`.
+
+```kotlin
+@Entity
+class Post internal constructor(
+    title: String,
+    content: String,
+    user: User,
+    board: Board,
+) : BaseEntity() {
+
+    init {
+        require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+    }
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long = 0L
+        private set
+
+    var title: String = title
+        private set
+    // ...
+}
+```
+
+| Concern | Location |
+|---------|----------|
+| JPA-managed fields (`id`, `isDeleted`) | Body, `private set`, default value |
+| Business creation params | Primary constructor (non-property) |
+| Invariant validation | `init` block — JPA plugin no-arg bypasses `init`, so DB reconstruction is safe |
+
+### Factory Method vs `init`
+
+- **`init` block**: Enforces invariants regardless of creation path. Sufficient for simple entities (e.g., `Board`).
+- **`internal constructor` + factory method**: Use when creation logic is complex or multiple creation paths exist. `internal` blocks external modules while allowing test code (same module) to access the constructor.
+- **Factory method location**: `companion object` — delegates validation to `init`, `create()` expresses creation intent.
 
 ## Value Object (VO)
 
