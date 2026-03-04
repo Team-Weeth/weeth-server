@@ -35,6 +35,16 @@ class BoardAdminController(
     fun findAllBoards(): CommonResponse<List<BoardDetailResponse>> =
         CommonResponse.success(BoardResponseCode.BOARD_FIND_ALL_SUCCESS, getBoardQueryService.findAllBoardsForAdmin())
 
+    @GetMapping("/{boardId}")
+    @Operation(summary = "게시판 상세 조회 (삭제된 게시판 포함)")
+    fun findBoard(
+        @PathVariable boardId: Long,
+    ): CommonResponse<BoardDetailResponse> =
+        CommonResponse.success(
+            BoardResponseCode.BOARD_FIND_BY_ID_SUCCESS,
+            getBoardQueryService.findBoardDetailForAdmin(boardId),
+        )
+
     @PostMapping
     @Operation(summary = "게시판 생성")
     fun createBoard(

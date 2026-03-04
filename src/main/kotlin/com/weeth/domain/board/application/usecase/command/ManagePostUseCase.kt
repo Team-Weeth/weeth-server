@@ -40,7 +40,7 @@ class ManagePostUseCase(
     ): PostSaveResponse {
         val user = userReader.getById(userId)
         val board = findBoard(boardId)
-        checkWritePermission(board, user)
+        validateWritePermission(board, user)
 
         val post =
             Post.create(
@@ -48,7 +48,7 @@ class ManagePostUseCase(
                 content = request.content,
                 user = user,
                 board = board,
-                cardinalNumber = request.cardinalNumber,
+                cardinalNumber = request.cardinalNumber, // 기수의 경우는 프론트에서 명시적으로 입력을 받을지, 백엔드에서 최신 기수를 넣을지 UX 고민 후 결정
             )
 
         val savedPost = postRepository.save(post)
@@ -62,10 +62,11 @@ class ManagePostUseCase(
         request: UpdatePostRequest,
         userId: Long,
     ): PostSaveResponse {
+        val user = userReader.getById(userId)
         val post = findPost(postId)
         validateOwner(post, userId)
+        validateWritePermission(post.board, user)
 
-        // TODO: PATCH 규칙 - title/content/cardinalNumber는 실제 변경된 경우에만 반영하도록 수정 필요
         post.update(
             newTitle = request.title,
             newContent = request.content,
@@ -81,8 +82,10 @@ class ManagePostUseCase(
         postId: Long,
         userId: Long,
     ) {
+        val user = userReader.getById(userId)
         val post = findPost(postId)
         validateOwner(post, userId)
+        validateWritePermission(post.board, user)
 
         markPostFilesDeleted(post.id)
         post.markDeleted()
@@ -92,7 +95,7 @@ class ManagePostUseCase(
         boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 
     private fun findPost(postId: Long): Post =
-        postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
+        postRepository.findActivePostById(postId) ?: throw PostNotFoundException()
 
     private fun validateOwner(
         post: Post,
@@ -103,7 +106,7 @@ class ManagePostUseCase(
         }
     }
 
-    private fun checkWritePermission(
+    private fun validateWritePermission(
         board: Board,
         user: User,
     ) {

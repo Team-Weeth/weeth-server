@@ -79,10 +79,49 @@ presentation → application → domain (owns Port)
 
 ## Entity (Rich Domain Model)
 
-- **Factory method**: `companion object` with `create()` / `of()` including validation
 - **State changes**: named methods (`publish()`, `softDelete()`) — no public setters
 - **Validation**: `require` for argument checks, `check` for state preconditions
 - **Business decisions**: `isEditableBy()`, `canPublish()` belong to Entity
+
+### Constructor Pattern
+
+Primary constructor takes **business creation params only** (non-property) — JPA-managed fields (`id`, `isDeleted`) belong in the body with `private set` and default values.
+
+```kotlin
+@Entity
+class Post(
+    title: String,
+    content: String,
+    user: User,
+    board: Board,
+) : BaseEntity() {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long = 0L
+        private set
+
+    var title: String = title
+        private set
+    // ...
+
+    companion object {
+        fun create(title: String, content: String, user: User, board: Board): Post {
+            require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+            return Post(title = title, content = content, user = user, board = board)
+        }
+    }
+}
+```
+
+| Concern | Location |
+|---------|----------|
+| JPA-managed fields (`id`, `isDeleted`) | Body, `private set`, default value |
+| Business creation params | Primary constructor (non-property) |
+| Validation | `create()` / named mutation methods — not constructor |
+
+- **Factory method** (`companion object`): use when the entity has creation logic or validation. Expresses domain intent.
+- **Simple entities** (e.g., `Board`): public constructor is fine; no factory method needed if creation is trivial.
 
 ## Value Object (VO)
 

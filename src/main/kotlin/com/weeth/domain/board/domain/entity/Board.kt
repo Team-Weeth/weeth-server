@@ -18,28 +18,42 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "board")
 class Board(
+    name: String,
+    type: BoardType,
+    config: BoardConfig = BoardConfig(),
+) : BaseEntity() {
+    init {
+        require(name.isNotBlank()) { "게시판 이름은 공백이 될 수 없습니다" }
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0L
+        private set
+
     @Column(nullable = false)
-    var name: String,
+    var name: String = name
+        private set
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val type: BoardType,
+    var type: BoardType = type
+        private set
+
     @Column(columnDefinition = "JSON") // Json 속성 사용으로 인한 커스텀 컨버터 적용
     @Convert(converter = BoardConfigConverter::class)
-    var config: BoardConfig = BoardConfig(),
+    var config: BoardConfig = config
+        private set
+
     @Column(nullable = false)
-    var isDeleted: Boolean = false,
-) : BaseEntity() {
+    var isDeleted: Boolean = false
+        private set
+
     val isCommentEnabled: Boolean
         get() = config.commentEnabled
 
     val isAdminOnly: Boolean
         get() = config.writePermission == Role.ADMIN
-
-    val isRestricted: Boolean
-        get() = isAdminOnly || config.isPrivate
 
     fun isAccessibleBy(role: Role): Boolean = role == Role.ADMIN || !config.isPrivate
 

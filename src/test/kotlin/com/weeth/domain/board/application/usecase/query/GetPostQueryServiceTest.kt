@@ -5,11 +5,11 @@ import com.weeth.domain.board.application.exception.NoSearchResultException
 import com.weeth.domain.board.application.exception.PageNotFoundException
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
-import com.weeth.domain.board.domain.entity.Board
-import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.board.fixture.BoardTestFixture
+import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.comment.domain.repository.CommentReader
@@ -76,8 +76,14 @@ class GetPostQueryServiceTest :
 
             it("댓글/파일을 포함한 상세 응답을 반환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board, commentCount = 1)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val post =
+                    PostTestFixture.create(
+                        title = "제목",
+                        content = "내용",
+                        user = user,
+                        board = board,
+                    )
                 val comments = listOf(mockk<CommentResponse>())
                 val fileResponses =
                     listOf(
@@ -116,9 +122,9 @@ class GetPostQueryServiceTest :
                     )
 
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
-                every { commentReader.findAllByPostId(1L) } returns emptyList()
+                every { commentReader.findAllByPostId(any<Long>()) } returns emptyList()
                 every { getCommentQueryService.toCommentTreeResponses(any()) } returns comments
-                every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns files
+                every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
                 every { postMapper.toDetailResponse(post, comments, fileResponses) } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
@@ -131,10 +137,15 @@ class GetPostQueryServiceTest :
 
             it("비공개 게시판 게시글은 일반/익명에게 노출하지 않는다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val privateBoard = Board(id = 2L, name = "비공개", type = BoardType.GENERAL)
+                val privateBoard = BoardTestFixture.create(name = "비공개", type = BoardType.GENERAL)
                 privateBoard.updateConfig(privateBoard.config.copy(isPrivate = true))
                 val post =
-                    Post(id = 1L, title = "제목", content = "내용", user = user, board = privateBoard, commentCount = 0)
+                    PostTestFixture.create(
+                        title = "제목",
+                        content = "내용",
+                        user = user,
+                        board = privateBoard,
+                    )
 
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
@@ -145,9 +156,19 @@ class GetPostQueryServiceTest :
 
             it("삭제된 게시판의 게시글은 조회할 수 없다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val deletedBoard = Board(id = 3L, name = "삭제", type = BoardType.GENERAL, isDeleted = true)
+                val deletedBoard =
+                    BoardTestFixture
+                        .create(
+                            name = "삭제",
+                            type = BoardType.GENERAL,
+                        ).also { it.markDeleted() }
                 val post =
-                    Post(id = 1L, title = "제목", content = "내용", user = user, board = deletedBoard, commentCount = 0)
+                    PostTestFixture.create(
+                        title = "제목",
+                        content = "내용",
+                        user = user,
+                        board = deletedBoard,
+                    )
 
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
@@ -160,7 +181,7 @@ class GetPostQueryServiceTest :
         describe("searchPosts") {
             it("검색 결과가 없으면 예외를 던진다") {
                 val pageable = PageRequest.of(0, 10)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
                 every { postRepository.searchByBoardId(1L, "키워드", any()) } returns
                     SliceImpl(emptyList(), pageable, false)
@@ -171,7 +192,7 @@ class GetPostQueryServiceTest :
             }
 
             it("비공개 게시판은 일반/익명이 검색할 수 없다") {
-                val privateBoard = Board(id = 1L, name = "비공개", type = BoardType.GENERAL)
+                val privateBoard = BoardTestFixture.create(name = "비공개", type = BoardType.GENERAL)
                 privateBoard.updateConfig(privateBoard.config.copy(isPrivate = true))
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns privateBoard
 
@@ -204,8 +225,14 @@ class GetPostQueryServiceTest :
         describe("findPosts") {
             it("목록 조회 시 mapper를 통해 응답으로 변환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
-                val post = Post(id = 10L, title = "제목", content = "내용", user = user, board = board)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val post =
+                    PostTestFixture.create(
+                        title = "제목",
+                        content = "내용",
+                        user = user,
+                        board = board,
+                    )
                 val pageable = PageRequest.of(0, 10)
                 val postSlice = SliceImpl(listOf(post), pageable, false)
                 val response =
@@ -229,8 +256,7 @@ class GetPostQueryServiceTest :
                 val result = queryService.findPosts(1L, 0, 10, Role.USER)
 
                 result.content.size shouldBe 1
-                result.content.first().id shouldBe 10L
-                verify(exactly = 1) { fileReader.findAll(FileOwnerType.POST, listOf(10L), any()) }
+                verify(exactly = 1) { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) }
             }
         }
     })

@@ -15,34 +15,57 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "post")
 class Post(
+    title: String,
+    content: String,
+    user: User,
+    board: Board,
+    cardinalNumber: Int? = null,
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    var id: Long = 0L
+        private set
+
     @Column(nullable = false)
-    var title: String,
+    var title: String = title
+        private set
+
     @Column(columnDefinition = "TEXT", nullable = false)
-    var content: String,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    val user: User,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id")
-    val board: Board,
+    var content: String = content
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    var user: User = user
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "board_id", nullable = false)
+    var board: Board = board
+        private set
+
     @Column(nullable = false)
-    var commentCount: Int = 0,
+    var commentCount: Int = 0
+        private set
+
     @Column(nullable = false)
-    var likeCount: Int = 0,
+    var likeCount: Int = 0
+        private set
+
     @Column
-    var cardinalNumber: Int? = null,
+    var cardinalNumber: Int? = cardinalNumber
+        private set
+
     @Column(nullable = false)
-    var isDeleted: Boolean = false,
-) : BaseEntity() {
+    var isDeleted: Boolean = false
+        private set
+
     fun increaseCommentCount() {
         commentCount++
     }
 
     fun decreaseCommentCount() {
-        check(commentCount > 0) { "comment count cannot be negative" }
+        check(commentCount > 0) { "댓글 수는 0보다 작아질 수 없습니다" }
         commentCount--
     }
 
@@ -51,29 +74,26 @@ class Post(
     }
 
     fun decreaseLikeCount() {
-        check(likeCount > 0) { "like count cannot be negative" }
+        check(likeCount > 0) { "좋아요 수는 0보다 작아질 수 없습니다" }
         likeCount--
-    }
-
-    fun updateContent(
-        newTitle: String,
-        newContent: String,
-    ) {
-        require(newTitle.isNotBlank()) { "title must not be blank" }
-        require(newContent.isNotBlank()) { "content must not be blank" }
-        title = newTitle
-        content = newContent
     }
 
     fun isOwnedBy(userId: Long): Boolean = user.id == userId
 
     fun update(
-        newTitle: String,
-        newContent: String,
+        newTitle: String?,
+        newContent: String?,
         newCardinalNumber: Int?,
     ) {
-        updateContent(newTitle, newContent)
-        cardinalNumber = newCardinalNumber
+        newTitle?.let {
+            require(it.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+            title = it
+        }
+        newContent?.let {
+            require(it.isNotBlank()) { "내용은 비어 있을 수 없습니다" }
+            content = it
+        }
+        newCardinalNumber?.let { cardinalNumber = it }
     }
 
     fun markDeleted() {
@@ -92,8 +112,8 @@ class Post(
             board: Board,
             cardinalNumber: Int? = null,
         ): Post {
-            require(title.isNotBlank()) { "title must not be blank" }
-            require(content.isNotBlank()) { "content must not be blank" }
+            require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+            require(content.isNotBlank()) { "내용은 비어 있을 수 없습니다" }
             return Post(
                 title = title,
                 content = content,

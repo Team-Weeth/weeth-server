@@ -1,6 +1,5 @@
 package com.weeth.domain.board.presentation
 
-import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.dto.response.BoardListResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.query.GetBoardQueryService
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -29,15 +27,4 @@ class BoardController(
         @Parameter(hidden = true) @CurrentUserRole role: Role,
     ): CommonResponse<List<BoardListResponse>> =
         CommonResponse.success(BoardResponseCode.BOARD_FIND_ALL_SUCCESS, getBoardQueryService.findBoards(role))
-
-    @GetMapping("/{boardId}")
-    @Operation(summary = "게시판 상세 조회")
-    fun findBoard(
-        @PathVariable boardId: Long,
-        @Parameter(hidden = true) @CurrentUserRole role: Role,
-    ): CommonResponse<BoardDetailResponse> =
-        CommonResponse.success(
-            BoardResponseCode.BOARD_FIND_BY_ID_SUCCESS,
-            getBoardQueryService.findBoard(boardId, role),
-        )
 }

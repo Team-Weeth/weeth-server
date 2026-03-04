@@ -21,7 +21,7 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "users")
-class User protected constructor() : BaseEntity() {
+class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (생성자 정리, lateinit 제거 등)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
