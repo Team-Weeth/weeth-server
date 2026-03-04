@@ -22,9 +22,9 @@ class GetBoardQueryServiceTest :
 
         describe("findBoards") {
             it("일반 사용자에게는 공개 게시판만 반환한다") {
-                val publicBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val publicBoard = Board(name = "일반", type = BoardType.GENERAL)
                 val privateBoard =
-                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                    Board(name = "운영", type = BoardType.NOTICE).apply {
                         updateConfig(config.copy(isPrivate = true))
                     }
 
@@ -34,13 +34,13 @@ class GetBoardQueryServiceTest :
                 val result = queryService.findBoards(Role.USER)
 
                 result shouldHaveSize 1
-                result.first().id shouldBe 1L
+                result.first().name shouldBe "일반"
             }
 
             it("관리자에게는 비공개 게시판도 포함해 반환한다") {
-                val publicBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val publicBoard = Board(name = "일반", type = BoardType.GENERAL)
                 val privateBoard =
-                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                    Board(name = "운영", type = BoardType.NOTICE).apply {
                         updateConfig(config.copy(isPrivate = true))
                     }
 
@@ -55,9 +55,9 @@ class GetBoardQueryServiceTest :
 
         describe("findAllBoardsForAdmin") {
             it("삭제된 게시판을 포함해 전체 목록을 반환한다") {
-                val activeBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val activeBoard = Board(name = "일반", type = BoardType.GENERAL)
                 val deletedBoard =
-                    Board(id = 2L, name = "삭제됨", type = BoardType.GENERAL).apply {
+                    Board(name = "삭제됨", type = BoardType.GENERAL).apply {
                         markDeleted()
                     }
 
@@ -69,9 +69,9 @@ class GetBoardQueryServiceTest :
             }
 
             it("활성 게시판과 비공개 게시판도 모두 포함해 반환한다") {
-                val publicBoard = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val publicBoard = Board(name = "일반", type = BoardType.GENERAL)
                 val privateBoard =
-                    Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                    Board(name = "운영", type = BoardType.NOTICE).apply {
                         updateConfig(config.copy(isPrivate = true))
                     }
 
@@ -87,27 +87,25 @@ class GetBoardQueryServiceTest :
             context("관리자라면") {
                 it("삭제된 게시판도 조회할 수 있다") {
                     val deletedBoard =
-                        Board(id = 3L, name = "삭제됨", type = BoardType.GENERAL).apply {
+                        Board(name = "삭제됨", type = BoardType.GENERAL).apply {
                             markDeleted()
                         }
                     every { boardRepository.findByIdOrNull(3L) } returns deletedBoard
 
                     val result = queryService.findBoardDetailForAdmin(3L)
 
-                    result.id shouldBe 3L
                     result.isDeleted shouldBe true
                 }
 
                 it("비공개 게시판도 조회할 수 있다") {
                     val privateBoard =
-                        Board(id = 2L, name = "운영", type = BoardType.NOTICE).apply {
+                        Board(name = "운영", type = BoardType.NOTICE).apply {
                             updateConfig(config.copy(isPrivate = true))
                         }
                     every { boardRepository.findByIdOrNull(2L) } returns privateBoard
 
                     val result = queryService.findBoardDetailForAdmin(2L)
 
-                    result.id shouldBe 2L
                     result.isPrivate shouldBe true
                 }
 

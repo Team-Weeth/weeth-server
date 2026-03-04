@@ -8,12 +8,13 @@ import com.weeth.domain.board.application.exception.CategoryAccessDeniedExceptio
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.exception.PostNotOwnedException
 import com.weeth.domain.board.application.mapper.PostMapper
-import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
+import com.weeth.domain.board.fixture.BoardTestFixture
+import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
@@ -97,7 +98,7 @@ class ManagePostUseCaseTest :
         describe("save") {
             it("일반 게시판에서 게시글을 저장한다") {
                 val user = createUser(1L, Role.USER)
-                val board = Board(id = 10L, name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userReader.getById(1L) } returns user
@@ -112,8 +113,7 @@ class ManagePostUseCaseTest :
             it("ADMIN 전용 게시판에 일반 사용자가 작성하면 예외를 던진다") {
                 val user = createUser(1L, Role.USER)
                 val board =
-                    Board(
-                        id = 20L,
+                    BoardTestFixture.create(
                         name = "공지",
                         type = BoardType.NOTICE,
                         config = BoardConfig(writePermission = Role.ADMIN),
@@ -133,8 +133,7 @@ class ManagePostUseCaseTest :
             it("비공개 게시판에 일반 사용자가 작성하면 예외를 던진다") {
                 val user = createUser(1L, Role.USER)
                 val board =
-                    Board(
-                        id = 21L,
+                    BoardTestFixture.create(
                         name = "비공개",
                         type = BoardType.GENERAL,
                         config = BoardConfig(isPrivate = true),
@@ -153,7 +152,7 @@ class ManagePostUseCaseTest :
 
             it("cardinalNumber가 전달되면 게시글에 반영된다") {
                 val user = createUser(1L, Role.USER)
-                val board = Board(id = 11L, name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val request =
                     CreatePostRequest(
                         title = "게시글",
@@ -189,7 +188,7 @@ class ManagePostUseCaseTest :
         describe("update") {
             it("files가 null이면 기존 파일을 유지한다") {
                 val user = createUser(1L, Role.USER)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val post = Post.create("제목", "내용", user, board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
@@ -204,8 +203,8 @@ class ManagePostUseCaseTest :
 
             it("files가 있으면 기존 파일을 soft delete 후 교체한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
                 val oldFile = createUploadedPostFile("old.png")
                 val newFiles = listOf(createUploadedPostFile("new.png"))
                 val request =
@@ -225,8 +224,8 @@ class ManagePostUseCaseTest :
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
-                every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns listOf(oldFile)
-                every { fileMapper.toFileList(request.files, FileOwnerType.POST, 1L) } returns newFiles
+                every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
+                every { fileMapper.toFileList(request.files, FileOwnerType.POST, any<Long>()) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
 
                 useCase.update(1L, request, 1L)
@@ -239,7 +238,7 @@ class ManagePostUseCaseTest :
 
             it("title이 null이면 기존 제목을 유지한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val post = Post.create("원래 제목", "원래 내용", user, board)
                 val request = UpdatePostRequest(content = "수정된 내용")
 
@@ -254,7 +253,7 @@ class ManagePostUseCaseTest :
 
             it("content가 null이면 기존 내용을 유지한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val post = Post.create("원래 제목", "원래 내용", user, board)
                 val request = UpdatePostRequest(title = "수정된 제목")
 
@@ -278,13 +277,12 @@ class ManagePostUseCaseTest :
             it("게시판이 ADMIN 전용으로 바뀐 후 일반 사용자가 수정하면 예외를 던진다") {
                 val user = createUser(1L, Role.USER)
                 val board =
-                    Board(
-                        id = 1L,
+                    BoardTestFixture.create(
                         name = "공지",
                         type = BoardType.NOTICE,
                         config = BoardConfig(writePermission = Role.ADMIN),
                     )
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
+                val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
@@ -297,13 +295,12 @@ class ManagePostUseCaseTest :
             it("게시판이 비공개로 바뀐 후 일반 사용자가 수정하면 예외를 던진다") {
                 val user = createUser(1L, Role.USER)
                 val board =
-                    Board(
-                        id = 1L,
+                    BoardTestFixture.create(
                         name = "비공개",
                         type = BoardType.GENERAL,
                         config = BoardConfig(isPrivate = true),
                     )
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
+                val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
@@ -317,13 +314,13 @@ class ManagePostUseCaseTest :
         describe("delete") {
             it("삭제 시 첨부 파일과 게시글을 soft delete한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
                 val oldFile = createUploadedPostFile("old.png")
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
-                every { fileReader.findAll(FileOwnerType.POST, 1L, any()) } returns listOf(oldFile)
+                every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
 
                 useCase.delete(1L, 1L)
 
@@ -343,13 +340,12 @@ class ManagePostUseCaseTest :
             it("게시판이 ADMIN 전용으로 바뀐 후 일반 사용자가 삭제하면 예외를 던진다") {
                 val user = createUser(1L, Role.USER)
                 val board =
-                    Board(
-                        id = 1L,
+                    BoardTestFixture.create(
                         name = "공지",
                         type = BoardType.NOTICE,
                         config = BoardConfig(writePermission = Role.ADMIN),
                     )
-                val post = Post(id = 1L, title = "제목", content = "내용", user = user, board = board)
+                val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
@@ -364,8 +360,8 @@ class ManagePostUseCaseTest :
             it("작성자가 아니면 수정 시 예외를 던진다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
                 val otherUser = createUser(2L, Role.USER)
-                val board = Board(id = 1L, name = "일반", type = BoardType.GENERAL)
-                val post = Post(id = 1L, title = "제목", content = "내용", user = owner, board = board)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val post = PostTestFixture.create(title = "제목", content = "내용", user = owner, board = board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
                 every { userReader.getById(2L) } returns otherUser

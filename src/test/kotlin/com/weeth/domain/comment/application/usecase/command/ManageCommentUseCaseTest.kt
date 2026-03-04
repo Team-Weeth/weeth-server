@@ -58,7 +58,7 @@ class ManageCommentUseCaseTest :
         describe("savePostComment") {
             it("최상위 댓글 저장 시 댓글 수가 증가한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = user)
+                val post = PostTestFixture.create(user = user)
                 val dto = CommentSaveRequest(parentCommentId = null, content = "최상위 댓글", files = null)
 
                 every { userReader.getById(1L) } returns user
@@ -73,7 +73,7 @@ class ManageCommentUseCaseTest :
 
             it("부모 댓글이 존재하지 않으면 예외를 던진다") {
                 val user = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = user)
+                val post = PostTestFixture.create(user = user)
                 val dto = CommentSaveRequest(parentCommentId = 999L, content = "대댓글", files = null)
 
                 every { userReader.getById(1L) } returns user
@@ -89,7 +89,7 @@ class ManageCommentUseCaseTest :
         describe("updatePostComment") {
             it("작성자가 아니면 예외를 던진다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = owner)
+                val post = PostTestFixture.create(user = owner)
                 val comment = Comment(id = 200L, content = "old", post = post, user = owner)
                 val dto = CommentUpdateRequest(content = "new", files = null)
 
@@ -102,7 +102,7 @@ class ManageCommentUseCaseTest :
 
             it("files가 있으면 기존 파일은 삭제되고 새 파일이 저장된다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = owner)
+                val post = PostTestFixture.create(user = owner)
                 val comment = Comment(id = 202L, content = "old", post = post, user = owner)
                 val dto =
                     CommentUpdateRequest(
@@ -151,7 +151,10 @@ class ManageCommentUseCaseTest :
         describe("deletePostComment") {
             it("리프 댓글 삭제 시 hard delete 되고 댓글 수가 감소한다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = owner, title = "title", commentCount = 1)
+                val post =
+                    PostTestFixture.create(user = owner, title = "title").also {
+                        it.increaseCommentCount()
+                    }
                 val comment = Comment(id = 310L, content = "leaf", post = post, user = owner)
 
                 every { postRepository.findByIdWithLock(10L) } returns post
@@ -165,7 +168,11 @@ class ManageCommentUseCaseTest :
 
             it("자식이 있는 댓글 삭제 시 soft delete 된다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = owner, commentCount = 2)
+                val post =
+                    PostTestFixture.create(user = owner).also {
+                        it.increaseCommentCount()
+                        it.increaseCommentCount()
+                    }
 
                 val comment = Comment(id = 300L, content = "target", post = post, user = owner)
                 val child = Comment(id = 301L, content = "child", post = post, user = owner, parent = comment)
@@ -184,7 +191,7 @@ class ManageCommentUseCaseTest :
 
             it("이미 삭제된 댓글은 삭제할 수 없다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val post = PostTestFixture.create(id = 10L, user = owner)
+                val post = PostTestFixture.create(user = owner)
                 val comment = Comment(id = 320L, content = "삭제된 댓글입니다.", post = post, user = owner, isDeleted = true)
 
                 every { postRepository.findByIdWithLock(10L) } returns post

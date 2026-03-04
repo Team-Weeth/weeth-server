@@ -7,24 +7,18 @@ import com.weeth.domain.user.domain.enums.Role
 
 object BoardTestFixture {
     fun create(
-        id: Long = 1L,
         name: String = "일반 게시판",
         type: BoardType = BoardType.GENERAL,
         config: BoardConfig = BoardConfig(),
     ): Board =
         Board(
-            id = id,
             name = name,
             type = type,
             config = config,
         )
 
-    fun createNoticeBoard(
-        id: Long = 2L,
-        name: String = "공지사항",
-    ): Board =
+    fun createNoticeBoard(name: String = "공지사항"): Board =
         create(
-            id = id,
             name = name,
             type = BoardType.NOTICE,
             config = BoardConfig(writePermission = Role.ADMIN),
