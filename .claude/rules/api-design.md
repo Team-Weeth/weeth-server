@@ -61,9 +61,9 @@ enum class UserResponseCode(
     override val status: HttpStatus,
     override val message: String
 ) : ResponseCodeInterface {
-    GET_MY_INFO(1100, HttpStatus.OK, "내 정보 조회에 성공했습니다."),
-    GET_USER_INFO(1101, HttpStatus.OK, "다른 사용자 정보 조회에 성공했습니다."),
-    UPDATE_PROFILE_IMAGE(1102, HttpStatus.OK, "프로필 이미지 수정에 성공했습니다.")
+    USER_FIND_ALL_SUCCESS(10900, HttpStatus.OK, "모든 회원 정보를 성공적으로 조회했습니다."),
+    USER_FIND_BY_ID_SUCCESS(10907, HttpStatus.OK, "회원 정보가 성공적으로 조회되었습니다."),
+    USER_UPDATE_SUCCESS(10908, HttpStatus.OK, "회원 정보가 성공적으로 수정되었습니다."),
 }
 ```
 
@@ -72,44 +72,62 @@ enum class UserResponseCode(
   - `CommonResponse.success(USER_FIND_BY_ID_SUCCESS, data)`
   - `CommonResponse.success(USER_UPDATE_SUCCESS)`
 
-## Domain Success Codes
+## Code Format
 
-Current project uses domain-specific success enums under `src/main/java/com/weeth/domain/*/presentation/*ResponseCode.java`.
+|   | Mean            | Value                                                                      |
+|---|-----------------|----------------------------------------------------------------------------|
+| X | Category        | 1=Success, 2=Domain Error, 3=Infra/Server Error, 4=Client/Validation Error |
+| DD | Domain ID       | 01~99                                                                      |
+| NN | In Domain Count | 00~99                                                                      |
+
+## Domain ID
+
+| DD | Domain     | Success Range | Domain Error Range | Infra Error Range |
+|----|------------|---------------|--------------------|-------------------|
+| 01 | account    | 10100~        | 20100~             | —                 |
+| 02 | attendance | 10200~        | 20200~             | —                 |
+| 03 | session    | 10300~        | 20300~             | —                 |
+| 04 | board      | 10400~        | 20400~             | —                 |
+| 05 | comment    | 10500~        | 20500~             | —                 |
+| 06 | file       | 10600~        | 20600~             | 30600~            |
+| 07 | penalty    | 10700~        | 20700~             | —                 |
+| 08 | schedule   | 10800~        | 20800~             | —                 |
+| 09 | user       | 10900~        | 20900~             | —                 |
+| 10 | cardinal   | 11000~        | 21000~             | —                 |
+| 11 | club       | ()          | ()               | —                 |
+| 90 | jwt/auth   | —             | 29000~             | —                 |
+| 99 | common     | —             | —                  | 39900~            |
+
+## Domain Success Codes
 
 | Domain | ResponseCode Enum | Code Range | Location |
 |--------|------------------|------------|----------|
-| Account | `AccountResponseCode` | `11xx` | `domain/account/presentation/` |
-| Attendance | `AttendanceResponseCode` | `12xx` | `domain/attendance/presentation/` |
-| Board | `BoardResponseCode` | `13xx` | `domain/board/presentation/` |
-| Comment | `CommentResponseCode` | `140xx` | `domain/comment/presentation/` |
-| File | `FileResponseCode` | `15xx` | `domain/file/presentation/` |
-| Penalty | `PenaltyResponseCode` | `160xx` | `domain/penalty/presentation/` |
-| Schedule | `ScheduleResponseCode` | `17xx` | `domain/schedule/presentation/` |
-| User | `UserResponseCode` | `18xx` | `domain/user/presentation/` |
+| Account | `AccountResponseCode` | `101xx` | `domain/account/presentation/` |
+| Attendance | `AttendanceResponseCode` | `102xx` | `domain/attendance/presentation/` |
+| Session | `SessionResponseCode` | `103xx` | `domain/session/presentation/` |
+| Board | `BoardResponseCode` | `104xx` | `domain/board/presentation/` |
+| Comment | `CommentResponseCode` | `105xx` | `domain/comment/presentation/` |
+| File | `FileResponseCode` | `106xx` | `domain/file/presentation/` |
+| Penalty | `PenaltyResponseCode` | `107xx` | `domain/penalty/presentation/` |
+| Schedule | `ScheduleResponseCode` | `108xx` | `domain/schedule/presentation/` |
+| User | `UserResponseCode` | `109xx` | `domain/user/presentation/` |
+| Cardinal | `CardinalResponseCode` | `110xx` | `domain/cardinal/presentation/` |
 
 ## Domain Error Codes
 
-Domain-specific error enums under `src/main/java/com/weeth/domain/*/application/exception/*ErrorCode.java`.
-
 | Domain | ErrorCode Enum | Code Range | Location |
 |--------|---------------|------------|----------|
-| Account | `AccountErrorCode` | `21xx` | `domain/account/application/exception/` |
-| Attendance | `AttendanceErrorCode` | `22xx` | `domain/attendance/application/exception/` |
-| Board | `BoardErrorCode`, `NoticeErrorCode`, `PostErrorCode` | `23xx` | `domain/board/application/exception/` |
-| Comment | `CommentErrorCode` | `240x` | `domain/comment/application/exception/` |
-| Penalty | `PenaltyErrorCode` | `260x` | `domain/penalty/application/exception/` |
-| Schedule | `EventErrorCode`, `MeetingErrorCode` | `27xx` | `domain/schedule/application/exception/` |
-| User | `UserErrorCode` | `28xx` | `domain/user/application/exception/` |
-| JWT (Global) | `JwtErrorCode` | `29xx` | `global/auth/jwt/exception/` |
-
-## Code Numbering
-
-| Range | Category |
-|-------|----------|
-| 1XXX | Success responses |
-| 2XXX | Domain-specific errors |
-| 3XXX | Server errors |
-| 4XXX | Client errors |
+| Account | `AccountErrorCode` | `201xx` | `domain/account/application/exception/` |
+| Attendance | `AttendanceErrorCode` | `202xx` | `domain/attendance/application/exception/` |
+| Session | `SessionErrorCode` | `203xx` | `domain/session/application/exception/` |
+| Board | `BoardErrorCode` | `204xx` | `domain/board/application/exception/` |
+| Comment | `CommentErrorCode` | `205xx` | `domain/comment/application/exception/` |
+| File | `FileErrorCode` | `206xx` (domain), `306xx` (infra) | `domain/file/application/exception/` |
+| Penalty | `PenaltyErrorCode` | `207xx` | `domain/penalty/application/exception/` |
+| Schedule | `EventErrorCode` | `208xx` | `domain/schedule/application/exception/` |
+| User | `UserErrorCode` | `209xx` | `domain/user/application/exception/` |
+| Cardinal | `CardinalErrorCode` | `210xx` | `domain/cardinal/application/exception/` |
+| JWT (Global) | `JwtErrorCode` | `290xx` | `global/auth/jwt/application/exception/` |
 
 ## HTTP Methods
 

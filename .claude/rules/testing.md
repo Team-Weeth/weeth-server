@@ -20,12 +20,11 @@
 ## Directory Structure
 
 ```text
-src/test/kotlin/weeth/domain/{domain-name}/
+src/test/kotlin/com/weeth/domain/{domain-name}/
 ├── application/usecase/command/   # Command UseCase tests
 ├── application/usecase/query/     # QueryService tests
 ├── domain/service/                # Domain service tests (multi-entity logic)
 ├── domain/entity/                 # Entity behavior tests
-├── presentation/                  # Controller tests (@WebMvcTest)
 └── fixture/                       # Shared fixtures for the domain
 ```
 
@@ -74,7 +73,7 @@ object UserTestFixture {
 }
 ```
 
-- Location: `src/test/kotlin/weeth/domain/{domain-name}/fixture/`
+- Location: `src/test/kotlin/com/weeth/domain/{domain-name}/fixture/`
 - Use `object` with factory methods
 - Provide sensible defaults for all parameters
 - Reuse across test classes in the same domain
