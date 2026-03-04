@@ -21,8 +21,11 @@ class Board(
     name: String,
     type: BoardType,
     config: BoardConfig = BoardConfig(),
-    isDeleted: Boolean = false,
 ) : BaseEntity() {
+    init {
+        require(name.isNotBlank()) { "게시판 이름은 공백이 될 수 없습니다" }
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0L
@@ -43,7 +46,7 @@ class Board(
         private set
 
     @Column(nullable = false)
-    var isDeleted: Boolean = isDeleted
+    var isDeleted: Boolean = false
         private set
 
     val isCommentEnabled: Boolean

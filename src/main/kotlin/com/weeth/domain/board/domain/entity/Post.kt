@@ -19,10 +19,7 @@ class Post(
     content: String,
     user: User,
     board: Board,
-    commentCount: Int = 0,
-    likeCount: Int = 0,
     cardinalNumber: Int? = null,
-    isDeleted: Boolean = false,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,22 +34,22 @@ class Post(
     var content: String = content
         private set
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     var user: User = user
         private set
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "board_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "board_id", nullable = false)
     var board: Board = board
         private set
 
     @Column(nullable = false)
-    var commentCount: Int = commentCount
+    var commentCount: Int = 0
         private set
 
     @Column(nullable = false)
-    var likeCount: Int = likeCount
+    var likeCount: Int = 0
         private set
 
     @Column
@@ -60,7 +57,7 @@ class Post(
         private set
 
     @Column(nullable = false)
-    var isDeleted: Boolean = isDeleted
+    var isDeleted: Boolean = false
         private set
 
     fun increaseCommentCount() {
