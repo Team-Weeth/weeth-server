@@ -30,7 +30,6 @@ import jakarta.persistence.UniqueConstraint
     ],
 )
 class ClubMember(
-    id: Long = 0L,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "club_id", nullable = false)
     val club: Club,
@@ -43,7 +42,7 @@ class ClubMember(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "club_member_id")
-    var id: Long = id
+    var id: Long = 0L
         private set
 
     @Enumerated(EnumType.STRING)
@@ -124,7 +123,6 @@ class ClubMember(
             user: User,
             memberRole: MemberRole = MemberRole.USER,
         ): ClubMember {
-            require(user.id != 0L) { "유효하지 않은 사용자입니다." }
             return ClubMember(club = club, user = user, memberRole = memberRole)
         }
     }
