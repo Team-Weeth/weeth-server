@@ -122,8 +122,6 @@ class ClubMember(
             club: Club,
             user: User,
             memberRole: MemberRole = MemberRole.USER,
-        ): ClubMember {
-            return ClubMember(club = club, user = user, memberRole = memberRole)
-        }
+        ): ClubMember = ClubMember(club = club, user = user, memberRole = memberRole)
     }
 }
