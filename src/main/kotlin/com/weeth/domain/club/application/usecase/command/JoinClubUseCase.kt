@@ -25,6 +25,7 @@ class JoinClubUseCase(
 ) {
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
+     * MVP에서는 단일 동아리 지원만 가능
      */
     @Transactional
     fun join(
@@ -37,6 +38,15 @@ class JoinClubUseCase(
             userReader.getById(userId)
 
         clubMemberRepository.findByClubIdAndUserId(clubId, userId)?.let {
+            throw AlreadyJoinedException()
+        }
+
+        val isJoinedAnotherClub =
+            clubMemberRepository
+                .findAllByUserId(userId)
+                .any { it.club.id != clubId && it.isActive() }
+
+        if (isJoinedAnotherClub) {
             throw AlreadyJoinedException()
         }
 
