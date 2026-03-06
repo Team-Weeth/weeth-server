@@ -4,10 +4,12 @@ import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.application.exception.NotClubAdminException
 import com.weeth.domain.club.domain.repository.ClubMemberReader
+import org.springframework.stereotype.Service
 
 /**
  * 동아리 멤버 관련 비즈니스 규칙 및 권한 검증
  */
+@Service
 class ClubMemberPolicy(
     private val clubMemberReader: ClubMemberReader,
 ) {
