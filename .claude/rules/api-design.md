@@ -94,7 +94,7 @@ enum class UserResponseCode(
 | 08 | schedule   | 10800~        | 20800~             | —                 |
 | 09 | user       | 10900~        | 20900~             | —                 |
 | 10 | cardinal   | 11000~        | 21000~             | —                 |
-| 11 | club       | ()          | ()               | —                 |
+| 11 | club       | 11100~        | 21100~             | —                 |
 | 90 | jwt/auth   | —             | 29000~             | —                 |
 | 99 | common     | —             | —                  | 39900~            |
 

@@ -8,6 +8,7 @@ import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.user.domain.enums.Role
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -50,6 +51,7 @@ class GetBoardQueryServiceTest :
                 val result = queryService.findBoards(Role.ADMIN)
 
                 result shouldHaveSize 2
+                result.map { it.name } shouldBe listOf("일반", "운영")
             }
         }
 
@@ -66,6 +68,7 @@ class GetBoardQueryServiceTest :
                 val result = queryService.findAllBoardsForAdmin()
 
                 result shouldHaveSize 2
+                result.map { it.name } shouldBe listOf("일반", "삭제됨")
             }
 
             it("활성 게시판과 비공개 게시판도 모두 포함해 반환한다") {
@@ -80,6 +83,7 @@ class GetBoardQueryServiceTest :
                 val result = queryService.findAllBoardsForAdmin()
 
                 result shouldHaveSize 2
+                result.map { it.name } shouldBe listOf("일반", "운영")
             }
         }
 

@@ -61,6 +61,9 @@ dependencies {
     runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
 
+    // --- TSID ---
+    implementation("io.hypersistence:hypersistence-tsid:2.1.4")
+
     // --- DB ---
     runtimeOnly("com.mysql:mysql-connector-j")
 
