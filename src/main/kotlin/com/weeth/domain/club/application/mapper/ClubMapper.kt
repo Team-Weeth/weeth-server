@@ -1,0 +1,89 @@
+package com.weeth.domain.club.application.mapper
+
+import com.weeth.domain.club.application.dto.response.ClubDetailResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberResponse
+import com.weeth.domain.club.application.dto.response.ClubResponse
+import com.weeth.domain.club.application.dto.response.ClubInfoResponse
+import com.weeth.domain.club.domain.entity.Club
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.global.common.id.TsidBase62Encoder
+import org.springframework.stereotype.Component
+
+@Component
+class ClubMapper {
+    fun toInfoResponse(
+        club: Club,
+        member: ClubMember,
+    ) = ClubInfoResponse(
+        id = TsidBase62Encoder.encode(club.id),
+        name = club.name,
+        schoolName = club.schoolName,
+        description = club.description,
+        memberRole = member.memberRole,
+        memberStatus = member.memberStatus,
+    )
+
+    fun toResponse(club: Club) =
+        ClubResponse(
+            id = TsidBase62Encoder.encode(club.id),
+            name = club.name,
+            schoolName = club.schoolName,
+            description = club.description,
+            profileImageUrl = club.profileImageUrl,
+            backgroundImageUrl = club.backgroundImageUrl,
+        )
+
+    fun toDetailResponse(club: Club) =
+        ClubDetailResponse(
+            id = TsidBase62Encoder.encode(club.id),
+            name = club.name,
+            code = club.code,
+            schoolName = club.schoolName,
+            description = club.description,
+            contactEmail = club.clubContact.email,
+            contactPhoneNumber = club.clubContact.phoneNumber,
+            profileImageUrl = club.profileImageUrl,
+            backgroundImageUrl = club.backgroundImageUrl,
+        )
+
+    fun toMemberResponse(member: ClubMember, cardinals: List<ClubMemberCardinal>) =
+        ClubMemberResponse(
+            userId = member.user.id,
+            clubMemberId = member.id,
+            name = member.user.name,
+            email = member.user.emailValue,
+            studentId = member.user.studentId,
+            tel = member.user.telValue,
+            department = member.user.department,
+            cardinals = toCardinalNumbers(cardinals),
+            memberStatus = member.memberStatus,
+            memberRole = member.memberRole,
+            attendanceCount = member.attendanceStats.attendanceCount,
+            absenceCount = member.attendanceStats.absenceCount,
+            attendanceRate = member.attendanceStats.attendanceRate,
+            penaltyCount = member.penaltyCount,
+        )
+
+    fun toMemberProfileResponse(member: ClubMember) =
+        ClubMemberProfileResponse(
+            clubMemberId = member.id,
+            memberStatus = member.memberStatus,
+            memberRole = member.memberRole,
+            attendanceCount = member.attendanceStats.attendanceCount,
+            absenceCount = member.attendanceStats.absenceCount,
+            attendanceRate = member.attendanceStats.attendanceRate,
+            penaltyCount = member.penaltyCount,
+        )
+
+    private fun toCardinalNumbers(cardinals: List<ClubMemberCardinal>): List<Int> {
+        if (cardinals.isEmpty()) {
+            return emptyList()
+        }
+
+        return cardinals
+            .map { it.cardinal.cardinalNumber }
+            .sorted()
+    }
+}
