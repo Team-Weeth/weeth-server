@@ -1,5 +1,6 @@
 package com.weeth.global.common.id
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
@@ -30,6 +31,32 @@ class TsidBase62EncoderTest :
 
             cases.forEach { (encoded, expected) ->
                 TsidBase62Encoder.decode(encoded) shouldBe expected
+            }
+        }
+
+        "encode 후 decode 하면 원래 값이 나온다" {
+            val values = listOf(
+                0L,
+                1L,
+                10L,
+                61L,
+                62L,
+                999L,
+                123456789L,
+                Long.MAX_VALUE,
+            )
+
+            values.forEach { value ->
+                val encoded = TsidBase62Encoder.encode(value)
+                val decoded = TsidBase62Encoder.decode(encoded)
+
+                decoded shouldBe value
+            }
+        }
+
+        "유효하지 않은 Base62 문자가 들어오면 예외가 발생한다" {
+            shouldThrow<IllegalArgumentException> {
+                TsidBase62Encoder.decode("abc!")
             }
         }
     })
