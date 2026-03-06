@@ -27,6 +27,8 @@ class Club(
     description: String? = null,
     schoolName: String,
     clubContact: ClubContact,
+    profileImageUrl: String? = null,
+    backgroundImageUrl: String? = null,
 ) : BaseEntity() {
     // TSID(Time-Sorted Unique Identifier)로 관리
     // Client 반환시 Base62 인코딩해서 String으로 반환
@@ -39,7 +41,7 @@ class Club(
     var name: String = name.trim()
         private set
 
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(nullable = false, unique = true, length = 32)
     var code: String = code
         private set
 
@@ -54,6 +56,22 @@ class Club(
     @Embedded
     var clubContact: ClubContact = clubContact
         private set
+
+    @Column(length = 500)
+    var profileImageUrl: String? = profileImageUrl
+        private set
+
+    @Column(length = 500)
+    var backgroundImageUrl: String? = backgroundImageUrl
+        private set
+
+    fun updateImages(
+        profileImageUrl: String?,
+        backgroundImageUrl: String?,
+    ) {
+        this.profileImageUrl = profileImageUrl
+        this.backgroundImageUrl = backgroundImageUrl
+    }
 
     fun update(
         name: String,
@@ -90,6 +108,8 @@ class Club(
             schoolName: String,
             clubContact: ClubContact,
             description: String? = null,
+            profileImageUrl: String? = null,
+            backgroundImageUrl: String? = null,
         ): Club {
             require(name.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
             require(code.isNotBlank()) { "초대 코드는 비어 있을 수 없습니다." }
@@ -100,6 +120,8 @@ class Club(
                 description = description,
                 schoolName = schoolName,
                 clubContact = clubContact,
+                profileImageUrl = profileImageUrl,
+                backgroundImageUrl = backgroundImageUrl,
             ).apply {
                 // 객체 생성시 TSID 할당
                 id = TsidGenerator.nextId()
