@@ -31,6 +31,7 @@ class ManageClubUseCase(
      * 새로운 동아리를 생성
      * 생성자는 자동으로 LEAD 권한 설정
      * 동아리 생성은 관리자 권한이 필요 없음
+     * todo: 기수 관련 설정 필수 처리
      */
     @Transactional
     fun create(
