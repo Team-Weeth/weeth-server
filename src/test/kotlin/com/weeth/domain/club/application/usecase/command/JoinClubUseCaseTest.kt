@@ -39,9 +39,9 @@ class JoinClubUseCaseTest :
         describe("join") {
             context("이미 다른 동아리에서 ACTIVE 상태로 활동 중인 경우") {
                 it("MVP 단일 동아리 정책에 따라 가입할 수 없다") {
-                    val targetClub = ClubTestFixture.createClub(id = 1L, code = "JOIN-CODE")
-                    val anotherClub = ClubTestFixture.createClub(id = 2L)
-                    val user = UserTestFixture.createActiveUser1(id = 10L)
+                    val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
+                    val anotherClub = ClubTestFixture.createClub()
+                    val user = UserTestFixture.createActiveUser1()
                     val anotherClubMember =
                         ClubTestFixture.createClubMember(
                             club = anotherClub,

@@ -34,9 +34,10 @@ class GetClubMemberQueryServiceTest :
         describe("findClubMembersForAdmin") {
             context("관리자가 멤버 목록을 조회하는 경우") {
                 it("각 멤버의 소속 기수 정보를 함께 반환한다") {
-                    val club = ClubTestFixture.createClub(id = 1L)
+                    val club = ClubTestFixture.createClub()
                     val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
-                    val member = ClubTestFixture.createClubMember(id = 11L, club = club, user = UserTestFixture.createActiveUser1(id = 3L))
+                    val member =
+                        ClubTestFixture.createClubMember(club = club, user = UserTestFixture.createActiveUser1(id = 3L))
                     val cardinal7 = Cardinal.create(cardinalNumber = 7)
                     val cardinal6 = Cardinal.create(cardinalNumber = 6)
                     val memberCardinals =
@@ -52,8 +53,19 @@ class GetClubMemberQueryServiceTest :
                     val result = service.findClubMembersForAdmin(clubId = 1L, userId = 99L)
 
                     result shouldHaveSize 1
-                    result.first().clubMemberId shouldBe 11L
-                    result.first().cardinals shouldBe listOf(6, 7)
+                    val response = result.first()
+                    response.name shouldBe member.user.name
+                    response.email shouldBe member.user.emailValue
+                    response.studentId shouldBe member.user.studentId
+                    response.tel shouldBe member.user.telValue
+                    response.department shouldBe member.user.department
+                    response.memberStatus shouldBe member.memberStatus
+                    response.memberRole shouldBe member.memberRole
+                    response.attendanceCount shouldBe member.attendanceStats.attendanceCount
+                    response.absenceCount shouldBe member.attendanceStats.absenceCount
+                    response.attendanceRate shouldBe member.attendanceStats.attendanceRate
+                    response.penaltyCount shouldBe member.penaltyCount
+                    response.cardinals shouldBe listOf(6, 7)
                     verify(exactly = 1) { clubMemberPolicy.requireAdmin(1L, 99L) }
                     verify(exactly = 1) { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) }
                 }
