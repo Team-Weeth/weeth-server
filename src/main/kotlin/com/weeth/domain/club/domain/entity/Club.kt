@@ -58,7 +58,7 @@ class Club(
         private set
 
     @Column(length = 500)
-    var profileImageUrl: String? = profileImageUrl
+    var profileImageUrl: String? = profileImageUrl // 우선 URL로 저장 후 File로 붙일지 논의
         private set
 
     @Column(length = 500)
