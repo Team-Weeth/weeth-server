@@ -26,7 +26,7 @@ class Club(
     var id: Long = 0L
         private set
 
-    @Column(nullable = false, unique = true, length = 100)
+    @Column(nullable = false, unique = false, length = 100)
     var name: String = name.trim()
         private set
 
