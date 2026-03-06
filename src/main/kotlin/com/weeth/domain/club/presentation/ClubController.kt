@@ -47,7 +47,7 @@ class ClubController(
     ): CommonResponse<Unit> {
         manageClubUseCase.create(userId, request)
 
-        return CommonResponse.success(ClubResponseCode.CLUB_CREATED)
+        return CommonResponse.success(ClubResponseCode.CLUB_CREATED_SUCCESS)
     }
 
     @GetMapping
@@ -57,7 +57,7 @@ class ClubController(
     ): CommonResponse<List<ClubInfoResponse>> {
         val clubs = getClubQueryService.findMyClubs(userId)
 
-        return CommonResponse.success(ClubResponseCode.CLUB_FIND_ALL, clubs)
+        return CommonResponse.success(ClubResponseCode.CLUB_FIND_ALL_SUCCESS, clubs)
     }
 
     @GetMapping("/{clubId}")
@@ -69,7 +69,7 @@ class ClubController(
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         val info = getClubQueryService.findClub(decodedClubId)
 
-        return CommonResponse.success(ClubResponseCode.CLUB_FIND_PUBLIC, info)
+        return CommonResponse.success(ClubResponseCode.CLUB_FIND_SUCCESS, info)
     }
 
     @PostMapping("/{clubId}/join")
@@ -82,7 +82,7 @@ class ClubController(
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         joinClubUseCase.join(decodedClubId, userId, request)
 
-        return CommonResponse.success(ClubResponseCode.CLUB_JOINED)
+        return CommonResponse.success(ClubResponseCode.CLUB_JOINED_SUCCESS)
     }
 
     @DeleteMapping("/{clubId}/leave")
@@ -94,7 +94,7 @@ class ClubController(
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         joinClubUseCase.leave(decodedClubId, userId)
 
-        return CommonResponse.success(ClubResponseCode.CLUB_LEFT)
+        return CommonResponse.success(ClubResponseCode.CLUB_LEFT_SUCCESS)
     }
 
     @GetMapping("/{clubId}/members/me")
@@ -106,6 +106,6 @@ class ClubController(
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         val meInfo = getClubMemberQueryService.findMyMemberProfile(decodedClubId, userId)
 
-        return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME, meInfo)
+        return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
     }
 }

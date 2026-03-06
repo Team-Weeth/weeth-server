@@ -44,7 +44,7 @@ class ClubAdminController(
     ): CommonResponse<ClubDetailResponse> {
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         val detail = getClubQueryService.findClubDetailForAdmin(decodedClubId, userId)
-        return CommonResponse.success(ClubResponseCode.CLUB_FIND_BY_ID, detail)
+        return CommonResponse.success(ClubResponseCode.CLUB_FIND_BY_ID_SUCCESS, detail)
     }
 
     @PatchMapping
@@ -56,7 +56,7 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         manageClubUseCase.update(decodedClubId, userId, request)
-        return CommonResponse.success(ClubResponseCode.CLUB_UPDATED)
+        return CommonResponse.success(ClubResponseCode.CLUB_UPDATED_SUCCESS)
     }
 
     @PostMapping("/code/regenerate")
@@ -67,7 +67,7 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         manageClubUseCase.regenerateCode(decodedClubId, userId)
-        return CommonResponse.success(ClubResponseCode.CLUB_CODE_REGENERATED)
+        return CommonResponse.success(ClubResponseCode.CLUB_CODE_REGENERATED_SUCCESS)
     }
 
     @GetMapping("/members")
@@ -78,7 +78,7 @@ class ClubAdminController(
     ): CommonResponse<List<ClubMemberResponse>> {
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         val members = getClubMemberQueryService.findClubMembersForAdmin(decodedClubId, userId)
-        return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL, members)
+        return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
     }
 
     @PatchMapping("/members/{clubMemberId}/accept")
@@ -90,7 +90,7 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         adminClubMemberUseCase.accept(decodedClubId, userId, clubMemberId)
-        return CommonResponse.success(ClubResponseCode.MEMBER_ACCEPTED)
+        return CommonResponse.success(ClubResponseCode.MEMBER_ACCEPTED_SUCCESS)
     }
 
     @DeleteMapping("/members/{clubMemberId}/ban")
@@ -102,7 +102,7 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         adminClubMemberUseCase.ban(decodedClubId, userId, clubMemberId)
-        return CommonResponse.success(ClubResponseCode.MEMBER_BANNED)
+        return CommonResponse.success(ClubResponseCode.MEMBER_BANNED_SUCCESS)
     }
 
     @PatchMapping("/members/{clubMemberId}/role")
@@ -115,6 +115,6 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         val decodedClubId = TsidBase62Encoder.decode(clubId)
         adminClubMemberUseCase.updateMemberRole(decodedClubId, userId, request)
-        return CommonResponse.success(ClubResponseCode.MEMBER_ROLE_UPDATED)
+        return CommonResponse.success(ClubResponseCode.MEMBER_ROLE_UPDATED_SUCCESS)
     }
 }
