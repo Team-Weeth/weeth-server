@@ -12,8 +12,9 @@ import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
-import com.weeth.global.common.id.TsidBase62Encoder
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
+import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -21,7 +22,6 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -64,10 +64,10 @@ class ClubController(
     @Operation(summary = "동아리 정보 조회 (이름, 소개, 이미지)")
     fun getClubPublicInfo(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
     ): CommonResponse<ClubResponse> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        val info = getClubQueryService.findClub(decodedClubId)
+        val info = getClubQueryService.findClub(clubId)
 
         return CommonResponse.success(ClubResponseCode.CLUB_FIND_SUCCESS, info)
     }
@@ -76,11 +76,11 @@ class ClubController(
     @Operation(summary = "동아리 가입")
     fun join(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
         @Valid @RequestBody request: ClubJoinRequest,
     ): CommonResponse<Unit> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        joinClubUseCase.join(decodedClubId, userId, request)
+        joinClubUseCase.join(clubId, userId, request)
 
         return CommonResponse.success(ClubResponseCode.CLUB_JOINED_SUCCESS)
     }
@@ -89,10 +89,10 @@ class ClubController(
     @Operation(summary = "동아리 탈퇴")
     fun leave(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
     ): CommonResponse<Unit> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        joinClubUseCase.leave(decodedClubId, userId)
+        joinClubUseCase.leave(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.CLUB_LEFT_SUCCESS)
     }
@@ -101,10 +101,10 @@ class ClubController(
     @Operation(summary = "내 멤버 정보 조회")
     fun getMyMemberInfo(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
     ): CommonResponse<ClubMemberProfileResponse> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        val meInfo = getClubMemberQueryService.findMyMemberProfile(decodedClubId, userId)
+        val meInfo = getClubMemberQueryService.findMyMemberProfile(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
     }

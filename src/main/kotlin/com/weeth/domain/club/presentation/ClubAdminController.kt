@@ -11,8 +11,9 @@ import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
-import com.weeth.global.common.id.TsidBase62Encoder
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
+import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -40,10 +41,10 @@ class ClubAdminController(
     @Operation(summary = "동아리 상세 정보 조회")
     fun getClubDetail(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
     ): CommonResponse<ClubDetailResponse> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        val detail = getClubQueryService.findClubDetailForAdmin(decodedClubId, userId)
+        val detail = getClubQueryService.findClubDetailForAdmin(clubId, userId)
         return CommonResponse.success(ClubResponseCode.CLUB_FIND_BY_ID_SUCCESS, detail)
     }
 
@@ -51,11 +52,11 @@ class ClubAdminController(
     @Operation(summary = "동아리 정보 수정")
     fun update(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
         @Valid @RequestBody request: ClubUpdateRequest,
     ): CommonResponse<Unit> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        manageClubUseCase.update(decodedClubId, userId, request)
+        manageClubUseCase.update(clubId, userId, request)
         return CommonResponse.success(ClubResponseCode.CLUB_UPDATED_SUCCESS)
     }
 
@@ -63,10 +64,10 @@ class ClubAdminController(
     @Operation(summary = "초대 코드 재생성 (MVP 미사용)", deprecated = true)
     fun regenerateCode(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
     ): CommonResponse<Unit> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        manageClubUseCase.regenerateCode(decodedClubId, userId)
+        manageClubUseCase.regenerateCode(clubId, userId)
         return CommonResponse.success(ClubResponseCode.CLUB_CODE_REGENERATED_SUCCESS)
     }
 
@@ -74,10 +75,10 @@ class ClubAdminController(
     @Operation(summary = "동아리 멤버 목록 조회")
     fun getClubMembers(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
     ): CommonResponse<List<ClubMemberResponse>> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        val members = getClubMemberQueryService.findClubMembersForAdmin(decodedClubId, userId)
+        val members = getClubMemberQueryService.findClubMembersForAdmin(clubId, userId)
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
     }
 
@@ -85,11 +86,11 @@ class ClubAdminController(
     @Operation(summary = "멤버 승인")
     fun acceptMember(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
         @PathVariable clubMemberId: Long,
     ): CommonResponse<Unit> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        adminClubMemberUseCase.accept(decodedClubId, userId, clubMemberId)
+        adminClubMemberUseCase.accept(clubId, userId, clubMemberId)
         return CommonResponse.success(ClubResponseCode.MEMBER_ACCEPTED_SUCCESS)
     }
 
@@ -97,11 +98,11 @@ class ClubAdminController(
     @Operation(summary = "멤버 추방")
     fun banMember(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
         @PathVariable clubMemberId: Long,
     ): CommonResponse<Unit> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        adminClubMemberUseCase.ban(decodedClubId, userId, clubMemberId)
+        adminClubMemberUseCase.ban(clubId, userId, clubMemberId)
         return CommonResponse.success(ClubResponseCode.MEMBER_BANNED_SUCCESS)
     }
 
@@ -109,12 +110,12 @@ class ClubAdminController(
     @Operation(summary = "멤버 권한 변경")
     fun updateMemberRole(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable clubId: String,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
         @PathVariable clubMemberId: Long,
         @Valid @RequestBody request: ClubMemberRoleUpdateRequest,
     ): CommonResponse<Unit> {
-        val decodedClubId = TsidBase62Encoder.decode(clubId)
-        adminClubMemberUseCase.updateMemberRole(decodedClubId, userId, request)
+        adminClubMemberUseCase.updateMemberRole(clubId, userId, request)
         return CommonResponse.success(ClubResponseCode.MEMBER_ROLE_UPDATED_SUCCESS)
     }
 }
