@@ -41,7 +41,7 @@ class Club(
     var name: String = name.trim()
         private set
 
-    @Column(nullable = false, unique = true, length = 32)
+    @Column(nullable = false, unique = true, length = 36)
     var code: String = code
         private set
 
