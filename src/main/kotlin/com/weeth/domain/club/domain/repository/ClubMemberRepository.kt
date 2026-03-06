@@ -3,6 +3,8 @@ package com.weeth.domain.club.domain.repository
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.domain.entity.ClubMember
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface ClubMemberRepository :
     JpaRepository<ClubMember, Long>,
@@ -17,7 +19,17 @@ interface ClubMemberRepository :
         userId: Long,
     ): ClubMember?
 
-    override fun findAllByClubId(clubId: Long): List<ClubMember>
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user
+        WHERE cm.club.id = :clubId
+        """,
+    )
+    override fun findAllByClubId(
+        @Param("clubId") clubId: Long,
+    ): List<ClubMember>
 
     override fun findAllByUserId(userId: Long): List<ClubMember>
 }
