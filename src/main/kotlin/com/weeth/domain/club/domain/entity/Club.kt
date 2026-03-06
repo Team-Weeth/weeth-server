@@ -9,9 +9,18 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.PrePersist
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "club")
+@Table(
+    name = "club",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_club_school_name_club_name",
+            columnNames = ["school_name", "name"],
+        ),
+    ],
+)
 class Club(
     name: String,
     code: String,
