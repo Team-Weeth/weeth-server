@@ -35,16 +35,17 @@ class TsidBase62EncoderTest :
         }
 
         "encode 후 decode 하면 원래 값이 나온다" {
-            val values = listOf(
-                0L,
-                1L,
-                10L,
-                61L,
-                62L,
-                999L,
-                123456789L,
-                Long.MAX_VALUE,
-            )
+            val values =
+                listOf(
+                    0L,
+                    1L,
+                    10L,
+                    61L,
+                    62L,
+                    999L,
+                    123456789L,
+                    Long.MAX_VALUE,
+                )
 
             values.forEach { value ->
                 val encoded = TsidBase62Encoder.encode(value)

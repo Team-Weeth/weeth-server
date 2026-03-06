@@ -2,9 +2,9 @@ package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
+import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubResponse
-import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.JoinClubUseCase
 import com.weeth.domain.club.application.usecase.command.ManageClubUseCase

@@ -31,5 +31,5 @@ enum class ClubErrorCode(
     MEMBER_NOT_ACTIVE(21106, HttpStatus.FORBIDDEN, "비활성 멤버입니다."),
 
     @ExplainError("MVP 단계에서 여러 동아리에 지원하려고 하는 경우 발생합니다. MVP는 단일 동아리 지원만 가능합니다.")
-    CLUB_CANT_JOIN(21106, HttpStatus.BAD_REQUEST, "MVP에서 동아리는 1개만 지원 가능합니다.")
+    CLUB_CANT_JOIN(21106, HttpStatus.BAD_REQUEST, "MVP에서 동아리는 1개만 지원 가능합니다."),
 }

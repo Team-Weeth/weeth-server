@@ -1,10 +1,10 @@
 package com.weeth.domain.club.application.mapper
 
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
+import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubResponse
-import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
@@ -48,23 +48,25 @@ class ClubMapper {
             backgroundImageUrl = club.backgroundImageUrl,
         )
 
-    fun toMemberResponse(member: ClubMember, cardinals: List<ClubMemberCardinal>) =
-        ClubMemberResponse(
-            userId = member.user.id,
-            clubMemberId = member.id,
-            name = member.user.name,
-            email = member.user.emailValue,
-            studentId = member.user.studentId,
-            tel = member.user.telValue,
-            department = member.user.department,
-            cardinals = toCardinalNumbers(cardinals),
-            memberStatus = member.memberStatus,
-            memberRole = member.memberRole,
-            attendanceCount = member.attendanceStats.attendanceCount,
-            absenceCount = member.attendanceStats.absenceCount,
-            attendanceRate = member.attendanceStats.attendanceRate,
-            penaltyCount = member.penaltyCount,
-        )
+    fun toMemberResponse(
+        member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+    ) = ClubMemberResponse(
+        userId = member.user.id,
+        clubMemberId = member.id,
+        name = member.user.name,
+        email = member.user.emailValue,
+        studentId = member.user.studentId,
+        tel = member.user.telValue,
+        department = member.user.department,
+        cardinals = toCardinalNumbers(cardinals),
+        memberStatus = member.memberStatus,
+        memberRole = member.memberRole,
+        attendanceCount = member.attendanceStats.attendanceCount,
+        absenceCount = member.attendanceStats.absenceCount,
+        attendanceRate = member.attendanceStats.attendanceRate,
+        penaltyCount = member.penaltyCount,
+    )
 
     fun toMemberProfileResponse(member: ClubMember) =
         ClubMemberProfileResponse(
