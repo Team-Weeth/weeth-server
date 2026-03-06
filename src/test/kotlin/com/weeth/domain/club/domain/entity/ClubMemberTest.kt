@@ -19,7 +19,7 @@ class ClubMemberTest :
             )
         val user = UserTestFixture.createActiveUser1()
 
-        "ClubMember 생성 — 기본 상태는 WAITING, 역할은 USER" {
+        "ClubMember 생성 — 기본 상태는 WAITING, 역할은 USER, 패널티 횟수는 0" {
             val member = ClubMember(club = club, user = user)
 
             member.memberStatus shouldBe MemberStatus.WAITING

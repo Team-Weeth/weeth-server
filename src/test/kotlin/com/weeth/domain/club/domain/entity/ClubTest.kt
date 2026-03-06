@@ -1,8 +1,12 @@
 package com.weeth.domain.club.domain.entity
 
 import com.weeth.domain.club.domain.vo.ClubContact
+import com.weeth.domain.club.fixture.ClubTestFixture
+import io.hypersistence.tsid.TSID
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.comparables.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
 
 class ClubTest :
@@ -71,10 +75,19 @@ class ClubTest :
             }
         }
 
-        "create — Club id는 TSID로 생성된다" {
+        "create — Club id는 TSID 형식으로 생성된다" {
             val club = Club.create(name = "리츠", code = "LEETS001", schoolName = "가천대학교", clubContact = defaultContact)
 
-            (club.id > 0L) shouldBe true
+            shouldNotThrowAny {
+                TSID.from(club.id)
+            }
+        }
+
+        "create - Club id는 TSID 형식으로 시간순 정렬이 가능하다" {
+            val club1 = ClubTestFixture.createClub()
+            val club2 = ClubTestFixture.createClub()
+
+            club2.id shouldBeGreaterThan club1.id
         }
 
         "create — 유효한 인자로 생성에 성공한다" {
