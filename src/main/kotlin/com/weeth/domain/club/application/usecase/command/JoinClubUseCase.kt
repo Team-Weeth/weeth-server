@@ -36,7 +36,7 @@ class JoinClubUseCase(
     ) {
         val club = clubRepository.getClubById(clubId)
         val user =
-            userReader.getById(userId)
+            userReader.getByIdWithLock(userId)
 
         clubMemberRepository.findByClubIdAndUserId(clubId, userId)?.let {
             throw AlreadyJoinedException()
