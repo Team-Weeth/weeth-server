@@ -65,28 +65,49 @@ class Club(
     var backgroundImageUrl: String? = backgroundImageUrl
         private set
 
-    fun updateImages(
+    fun update(
+        name: String?,
+        schoolName: String?,
+        description: String?,
+        contactEmail: String?,
+        contactPhoneNumber: String?,
         profileImageUrl: String?,
         backgroundImageUrl: String?,
     ) {
-        this.profileImageUrl = profileImageUrl
-        this.backgroundImageUrl = backgroundImageUrl
+        name?.let {
+            require(it.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
+            this.name = it.trim()
+        }
+        schoolName?.let {
+            require(it.isNotBlank()) { "학교 이름은 비어 있을 수 없습니다." }
+            this.schoolName = it.trim()
+        }
+        description?.let { this.description = it }
+
+        updateContact(contactEmail, contactPhoneNumber)
+        updateImageUrl(profileImageUrl, backgroundImageUrl)
     }
 
-    fun update(
-        name: String,
-        description: String?,
+    private fun updateContact(
+        contactEmail: String?,
+        contactPhoneNumber: String?,
     ) {
-        require(name.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
-        this.name = name.trim()
-        this.description = description
+        if (contactEmail != null || contactPhoneNumber != null) {
+            clubContact.update(
+                email = contactEmail ?: clubContact.email,
+                phoneNumber = contactPhoneNumber ?: clubContact.phoneNumber,
+            )
+        }
     }
 
-    fun updateContact(
-        email: String?,
-        phoneNumber: String?,
+    private fun updateImageUrl(
+        profileImageUrl: String?,
+        backgroundImageUrl: String?,
     ) {
-        clubContact.update(email = email, phoneNumber = phoneNumber)
+        if (profileImageUrl != null || backgroundImageUrl != null) {
+            this.profileImageUrl = profileImageUrl ?: this.profileImageUrl
+            this.backgroundImageUrl = backgroundImageUrl ?: this.backgroundImageUrl
+        }
     }
 
     fun regenerateCode(newCode: String) {

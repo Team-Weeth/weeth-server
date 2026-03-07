@@ -85,18 +85,13 @@ class ManageClubUseCase(
         val club = clubRepository.getClubById(clubId)
 
         club.update(
-            name = request.name ?: club.name,
+            name = request.name,
+            schoolName = request.schoolName,
             description = request.description,
-        )
-
-        club.updateContact(
-            email = request.contactEmail,
-            phoneNumber = request.contactPhoneNumber,
-        )
-
-        club.updateImages(
-            request.profileImageUrl,
-            request.backgroundImageUrl,
+            contactEmail = request.contactEmail,
+            contactPhoneNumber = request.contactPhoneNumber,
+            profileImageUrl = request.profileImageUrl,
+            backgroundImageUrl = request.backgroundImageUrl,
         )
     }
 

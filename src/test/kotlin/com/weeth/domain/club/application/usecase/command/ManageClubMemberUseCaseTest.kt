@@ -48,7 +48,7 @@ class ManageClubMemberUseCaseTest :
                         )
 
                     every { clubRepository.getClubById(1L) } returns targetClub
-                    every { userReader.getById(10L) } returns user
+                    every { userReader.getByIdWithLock(10L) } returns user
                     every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
                     every { clubMemberRepository.findAllByUserId(10L) } returns listOf(anotherClubMember)
 
