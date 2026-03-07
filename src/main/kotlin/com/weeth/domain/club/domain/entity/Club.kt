@@ -115,6 +115,14 @@ class Club(
         this.code = newCode
     }
 
+    fun removeProfileImage() {
+        this.profileImageUrl = null
+    }
+
+    fun removeBackgroundImage() {
+        this.backgroundImageUrl = null
+    }
+
     @PrePersist
     fun assignIdIfAbsent() {
         if (id == 0L) {

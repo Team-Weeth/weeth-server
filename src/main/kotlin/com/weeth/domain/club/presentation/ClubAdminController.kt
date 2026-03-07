@@ -60,6 +60,28 @@ class ClubAdminController(
         return CommonResponse.success(ClubResponseCode.CLUB_UPDATED_SUCCESS)
     }
 
+    @DeleteMapping("/profile-image")
+    @Operation(summary = "동아리 프로필 사진 삭제")
+    fun deleteProfileImage(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
+    ): CommonResponse<Unit> {
+        manageClubUseCase.deleteProfileImage(clubId, userId)
+        return CommonResponse.success(ClubResponseCode.CLUB_PROFILE_IMAGE_DELETED_SUCCESS)
+    }
+
+    @DeleteMapping("/background-image")
+    @Operation(summary = "동아리 배경 사진 삭제")
+    fun deleteBackgroundImage(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable("clubId") clubId: Long,
+    ): CommonResponse<Unit> {
+        manageClubUseCase.deleteBackgroundImage(clubId, userId)
+        return CommonResponse.success(ClubResponseCode.CLUB_BACKGROUND_IMAGE_DELETED_SUCCESS)
+    }
+
     @PostMapping("/code/regenerate")
     @Operation(summary = "초대 코드 재생성 (MVP 미사용)", deprecated = true)
     fun regenerateCode(

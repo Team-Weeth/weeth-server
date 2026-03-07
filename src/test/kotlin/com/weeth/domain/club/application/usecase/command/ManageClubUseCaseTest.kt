@@ -83,4 +83,56 @@ class ManageClubUseCaseTest :
                 club.clubContact.phoneNumber shouldBe null
             }
         }
+
+        describe("deleteProfileImage") {
+            it("프로필 사진만 삭제하고 배경 사진은 유지한다") {
+                val club =
+                    ClubTestFixture.createClub(
+                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                    )
+                club.update(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "https://example.com/profile.png",
+                    "https://example.com/background.png",
+                )
+
+                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubRepository.getClubById(1L) } returns club
+
+                useCase.deleteProfileImage(1L, 10L)
+
+                club.profileImageUrl shouldBe null
+                club.backgroundImageUrl shouldBe "https://example.com/background.png"
+            }
+        }
+
+        describe("deleteBackgroundImage") {
+            it("배경 사진만 삭제하고 프로필 사진은 유지한다") {
+                val club =
+                    ClubTestFixture.createClub(
+                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                    )
+                club.update(
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    "https://example.com/profile.png",
+                    "https://example.com/background.png",
+                )
+
+                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubRepository.getClubById(1L) } returns club
+
+                useCase.deleteBackgroundImage(1L, 10L)
+
+                club.profileImageUrl shouldBe "https://example.com/profile.png"
+                club.backgroundImageUrl shouldBe null
+            }
+        }
     })

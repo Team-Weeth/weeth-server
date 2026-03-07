@@ -21,4 +21,6 @@ enum class ClubResponseCode(
     MEMBER_BANNED_SUCCESS(11110, HttpStatus.OK, "멤버가 추방되었습니다."),
     MEMBER_ROLE_UPDATED_SUCCESS(11111, HttpStatus.OK, "멤버 권한이 변경되었습니다."),
     CLUB_FIND_SUCCESS(11112, HttpStatus.OK, "동아리 공개 정보를 성공적으로 조회했습니다."),
+    CLUB_PROFILE_IMAGE_DELETED_SUCCESS(11113, HttpStatus.OK, "동아리 프로필 사진이 삭제되었습니다."),
+    CLUB_BACKGROUND_IMAGE_DELETED_SUCCESS(11114, HttpStatus.OK, "동아리 배경 사진이 삭제되었습니다."),
 }

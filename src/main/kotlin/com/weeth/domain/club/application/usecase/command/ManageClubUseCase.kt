@@ -106,4 +106,26 @@ class ManageClubUseCase(
         val newCode = ClubCodePolicy.generateCode()
         club.regenerateCode(newCode)
     }
+
+    @Transactional
+    fun deleteProfileImage(
+        clubId: Long,
+        userId: Long,
+    ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
+
+        val club = clubRepository.getClubById(clubId)
+        club.removeProfileImage()
+    }
+
+    @Transactional
+    fun deleteBackgroundImage(
+        clubId: Long,
+        userId: Long,
+    ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
+
+        val club = clubRepository.getClubById(clubId)
+        club.removeBackgroundImage()
+    }
 }
