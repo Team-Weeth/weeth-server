@@ -32,4 +32,7 @@ enum class ClubErrorCode(
 
     @ExplainError("MVP 단계에서 여러 동아리에 지원하려고 하는 경우 발생합니다. MVP는 단일 동아리 지원만 가능합니다.")
     CLUB_CANT_JOIN(21107, HttpStatus.BAD_REQUEST, "MVP에서 동아리는 1개만 지원 가능합니다."),
+
+    @ExplainError("요청한 멤버가 해당 동아리에 속하지 않을 때 발생합니다.")
+    CLUB_MEMBER_NOT_IN_CLUB(21108, HttpStatus.BAD_REQUEST, "해당 동아리에 속한 멤버가 아닙니다."),
 }

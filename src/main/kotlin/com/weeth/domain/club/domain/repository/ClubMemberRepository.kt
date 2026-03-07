@@ -14,6 +14,11 @@ interface ClubMemberRepository :
 
     override fun findByIdOrNull(clubMemberId: Long): ClubMember? = findById(clubMemberId).orElse(null)
 
+    override fun findByIdAndClubId(
+        clubMemberId: Long,
+        clubId: Long,
+    ): ClubMember?
+
     override fun findByClubIdAndUserId(
         clubId: Long,
         userId: Long,

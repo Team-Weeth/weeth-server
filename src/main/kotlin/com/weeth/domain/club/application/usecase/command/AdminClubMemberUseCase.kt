@@ -22,7 +22,7 @@ class AdminClubMemberUseCase(
     ) {
         clubMemberPolicy.requireAdmin(clubId, userId)
 
-        val member = clubMemberRepository.getClubMemberById(clubMemberId)
+        val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
         member.accept()
     }
 
@@ -34,7 +34,7 @@ class AdminClubMemberUseCase(
     ) {
         clubMemberPolicy.requireAdmin(clubId, userId)
 
-        val member = clubMemberRepository.getClubMemberById(clubMemberId)
+        val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
         member.ban()
     }
 
@@ -46,7 +46,7 @@ class AdminClubMemberUseCase(
     ) {
         clubMemberPolicy.requireAdmin(clubId, userId)
 
-        val member = clubMemberRepository.getClubMemberById(request.clubMemberId)
+        val member = clubMemberPolicy.getMemberInClub(clubId, request.clubMemberId)
         member.updateRole(request.memberRole)
     }
 }

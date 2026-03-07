@@ -7,6 +7,11 @@ interface ClubMemberReader {
 
     fun findByIdOrNull(clubMemberId: Long): ClubMember?
 
+    fun findByIdAndClubId(
+        clubMemberId: Long,
+        clubId: Long,
+    ): ClubMember?
+
     fun findByClubIdAndUserId(
         clubId: Long,
         userId: Long,

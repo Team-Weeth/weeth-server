@@ -1,6 +1,7 @@
 package com.weeth.domain.club.domain.service
 
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
+import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.application.exception.NotClubAdminException
 import com.weeth.domain.club.domain.repository.ClubMemberReader
@@ -40,4 +41,14 @@ class ClubMemberPolicy(
             throw NotClubAdminException()
         }
     }
+
+    fun getMemberInClub(
+        clubId: Long,
+        clubMemberId: Long,
+    ) = clubMemberReader.findByIdAndClubId(clubMemberId, clubId)
+        ?: throw if (clubMemberReader.findByIdOrNull(clubMemberId) != null) {
+            ClubMemberNotInClubException()
+        } else {
+            ClubMemberNotFoundException()
+        }
 }
