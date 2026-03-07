@@ -104,6 +104,8 @@ interface UserRepository :
 
     override fun getById(userId: Long): User = findById(userId).orElseThrow { UserNotFoundException() }
 
+    override fun getByIdWithLock(userId: Long): User = findByIdWithLock(userId).orElseThrow { UserNotFoundException() }
+
     override fun getByEmail(email: String): User = findByEmailValue(email).orElseThrow { UserNotFoundException() }
 
     override fun findByIdOrNull(userId: Long): User? = findById(userId).orElse(null)

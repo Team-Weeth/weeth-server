@@ -7,6 +7,8 @@ import com.weeth.domain.user.domain.enums.Status
 interface UserReader {
     fun getById(userId: Long): User
 
+    fun getByIdWithLock(userId: Long): User
+
     fun getByEmail(email: String): User
 
     fun findByIdOrNull(userId: Long): User?
