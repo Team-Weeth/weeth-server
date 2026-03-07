@@ -6,7 +6,7 @@ import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
-import com.weeth.domain.club.application.usecase.command.JoinClubUseCase
+import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.command.ManageClubUseCase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController
 @ApiErrorCodeExample(ClubErrorCode::class)
 class ClubController(
     private val manageClubUseCase: ManageClubUseCase,
-    private val joinClubUseCase: JoinClubUseCase,
+    private val manageClubMemberUsecase: ManageClubMemberUsecase,
     private val getClubQueryService: GetClubQueryService,
     private val getClubMemberQueryService: GetClubMemberQueryService,
 ) {
@@ -80,7 +80,7 @@ class ClubController(
         @TsidPathVariable("clubId") clubId: Long,
         @Valid @RequestBody request: ClubJoinRequest,
     ): CommonResponse<Unit> {
-        joinClubUseCase.join(clubId, userId, request)
+        manageClubMemberUsecase.join(clubId, userId, request)
 
         return CommonResponse.success(ClubResponseCode.CLUB_JOINED_SUCCESS)
     }
@@ -92,7 +92,7 @@ class ClubController(
         @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
     ): CommonResponse<Unit> {
-        joinClubUseCase.leave(clubId, userId)
+        manageClubMemberUsecase.leave(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.CLUB_LEFT_SUCCESS)
     }

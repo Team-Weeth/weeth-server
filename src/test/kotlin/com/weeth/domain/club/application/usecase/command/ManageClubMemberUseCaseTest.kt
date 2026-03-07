@@ -1,7 +1,6 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
-import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.ClubCantJoinException
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
@@ -16,7 +15,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 
-class JoinClubUseCaseTest :
+class ManageClubMemberUseCaseTest :
     DescribeSpec({
         val clubRepository = mockk<ClubRepository>()
         val clubMemberRepository = mockk<ClubMemberRepository>()
@@ -24,7 +23,7 @@ class JoinClubUseCaseTest :
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
 
         val useCase =
-            JoinClubUseCase(
+            ManageClubMemberUsecase(
                 clubRepository = clubRepository,
                 clubMemberRepository = clubMemberRepository,
                 userReader = userReader,

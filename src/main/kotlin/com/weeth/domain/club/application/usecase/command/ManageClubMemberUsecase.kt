@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
  * 동아리 가입, 탈퇴 UseCase.
  */
 @Service
-class JoinClubUseCase(
+class ManageClubMemberUsecase(
     private val clubRepository: ClubRepository,
     private val clubMemberRepository: ClubMemberRepository,
     private val userReader: UserReader,
