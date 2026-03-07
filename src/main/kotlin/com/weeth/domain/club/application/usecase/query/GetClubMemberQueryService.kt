@@ -42,7 +42,8 @@ class GetClubMemberQueryService(
         userId: Long,
     ): ClubMemberProfileResponse {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
 
-        return clubMapper.toMemberProfileResponse(member)
+        return clubMapper.toMemberProfileResponse(member, cardinals)
     }
 }

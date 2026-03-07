@@ -9,6 +9,7 @@ import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.global.common.id.TsidBase62Encoder
+import org.hibernate.metamodel.model.domain.internal.MapMember
 import org.springframework.stereotype.Component
 
 @Component
@@ -56,9 +57,10 @@ class ClubMapper {
         clubMemberId = member.id,
         name = member.user.name,
         email = member.user.emailValue,
-        studentId = member.user.studentId,
         tel = member.user.telValue,
+        school = null, // todo: User 도메인 반영 작업시 학교 정보 추가
         department = member.user.department,
+        studentId = member.user.studentId,
         cardinals = toCardinalNumbers(cardinals),
         memberStatus = member.memberStatus,
         memberRole = member.memberRole,
@@ -68,16 +70,20 @@ class ClubMapper {
         penaltyCount = member.penaltyCount,
     )
 
-    fun toMemberProfileResponse(member: ClubMember) =
-        ClubMemberProfileResponse(
-            clubMemberId = member.id,
-            memberStatus = member.memberStatus,
-            memberRole = member.memberRole,
-            attendanceCount = member.attendanceStats.attendanceCount,
-            absenceCount = member.attendanceStats.absenceCount,
-            attendanceRate = member.attendanceStats.attendanceRate,
-            penaltyCount = member.penaltyCount,
-        )
+    fun toMemberProfileResponse(
+        member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+    ) = ClubMemberProfileResponse(
+        userId = member.user.id,
+        clubMemberId = member.id,
+        name = member.user.name,
+        email = member.user.emailValue,
+        tel = member.user.telValue,
+        school = null, // todo: User 도메인 반영 작업시 학교 정보 추가
+        department = member.user.department,
+        studentId = member.user.studentId,
+        cardinals = toCardinalNumbers(cardinals),
+    )
 
     private fun toCardinalNumbers(cardinals: List<ClubMemberCardinal>): List<Int> {
         if (cardinals.isEmpty()) {
