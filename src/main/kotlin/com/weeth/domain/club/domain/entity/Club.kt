@@ -27,6 +27,8 @@ class Club(
     description: String? = null,
     schoolName: String,
     clubContact: ClubContact,
+    profileImageUrl: String? = null,
+    backgroundImageUrl: String? = null,
 ) : BaseEntity() {
     // TSID(Time-Sorted Unique Identifier)로 관리
     // Client 반환시 Base62 인코딩해서 String으로 반환
@@ -39,7 +41,7 @@ class Club(
     var name: String = name.trim()
         private set
 
-    @Column(nullable = false, unique = true, length = 20)
+    @Column(nullable = false, unique = true, length = 36)
     var code: String = code
         private set
 
@@ -55,25 +57,70 @@ class Club(
     var clubContact: ClubContact = clubContact
         private set
 
+    @Column(length = 500)
+    var profileImageUrl: String? = profileImageUrl // 우선 URL로 저장 후 File로 붙일지 논의
+        private set
+
+    @Column(length = 500)
+    var backgroundImageUrl: String? = backgroundImageUrl
+        private set
+
     fun update(
-        name: String,
+        name: String?,
+        schoolName: String?,
         description: String?,
+        contactEmail: String?,
+        contactPhoneNumber: String?,
+        profileImageUrl: String?,
+        backgroundImageUrl: String?,
     ) {
-        require(name.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
-        this.name = name.trim()
-        this.description = description
+        name?.let {
+            require(it.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
+            this.name = it.trim()
+        }
+        schoolName?.let {
+            require(it.isNotBlank()) { "학교 이름은 비어 있을 수 없습니다." }
+            this.schoolName = it.trim()
+        }
+        description?.let { this.description = it }
+
+        updateContact(contactEmail, contactPhoneNumber)
+        updateImageUrl(profileImageUrl, backgroundImageUrl)
     }
 
-    fun updateContact(
-        email: String?,
-        phoneNumber: String?,
+    private fun updateContact(
+        contactEmail: String?,
+        contactPhoneNumber: String?,
     ) {
-        clubContact.update(email = email, phoneNumber = phoneNumber)
+        if (contactEmail != null || contactPhoneNumber != null) {
+            clubContact.update(
+                email = contactEmail ?: clubContact.email,
+                phoneNumber = contactPhoneNumber ?: clubContact.phoneNumber,
+            )
+        }
+    }
+
+    private fun updateImageUrl(
+        profileImageUrl: String?,
+        backgroundImageUrl: String?,
+    ) {
+        if (profileImageUrl != null || backgroundImageUrl != null) {
+            this.profileImageUrl = profileImageUrl ?: this.profileImageUrl
+            this.backgroundImageUrl = backgroundImageUrl ?: this.backgroundImageUrl
+        }
     }
 
     fun regenerateCode(newCode: String) {
         require(newCode.isNotBlank()) { "초대 코드는 비어 있을 수 없습니다." }
         this.code = newCode
+    }
+
+    fun removeProfileImage() {
+        this.profileImageUrl = null
+    }
+
+    fun removeBackgroundImage() {
+        this.backgroundImageUrl = null
     }
 
     @PrePersist
@@ -90,6 +137,8 @@ class Club(
             schoolName: String,
             clubContact: ClubContact,
             description: String? = null,
+            profileImageUrl: String? = null,
+            backgroundImageUrl: String? = null,
         ): Club {
             require(name.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
             require(code.isNotBlank()) { "초대 코드는 비어 있을 수 없습니다." }
@@ -100,6 +149,8 @@ class Club(
                 description = description,
                 schoolName = schoolName,
                 clubContact = clubContact,
+                profileImageUrl = profileImageUrl,
+                backgroundImageUrl = backgroundImageUrl,
             ).apply {
                 // 객체 생성시 TSID 할당
                 id = TsidGenerator.nextId()

@@ -37,7 +37,15 @@ class ClubTest :
         "update — 이름과 소개를 수정한다" {
             val club = Club.create(name = "리츠", code = "LEETS001", schoolName = "가천대학교", clubContact = defaultContact)
 
-            club.update(name = "리츠2기", description = "업데이트된 소개")
+            club.update(
+                name = "리츠2기",
+                schoolName = null,
+                description = "업데이트된 소개",
+                contactEmail = null,
+                contactPhoneNumber = null,
+                profileImageUrl = null,
+                backgroundImageUrl = null,
+            )
 
             club.name shouldBe "리츠2기"
             club.description shouldBe "업데이트된 소개"
@@ -47,7 +55,7 @@ class ClubTest :
             val club = Club.create(name = "리츠", code = "LEETS001", schoolName = "가천대학교", clubContact = defaultContact)
 
             shouldThrow<IllegalArgumentException> {
-                club.update(name = "", description = null)
+                club.update("", null, null, null, null, null, null)
             }
         }
 
@@ -55,7 +63,7 @@ class ClubTest :
             val club = Club.create(name = "리츠", code = "LEETS001", schoolName = "가천대학교", clubContact = defaultContact)
 
             shouldThrow<IllegalArgumentException> {
-                club.update(name = "   ", description = null)
+                club.update("   ", null, null, null, null, null, null)
             }
         }
 

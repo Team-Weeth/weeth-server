@@ -1,7 +1,12 @@
 package com.weeth.domain.club.fixture
 
 import com.weeth.domain.club.domain.entity.Club
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.vo.ClubContact
+import com.weeth.domain.user.fixture.UserTestFixture
+import org.springframework.test.util.ReflectionTestUtils
 
 object ClubTestFixture {
     fun createClub(
@@ -20,5 +25,21 @@ object ClubTestFixture {
                 clubContact = clubContact,
             )
         return club
+    }
+
+    fun createClubMember(
+        club: Club = createClub(),
+        user: com.weeth.domain.user.domain.entity.User = UserTestFixture.createActiveUser1(),
+        memberStatus: MemberStatus = MemberStatus.ACTIVE,
+        memberRole: MemberRole = MemberRole.USER,
+    ): ClubMember {
+        val member =
+            ClubMember(
+                club = club,
+                user = user,
+                memberStatus = memberStatus,
+                memberRole = memberRole,
+            )
+        return member
     }
 }
