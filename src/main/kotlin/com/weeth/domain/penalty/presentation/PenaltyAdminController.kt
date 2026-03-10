@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-//todo: PR4에서 Club 기반으로 수정
+// todo: PR4에서 Club 기반으로 수정
 @Tag(name = "PENALTY ADMIN", description = "[ADMIN] 패널티 어드민 API")
 @RestController
 @RequestMapping("/api/v1/admin/penalties")

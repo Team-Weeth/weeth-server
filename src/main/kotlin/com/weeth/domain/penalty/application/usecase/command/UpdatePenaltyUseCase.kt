@@ -7,7 +7,7 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-//todo: PR4에서 Club 기반으로 수정
+// todo: PR4에서 Club 기반으로 수정
 @Service
 class UpdatePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,

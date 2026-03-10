@@ -27,7 +27,8 @@ class AccountAdminController(
     @PostMapping
     @Operation(summary = "회비 총 금액 기입")
     fun save(
-        @TsidParam @PathVariable @TsidPathVariable clubId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @RequestBody @Valid dto: AccountSaveRequest,
     ): CommonResponse<Void> {
         manageAccountUseCase.save(clubId, dto)

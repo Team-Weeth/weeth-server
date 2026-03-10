@@ -22,6 +22,7 @@ class GetAccountQueryService(
     private val receiptMapper: ReceiptMapper,
     private val fileMapper: FileMapper,
 ) {
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findByCardinal(
         clubId: Long,
         cardinal: Int,

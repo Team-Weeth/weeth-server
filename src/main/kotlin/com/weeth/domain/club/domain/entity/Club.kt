@@ -65,6 +65,8 @@ class Club(
     var backgroundImageUrl: String? = backgroundImageUrl
         private set
 
+    // todo: 동아리 삭제 지원
+
     fun update(
         name: String?,
         schoolName: String?,
