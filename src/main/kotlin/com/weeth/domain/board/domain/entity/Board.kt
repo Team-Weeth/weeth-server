@@ -3,6 +3,7 @@ package com.weeth.domain.board.domain.entity
 import com.weeth.domain.board.domain.converter.BoardConfigConverter
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
+import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
@@ -10,14 +11,18 @@ import jakarta.persistence.Convert
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
 @Entity
 @Table(name = "board")
 class Board(
+    club: Club,
     name: String,
     type: BoardType,
     config: BoardConfig = BoardConfig(),
@@ -25,6 +30,11 @@ class Board(
     init {
         require(name.isNotBlank()) { "게시판 이름은 공백이 될 수 없습니다" }
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_id", nullable = false)
+    var club: Club = club
+        private set
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -37,12 +37,14 @@ class GetPostQueryService(
         private const val MAX_PAGE_SIZE = 50
     }
 
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findPost(
+        clubId: Long,
         postId: Long,
         role: Role,
     ): PostDetailResponse {
         val post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
-        if (post.board.isDeleted || !post.board.isAccessibleBy(role)) {
+        if (post.board.club.id != clubId || post.board.isDeleted || !post.board.isAccessibleBy(role)) {
             throw PostNotFoundException()
         }
 
@@ -53,14 +55,16 @@ class GetPostQueryService(
         return postMapper.toDetailResponse(post, commentTree, files)
     }
 
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findPosts(
+        clubId: Long,
         boardId: Long,
         pageNumber: Int,
         pageSize: Int,
         role: Role,
     ): Slice<PostListResponse> {
         validatePage(pageNumber, pageSize)
-        validateBoardVisibility(boardId, role)
+        validateBoardVisibility(boardId, clubId, role)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
 
@@ -71,7 +75,9 @@ class GetPostQueryService(
         return posts.map { postMapper.toListResponse(it, fileExistsByPostId[it.id] == true, now) }
     }
 
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun searchPosts(
+        clubId: Long,
         boardId: Long,
         keyword: String,
         pageNumber: Int,
@@ -79,7 +85,7 @@ class GetPostQueryService(
         role: Role,
     ): Slice<PostListResponse> {
         validatePage(pageNumber, pageSize)
-        validateBoardVisibility(boardId, role)
+        validateBoardVisibility(boardId, clubId, role)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.searchByBoardId(boardId, keyword.trim(), pageable)
 
@@ -113,9 +119,11 @@ class GetPostQueryService(
 
     private fun validateBoardVisibility( // todo: 볼 권한이 없는 경우 권한 관련 예외를 던져주는게 나을지 UX 상의 후 결정
         boardId: Long,
+        clubId: Long,
         role: Role,
     ) {
-        val board = boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
+        val board =
+            boardRepository.findByIdAndClubIdAndIsDeletedFalse(boardId, clubId) ?: throw BoardNotFoundException()
         if (!board.isAccessibleBy(role)) {
             throw BoardNotFoundException()
         }
