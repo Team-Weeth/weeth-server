@@ -63,7 +63,7 @@ class SessionAdminController(
     fun delete(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
-        @PathVariable sessionId: Long,
+        @PathVariable sessionId: Long, // todo: userId 받아서 권한 검증
     ): CommonResponse<Void?> {
         manageSessionUseCase.delete(clubId, sessionId)
         return CommonResponse.success(SessionResponseCode.SESSION_DELETE_SUCCESS)
@@ -74,7 +74,7 @@ class SessionAdminController(
     fun getSessionInfos(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
-        @RequestParam(required = false) cardinal: Int?,
+        @RequestParam(required = false) cardinal: Int?, // todo: userId 받아서 권한 검증
     ): CommonResponse<SessionInfosResponse> =
         CommonResponse.success(
             SessionResponseCode.SESSION_INFOS_FIND_SUCCESS,
