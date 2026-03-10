@@ -21,7 +21,11 @@ class GetPenaltyQueryService(
     private val cardinalReader: CardinalReader,
     private val mapper: PenaltyMapper,
 ) {
-    fun findAllByCardinal(cardinalNumber: Int?): List<PenaltyByCardinalResponse> {
+    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
+    fun findAllByCardinal(
+        clubId: Long,
+        cardinalNumber: Int?,
+    ): List<PenaltyByCardinalResponse> {
         val cardinals =
             if (cardinalNumber == null) {
                 cardinalReader.findAllByCardinalNumberDesc()
@@ -50,7 +54,11 @@ class GetPenaltyQueryService(
         }
     }
 
-    fun findByUser(userId: Long): PenaltyResponse {
+    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
+    fun findByUser(
+        clubId: Long,
+        userId: Long,
+    ): PenaltyResponse {
         val user = userReader.getById(userId)
         val currentCardinal = userCardinalPolicy.getCurrentCardinal(user)
         val penalties = penaltyRepository.findByUserIdAndCardinalIdOrderByIdDesc(userId, currentCardinal.id)

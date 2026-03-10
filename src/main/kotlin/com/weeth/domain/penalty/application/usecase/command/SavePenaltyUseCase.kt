@@ -10,6 +10,7 @@ import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+//todo: PR4에서 Club 기반으로 수정
 @Service
 class SavePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
