@@ -23,9 +23,13 @@ class MarkNoticeReadUseCase(
     private val userReader: UserReader,
 ) {
     @Transactional
-    fun execute(userId: Long, boardId: Long) {
-        val board = boardRepository.findByIdAndIsDeletedFalse(boardId)
-            ?: throw BoardNotFoundException()
+    fun execute(
+        userId: Long,
+        boardId: Long,
+    ) {
+        val board =
+            boardRepository.findByIdAndIsDeletedFalse(boardId)
+                ?: throw BoardNotFoundException()
         if (board.type != BoardType.NOTICE) throw BoardTypeMismatchException()
         // TODO: 해당 클럽 회원인지 검증 후 클럽의 공지만 읽음 처리
 

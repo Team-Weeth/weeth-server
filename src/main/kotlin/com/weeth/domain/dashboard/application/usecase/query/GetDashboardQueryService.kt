@@ -142,8 +142,9 @@ class GetDashboardQueryService(
         clubId: Long,
         userId: Long,
     ) {
-        val member = clubMemberReader.findByClubIdAndUserId(clubId, userId)
-            ?: throw DashboardNotClubMemberException()
+        val member =
+            clubMemberReader.findByClubIdAndUserId(clubId, userId)
+                ?: throw DashboardNotClubMemberException()
         if (!member.isActive()) throw DashboardNotClubMemberException()
     }
 }
