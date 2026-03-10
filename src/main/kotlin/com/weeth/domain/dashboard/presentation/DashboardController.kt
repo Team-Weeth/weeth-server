@@ -12,26 +12,29 @@ import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Slice
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "DASHBOARD", description = "대시보드 API")
 @RestController
-@RequestMapping("/api/v4/dashboard")
+@RequestMapping("/api/v4/clubs/{clubId}/dashboard")
 @ApiErrorCodeExample(DashboardErrorCode::class, ClubErrorCode::class, JwtErrorCode::class)
 class DashboardController(
     private val getDashboardQueryService: GetDashboardQueryService,
 ) {
-    @GetMapping("/{clubId}/home")
+    @GetMapping("/home")
     @Operation(summary = "홈 조회")
     fun getHome(
+        @PathVariable @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<DashboardHomeResponse> =
@@ -40,9 +43,10 @@ class DashboardController(
             getDashboardQueryService.getHome(clubId, userId),
         )
 
-    @GetMapping("/{clubId}/recent-posts")
+    @GetMapping("/recent-posts")
     @Operation(summary = "최신 게시글 조회")
     fun getRecentPosts(
+        @PathVariable @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "10") pageSize: Int,
@@ -53,9 +57,10 @@ class DashboardController(
             getDashboardQueryService.getRecentPosts(clubId, userId, pageNumber, pageSize),
         )
 
-    @GetMapping("/{clubId}/recent-notices")
+    @GetMapping("/recent-notices")
     @Operation(summary = "최신 공지 조회")
     fun getRecentNotices(
+        @PathVariable @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<List<DashboardNoticeResponse>> =
@@ -64,9 +69,10 @@ class DashboardController(
             getDashboardQueryService.getRecentNotices(clubId, userId),
         )
 
-    @GetMapping("/{clubId}/monthly-schedules")
+    @GetMapping("/monthly-schedules")
     @Operation(summary = "월간 일정 조회")
     fun getMonthlySchedules(
+        @PathVariable @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<List<DashboardScheduleResponse>> =
@@ -75,9 +81,10 @@ class DashboardController(
             getDashboardQueryService.getMonthlySchedules(clubId, userId),
         )
 
-    @GetMapping("/{clubId}/unread-notice")
+    @GetMapping("/unread-notice")
     @Operation(summary = "2주 이내 읽지 않은 공지 조회")
     fun getUnreadNotice(
+        @PathVariable @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<DashboardUnreadNoticeResponse?> =
