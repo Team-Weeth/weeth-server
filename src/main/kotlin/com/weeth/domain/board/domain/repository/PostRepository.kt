@@ -1,6 +1,8 @@
 package com.weeth.domain.board.domain.repository
 
+import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.domain.entity.Post
+import com.weeth.domain.board.domain.enums.BoardType
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.domain.Pageable
@@ -11,8 +13,11 @@ import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
 
-interface PostRepository : JpaRepository<Post, Long> {
+interface PostRepository :
+    JpaRepository<Post, Long>,
+    PostReader {
     @EntityGraph(attributePaths = ["user"])
     @Query(
         """
@@ -74,4 +79,57 @@ interface PostRepository : JpaRepository<Post, Long> {
         @Param("keyword") keyword: String,
         pageable: Pageable,
     ): Slice<Post>
+
+    override fun getById(postId: Long): Post = findActivePostById(postId) ?: throw PostNotFoundException()
+
+    override fun findActiveById(postId: Long): Post? = findActivePostById(postId)
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.type = :boardType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC
+        """,
+    )
+    override fun findRecentByBoardType(
+        @Param("boardType") boardType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.type <> :excludedType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC
+        """,
+    )
+    override fun findRecentExcludingBoardType(
+        @Param("excludedType") excludedType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.type = :boardType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+          AND p.createdAt >= :since
+        ORDER BY p.createdAt DESC
+        """,
+    )
+    override fun findRecentByBoardTypeSince(
+        @Param("boardType") boardType: BoardType,
+        @Param("since") since: LocalDateTime,
+    ): List<Post>
 }
