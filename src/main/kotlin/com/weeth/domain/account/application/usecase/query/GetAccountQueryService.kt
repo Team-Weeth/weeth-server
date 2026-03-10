@@ -12,9 +12,6 @@ import com.weeth.domain.file.domain.repository.FileReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/**
- * Todo: 개행을 추가해 가독성 개선
- */
 @Service
 @Transactional(readOnly = true)
 class GetAccountQueryService(
@@ -25,14 +22,19 @@ class GetAccountQueryService(
     private val receiptMapper: ReceiptMapper,
     private val fileMapper: FileMapper,
 ) {
-    fun findByCardinal(cardinal: Int): AccountResponse {
-        val account = accountRepository.findByCardinal(cardinal) ?: throw AccountNotFoundException()
+    fun findByCardinal(
+        clubId: Long,
+        cardinal: Int,
+    ): AccountResponse {
+        val account = accountRepository.findByClubIdAndCardinal(clubId, cardinal) ?: throw AccountNotFoundException()
         val receipts = receiptRepository.findAllByAccountIdOrderByCreatedAtDesc(account.id)
         val receiptIds = receipts.map { it.id }
+
         val filesByReceiptId =
             fileReader
                 .findAll(FileOwnerType.RECEIPT, receiptIds, null)
                 .groupBy({ it.ownerId }, { fileMapper.toFileResponse(it) })
+
         return accountMapper.toResponse(account, receiptMapper.toResponses(receipts, filesByReceiptId))
     }
 }
