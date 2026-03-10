@@ -44,10 +44,12 @@ class ManageBoardUseCase(
     // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun update(
+        clubId: Long,
         boardId: Long,
         request: UpdateBoardRequest,
     ): BoardDetailResponse {
         val board = findBoard(boardId)
+        if (board.club.id != clubId) throw BoardNotFoundException()
 
         request.name?.let { board.rename(it) }
 
@@ -68,8 +70,12 @@ class ManageBoardUseCase(
 
     // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
-    fun delete(boardId: Long) {
+    fun delete(
+        clubId: Long,
+        boardId: Long,
+    ) {
         val board = findBoard(boardId)
+        if (board.club.id != clubId) throw BoardNotFoundException()
         board.markDeleted()
     }
 

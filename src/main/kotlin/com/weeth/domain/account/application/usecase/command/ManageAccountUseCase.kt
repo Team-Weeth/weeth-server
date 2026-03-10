@@ -4,7 +4,9 @@ import com.weeth.domain.account.application.dto.request.AccountSaveRequest
 import com.weeth.domain.account.application.exception.AccountExistsException
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.repository.AccountRepository
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
+import com.weeth.domain.club.application.exception.ClubNotFoundException
 import com.weeth.domain.club.domain.repository.ClubReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,7 +28,7 @@ class ManageAccountUseCase(
         if (accountRepository.existsByClubIdAndCardinal(clubId, request.cardinal)) throw AccountExistsException()
 
         cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal)
-            ?: cardinalReader.getByCardinalNumber(request.cardinal) // clubId 기반 조회 실패 시 기존 방식으로 폴백
+            ?: throw CardinalNotFoundException()
 
         accountRepository.save(Account.create(club, request.description, request.totalAmount, request.cardinal))
     }

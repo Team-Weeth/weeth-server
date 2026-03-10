@@ -26,8 +26,8 @@ class ManageBoardUseCaseTest :
         val clubReader = mockk<ClubReader>()
         val useCase = ManageBoardUseCase(boardRepository, boardMapper, clubReader)
 
-        val clubId = 1L
         val club = ClubTestFixture.createClub()
+        val clubId = club.id
 
         beforeTest {
             clearMocks(boardRepository, clubReader)
@@ -58,10 +58,10 @@ class ManageBoardUseCaseTest :
 
         describe("update") {
             it("일부 필드만 전달되면 해당 필드만 갱신한다") {
-                val board = BoardTestFixture.create(name = "기존", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                val result = useCase.update(1L, UpdateBoardRequest(name = "변경", isPrivate = true))
+                val result = useCase.update(clubId, 1L, UpdateBoardRequest(name = "변경", isPrivate = true))
 
                 result.name shouldBe "변경"
                 result.commentEnabled shouldBe true
@@ -70,10 +70,10 @@ class ManageBoardUseCaseTest :
             }
 
             it("아무 필드도 전달되지 않으면 기존 값이 그대로 유지된다") {
-                val board = BoardTestFixture.create(name = "기존", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                val result = useCase.update(1L, UpdateBoardRequest())
+                val result = useCase.update(clubId, 1L, UpdateBoardRequest())
 
                 result.name shouldBe "기존"
                 result.commentEnabled shouldBe true
@@ -85,17 +85,17 @@ class ManageBoardUseCaseTest :
                 every { boardRepository.findByIdAndIsDeletedFalse(999L) } returns null
 
                 shouldThrow<BoardNotFoundException> {
-                    useCase.update(999L, UpdateBoardRequest(name = "변경"))
+                    useCase.update(clubId, 999L, UpdateBoardRequest(name = "변경"))
                 }
             }
         }
 
         describe("delete") {
             it("게시판을 soft delete 처리한다") {
-                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(club = club, name = "일반", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                useCase.delete(1L)
+                useCase.delete(clubId, 1L)
 
                 board.isDeleted shouldBe true
                 verify(exactly = 0) { boardRepository.delete(any()) }

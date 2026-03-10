@@ -58,7 +58,8 @@ class BoardAdminController(
     @PostMapping
     @Operation(summary = "게시판 생성")
     fun createBoard(
-        @PathVariable clubId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @RequestBody @Valid request: CreateBoardRequest,
     ): CommonResponse<BoardDetailResponse> =
         CommonResponse.success(BoardResponseCode.BOARD_CREATED_SUCCESS, manageBoardUseCase.create(clubId, request))
@@ -71,7 +72,10 @@ class BoardAdminController(
         @PathVariable boardId: Long,
         @RequestBody @Valid request: UpdateBoardRequest,
     ): CommonResponse<BoardDetailResponse> =
-        CommonResponse.success(BoardResponseCode.BOARD_UPDATED_SUCCESS, manageBoardUseCase.update(boardId, request))
+        CommonResponse.success(
+            BoardResponseCode.BOARD_UPDATED_SUCCESS,
+            manageBoardUseCase.update(clubId, boardId, request),
+        )
 
     @DeleteMapping("/{boardId}")
     @Operation(summary = "게시판 삭제")
@@ -80,7 +84,7 @@ class BoardAdminController(
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
     ): CommonResponse<Void?> {
-        manageBoardUseCase.delete(boardId)
+        manageBoardUseCase.delete(clubId, boardId)
         return CommonResponse.success(BoardResponseCode.BOARD_DELETED_SUCCESS)
     }
 }

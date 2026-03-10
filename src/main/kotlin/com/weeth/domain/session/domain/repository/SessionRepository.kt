@@ -43,7 +43,7 @@ interface SessionRepository :
 
     override fun getById(sessionId: Long): Session = findById(sessionId).orElseThrow { SessionNotFoundException() }
 
-    @Query("SELECT s FROM Session s WHERE s.club.id = :clubId AND s.start >= :start AND s.end <= :end")
+    @Query("SELECT s FROM Session s WHERE s.club.id = :clubId AND s.start <= :end AND s.end >= :start")
     override fun findAllByClubIdAndStartBetween(
         @Param("clubId") clubId: Long,
         @Param("start") start: LocalDateTime,

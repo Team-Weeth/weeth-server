@@ -43,6 +43,7 @@ class ManageEventUseCase(
     ) {
         val user = userReader.getById(userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
+        if (event.club.id != clubId) throw EventNotFoundException()
         event.update(request.title, request.content, request.location, request.start, request.end, user)
     }
 
@@ -53,6 +54,7 @@ class ManageEventUseCase(
         eventId: Long,
     ) {
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
+        if (event.club.id != clubId) throw EventNotFoundException()
         eventRepository.delete(event)
     }
 }

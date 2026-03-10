@@ -26,11 +26,11 @@ class GetScheduleQueryService(
     fun findEvent(
         clubId: Long,
         eventId: Long,
-    ): EventResponse =
-        eventRepository
-            .findByIdOrNull(eventId)
-            ?.let { eventMapper.toResponse(it) }
-            ?: throw EventNotFoundException()
+    ): EventResponse {
+        val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
+        if (clubId != 0L && event.club.id != clubId) throw EventNotFoundException()
+        return eventMapper.toResponse(event)
+    }
 
     // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findMonthly(
