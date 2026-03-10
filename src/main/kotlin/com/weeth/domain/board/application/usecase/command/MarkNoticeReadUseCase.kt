@@ -19,8 +19,9 @@ class MarkNoticeReadUseCase(
 ) {
     @Transactional
     fun execute(userId: Long) {
-        val recentNotices = postReader.findRecentByBoardTypeSince(BoardType.NOTICE, LocalDateTime.now().minusWeeks(2))
-        val readPostIds = noticeReadReader.findReadPostIdsByUserId(userId)
+        val since = LocalDateTime.now().minusWeeks(2)
+        val recentNotices = postReader.findRecentByBoardTypeSince(BoardType.NOTICE, since)
+        val readPostIds = noticeReadReader.findReadPostIdsByUserId(userId, since)
         val unreadNotices = recentNotices.filter { it.id !in readPostIds }
 
         if (unreadNotices.isEmpty()) return

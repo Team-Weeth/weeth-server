@@ -125,8 +125,9 @@ class GetDashboardQueryService(
         validateMembership(clubId, userId)
 
         // TODO: 해당 클럽 회원인지 검증 후 클럽의 공지만 조회
-        val recentNotices = postReader.findRecentByBoardTypeSince(BoardType.NOTICE, LocalDateTime.now().minusWeeks(2))
-        val readPostIds = noticeReadReader.findReadPostIdsByUserId(userId)
+        val since = LocalDateTime.now().minusWeeks(2)
+        val recentNotices = postReader.findRecentByBoardTypeSince(BoardType.NOTICE, since)
+        val readPostIds = noticeReadReader.findReadPostIdsByUserId(userId, since)
 
         return recentNotices
             .firstOrNull { it.id !in readPostIds }

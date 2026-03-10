@@ -209,7 +209,7 @@ class GetDashboardQueryServiceTest :
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { postReader.findRecentByBoardTypeSince(BoardType.NOTICE, any()) } returns listOf(notice)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId) } returns emptySet()
+                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -224,7 +224,7 @@ class GetDashboardQueryServiceTest :
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { postReader.findRecentByBoardTypeSince(BoardType.NOTICE, any()) } returns listOf(notice)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId) } returns setOf(notice.id)
+                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns setOf(notice.id)
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -236,7 +236,7 @@ class GetDashboardQueryServiceTest :
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { postReader.findRecentByBoardTypeSince(BoardType.NOTICE, any()) } returns emptyList()
-                    every { noticeReadReader.findReadPostIdsByUserId(userId) } returns emptySet()
+                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 

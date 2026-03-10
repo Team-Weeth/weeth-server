@@ -42,7 +42,7 @@ class MarkNoticeReadUseCaseTest :
             context("모든 공지를 이미 읽은 경우") {
                 it("NoticeRead를 저장하지 않고 종료한다") {
                     every { postReader.findRecentByBoardTypeSince(any(), any()) } returns listOf(post)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId) } returns setOf(post.id)
+                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns setOf(post.id)
 
                     useCase.execute(userId)
 
@@ -54,7 +54,7 @@ class MarkNoticeReadUseCaseTest :
             context("읽지 않은 공지가 있는 경우") {
                 it("미읽은 공지를 NoticeRead로 생성하고 일괄 저장한다") {
                     every { postReader.findRecentByBoardTypeSince(any(), any()) } returns listOf(post)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId) } returns emptySet()
+                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
                     every { userReader.getById(userId) } returns user
                     every { noticeReadRepository.saveAll(any<List<NoticeRead>>()) } answers { firstArg() }
 
@@ -68,7 +68,7 @@ class MarkNoticeReadUseCaseTest :
             context("2주 이내 공지가 없는 경우") {
                 it("NoticeRead를 저장하지 않고 종료한다") {
                     every { postReader.findRecentByBoardTypeSince(any(), any()) } returns emptyList()
-                    every { noticeReadReader.findReadPostIdsByUserId(userId) } returns emptySet()
+                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
 
                     useCase.execute(userId)
 
