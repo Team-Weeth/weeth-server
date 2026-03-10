@@ -95,6 +95,7 @@ enum class UserResponseCode(
 | 09 | user       | 10900~        | 20900~             | —                 |
 | 10 | cardinal   | 11000~        | 21000~             | —                 |
 | 11 | club       | 11100~        | 21100~             | —                 |
+| 12 | dashboard  | 11200~        | 21200~             | —                 |
 | 90 | jwt/auth   | —             | 29000~             | —                 |
 | 99 | common     | —             | —                  | 39900~            |
 
@@ -112,6 +113,8 @@ enum class UserResponseCode(
 | Schedule | `ScheduleResponseCode` | `108xx` | `domain/schedule/presentation/` |
 | User | `UserResponseCode` | `109xx` | `domain/user/presentation/` |
 | Cardinal | `CardinalResponseCode` | `110xx` | `domain/cardinal/presentation/` |
+| Club | `ClubResponseCode` | `111xx` | `domain/club/presentation/` |
+| Dashboard | `DashboardResponseCode` | `112xx` | `domain/dashboard/presentation/` |
 
 ## Domain Error Codes
 
@@ -127,6 +130,8 @@ enum class UserResponseCode(
 | Schedule | `EventErrorCode` | `208xx` | `domain/schedule/application/exception/` |
 | User | `UserErrorCode` | `209xx` | `domain/user/application/exception/` |
 | Cardinal | `CardinalErrorCode` | `210xx` | `domain/cardinal/application/exception/` |
+| Club | `ClubErrorCode` | `211xx` | `domain/club/application/exception/` |
+| Dashboard | `DashboardErrorCode` | `212xx` | `domain/dashboard/application/exception/` |
 | JWT (Global) | `JwtErrorCode` | `290xx` | `global/auth/jwt/application/exception/` |
 
 ## HTTP Methods
