@@ -7,6 +7,7 @@ import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.dashboard.application.exception.DashboardNotClubMemberException
 import com.weeth.domain.dashboard.application.mapper.DashboardMapper
@@ -94,6 +95,18 @@ class GetDashboardQueryServiceTest :
                 it("DashboardNotClubMemberException을 던진다") {
                     every { clubReader.getClubById(clubId) } returns club
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns null
+
+                    shouldThrow<DashboardNotClubMemberException> {
+                        queryService.getHome(clubId, userId)
+                    }
+                }
+            }
+
+            context("비활성 멤버인 경우") {
+                it("DashboardNotClubMemberException을 던진다") {
+                    val inactiveMember = ClubTestFixture.createClubMember(club = club, memberStatus = MemberStatus.BANNED)
+                    every { clubReader.getClubById(clubId) } returns club
+                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns inactiveMember
 
                     shouldThrow<DashboardNotClubMemberException> {
                         queryService.getHome(clubId, userId)
