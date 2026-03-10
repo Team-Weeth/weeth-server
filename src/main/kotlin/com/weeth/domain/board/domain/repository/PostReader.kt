@@ -25,4 +25,9 @@ interface PostReader {
         boardType: BoardType,
         since: LocalDateTime,
     ): List<Post>
+
+    fun findRecentByBoardIdSince(
+        boardId: Long,
+        since: LocalDateTime,
+    ): List<Post>
 }

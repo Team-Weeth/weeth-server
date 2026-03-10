@@ -26,4 +26,7 @@ enum class BoardErrorCode(
 
     @ExplainError("게시글 작성자가 아닌 사용자가 수정/삭제를 시도할 때 발생합니다.")
     POST_NOT_OWNED(20405, HttpStatus.FORBIDDEN, "게시글 작성자만 수정/삭제할 수 있습니다."),
+
+    @ExplainError("공지 게시판이 아닌 게시판에 읽음 처리를 시도할 때 발생합니다.")
+    BOARD_TYPE_MISMATCH(20406, HttpStatus.BAD_REQUEST, "공지 게시판이 아닙니다."),
 }

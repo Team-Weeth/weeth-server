@@ -132,4 +132,21 @@ interface PostRepository :
         @Param("boardType") boardType: BoardType,
         @Param("since") since: LocalDateTime,
     ): List<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.id = :boardId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+          AND p.createdAt >= :since
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findRecentByBoardIdSince(
+        @Param("boardId") boardId: Long,
+        @Param("since") since: LocalDateTime,
+    ): List<Post>
 }
