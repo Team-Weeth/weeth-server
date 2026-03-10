@@ -7,12 +7,6 @@ import java.time.LocalDateTime
 interface SessionReader {
     fun getById(sessionId: Long): Session
 
-    // TODO: QR 코드 출석 기능 구현 시 사용 예정 (현재 시간 기준 진행 중인 세션 조회)
-    fun findAllByStartBetween(
-        start: LocalDateTime,
-        end: LocalDateTime,
-    ): List<Session>
-
     fun findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(
         end: LocalDateTime,
         start: LocalDateTime,
