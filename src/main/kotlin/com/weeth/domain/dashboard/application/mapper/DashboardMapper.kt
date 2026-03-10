@@ -18,7 +18,6 @@ import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
-// todo: 빈줄 추가하여 가독성 개선
 @Component
 class DashboardMapper(
     private val fileMapper: FileMapper,
