@@ -38,8 +38,8 @@ class GetClubMemberQueryServiceTest :
                     val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
                     val member =
                         ClubTestFixture.createClubMember(club = club, user = UserTestFixture.createActiveUser1(id = 3L))
-                    val cardinal7 = Cardinal.create(cardinalNumber = 7)
-                    val cardinal6 = Cardinal.create(cardinalNumber = 6)
+                    val cardinal7 = Cardinal.create(club = club, cardinalNumber = 7)
+                    val cardinal6 = Cardinal.create(club = club, cardinalNumber = 6)
                     val memberCardinals =
                         listOf(
                             ClubMemberCardinal.create(member, cardinal7),

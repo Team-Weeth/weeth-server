@@ -110,9 +110,9 @@ class ClubMemberPolicyTest :
             context("해당 동아리에 속한 멤버인 경우") {
                 it("멤버를 반환해야 한다") {
                     val member = ClubTestFixture.createClubMember()
-                    every { clubMemberReader.findByIdAndClubId(1L, 1L) } returns member
+                    every { clubMemberReader.findByIdOrNull(1L) } returns member
 
-                    val result = policy.getMemberInClub(1L, 1L)
+                    val result = policy.getMemberInClub(member.club.id, 1L)
 
                     assert(result == member)
                 }
@@ -121,18 +121,17 @@ class ClubMemberPolicyTest :
             context("멤버는 존재하지만 다른 동아리에 속한 경우") {
                 it("ClubMemberNotInClubException을 발생시켜야 한다") {
                     val member = ClubTestFixture.createClubMember()
-                    every { clubMemberReader.findByIdAndClubId(2L, 1L) } returns null
-                    every { clubMemberReader.findByIdOrNull(2L) } returns member
+                    every { clubMemberReader.findByIdOrNull(1L) } returns member
 
                     shouldThrow<ClubMemberNotInClubException> {
-                        policy.getMemberInClub(1L, 2L)
+                        // member.club.id와 다른 clubId를 전달하여 다른 동아리 시나리오를 재현
+                        policy.getMemberInClub(member.club.id + 999L, 1L)
                     }
                 }
             }
 
             context("멤버 자체가 존재하지 않는 경우") {
                 it("ClubMemberNotFoundException을 발생시켜야 한다") {
-                    every { clubMemberReader.findByIdAndClubId(2L, 1L) } returns null
                     every { clubMemberReader.findByIdOrNull(2L) } returns null
 
                     shouldThrow<ClubMemberNotFoundException> {

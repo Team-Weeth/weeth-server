@@ -4,6 +4,7 @@ import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.application.exception.NotClubAdminException
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import org.springframework.stereotype.Service
 
@@ -16,18 +17,18 @@ class ClubMemberPolicy(
 ) {
     /**
      * 동아리의 활성 멤버를 조회
+     * 한 번 조회 후 분기하여 불필요한 중복 쿼리를 방지
      */
     fun getActiveMember(
         clubId: Long,
         userId: Long,
-    ) = clubMemberReader
-        .findByClubIdAndUserId(clubId, userId)
-        ?.takeIf { it.isActive() }
-        ?: throw if (clubMemberReader.findByClubIdAndUserId(clubId, userId) != null) {
-            MemberNotActiveException()
-        } else {
-            ClubMemberNotFoundException()
-        }
+    ): ClubMember {
+        val member =
+            clubMemberReader.findByClubIdAndUserId(clubId, userId)
+                ?: throw ClubMemberNotFoundException()
+        if (!member.isActive()) throw MemberNotActiveException()
+        return member
+    }
 
     /**
      * 사용자가 동아리 관리자인지 검증
@@ -45,10 +46,11 @@ class ClubMemberPolicy(
     fun getMemberInClub(
         clubId: Long,
         clubMemberId: Long,
-    ) = clubMemberReader.findByIdAndClubId(clubMemberId, clubId)
-        ?: throw if (clubMemberReader.findByIdOrNull(clubMemberId) != null) {
-            ClubMemberNotInClubException()
-        } else {
-            ClubMemberNotFoundException()
-        }
+    ): ClubMember {
+        val member =
+            clubMemberReader.findByIdOrNull(clubMemberId)
+                ?: throw ClubMemberNotFoundException()
+        if (member.club.id != clubId) throw ClubMemberNotInClubException()
+        return member
+    }
 }
