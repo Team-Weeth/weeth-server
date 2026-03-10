@@ -9,11 +9,6 @@ import java.time.LocalDateTime
 interface NoticeReadRepository :
     JpaRepository<NoticeRead, Long>,
     NoticeReadReader {
-    override fun existsByUserIdAndPostId(
-        userId: Long,
-        postId: Long,
-    ): Boolean
-
     @Query("SELECT nr.post.id FROM NoticeRead nr WHERE nr.user.id = :userId AND nr.post.createdAt >= :since")
     override fun findReadPostIdsByUserId(
         @Param("userId") userId: Long,

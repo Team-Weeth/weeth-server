@@ -7,9 +7,4 @@ interface NoticeReadReader {
         userId: Long,
         since: LocalDateTime,
     ): Set<Long>
-
-    fun existsByUserIdAndPostId(
-        userId: Long,
-        postId: Long,
-    ): Boolean
 }
