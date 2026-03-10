@@ -92,7 +92,7 @@ interface PostRepository :
         WHERE p.board.type = :boardType
           AND p.isDeleted = false
           AND p.board.isDeleted = false
-        ORDER BY p.createdAt DESC
+        ORDER BY p.createdAt DESC, p.id DESC
         """,
     )
     override fun findRecentByBoardType(
@@ -108,7 +108,7 @@ interface PostRepository :
         WHERE p.board.type <> :excludedType
           AND p.isDeleted = false
           AND p.board.isDeleted = false
-        ORDER BY p.createdAt DESC
+        ORDER BY p.createdAt DESC, p.id DESC
         """,
     )
     override fun findRecentExcludingBoardType(
@@ -125,7 +125,7 @@ interface PostRepository :
           AND p.isDeleted = false
           AND p.board.isDeleted = false
           AND p.createdAt >= :since
-        ORDER BY p.createdAt DESC
+        ORDER BY p.createdAt DESC, p.id DESC
         """,
     )
     override fun findRecentByBoardTypeSince(
