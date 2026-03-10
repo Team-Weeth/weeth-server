@@ -82,7 +82,7 @@ class GetDashboardQueryService(
         return posts.map { post ->
             dashboardMapper.toPostResponse(
                 post = post,
-                authorProfileImage = null,
+                authorProfileImage = null, // TODO: 유저 프로필 이미지 기능 구현 후 연동
                 files = filesByPostId[post.id] ?: emptyList(),
                 now = now,
             )
