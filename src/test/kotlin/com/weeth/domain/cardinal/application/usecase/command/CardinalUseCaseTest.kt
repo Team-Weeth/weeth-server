@@ -20,7 +20,6 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.util.Optional
 import java.time.LocalDateTime
 
 class CardinalUseCaseTest :
