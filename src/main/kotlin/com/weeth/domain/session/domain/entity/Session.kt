@@ -1,5 +1,6 @@
 package com.weeth.domain.session.domain.entity
 
+import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
@@ -21,6 +22,7 @@ import kotlin.random.asKotlinRandom
 @Entity
 @Table(name = "meeting") // 테이블명 Session으로 수정
 class Session(
+    club: Club,
     var title: String,
     @Column(length = 500)
     var content: String? = null,
@@ -35,6 +37,11 @@ class Session(
     @JoinColumn(name = "user_id")
     var user: User? = null,
 ) : BaseEntity() {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_id", nullable = false)
+    var club: Club = club
+        private set
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0
@@ -76,6 +83,7 @@ class Session(
         private val secureRandom = SecureRandom().asKotlinRandom()
 
         fun create(
+            club: Club,
             title: String,
             content: String?,
             location: String?,
@@ -87,6 +95,7 @@ class Session(
             require(title.isNotBlank()) { "제목은 필수입니다" }
             require(!end.isBefore(start)) { "종료 시간은 시작 시간 이후여야 합니다" }
             return Session(
+                club = club,
                 title = title,
                 content = content,
                 location = location,

@@ -1,5 +1,7 @@
 package com.weeth.domain.session.fixture
 
+import com.weeth.domain.club.domain.entity.Club
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.enums.SessionStatus
 import org.springframework.test.util.ReflectionTestUtils
@@ -9,6 +11,7 @@ import java.time.LocalDateTime
 object SessionTestFixture {
     fun createSession(
         id: Long = 0L,
+        club: Club = ClubTestFixture.createClub(),
         title: String = "Test Session",
         content: String = "Test Content",
         location: String = "Test Location",
@@ -20,6 +23,7 @@ object SessionTestFixture {
     ): Session {
         val session =
             Session(
+                club = club,
                 title = title,
                 content = content,
                 location = location,
@@ -38,8 +42,10 @@ object SessionTestFixture {
         cardinal: Int,
         code: Int,
         title: String,
+        club: Club = ClubTestFixture.createClub(),
     ): Session =
         Session(
+            club = club,
             title = title,
             location = "Test Location",
             start = date.atTime(10, 0),
@@ -52,8 +58,10 @@ object SessionTestFixture {
         cardinal: Int,
         code: Int,
         title: String,
+        club: Club = ClubTestFixture.createClub(),
     ): Session =
         Session(
+            club = club,
             title = title,
             location = "Test Location",
             start = LocalDateTime.now().minusMinutes(5),

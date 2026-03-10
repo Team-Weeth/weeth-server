@@ -20,14 +20,19 @@ interface SessionRepository :
     @Query("SELECT s FROM Session s WHERE s.id = :id")
     fun findByIdWithLock(id: Long): Session?
 
-    override fun findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(
-        end: LocalDateTime,
-        start: LocalDateTime,
+    fun findByIdAndClubId(
+        sessionId: Long,
+        clubId: Long,
+    ): Session?
+
+    fun findAllByClubIdOrderByStartDesc(clubId: Long): List<Session>
+
+    fun findAllByClubIdAndCardinalOrderByStartDesc(
+        clubId: Long,
+        cardinal: Int,
     ): List<Session>
 
     override fun findAllByCardinalOrderByStartAsc(cardinal: Int): List<Session>
-
-    fun findAllByCardinalOrderByStartDesc(cardinal: Int): List<Session>
 
     override fun findAllByCardinal(cardinal: Int): List<Session>
 
@@ -36,12 +41,18 @@ interface SessionRepository :
         end: LocalDateTime,
     ): List<Session>
 
-    fun findAllByOrderByStartDesc(): List<Session>
+    override fun getById(sessionId: Long): Session = findById(sessionId).orElseThrow { SessionNotFoundException() }
 
-    @Query("SELECT s FROM Session s WHERE s.cardinal IN :cardinals")
-    override fun findAllByCardinalIn(
-        @Param("cardinals") cardinals: List<Int>,
+    @Query("SELECT s FROM Session s WHERE s.club.id = :clubId AND s.start >= :start AND s.end <= :end")
+    override fun findAllByClubIdAndStartBetween(
+        @Param("clubId") clubId: Long,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
     ): List<Session>
 
-    override fun getById(sessionId: Long): Session = findById(sessionId).orElseThrow { SessionNotFoundException() }
+    @Query("SELECT s FROM Session s WHERE s.club.id = :clubId AND s.cardinal IN :cardinals")
+    override fun findAllByClubIdAndCardinalIn(
+        @Param("clubId") clubId: Long,
+        @Param("cardinals") cardinals: List<Int>,
+    ): List<Session>
 }

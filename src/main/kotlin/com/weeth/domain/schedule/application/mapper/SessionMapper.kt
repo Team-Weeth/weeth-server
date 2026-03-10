@@ -1,5 +1,6 @@
 package com.weeth.domain.schedule.application.mapper
 
+import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.response.SessionInfoResponse
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
@@ -61,10 +62,12 @@ class SessionMapper {
         )
 
     fun toEntity(
+        club: Club,
         request: ScheduleSaveRequest,
         user: User,
     ): Session =
         Session.create(
+            club = club,
             title = request.title,
             content = request.content,
             location = request.location,

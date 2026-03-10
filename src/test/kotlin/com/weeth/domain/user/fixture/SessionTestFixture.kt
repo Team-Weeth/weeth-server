@@ -1,5 +1,6 @@
 package com.weeth.domain.user.fixture
 
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.entity.Session
 import java.time.LocalDateTime
 
@@ -12,6 +13,7 @@ object SessionTestFixture {
         code: Int = 1234,
     ): Session =
         Session(
+            club = ClubTestFixture.createClub(),
             title = title,
             cardinal = cardinalNumber,
             start = start,
