@@ -22,39 +22,47 @@ class GetScheduleQueryService(
     private val scheduleMapper: ScheduleMapper,
     private val eventMapper: EventMapper,
 ) {
-    fun findEvent(eventId: Long): EventResponse =
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
+    fun findEvent(
+        clubId: Long,
+        eventId: Long,
+    ): EventResponse =
         eventRepository
             .findByIdOrNull(eventId)
             ?.let { eventMapper.toResponse(it) }
             ?: throw EventNotFoundException()
 
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findMonthly(
+        clubId: Long,
         start: LocalDateTime,
         end: LocalDateTime,
     ): List<ScheduleResponse> {
         val events =
             eventRepository
-                .findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start)
+                .findByClubIdAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(clubId, end, start)
                 .map { scheduleMapper.toResponse(it, false) }
         val sessions =
             sessionReader
-                .findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start)
+                .findAllByClubIdAndStartBetween(clubId, start, end)
                 .map { scheduleMapper.toResponse(it, true) }
         return (events + sessions).sortedBy { it.start }
     }
 
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findYearly(
+        clubId: Long,
         year: Int,
         semester: Int,
     ): Map<Int, List<ScheduleResponse>> {
         val cardinal = cardinalReader.getByYearAndSemester(year, semester)
         val events =
             eventRepository
-                .findAllByCardinal(cardinal.cardinalNumber)
+                .findAllByClubIdAndCardinal(clubId, cardinal.cardinalNumber)
                 .map { scheduleMapper.toResponse(it, false) }
         val sessions =
             sessionReader
-                .findAllByCardinal(cardinal.cardinalNumber)
+                .findAllByClubIdAndCardinalIn(clubId, listOf(cardinal.cardinalNumber))
                 .map { scheduleMapper.toResponse(it, true) }
 
         return (events + sessions)

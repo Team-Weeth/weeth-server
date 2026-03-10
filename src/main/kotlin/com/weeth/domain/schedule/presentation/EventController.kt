@@ -5,6 +5,8 @@ import com.weeth.domain.schedule.application.exception.EventErrorCode
 import com.weeth.domain.schedule.application.usecase.query.GetScheduleQueryService
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
+import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
@@ -22,7 +24,8 @@ class EventController(
     @GetMapping("/{eventId}")
     @Operation(summary = "일정 상세 조회")
     fun getEvent(
-        @PathVariable eventId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable eventId: Long,
     ): CommonResponse<EventResponse> =
-        CommonResponse.success(ScheduleResponseCode.EVENT_FIND_SUCCESS, getScheduleQueryService.findEvent(eventId))
+        CommonResponse.success(ScheduleResponseCode.EVENT_FIND_SUCCESS, getScheduleQueryService.findEvent(0L, eventId))
 }
