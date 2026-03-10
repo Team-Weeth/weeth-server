@@ -40,6 +40,18 @@ interface ClubMemberRepository :
 
     @Query(
         """
+        SELECT cm
+        FROM ClubMember cm
+        WHERE cm.user.id = :userId
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        """,
+    )
+    override fun findActiveByUserId(
+        @Param("userId") userId: Long,
+    ): List<ClubMember>
+
+    @Query(
+        """
         SELECT COUNT(cm)
         FROM ClubMember cm
         WHERE cm.club.id = :clubId

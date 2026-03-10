@@ -21,5 +21,7 @@ interface ClubMemberReader {
 
     fun findAllByUserId(userId: Long): List<ClubMember>
 
+    fun findActiveByUserId(userId: Long): List<ClubMember>
+
     fun countActiveByClubId(clubId: Long): Long
 }

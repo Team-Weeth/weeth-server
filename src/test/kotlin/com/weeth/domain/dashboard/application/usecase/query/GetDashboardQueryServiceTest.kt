@@ -80,7 +80,7 @@ class GetDashboardQueryServiceTest :
                     every {
                         sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(any(), any())
                     } returns emptyList()
-                    every { clubMemberReader.findAllByUserId(userId) } returns listOf(clubMember)
+                    every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
 
                     val result = queryService.getHome(clubId, userId)
 
@@ -123,7 +123,7 @@ class GetDashboardQueryServiceTest :
                     every {
                         sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(any(), any())
                     } returns listOf(session)
-                    every { clubMemberReader.findAllByUserId(userId) } returns listOf(clubMember)
+                    every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
 
                     val result = queryService.getHome(clubId, userId)
 

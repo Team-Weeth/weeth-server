@@ -55,7 +55,7 @@ class GetDashboardQueryService(
                 todayStart,
             )
 
-        val myClubs = clubMemberReader.findAllByUserId(userId).map(dashboardMapper::toMyClubResponse)
+        val myClubs = clubMemberReader.findActiveByUserId(userId).map(dashboardMapper::toMyClubResponse)
 
         return dashboardMapper.toHomeResponse(
             club = club,
