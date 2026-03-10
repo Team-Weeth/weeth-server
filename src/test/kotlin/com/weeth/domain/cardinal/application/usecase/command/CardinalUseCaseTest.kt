@@ -20,8 +20,8 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import java.time.LocalDateTime
 import java.util.Optional
+import java.time.LocalDateTime
 
 class CardinalUseCaseTest :
     DescribeSpec({
@@ -90,7 +90,7 @@ class CardinalUseCaseTest :
         describe("update") {
             it("연도와 학기를 변경한다") {
                 val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2024, semester = 2)
-                every { cardinalRepository.findById(1L) } returns Optional.of(cardinal)
+                every { cardinalRepository.findByIdAndClubId(1L, clubId) } returns cardinal
 
                 manageCardinalUseCase.update(clubId, CardinalUpdateRequest(1L, 2025, 1, false))
 

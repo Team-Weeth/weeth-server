@@ -12,7 +12,6 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
-import org.springframework.data.repository.findByIdOrNull
 
 class GetBoardQueryServiceTest :
     DescribeSpec({
@@ -94,7 +93,7 @@ class GetBoardQueryServiceTest :
                     BoardTestFixture.create(name = "삭제됨", type = BoardType.GENERAL).apply {
                         markDeleted()
                     }
-                every { boardRepository.findByIdOrNull(3L) } returns deletedBoard
+                every { boardRepository.findByIdAndClubId(3L, clubId) } returns deletedBoard
 
                 val result = queryService.findBoardDetailForAdmin(clubId, 3L)
 
@@ -106,7 +105,7 @@ class GetBoardQueryServiceTest :
                     BoardTestFixture.create(name = "운영", type = BoardType.NOTICE).apply {
                         updateConfig(config.copy(isPrivate = true))
                     }
-                every { boardRepository.findByIdOrNull(2L) } returns privateBoard
+                every { boardRepository.findByIdAndClubId(2L, clubId) } returns privateBoard
 
                 val result = queryService.findBoardDetailForAdmin(clubId, 2L)
 
@@ -114,7 +113,7 @@ class GetBoardQueryServiceTest :
             }
 
             it("존재하지 않는 boardId면 예외를 던진다") {
-                every { boardRepository.findByIdOrNull(999L) } returns null
+                every { boardRepository.findByIdAndClubId(999L, clubId) } returns null
 
                 shouldThrow<BoardNotFoundException> {
                     queryService.findBoardDetailForAdmin(clubId, 999L)
