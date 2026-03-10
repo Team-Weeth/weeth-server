@@ -7,6 +7,8 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.comment.application.dto.request.CommentSaveRequest
 import com.weeth.domain.comment.domain.entity.Comment
 import com.weeth.domain.comment.domain.repository.CommentRepository
@@ -31,6 +33,7 @@ import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.roundToLong
+import java.util.UUID
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -42,6 +45,7 @@ class CommentConcurrencyTest(
     private val postRepository: PostRepository,
     private val userRepository: UserRepository,
     private val commentRepository: CommentRepository,
+    private val clubRepository: ClubRepository,
     private val entityManager: EntityManager,
     private val atomicCommentCountCommand: AtomicCommentCountCommand,
 ) : DescribeSpec({
@@ -64,12 +68,15 @@ class CommentConcurrencyTest(
             val allElapsedMs: List<Double>,
         )
 
-        fun createUsers(size: Int): List<User> =
+        fun createUsers(
+            size: Int,
+            runId: String,
+        ): List<User> =
             (1..size).map { i ->
                 userRepository.save(
                     User(
                         name = "user$i",
-                        email = Email.from("user$i@test.com"),
+                        email = Email.from("user-$runId-$i@test.com"),
                         status = Status.ACTIVE,
                     ),
                 )
@@ -78,11 +85,20 @@ class CommentConcurrencyTest(
         fun createPost(
             title: String,
             user: User,
+            runId: String,
         ): Post {
+            val club =
+                clubRepository.save(
+                    ClubTestFixture.createClub(
+                        name = "테스트 동아리-$runId",
+                        code = "TEST-$runId",
+                    ),
+                )
             val board =
                 boardRepository.save(
                     Board(
-                        name = "concurrency-board",
+                        club = club,
+                        name = "concurrency-board-$runId",
                         type = BoardType.GENERAL,
                     ),
                 )
@@ -100,8 +116,9 @@ class CommentConcurrencyTest(
             threadCount: Int,
             saveAction: (postId: Long, userId: Long, index: Int) -> Unit,
         ): ConcurrencyResult {
-            val users = createUsers(threadCount)
-            val post = createPost("동시성 테스트 게시글", users.first())
+            val runId = UUID.randomUUID().toString().take(8)
+            val users = createUsers(threadCount, runId)
+            val post = createPost("동시성 테스트 게시글-$runId", users.first(), runId)
             val executor = Executors.newFixedThreadPool(threadCount)
             val latch = CountDownLatch(threadCount)
             val successCount = AtomicInteger(0)
@@ -189,6 +206,7 @@ class CommentConcurrencyTest(
             commentRepository.deleteAllInBatch()
             postRepository.deleteAllInBatch()
             boardRepository.deleteAllInBatch()
+            clubRepository.deleteAllInBatch()
             userRepository.deleteAllInBatch()
         }
 
