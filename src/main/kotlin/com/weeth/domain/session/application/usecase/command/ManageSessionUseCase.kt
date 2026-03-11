@@ -5,6 +5,7 @@ import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.mapper.SessionMapper
@@ -23,14 +24,15 @@ class ManageSessionUseCase(
     private val cardinalReader: CardinalReader,
     private val sessionMapper: SessionMapper,
     private val clubReader: ClubReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
 ) {
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun create(
         clubId: Long,
         request: ScheduleSaveRequest,
         userId: Long,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
         val cardinal = cardinalReader.getByCardinalNumber(request.cardinal)
@@ -43,7 +45,6 @@ class ManageSessionUseCase(
         attendanceRepository.saveAll(users.map { Attendance.Companion.create(session, it) })
     }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun update(
         clubId: Long,
@@ -51,6 +52,7 @@ class ManageSessionUseCase(
         request: ScheduleUpdateRequest,
         userId: Long,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         if (session.club.id != clubId) throw SessionNotFoundException()
         val user = userReader.getById(userId)
@@ -58,12 +60,13 @@ class ManageSessionUseCase(
         session.updateInfo(request.title, request.content, request.location, request.start, request.end, user)
     }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun delete(
         clubId: Long,
         sessionId: Long,
+        userId: Long,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         if (session.club.id != clubId) throw SessionNotFoundException()
         val attendances = attendanceRepository.findAllBySessionAndUserStatusWithLock(session, Status.ACTIVE)
