@@ -15,6 +15,7 @@ import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
@@ -42,6 +43,7 @@ class ManagePostUseCaseTest :
         val postRepository = mockk<PostRepository>()
         val boardRepository = mockk<BoardRepository>()
         val userReader = mockk<UserReader>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val fileRepository = mockk<FileRepository>()
         val fileReader = mockk<FileReader>()
         val fileMapper = mockk<FileMapper>()
@@ -52,6 +54,7 @@ class ManagePostUseCaseTest :
                 postRepository,
                 boardRepository,
                 userReader,
+                clubMemberPolicy,
                 fileRepository,
                 fileReader,
                 fileMapper,
@@ -84,7 +87,7 @@ class ManagePostUseCaseTest :
             )
 
         beforeTest {
-            clearMocks(postRepository, boardRepository, userReader, fileRepository, fileReader, fileMapper, postMapper)
+            clearMocks(postRepository, boardRepository, userReader, clubMemberPolicy, fileRepository, fileReader, fileMapper, postMapper)
             every { postRepository.save(any()) } answers { firstArg() }
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
             every { fileRepository.saveAll(any<List<File>>()) } returns emptyList()

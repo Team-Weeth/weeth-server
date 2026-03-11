@@ -6,11 +6,13 @@ import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.command.ManageBoardUseCase
 import com.weeth.domain.board.application.usecase.query.GetBoardQueryService
+import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.security.access.prepost.PreAuthorize
@@ -37,10 +39,11 @@ class BoardAdminController(
     fun findAllBoards(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<List<BoardDetailResponse>> =
         CommonResponse.success(
             BoardResponseCode.BOARD_FIND_ALL_SUCCESS,
-            getBoardQueryService.findAllBoardsForAdmin(clubId),
+            getBoardQueryService.findAllBoardsForAdmin(clubId, userId),
         )
 
     @GetMapping("/{boardId}")
@@ -49,10 +52,11 @@ class BoardAdminController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<BoardDetailResponse> =
         CommonResponse.success(
             BoardResponseCode.BOARD_FIND_BY_ID_SUCCESS,
-            getBoardQueryService.findBoardDetailForAdmin(clubId, boardId),
+            getBoardQueryService.findBoardDetailForAdmin(clubId, userId, boardId),
         )
 
     @PostMapping
@@ -61,8 +65,12 @@ class BoardAdminController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid request: CreateBoardRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<BoardDetailResponse> =
-        CommonResponse.success(BoardResponseCode.BOARD_CREATED_SUCCESS, manageBoardUseCase.create(clubId, request))
+        CommonResponse.success(
+            BoardResponseCode.BOARD_CREATED_SUCCESS,
+            manageBoardUseCase.create(clubId, request, userId),
+        )
 
     @PatchMapping("/{boardId}")
     @Operation(summary = "게시판 설정/이름 수정")
@@ -71,10 +79,11 @@ class BoardAdminController(
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestBody @Valid request: UpdateBoardRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<BoardDetailResponse> =
         CommonResponse.success(
             BoardResponseCode.BOARD_UPDATED_SUCCESS,
-            manageBoardUseCase.update(clubId, boardId, request),
+            manageBoardUseCase.update(clubId, boardId, request, userId),
         )
 
     @DeleteMapping("/{boardId}")
@@ -83,8 +92,9 @@ class BoardAdminController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        manageBoardUseCase.delete(clubId, boardId)
+        manageBoardUseCase.delete(clubId, boardId, userId)
         return CommonResponse.success(BoardResponseCode.BOARD_DELETED_SUCCESS)
     }
 }

@@ -60,11 +60,12 @@ class PostController(
         @PathVariable boardId: Long,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "10") pageSize: Int,
-        @Parameter(hidden = true) @CurrentUserRole role: Role,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Parameter(hidden = true) @CurrentUserRole role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): CommonResponse<Slice<PostListResponse>> =
         CommonResponse.success(
             BoardResponseCode.POST_FIND_ALL_SUCCESS,
-            getPostQueryService.findPosts(clubId, boardId, pageNumber, pageSize, role),
+            getPostQueryService.findPosts(clubId, userId, boardId, pageNumber, pageSize, role),
         )
 
     @GetMapping("/posts/{postId}")
@@ -73,11 +74,12 @@ class PostController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
-        @Parameter(hidden = true) @CurrentUserRole role: Role,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Parameter(hidden = true) @CurrentUserRole role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): CommonResponse<PostDetailResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_FIND_BY_ID_SUCCESS,
-            getPostQueryService.findPost(clubId, postId, role),
+            getPostQueryService.findPost(clubId, userId, postId, role),
         )
 
     @PatchMapping("/posts/{postId}")
@@ -115,11 +117,12 @@ class PostController(
         @RequestParam keyword: String,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "10") pageSize: Int,
-        @Parameter(hidden = true) @CurrentUserRole role: Role,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Parameter(hidden = true) @CurrentUserRole role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): CommonResponse<Slice<PostListResponse>> =
         CommonResponse.success(
             BoardResponseCode.POST_SEARCH_SUCCESS,
-            getPostQueryService.searchPosts(clubId, boardId, keyword, pageNumber, pageSize, role),
+            getPostQueryService.searchPosts(clubId, userId, boardId, keyword, pageNumber, pageSize, role),
         )
 
     // todo: 좋아요 관련 API 추가
