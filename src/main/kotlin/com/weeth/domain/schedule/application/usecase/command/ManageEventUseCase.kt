@@ -2,6 +2,7 @@ package com.weeth.domain.schedule.application.usecase.command
 
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
@@ -19,21 +20,21 @@ class ManageEventUseCase(
     private val cardinalReader: CardinalReader,
     private val eventMapper: EventMapper,
     private val clubReader: ClubReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
 ) {
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun create(
         clubId: Long,
         request: ScheduleSaveRequest,
         userId: Long,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
         cardinalReader.getByCardinalNumber(request.cardinal)
         eventRepository.save(eventMapper.toEntity(club, request, user))
     }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun update(
         clubId: Long,
@@ -41,18 +42,20 @@ class ManageEventUseCase(
         request: ScheduleUpdateRequest,
         userId: Long,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val user = userReader.getById(userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
         if (event.club.id != clubId) throw EventNotFoundException()
         event.update(request.title, request.content, request.location, request.start, request.end, user)
     }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun delete(
         clubId: Long,
         eventId: Long,
+        userId: Long,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
         if (event.club.id != clubId) throw EventNotFoundException()
         eventRepository.delete(event)

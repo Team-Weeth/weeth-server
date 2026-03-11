@@ -1,6 +1,7 @@
 package com.weeth.domain.schedule.application.usecase.query
 
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
@@ -19,47 +20,58 @@ class GetScheduleQueryService(
     private val eventRepository: EventRepository,
     private val sessionReader: SessionReader,
     private val cardinalReader: CardinalReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val scheduleMapper: ScheduleMapper,
     private val eventMapper: EventMapper,
 ) {
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findEvent(
         clubId: Long,
+        userId: Long,
         eventId: Long,
     ): EventResponse {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
-        if (clubId != 0L && event.club.id != clubId) throw EventNotFoundException()
+
+        if (event.club.id != clubId) throw EventNotFoundException()
+
         return eventMapper.toResponse(event)
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findMonthly(
         clubId: Long,
+        userId: Long,
         start: LocalDateTime,
         end: LocalDateTime,
     ): List<ScheduleResponse> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
+
         val events =
             eventRepository
                 .findByClubIdAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(clubId, end, start)
                 .map { scheduleMapper.toResponse(it, false) }
+
         val sessions =
             sessionReader
                 .findAllByClubIdAndStartBetween(clubId, start, end)
                 .map { scheduleMapper.toResponse(it, true) }
+
         return (events + sessions).sortedBy { it.start }
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findYearly(
         clubId: Long,
+        userId: Long,
         year: Int,
         semester: Int,
     ): Map<Int, List<ScheduleResponse>> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         val cardinal = cardinalReader.getByYearAndSemester(year, semester)
+
         val events =
             eventRepository
                 .findAllByClubIdAndCardinal(clubId, cardinal.cardinalNumber)
                 .map { scheduleMapper.toResponse(it, false) }
+
         val sessions =
             sessionReader
                 .findAllByClubIdAndCardinalIn(clubId, listOf(cardinal.cardinalNumber))
