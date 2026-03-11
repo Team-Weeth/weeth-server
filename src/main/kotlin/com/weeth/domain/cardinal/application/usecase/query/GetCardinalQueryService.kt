@@ -4,6 +4,7 @@ import com.weeth.domain.cardinal.application.dto.response.CardinalResponse
 import com.weeth.domain.cardinal.application.mapper.CardinalMapper
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -12,9 +13,15 @@ import org.springframework.transaction.annotation.Transactional
 class GetCardinalQueryService(
     private val cardinalRepository: CardinalRepository,
     private val cardinalReader: CardinalReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val cardinalMapper: CardinalMapper,
 ) {
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
-    fun findAll(clubId: Long): List<CardinalResponse> =
-        cardinalReader.findAllByClubIdOrderByCardinalNumberAsc(clubId).map(cardinalMapper::toResponse)
+    fun findAll(
+        clubId: Long,
+        userId: Long,
+    ): List<CardinalResponse> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
+
+        return cardinalReader.findAllByClubIdOrderByCardinalNumberAsc(clubId).map(cardinalMapper::toResponse)
+    }
 }
