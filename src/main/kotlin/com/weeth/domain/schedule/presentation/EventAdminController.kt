@@ -7,6 +7,8 @@ import com.weeth.domain.schedule.application.usecase.command.ManageEventUseCase
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
+import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -21,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "EVENT ADMIN", description = "[ADMIN] 일정 어드민 API")
 @RestController
-@RequestMapping("/api/v4/admin/events")
+@RequestMapping("/api/v4/admin/clubs/{clubId}/events")
 @ApiErrorCodeExample(EventErrorCode::class)
 class EventAdminController(
     private val manageEventUseCase: ManageEventUseCase,
@@ -29,30 +31,36 @@ class EventAdminController(
     @PostMapping
     @Operation(summary = "일정 생성")
     fun create(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @Valid @RequestBody dto: ScheduleSaveRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        manageEventUseCase.create(dto, userId)
+        manageEventUseCase.create(clubId, dto, userId)
         return CommonResponse.success(ScheduleResponseCode.EVENT_SAVE_SUCCESS)
     }
 
     @PatchMapping("/{eventId}")
     @Operation(summary = "일정 수정")
     fun update(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable eventId: Long,
         @Valid @RequestBody dto: ScheduleUpdateRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        manageEventUseCase.update(eventId, dto, userId)
+        manageEventUseCase.update(clubId, eventId, dto, userId)
         return CommonResponse.success(ScheduleResponseCode.EVENT_UPDATE_SUCCESS)
     }
 
     @DeleteMapping("/{eventId}")
     @Operation(summary = "일정 삭제")
     fun delete(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable eventId: Long,
     ): CommonResponse<Void?> {
-        manageEventUseCase.delete(eventId)
+        manageEventUseCase.delete(clubId, eventId)
         return CommonResponse.success(ScheduleResponseCode.EVENT_DELETE_SUCCESS)
     }
 }

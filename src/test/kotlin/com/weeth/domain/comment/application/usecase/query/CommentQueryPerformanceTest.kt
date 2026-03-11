@@ -7,6 +7,8 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.application.mapper.CommentMapper
 import com.weeth.domain.comment.domain.entity.Comment
@@ -41,6 +43,7 @@ class CommentQueryPerformanceTest(
     private val postRepository: PostRepository,
     private val commentRepository: CommentRepository,
     private val fileRepository: FileRepository,
+    private val clubRepository: ClubRepository,
     private val entityManager: EntityManager,
 ) : DescribeSpec({
         val runPerformanceTests = System.getProperty("runPerformanceTests")?.toBoolean() ?: false
@@ -56,13 +59,16 @@ class CommentQueryPerformanceTest(
                 ),
             )
 
-        fun createBoard(): Board =
-            boardRepository.save(
+        fun createBoard(): Board {
+            val club = clubRepository.save(ClubTestFixture.createClub())
+            return boardRepository.save(
                 Board(
+                    club = club,
                     name = "perf-board",
                     type = BoardType.GENERAL,
                 ),
             )
+        }
 
         fun createPost(
             user: User,

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
+// TODO(PR4): /api/v4/clubs/{clubId}/events 경로로 전환 필요
 @Tag(name = "EVENT", description = "일정 API")
 @RestController
 @RequestMapping("/api/v4/events")
@@ -24,5 +25,5 @@ class EventController(
     fun getEvent(
         @PathVariable eventId: Long,
     ): CommonResponse<EventResponse> =
-        CommonResponse.success(ScheduleResponseCode.EVENT_FIND_SUCCESS, getScheduleQueryService.findEvent(eventId))
+        CommonResponse.success(ScheduleResponseCode.EVENT_FIND_SUCCESS, getScheduleQueryService.findEvent(0L, eventId))
 }

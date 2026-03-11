@@ -23,7 +23,11 @@ class GetAttendanceQueryService(
     private val attendanceRepository: AttendanceRepository,
     private val attendanceMapper: AttendanceMapper,
 ) {
-    fun findAttendance(userId: Long): AttendanceSummaryResponse {
+    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
+    fun findAttendance(
+        clubId: Long,
+        userId: Long,
+    ): AttendanceSummaryResponse {
         val user = userReader.getById(userId)
         val today = LocalDate.now()
 
@@ -37,7 +41,11 @@ class GetAttendanceQueryService(
         return attendanceMapper.toSummaryResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
     }
 
-    fun findAllDetailsByCurrentCardinal(userId: Long): AttendanceDetailResponse {
+    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
+    fun findAllDetailsByCurrentCardinal(
+        clubId: Long,
+        userId: Long,
+    ): AttendanceDetailResponse {
         val user = userReader.getById(userId)
         val currentCardinal = userCardinalPolicy.getCurrentCardinal(user)
 
@@ -49,7 +57,11 @@ class GetAttendanceQueryService(
         return attendanceMapper.toDetailResponse(user, responses)
     }
 
-    fun findAllAttendanceBySession(sessionId: Long): List<AttendanceInfoResponse> {
+    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
+    fun findAllAttendanceBySession(
+        clubId: Long,
+        sessionId: Long,
+    ): List<AttendanceInfoResponse> {
         val session = sessionReader.getById(sessionId)
 
         val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)

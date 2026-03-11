@@ -102,9 +102,9 @@ class ManagePostUseCaseTest :
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userReader.getById(1L) } returns user
-                every { boardRepository.findByIdAndIsDeletedFalse(10L) } returns board
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(10L, 1L) } returns board
 
-                val result = useCase.save(10L, request, 1L)
+                val result = useCase.save(1L, 10L, request, 1L)
 
                 result.id shouldBe 1L
                 verify(exactly = 1) { postRepository.save(any<Post>()) }
@@ -121,10 +121,10 @@ class ManagePostUseCaseTest :
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userReader.getById(1L) } returns user
-                every { boardRepository.findByIdAndIsDeletedFalse(20L) } returns board
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(20L, 1L) } returns board
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.save(20L, request, 1L)
+                    useCase.save(1L, 20L, request, 1L)
                 }
 
                 verify(exactly = 0) { postRepository.save(any<Post>()) }
@@ -141,10 +141,10 @@ class ManagePostUseCaseTest :
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userReader.getById(1L) } returns user
-                every { boardRepository.findByIdAndIsDeletedFalse(21L) } returns board
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(21L, 1L) } returns board
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.save(21L, request, 1L)
+                    useCase.save(1L, 21L, request, 1L)
                 }
 
                 verify(exactly = 0) { postRepository.save(any<Post>()) }
@@ -161,9 +161,9 @@ class ManagePostUseCaseTest :
                     )
 
                 every { userReader.getById(1L) } returns user
-                every { boardRepository.findByIdAndIsDeletedFalse(11L) } returns board
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(11L, 1L) } returns board
 
-                useCase.save(11L, request, 1L)
+                useCase.save(1L, 11L, request, 1L)
 
                 verify {
                     postRepository.save(
@@ -177,10 +177,10 @@ class ManagePostUseCaseTest :
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userReader.getById(1L) } returns user
-                every { boardRepository.findByIdAndIsDeletedFalse(999L) } returns null
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(999L, 1L) } returns null
 
                 shouldThrow<BoardNotFoundException> {
-                    useCase.save(999L, request, 1L)
+                    useCase.save(1L, 999L, request, 1L)
                 }
             }
         }
@@ -189,13 +189,14 @@ class ManagePostUseCaseTest :
             it("files가 null이면 기존 파일을 유지한다") {
                 val user = createUser(1L, Role.USER)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
                 val post = Post.create("제목", "내용", user, board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
 
-                useCase.update(1L, request, 1L)
+                useCase.update(clubId, 1L, request, 1L)
 
                 verify(exactly = 0) { fileReader.findAll(any(), any<Long>(), any()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
@@ -204,6 +205,7 @@ class ManagePostUseCaseTest :
             it("files가 있으면 기존 파일을 soft delete 후 교체한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
                 val oldFile = createUploadedPostFile("old.png")
                 val newFiles = listOf(createUploadedPostFile("new.png"))
@@ -228,7 +230,7 @@ class ManagePostUseCaseTest :
                 every { fileMapper.toFileList(request.files, FileOwnerType.POST, any<Long>()) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
 
-                useCase.update(1L, request, 1L)
+                useCase.update(clubId, 1L, request, 1L)
 
                 oldFile.status.name shouldBe "DELETED"
                 post.title shouldBe "수정"
@@ -239,13 +241,14 @@ class ManagePostUseCaseTest :
             it("title이 null이면 기존 제목을 유지한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
                 val post = Post.create("원래 제목", "원래 내용", user, board)
                 val request = UpdatePostRequest(content = "수정된 내용")
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
 
-                useCase.update(1L, request, 1L)
+                useCase.update(clubId, 1L, request, 1L)
 
                 post.title shouldBe "원래 제목"
                 post.content shouldBe "수정된 내용"
@@ -254,13 +257,14 @@ class ManagePostUseCaseTest :
             it("content가 null이면 기존 내용을 유지한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
                 val post = Post.create("원래 제목", "원래 내용", user, board)
                 val request = UpdatePostRequest(title = "수정된 제목")
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
 
-                useCase.update(1L, request, 1L)
+                useCase.update(clubId, 1L, request, 1L)
 
                 post.title shouldBe "수정된 제목"
                 post.content shouldBe "원래 내용"
@@ -270,7 +274,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns null
 
                 shouldThrow<PostNotFoundException> {
-                    useCase.update(1L, UpdatePostRequest(title = "수정"), 1L)
+                    useCase.update(1L, 1L, UpdatePostRequest(title = "수정"), 1L)
                 }
             }
 
@@ -282,13 +286,14 @@ class ManagePostUseCaseTest :
                         type = BoardType.NOTICE,
                         config = BoardConfig(writePermission = Role.ADMIN),
                     )
+                val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.update(1L, UpdatePostRequest(title = "수정"), 1L)
+                    useCase.update(clubId, 1L, UpdatePostRequest(title = "수정"), 1L)
                 }
             }
 
@@ -300,13 +305,14 @@ class ManagePostUseCaseTest :
                         type = BoardType.GENERAL,
                         config = BoardConfig(isPrivate = true),
                     )
+                val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.update(1L, UpdatePostRequest(title = "수정"), 1L)
+                    useCase.update(clubId, 1L, UpdatePostRequest(title = "수정"), 1L)
                 }
             }
         }
@@ -315,6 +321,7 @@ class ManagePostUseCaseTest :
             it("삭제 시 첨부 파일과 게시글을 soft delete한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
                 val oldFile = createUploadedPostFile("old.png")
 
@@ -322,7 +329,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
 
-                useCase.delete(1L, 1L)
+                useCase.delete(clubId, 1L, 1L)
 
                 oldFile.status.name shouldBe "DELETED"
                 post.isDeleted shouldBe true
@@ -333,7 +340,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns null
 
                 shouldThrow<PostNotFoundException> {
-                    useCase.delete(1L, 1L)
+                    useCase.delete(1L, 1L, 1L)
                 }
             }
 
@@ -345,13 +352,14 @@ class ManagePostUseCaseTest :
                         type = BoardType.NOTICE,
                         config = BoardConfig(writePermission = Role.ADMIN),
                     )
+                val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
 
                 every { userReader.getById(1L) } returns user
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.delete(1L, 1L)
+                    useCase.delete(clubId, 1L, 1L)
                 }
             }
         }
@@ -361,6 +369,7 @@ class ManagePostUseCaseTest :
                 val owner = UserTestFixture.createActiveUser1(1L)
                 val otherUser = createUser(2L, Role.USER)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = owner, board = board)
                 val request = UpdatePostRequest(title = "수정", content = "수정")
 
@@ -368,7 +377,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<PostNotOwnedException> {
-                    useCase.update(1L, request, 2L)
+                    useCase.update(clubId, 1L, request, 2L)
                 }
             }
         }

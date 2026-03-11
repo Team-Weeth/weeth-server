@@ -3,6 +3,8 @@ package com.weeth.domain.user.domain.repository
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
+import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.entity.UserCardinal
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
@@ -19,24 +21,26 @@ class UserCardinalRepositoryTest(
     private val userRepository: UserRepository,
     private val cardinalRepository: CardinalRepository,
     private val userCardinalRepository: UserCardinalRepository,
+    private val clubRepository: ClubRepository,
 ) : DescribeSpec({
 
         describe("findAllByUserOrderByCardinalCardinalNumberDesc") {
             it("유저별 기수가 내림차순으로 조회된다") {
                 val user = UserTestFixture.createActiveUser1()
                 userRepository.save(user)
+                val club = clubRepository.save(ClubTestFixture.createClub())
 
                 val cardinal1 =
                     cardinalRepository.save(
-                        CardinalTestFixture.createCardinal(cardinalNumber = 5, year = 2023, semester = 1),
+                        CardinalTestFixture.createCardinal(club = club, cardinalNumber = 5, year = 2023, semester = 1),
                     )
                 val cardinal2 =
                     cardinalRepository.save(
-                        CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2023, semester = 2),
+                        CardinalTestFixture.createCardinal(club = club, cardinalNumber = 6, year = 2023, semester = 2),
                     )
                 val cardinal3 =
                     cardinalRepository.save(
-                        CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2024, semester = 1),
+                        CardinalTestFixture.createCardinal(club = club, cardinalNumber = 7, year = 2024, semester = 1),
                     )
 
                 userCardinalRepository.saveAll(
@@ -62,22 +66,23 @@ class UserCardinalRepositoryTest(
                 val user2 = UserTestFixture.createActiveUser2()
                 userRepository.save(user1)
                 userRepository.save(user2)
+                val club = clubRepository.save(ClubTestFixture.createClub())
 
                 val c1 =
                     cardinalRepository.save(
-                        CardinalTestFixture.createCardinal(cardinalNumber = 5, year = 2023, semester = 1),
+                        CardinalTestFixture.createCardinal(club = club, cardinalNumber = 5, year = 2023, semester = 1),
                     )
                 val c2 =
                     cardinalRepository.save(
-                        CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2023, semester = 2),
+                        CardinalTestFixture.createCardinal(club = club, cardinalNumber = 6, year = 2023, semester = 2),
                     )
                 val c3 =
                     cardinalRepository.save(
-                        CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2024, semester = 1),
+                        CardinalTestFixture.createCardinal(club = club, cardinalNumber = 7, year = 2024, semester = 1),
                     )
                 val c4 =
                     cardinalRepository.save(
-                        CardinalTestFixture.createCardinal(cardinalNumber = 8, year = 2024, semester = 2),
+                        CardinalTestFixture.createCardinal(club = club, cardinalNumber = 8, year = 2024, semester = 2),
                     )
 
                 userCardinalRepository.saveAll(

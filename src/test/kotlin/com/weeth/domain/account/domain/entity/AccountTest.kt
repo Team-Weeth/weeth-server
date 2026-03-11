@@ -2,6 +2,7 @@ package com.weeth.domain.account.domain.entity
 
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
+import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -45,7 +46,7 @@ class AccountTest :
         }
 
         "create는 currentAmount를 totalAmount와 동일하게 초기화한다" {
-            val account = Account.create("2학기 회비", 200_000, 41)
+            val account = Account.create(ClubTestFixture.createClub(), "2학기 회비", 200_000, 41)
 
             account.currentAmount shouldBe 200_000
             account.totalAmount shouldBe 200_000

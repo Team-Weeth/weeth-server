@@ -13,6 +13,8 @@ import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.annotation.CurrentUserRole
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
+import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -30,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "BOARD", description = "게시글 API")
 @RestController
-@RequestMapping("/api/v4/boards")
+@RequestMapping("/api/v4/clubs/{clubId}/boards")
 @ApiErrorCodeExample(BoardErrorCode::class)
 class PostController(
     private val managePostUseCase: ManagePostUseCase,
@@ -39,15 +41,22 @@ class PostController(
     @PostMapping("/{boardId}/posts")
     @Operation(summary = "게시글 작성")
     fun save(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestBody @Valid request: CreatePostRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostSaveResponse> =
-        CommonResponse.success(BoardResponseCode.POST_CREATED_SUCCESS, managePostUseCase.save(boardId, request, userId))
+        CommonResponse.success(
+            BoardResponseCode.POST_CREATED_SUCCESS,
+            managePostUseCase.save(clubId, boardId, request, userId),
+        )
 
     @GetMapping("/{boardId}/posts")
     @Operation(summary = "게시글 목록 조회")
     fun findPosts(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "10") pageSize: Int,
@@ -55,42 +64,53 @@ class PostController(
     ): CommonResponse<Slice<PostListResponse>> =
         CommonResponse.success(
             BoardResponseCode.POST_FIND_ALL_SUCCESS,
-            getPostQueryService.findPosts(boardId, pageNumber, pageSize, role),
+            getPostQueryService.findPosts(clubId, boardId, pageNumber, pageSize, role),
         )
 
     @GetMapping("/posts/{postId}")
     @Operation(summary = "게시글 상세 조회")
     fun findPost(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUserRole role: Role,
     ): CommonResponse<PostDetailResponse> =
-        CommonResponse.success(BoardResponseCode.POST_FIND_BY_ID_SUCCESS, getPostQueryService.findPost(postId, role))
+        CommonResponse.success(
+            BoardResponseCode.POST_FIND_BY_ID_SUCCESS,
+            getPostQueryService.findPost(clubId, postId, role),
+        )
 
     @PatchMapping("/posts/{postId}")
     @Operation(summary = "게시글 수정")
     fun update(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @RequestBody @Valid request: UpdatePostRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostSaveResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_UPDATED_SUCCESS,
-            managePostUseCase.update(postId, request, userId),
+            managePostUseCase.update(clubId, postId, request, userId),
         )
 
     @DeleteMapping("/posts/{postId}")
     @Operation(summary = "게시글 삭제")
     fun delete(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        managePostUseCase.delete(postId, userId)
+        managePostUseCase.delete(clubId, postId, userId)
         return CommonResponse.success(BoardResponseCode.POST_DELETED_SUCCESS)
     }
 
     @GetMapping("/{boardId}/posts/search")
     @Operation(summary = "게시글 검색")
     fun searchPosts(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestParam keyword: String,
         @RequestParam(defaultValue = "0") pageNumber: Int,
@@ -99,7 +119,7 @@ class PostController(
     ): CommonResponse<Slice<PostListResponse>> =
         CommonResponse.success(
             BoardResponseCode.POST_SEARCH_SUCCESS,
-            getPostQueryService.searchPosts(boardId, keyword, pageNumber, pageSize, role),
+            getPostQueryService.searchPosts(clubId, boardId, keyword, pageNumber, pageSize, role),
         )
 
     // todo: 좋아요 관련 API 추가

@@ -1,5 +1,6 @@
 package com.weeth.domain.schedule.application.mapper
 
+import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.domain.entity.Event
@@ -25,10 +26,12 @@ class EventMapper {
         )
 
     fun toEntity(
+        club: Club,
         request: ScheduleSaveRequest,
         user: User,
     ): Event =
         Event.create(
+            club = club,
             title = request.title,
             content = request.content,
             location = request.location,

@@ -36,6 +36,8 @@ class GetAccountQueryServiceTest :
                 fileMapper,
             )
 
+        val clubId = 1L
+
         beforeTest {
             clearMocks(accountRepository, receiptRepository, fileReader, accountMapper, receiptMapper, fileMapper)
         }
@@ -48,7 +50,7 @@ class GetAccountQueryServiceTest :
                     val receipt2 = ReceiptTestFixture.createReceipt(id = 2L, account = account)
                     val accountResponse = mockk<com.weeth.domain.account.application.dto.response.AccountResponse>()
 
-                    every { accountRepository.findByCardinal(40) } returns account
+                    every { accountRepository.findByClubIdAndCardinal(clubId, 40) } returns account
                     every { receiptRepository.findAllByAccountIdOrderByCreatedAtDesc(account.id) } returns
                         listOf(receipt1, receipt2)
                     every { fileReader.findAll(FileOwnerType.RECEIPT, listOf(1L, 2L), null) } returns emptyList()
@@ -56,7 +58,7 @@ class GetAccountQueryServiceTest :
                     every { receiptMapper.toResponses(any(), any()) } returns emptyList()
                     every { accountMapper.toResponse(account, emptyList()) } returns accountResponse
 
-                    val result = queryService.findByCardinal(40)
+                    val result = queryService.findByCardinal(clubId, 40)
 
                     result shouldBe accountResponse
                     verify(exactly = 1) { fileReader.findAll(FileOwnerType.RECEIPT, listOf(1L, 2L), null) }
@@ -66,13 +68,13 @@ class GetAccountQueryServiceTest :
                     val account = AccountTestFixture.createAccount(cardinal = 40)
                     val accountResponse = mockk<com.weeth.domain.account.application.dto.response.AccountResponse>()
 
-                    every { accountRepository.findByCardinal(40) } returns account
+                    every { accountRepository.findByClubIdAndCardinal(clubId, 40) } returns account
                     every { receiptRepository.findAllByAccountIdOrderByCreatedAtDesc(account.id) } returns emptyList()
                     every { fileReader.findAll(FileOwnerType.RECEIPT, emptyList(), null) } returns emptyList()
                     every { receiptMapper.toResponses(emptyList(), emptyMap()) } returns emptyList()
                     every { accountMapper.toResponse(account, emptyList()) } returns accountResponse
 
-                    queryService.findByCardinal(40)
+                    queryService.findByCardinal(clubId, 40)
 
                     verify(exactly = 1) { fileReader.findAll(FileOwnerType.RECEIPT, emptyList<Long>(), null) }
                 }
@@ -80,9 +82,9 @@ class GetAccountQueryServiceTest :
 
             context("존재하지 않는 기수 조회 시") {
                 it("AccountNotFoundException을 던진다") {
-                    every { accountRepository.findByCardinal(99) } returns null
+                    every { accountRepository.findByClubIdAndCardinal(clubId, 99) } returns null
 
-                    shouldThrow<AccountNotFoundException> { queryService.findByCardinal(99) }
+                    shouldThrow<AccountNotFoundException> { queryService.findByCardinal(clubId, 99) }
                 }
             }
         }

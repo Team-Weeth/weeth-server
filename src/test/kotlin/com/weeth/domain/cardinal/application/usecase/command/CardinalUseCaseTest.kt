@@ -7,25 +7,39 @@ import com.weeth.domain.cardinal.application.mapper.CardinalMapper
 import com.weeth.domain.cardinal.application.usecase.query.GetCardinalQueryService
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.cardinal.domain.service.CardinalStatusPolicy
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
+import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import java.time.LocalDateTime
-import java.util.Optional
 
 class CardinalUseCaseTest :
     DescribeSpec({
         val cardinalRepository = mockk<CardinalRepository>()
+        val cardinalReader = mockk<CardinalReader>()
         val cardinalMapper = mockk<CardinalMapper>()
+        val clubReader = mockk<ClubReader>()
         val cardinalStatusPolicy = CardinalStatusPolicy(cardinalRepository)
-        val manageCardinalUseCase = ManageCardinalUseCase(cardinalRepository, cardinalMapper, cardinalStatusPolicy)
-        val getCardinalQueryService = GetCardinalQueryService(cardinalRepository, cardinalMapper)
+        val manageCardinalUseCase =
+            ManageCardinalUseCase(cardinalRepository, cardinalMapper, cardinalStatusPolicy, clubReader)
+        val getCardinalQueryService = GetCardinalQueryService(cardinalRepository, cardinalReader, cardinalMapper)
+
+        val clubId = 1L
+        val club = ClubTestFixture.createClub()
+
+        beforeTest {
+            clearMocks(cardinalRepository, cardinalReader, cardinalMapper, clubReader)
+            every { clubReader.getClubById(clubId) } returns club
+        }
 
         describe("save") {
             context("진행중이 아닌 기수라면") {
@@ -34,13 +48,13 @@ class CardinalUseCaseTest :
                     val toSave = CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2025, semester = 1)
                     val saved = CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2025, semester = 1)
 
-                    every { cardinalRepository.findByCardinalNumber(7) } returns Optional.empty()
-                    every { cardinalMapper.toEntity(request) } returns toSave
+                    every { cardinalRepository.findByClubIdAndCardinalNumber(clubId, 7) } returns null
+                    every { cardinalMapper.toEntity(club, request) } returns toSave
                     every { cardinalRepository.save(toSave) } returns saved
 
-                    manageCardinalUseCase.save(request)
+                    manageCardinalUseCase.save(clubId, request)
 
-                    verify { cardinalRepository.findByCardinalNumber(7) }
+                    verify { cardinalRepository.findByClubIdAndCardinalNumber(clubId, 7) }
                     verify { cardinalRepository.save(toSave) }
                     verify(exactly = 0) { cardinalRepository.findAllInProgressWithLock() }
                 }
@@ -56,12 +70,12 @@ class CardinalUseCaseTest :
                     val newCardinalAfterSave =
                         CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2025, semester = 1)
 
-                    every { cardinalRepository.findByCardinalNumber(7) } returns Optional.empty()
+                    every { cardinalRepository.findByClubIdAndCardinalNumber(clubId, 7) } returns null
                     every { cardinalRepository.findAllInProgressWithLock() } returns listOf(oldCardinal)
-                    every { cardinalMapper.toEntity(request) } returns newCardinalBeforeSave
+                    every { cardinalMapper.toEntity(club, request) } returns newCardinalBeforeSave
                     every { cardinalRepository.save(newCardinalBeforeSave) } returns newCardinalAfterSave
 
-                    manageCardinalUseCase.save(request)
+                    manageCardinalUseCase.save(clubId, request)
 
                     verify { cardinalRepository.findAllInProgressWithLock() }
                     verify { cardinalRepository.save(newCardinalBeforeSave) }
@@ -75,9 +89,9 @@ class CardinalUseCaseTest :
         describe("update") {
             it("연도와 학기를 변경한다") {
                 val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2024, semester = 2)
-                every { cardinalRepository.findById(1L) } returns Optional.of(cardinal)
+                every { cardinalRepository.findByIdAndClubId(1L, clubId) } returns cardinal
 
-                manageCardinalUseCase.update(CardinalUpdateRequest(1L, 2025, 1, false))
+                manageCardinalUseCase.update(clubId, CardinalUpdateRequest(1L, 2025, 1, false))
 
                 cardinal.year shouldBe 2025
                 cardinal.semester shouldBe 1
@@ -98,13 +112,13 @@ class CardinalUseCaseTest :
                 val response2 =
                     CardinalResponse(2L, 7, 2025, 1, CardinalStatus.IN_PROGRESS, now.minusDays(2), now)
 
-                every { cardinalRepository.findAllByOrderByCardinalNumberAsc() } returns cardinals
+                every { cardinalReader.findAllByClubIdOrderByCardinalNumberAsc(clubId) } returns cardinals
                 every { cardinalMapper.toResponse(cardinal1) } returns response1
                 every { cardinalMapper.toResponse(cardinal2) } returns response2
 
-                val responses = getCardinalQueryService.findAll()
+                val responses = getCardinalQueryService.findAll(clubId)
 
-                verify { cardinalRepository.findAllByOrderByCardinalNumberAsc() }
+                verify { cardinalReader.findAllByClubIdOrderByCardinalNumberAsc(clubId) }
                 verify(exactly = 2) { cardinalMapper.toResponse(any<Cardinal>()) }
 
                 responses shouldHaveSize 2

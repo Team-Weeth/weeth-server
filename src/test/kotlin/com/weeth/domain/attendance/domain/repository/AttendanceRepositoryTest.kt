@@ -2,6 +2,8 @@ package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.domain.repository.SessionRepository
@@ -24,6 +26,7 @@ class AttendanceRepositoryTest(
     private val attendanceRepository: AttendanceRepository,
     private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository,
+    private val clubRepository: ClubRepository,
 ) : DescribeSpec({
 
         lateinit var session: Session
@@ -31,8 +34,11 @@ class AttendanceRepositoryTest(
         lateinit var activeUser2: User
 
         beforeEach {
+            val club = clubRepository.save(ClubTestFixture.createClub())
+
             session =
                 Session(
+                    club = club,
                     title = "1차 정기모임",
                     start = LocalDateTime.now().minusHours(1),
                     end = LocalDateTime.now().plusHours(1),

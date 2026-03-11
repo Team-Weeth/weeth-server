@@ -9,6 +9,8 @@ import com.weeth.domain.session.application.usecase.query.GetSessionQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
+import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -25,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "SESSION ADMIN", description = "[ADMIN] 정기모임 어드민 API")
 @RestController
-@RequestMapping("/api/v4/admin/sessions")
+@RequestMapping("/api/v4/admin/clubs/{clubId}/sessions")
 @ApiErrorCodeExample(SessionErrorCode::class)
 class SessionAdminController(
     private val manageSessionUseCase: ManageSessionUseCase,
@@ -34,40 +36,48 @@ class SessionAdminController(
     @PostMapping
     @Operation(summary = "정기모임 생성")
     fun create(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @Valid @RequestBody dto: ScheduleSaveRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        manageSessionUseCase.create(dto, userId)
+        manageSessionUseCase.create(clubId, dto, userId)
         return CommonResponse.success(SessionResponseCode.SESSION_SAVE_SUCCESS)
     }
 
     @PatchMapping("/{sessionId}")
     @Operation(summary = "정기모임 수정")
     fun update(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable sessionId: Long,
         @Valid @RequestBody dto: ScheduleUpdateRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        manageSessionUseCase.update(sessionId, dto, userId)
+        manageSessionUseCase.update(clubId, sessionId, dto, userId)
         return CommonResponse.success(SessionResponseCode.SESSION_UPDATE_SUCCESS)
     }
 
     @DeleteMapping("/{sessionId}")
     @Operation(summary = "정기모임 삭제")
     fun delete(
-        @PathVariable sessionId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable sessionId: Long, // todo: userId 받아서 권한 검증
     ): CommonResponse<Void?> {
-        manageSessionUseCase.delete(sessionId)
+        manageSessionUseCase.delete(clubId, sessionId)
         return CommonResponse.success(SessionResponseCode.SESSION_DELETE_SUCCESS)
     }
 
     @GetMapping
     @Operation(summary = "정기모임 목록 조회")
     fun getSessionInfos(
-        @RequestParam(required = false) cardinal: Int?,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @RequestParam(required = false) cardinal: Int?, // todo: userId 받아서 권한 검증
     ): CommonResponse<SessionInfosResponse> =
         CommonResponse.success(
             SessionResponseCode.SESSION_INFOS_FIND_SUCCESS,
-            getSessionQueryService.findSessionInfos(cardinal),
+            getSessionQueryService.findSessionInfos(clubId, cardinal),
         )
 }

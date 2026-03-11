@@ -43,7 +43,8 @@ class AttendanceController(
     ): CommonResponse<AttendanceSummaryResponse> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_SUCCESS,
-            getAttendanceQueryService.findAttendance(userId),
+            // TODO: PR4에서 clubId 기반으로 전환
+            getAttendanceQueryService.findAttendance(0L, userId),
         )
 
     @GetMapping("/detail")
@@ -53,6 +54,7 @@ class AttendanceController(
     ): CommonResponse<AttendanceDetailResponse> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_ALL_SUCCESS,
-            getAttendanceQueryService.findAllDetailsByCurrentCardinal(userId),
+            // TODO: PR4에서 clubId 기반으로 전환
+            getAttendanceQueryService.findAllDetailsByCurrentCardinal(0L, userId),
         )
 }

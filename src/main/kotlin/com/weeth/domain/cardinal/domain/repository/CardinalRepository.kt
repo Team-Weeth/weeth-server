@@ -16,23 +16,34 @@ interface CardinalRepository :
     CardinalReader {
     fun findByCardinalNumber(cardinal: Int): Optional<Cardinal>
 
-    fun findAllByCardinalNumberIn(cardinalNumbers: List<Int>): List<Cardinal>
-
     fun findByYearAndSemester(
         year: Int,
         semester: Int,
     ): Optional<Cardinal>
-
-    fun findAllByStatus(cardinalStatus: CardinalStatus): List<Cardinal>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query("SELECT c FROM Cardinal c WHERE c.status = 'IN_PROGRESS'")
     fun findAllInProgressWithLock(): List<Cardinal>
 
-    fun findAllByOrderByCardinalNumberAsc(): List<Cardinal>
-
     fun findAllByOrderByCardinalNumberDesc(): List<Cardinal>
+
+    fun findByIdAndClubId(
+        id: Long,
+        clubId: Long,
+    ): Cardinal?
+
+    override fun findByClubIdAndCardinalNumber(
+        clubId: Long,
+        cardinalNumber: Int,
+    ): Cardinal?
+
+    override fun findAllByClubIdAndStatus(
+        clubId: Long,
+        status: CardinalStatus,
+    ): List<Cardinal>
+
+    override fun findAllByClubIdOrderByCardinalNumberAsc(clubId: Long): List<Cardinal>
 
     override fun getByCardinalNumber(cardinalNumber: Int): Cardinal =
         findByCardinalNumber(cardinalNumber).orElseThrow { CardinalNotFoundException() }

@@ -1,13 +1,16 @@
 package com.weeth.domain.cardinal.domain.entity
 
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
+import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 
 class CardinalTest :
     StringSpec({
+        val club = ClubTestFixture.createClub()
+
         "inProgress/done 상태 전환" {
-            val cardinal = Cardinal(cardinalNumber = 10, year = 2026, semester = 1)
+            val cardinal = Cardinal(club = club, cardinalNumber = 10, year = 2026, semester = 1)
 
             cardinal.inProgress()
             cardinal.status shouldBe CardinalStatus.IN_PROGRESS
@@ -17,7 +20,7 @@ class CardinalTest :
         }
 
         "update는 year/semester를 변경한다" {
-            val cardinal = Cardinal(cardinalNumber = 9, year = 2025, semester = 2)
+            val cardinal = Cardinal(club = club, cardinalNumber = 9, year = 2025, semester = 2)
             cardinal.update(2026, 1)
 
             cardinal.year shouldBe 2026
