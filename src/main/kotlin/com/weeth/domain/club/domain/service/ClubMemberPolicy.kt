@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service
 
 /**
  * 동아리 멤버 관련 비즈니스 규칙 및 권한 검증
+ * TODO: 캐싱 도입
  */
 @Service
 class ClubMemberPolicy(

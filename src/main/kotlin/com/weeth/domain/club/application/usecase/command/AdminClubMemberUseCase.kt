@@ -1,7 +1,6 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
-import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class AdminClubMemberUseCase(
-    private val clubMemberRepository: ClubMemberRepository,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
     @Transactional

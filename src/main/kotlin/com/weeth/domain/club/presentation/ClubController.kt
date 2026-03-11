@@ -22,6 +22,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -64,8 +65,8 @@ class ClubController(
     @Operation(summary = "동아리 정보 조회 (이름, 소개, 이미지)")
     fun getClubPublicInfo(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @TsidParam
-        @TsidPathVariable("clubId") clubId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
     ): CommonResponse<ClubResponse> {
         val info = getClubQueryService.findClub(clubId)
 
@@ -76,8 +77,8 @@ class ClubController(
     @Operation(summary = "동아리 가입")
     fun join(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @TsidParam
-        @TsidPathVariable("clubId") clubId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @Valid @RequestBody request: ClubJoinRequest,
     ): CommonResponse<Unit> {
         manageClubMemberUsecase.join(clubId, userId, request)
@@ -89,8 +90,8 @@ class ClubController(
     @Operation(summary = "동아리 탈퇴")
     fun leave(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @TsidParam
-        @TsidPathVariable("clubId") clubId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
     ): CommonResponse<Unit> {
         manageClubMemberUsecase.leave(clubId, userId)
 
@@ -101,8 +102,8 @@ class ClubController(
     @Operation(summary = "내 멤버 정보 조회")
     fun getMyMemberInfo(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @TsidParam
-        @TsidPathVariable("clubId") clubId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
     ): CommonResponse<ClubMemberProfileResponse> {
         val meInfo = getClubMemberQueryService.findMyMemberProfile(clubId, userId)
 
