@@ -2,6 +2,9 @@ package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.entity.Session
@@ -27,11 +30,14 @@ class AttendanceRepositoryTest(
     private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository,
     private val clubRepository: ClubRepository,
+    private val clubMemberRepository: ClubMemberRepository,
 ) : DescribeSpec({
 
         lateinit var session: Session
         lateinit var activeUser1: User
         lateinit var activeUser2: User
+        lateinit var activeMember1: ClubMember
+        lateinit var activeMember2: ClubMember
 
         beforeEach {
             val club = clubRepository.save(ClubTestFixture.createClub())
@@ -69,16 +75,33 @@ class AttendanceRepositoryTest(
             activeUser2.accept()
             userRepository.saveAll(listOf(activeUser1, activeUser2))
 
-            attendanceRepository.save(Attendance.create(session, activeUser1))
-            attendanceRepository.save(Attendance.create(session, activeUser2))
+            activeMember1 =
+                clubMemberRepository.save(
+                    ClubMember(
+                        club = club,
+                        user = activeUser1,
+                        memberStatus = MemberStatus.ACTIVE,
+                    ),
+                )
+            activeMember2 =
+                clubMemberRepository.save(
+                    ClubMember(
+                        club = club,
+                        user = activeUser2,
+                        memberStatus = MemberStatus.ACTIVE,
+                    ),
+                )
+
+            attendanceRepository.save(Attendance.create(session, activeMember1))
+            attendanceRepository.save(Attendance.create(session, activeMember2))
         }
 
-        describe("findAllBySessionAndUserStatus") {
-            it("특정 세션 + 사용자 상태로 출석 목록 조회") {
-                val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
+        describe("findAllBySessionAndClubMemberMemberStatus") {
+            it("특정 세션 + 멤버 상태로 출석 목록 조회") {
+                val attendances = attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, MemberStatus.ACTIVE)
 
                 attendances shouldHaveSize 2
-                attendances.map { it.user.name } shouldContainExactlyInAnyOrder listOf("이지훈", "이강혁")
+                attendances.map { it.clubMember.user.name } shouldContainExactlyInAnyOrder listOf("이지훈", "이강혁")
             }
         }
 

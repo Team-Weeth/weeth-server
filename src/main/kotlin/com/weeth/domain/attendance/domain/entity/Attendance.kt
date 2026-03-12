@@ -1,8 +1,8 @@
 package com.weeth.domain.attendance.domain.entity
 
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -23,9 +23,9 @@ class Attendance(
     @JoinColumn(name = "meeting_id")
     val session: Session,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "club_member_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
-    val user: User,
+    val clubMember: ClubMember,
     status: AttendanceStatus = AttendanceStatus.PENDING,
 ) : BaseEntity() {
     @Id
@@ -61,7 +61,7 @@ class Attendance(
     companion object {
         fun create(
             session: Session,
-            user: User,
-        ): Attendance = Attendance(session = session, user = user)
+            clubMember: ClubMember,
+        ): Attendance = Attendance(session = session, clubMember = clubMember)
     }
 }

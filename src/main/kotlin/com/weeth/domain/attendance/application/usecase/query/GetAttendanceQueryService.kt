@@ -3,13 +3,13 @@ package com.weeth.domain.attendance.application.usecase.query
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
+import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.user.domain.enums.Role
-import com.weeth.domain.user.domain.enums.Status
-import com.weeth.domain.user.domain.repository.UserReader
-import com.weeth.domain.user.domain.service.UserCardinalPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -17,54 +17,56 @@ import java.time.LocalDate
 @Service
 @Transactional(readOnly = true)
 class GetAttendanceQueryService(
-    private val userReader: UserReader,
-    private val userCardinalPolicy: UserCardinalPolicy,
+    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
     private val attendanceMapper: AttendanceMapper,
 ) {
-    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
     fun findAttendance(
         clubId: Long,
         userId: Long,
     ): AttendanceSummaryResponse {
-        val user = userReader.getById(userId)
+        val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
         val today = LocalDate.now()
 
         val todayAttendance =
-            attendanceRepository.findTodayByUserId(
-                userId,
+            attendanceRepository.findTodayByClubMemberId(
+                clubMember.id,
                 today.atStartOfDay(),
                 today.plusDays(1).atStartOfDay(),
             )
 
-        return attendanceMapper.toSummaryResponse(user, todayAttendance, isAdmin = user.role == Role.ADMIN)
+        return attendanceMapper.toSummaryResponse(clubMember, todayAttendance, isAdmin = clubMember.isAdmin())
     }
 
-    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
     fun findAllDetailsByCurrentCardinal(
         clubId: Long,
         userId: Long,
     ): AttendanceDetailResponse {
-        val user = userReader.getById(userId)
-        val currentCardinal = userCardinalPolicy.getCurrentCardinal(user)
-
+        val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
+        val currentCardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
         val responses =
             attendanceRepository
-                .findAllByUserIdAndCardinal(userId, currentCardinal.cardinalNumber)
+                .findAllByClubMemberIdAndCardinal(clubMember.id, currentCardinal.cardinalNumber)
                 .map(attendanceMapper::toResponse)
 
-        return attendanceMapper.toDetailResponse(user, responses)
+        return attendanceMapper.toDetailResponse(clubMember, responses)
     }
 
-    // TODO: PR4에서 clubMember 기반으로 전환 (현재는 user 기반 유지)
     fun findAllAttendanceBySession(
         clubId: Long,
+        userId: Long,
         sessionId: Long,
     ): List<AttendanceInfoResponse> {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val session = sessionReader.getById(sessionId)
 
-        val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
+        if (session.club.id != clubId) {
+            throw AttendanceNotFoundException()
+        }
+
+        val attendances = attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, MemberStatus.ACTIVE)
         return attendances.map(attendanceMapper::toInfoResponse)
     }
 }

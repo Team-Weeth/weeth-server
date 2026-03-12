@@ -6,20 +6,20 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.user.domain.entity.User
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
 @Component
 class AttendanceMapper {
     fun toSummaryResponse(
-        user: User,
+        clubMember: ClubMember,
         attendance: Attendance?,
         isAdmin: Boolean = false,
     ): AttendanceSummaryResponse =
         AttendanceSummaryResponse(
-            attendanceRate = user.attendanceRate,
+            attendanceRate = clubMember.attendanceStats.attendanceRate,
             title = attendance?.session?.title,
             status = attendance?.status,
             code = if (isAdmin) attendance?.session?.code else null,
@@ -29,13 +29,13 @@ class AttendanceMapper {
         )
 
     fun toDetailResponse(
-        user: User,
+        clubMember: ClubMember,
         attendances: List<AttendanceResponse>,
     ): AttendanceDetailResponse =
         AttendanceDetailResponse(
-            attendanceCount = user.attendanceCount,
-            total = user.attendanceCount + user.absenceCount,
-            absenceCount = user.absenceCount,
+            attendanceCount = clubMember.attendanceStats.attendanceCount,
+            total = clubMember.attendanceStats.attendanceCount + clubMember.attendanceStats.absenceCount,
+            absenceCount = clubMember.attendanceStats.absenceCount,
             attendances = attendances,
         )
 
@@ -53,9 +53,9 @@ class AttendanceMapper {
         AttendanceInfoResponse(
             id = attendance.id,
             status = attendance.status,
-            name = attendance.user.name,
-            department = attendance.user.department,
-            studentId = attendance.user.studentId,
+            name = attendance.clubMember.user.name,
+            department = attendance.clubMember.user.department,
+            studentId = attendance.clubMember.user.studentId,
         )
 
     fun toQrTokenResponse(

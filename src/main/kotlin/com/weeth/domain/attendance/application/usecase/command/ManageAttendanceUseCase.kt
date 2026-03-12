@@ -9,12 +9,12 @@ import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.application.exception.SessionNotInProgressException
 import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.user.domain.enums.Status
-import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -22,51 +22,57 @@ import java.time.LocalDateTime
 
 @Service
 class ManageAttendanceUseCase(
-    private val userReader: UserReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
     private val qrAttendancePort: QrAttendancePort,
 ) {
     @Transactional
     fun checkIn(
+        clubId: Long,
         userId: Long,
         sessionId: Long,
         code: Int,
     ) {
+        val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
+
         val storedCode = qrAttendancePort.getCode(sessionId) ?: throw QrTokenExpiredException()
         if (storedCode != code) throw AttendanceCodeMismatchException()
 
         val session = sessionReader.getById(sessionId)
-
+        if (session.club.id != clubId) throw AttendanceNotFoundException()
         if (!session.isCheckInAllowed(LocalDateTime.now())) throw SessionNotInProgressException()
 
-        val user = userReader.getById(userId)
-
         val lockedAttendance =
-            attendanceRepository.findBySessionAndUserWithLock(session, user)
+            attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember)
                 ?: throw AttendanceNotFoundException()
 
         if (lockedAttendance.status == AttendanceStatus.ATTEND) throw AlreadyAttendedException()
 
         lockedAttendance.attend()
-        user.attend()
+        clubMember.attend()
     }
 
     @Transactional
     fun close(
+        clubId: Long,
+        userId: Long,
         now: LocalDate,
         cardinal: Int,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val targetSession =
             sessionReader
-                .findAllByCardinalOrderByStartAsc(cardinal)
+                .findAllByClubIdAndCardinalIn(clubId, listOf(cardinal))
                 .firstOrNull { session ->
                     session.start.toLocalDate().isEqual(now) &&
                         session.end.toLocalDate().isEqual(now)
                 }
                 ?: throw SessionNotFoundException()
 
-        val attendances = attendanceRepository.findAllBySessionAndUserStatus(targetSession, Status.ACTIVE)
+        targetSession.close()
+        val attendances =
+            attendanceRepository.findAllBySessionAndClubMemberMemberStatus(targetSession, MemberStatus.ACTIVE)
         closePendingAttendances(attendances)
     }
 
@@ -76,21 +82,27 @@ class ManageAttendanceUseCase(
 
         sessions.forEach { session ->
             session.close()
-            val attendances = attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
+            val attendances =
+                attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, MemberStatus.ACTIVE)
             closePendingAttendances(attendances)
         }
     }
 
     @Transactional
-    fun updateStatus(attendanceUpdates: List<UpdateAttendanceStatusRequest>) {
+    fun updateStatus(
+        clubId: Long,
+        userId: Long,
+        attendanceUpdates: List<UpdateAttendanceStatusRequest>,
+    ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         attendanceUpdates.forEach { update ->
             val attendance =
-                attendanceRepository.findByIdWithUser(update.attendanceId)
+                attendanceRepository.findByIdWithClubMember(update.attendanceId)
                     ?: throw AttendanceNotFoundException()
+            if (attendance.clubMember.club.id != clubId) throw AttendanceNotFoundException()
 
-            val user = attendance.user
+            val member = attendance.clubMember
             val newStatus = AttendanceStatus.valueOf(update.status)
-
             if (attendance.status == newStatus) return@forEach
 
             val prevStatus = attendance.status
@@ -98,13 +110,18 @@ class ManageAttendanceUseCase(
 
             when (newStatus) {
                 AttendanceStatus.ABSENT -> {
-                    if (prevStatus == AttendanceStatus.ATTEND) user.removeAttend()
-                    user.absent()
+                    if (prevStatus == AttendanceStatus.ATTEND) member.removeAttend()
+                    member.absent()
                 }
 
-                else -> {
-                    if (prevStatus == AttendanceStatus.ABSENT) user.removeAbsent()
-                    user.attend()
+                AttendanceStatus.ATTEND -> {
+                    if (prevStatus == AttendanceStatus.ABSENT) member.removeAbsent()
+                    member.attend()
+                }
+
+                AttendanceStatus.PENDING -> {
+                    if (prevStatus == AttendanceStatus.ATTEND) member.removeAttend()
+                    if (prevStatus == AttendanceStatus.ABSENT) member.removeAbsent()
                 }
             }
         }
@@ -115,7 +132,7 @@ class ManageAttendanceUseCase(
             .filter { it.isPending() }
             .forEach { attendance ->
                 attendance.close()
-                attendance.user.absent()
+                attendance.clubMember.absent()
             }
     }
 }

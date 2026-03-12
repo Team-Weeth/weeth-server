@@ -1,20 +1,19 @@
 package com.weeth.domain.attendance.application.usecase.query
 
-import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
+import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
-import com.weeth.domain.cardinal.domain.entity.Cardinal
-import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
+import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.user.domain.enums.Status
-import com.weeth.domain.user.domain.repository.UserReader
-import com.weeth.domain.user.domain.service.UserCardinalPolicy
+import com.weeth.domain.session.fixture.SessionTestFixture
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
@@ -22,108 +21,92 @@ import io.mockk.verify
 
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
-
-        val userReader = mockk<UserReader>()
-        val userCardinalPolicy = mockk<UserCardinalPolicy>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubMemberCardinalPolicy = mockk<ClubMemberCardinalPolicy>()
         val sessionReader = mockk<SessionReader>()
         val attendanceRepository = mockk<AttendanceRepository>()
-        val attendanceMapper = mockk<AttendanceMapper>()
+        val attendanceMapper = AttendanceMapper()
 
         val queryService =
             GetAttendanceQueryService(
-                userReader,
-                userCardinalPolicy,
+                clubMemberPolicy,
+                clubMemberCardinalPolicy,
                 sessionReader,
                 attendanceRepository,
                 attendanceMapper,
             )
 
-        val clubId = 0L // TODO: PR4에서 실제 clubId 기반으로 전환
-        val userId = 10L
+        describe("findAttendance") {
+            it("오늘 출석 요약을 ClubMember 기준으로 반환한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                member.attend()
+                val session = SessionTestFixture.createInProgressSession(cardinal = 1, code = 111111, title = "오늘 모임", club = member.club)
+                val attendance = Attendance.create(session, member)
 
-        describe("find") {
-            it("오늘 출석 정보가 있으면 mapper.toSummaryResponse(user, attendance, isAdmin=false) 호출") {
-                val user = createActiveUser("이지훈")
-                val todayAttendance = mockk<Attendance>()
-                val mapped = mockk<AttendanceSummaryResponse>()
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns attendance
 
-                every { userReader.getById(userId) } returns user
-                every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns todayAttendance
-                every { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance), eq(false)) } returns mapped
+                val result = queryService.findAttendance(member.club.id, member.user.id)
 
-                val actual = queryService.findAttendance(clubId, userId)
-
-                actual shouldBe mapped
-                verify { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance), eq(false)) }
-            }
-
-            it("오늘 출석이 없다면 mapper.toSummaryResponse(user, null, isAdmin=false) 호출") {
-                val user = createActiveUser("이지훈")
-                val mapped = mockk<AttendanceSummaryResponse>()
-
-                every { userReader.getById(userId) } returns user
-                every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns null
-                every { attendanceMapper.toSummaryResponse(user, null, false) } returns mapped
-
-                val actual = queryService.findAttendance(clubId, userId)
-
-                actual shouldBe mapped
-                verify { attendanceMapper.toSummaryResponse(user, null, false) }
+                result.attendanceRate shouldBe member.attendanceStats.attendanceRate
+                result.title shouldBe session.title
+                result.status shouldBe AttendanceStatus.PENDING
+                verify(exactly = 1) { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) }
             }
         }
 
         describe("findAllDetailsByCurrentCardinal") {
-            it("현재 기수의 출석 목록을 매핑하여 Detail 반환") {
-                val user = createActiveUser("이지훈")
-                val attendance1 = mockk<Attendance>()
-                val attendance2 = mockk<Attendance>()
+            it("현재 기수의 출석 상세 목록과 통계를 반환한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                repeat(2) { member.attend() }
+                repeat(1) { member.absent() }
+                val cardinal = CardinalTestFixture.createCardinal(id = 1L, club = member.club, cardinalNumber = 8, year = 2026, semester = 1)
+                val session1 = SessionTestFixture.createSession(id = 1L, club = member.club, cardinal = 8, title = "1주차")
+                val session2 = SessionTestFixture.createSession(id = 2L, club = member.club, cardinal = 8, title = "2주차")
+                val attendances = listOf(Attendance.create(session1, member), Attendance.create(session2, member))
 
-                every { userReader.getById(userId) } returns user
-                val currentCardinal = mockk<Cardinal>()
-                every { currentCardinal.cardinalNumber } returns 1
-                every { userCardinalPolicy.getCurrentCardinal(user) } returns currentCardinal
-                every { attendanceRepository.findAllByUserIdAndCardinal(userId, 1) } returns
-                    listOf(attendance1, attendance2)
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { clubMemberCardinalPolicy.getCurrentCardinal(member) } returns cardinal
+                every { attendanceRepository.findAllByClubMemberIdAndCardinal(member.id, 8) } returns attendances
 
-                val response1 = mockk<AttendanceResponse>()
-                val response2 = mockk<AttendanceResponse>()
-                every { attendanceMapper.toResponse(attendance1) } returns response1
-                every { attendanceMapper.toResponse(attendance2) } returns response2
+                val result = queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id)
 
-                val expectedDetail = mockk<AttendanceDetailResponse>()
-                every { attendanceMapper.toDetailResponse(eq(user), any()) } returns expectedDetail
-
-                val actualDetail = queryService.findAllDetailsByCurrentCardinal(clubId, userId)
-
-                actualDetail shouldBe expectedDetail
-                verify {
-                    attendanceMapper.toDetailResponse(
-                        eq(user),
-                        match { it.size == 2 },
-                    )
-                }
+                result.attendanceCount shouldBe 2
+                result.absenceCount shouldBe 1
+                result.total shouldBe 3
+                result.attendances shouldHaveSize 2
+                result.attendances.map { it.title } shouldBe listOf("1주차", "2주차")
             }
         }
 
         describe("findAllAttendanceBySession") {
-            it("해당 정기모임의 출석 정보를 조회") {
-                val sessionId = 1L
-                val session = mockk<Session>()
-                val attendance1 = mockk<Attendance>()
-                val attendance2 = mockk<Attendance>()
-                val response1 = mockk<AttendanceInfoResponse>()
-                val response2 = mockk<AttendanceInfoResponse>()
+            it("관리자는 세션별 출석 목록을 조회할 수 있다") {
+                val admin = ClubMemberTestFixture.createAdminMember()
+                val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
+                val session = SessionTestFixture.createSession(id = 10L, club = admin.club, title = "세션")
+                val attendance = Attendance.create(session, member).also { it.attend() }
 
-                every { sessionReader.getById(sessionId) } returns session
-                every {
-                    attendanceRepository.findAllBySessionAndUserStatus(session, Status.ACTIVE)
-                } returns listOf(attendance1, attendance2)
-                every { attendanceMapper.toInfoResponse(attendance1) } returns response1
-                every { attendanceMapper.toInfoResponse(attendance2) } returns response2
+                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { sessionReader.getById(session.id) } returns session
+                every { attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, any()) } returns listOf(attendance)
 
-                val result = queryService.findAllAttendanceBySession(clubId, sessionId)
+                val result = queryService.findAllAttendanceBySession(admin.club.id, admin.user.id, session.id)
 
-                result shouldBe listOf(response1, response2)
+                result shouldHaveSize 1
+                result.first().name shouldBe member.user.name
+                result.first().status shouldBe AttendanceStatus.ATTEND
+            }
+
+            it("다른 동아리 세션이면 예외를 던진다") {
+                val admin = ClubMemberTestFixture.createAdminMember()
+                val otherSession = SessionTestFixture.createSession(id = 10L)
+
+                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { sessionReader.getById(otherSession.id) } returns otherSession
+
+                shouldThrow<AttendanceNotFoundException> {
+                    queryService.findAllAttendanceBySession(admin.club.id, admin.user.id, otherSession.id)
+                }
             }
         }
     })
