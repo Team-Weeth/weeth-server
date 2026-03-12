@@ -4,12 +4,12 @@ import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.dashboard.application.dto.response.DashboardHomeResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardNoticeResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardPostResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardScheduleResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardUnreadNoticeResponse
-import com.weeth.domain.dashboard.application.exception.DashboardNotClubMemberException
 import com.weeth.domain.dashboard.application.mapper.DashboardMapper
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.file.domain.enums.FileOwnerType
@@ -23,12 +23,12 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
 import java.time.LocalDateTime
 
-// TODO: 해당 club 멤버에 해당하는지 검증 후 club의 DB만 조회
 @Service
 @Transactional(readOnly = true)
 class GetDashboardQueryService(
     private val clubReader: ClubReader,
     private val clubMemberReader: ClubMemberReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val eventReader: EventReader,
     private val sessionReader: SessionReader,
     private val postReader: PostReader,
@@ -40,7 +40,7 @@ class GetDashboardQueryService(
         clubId: Long,
         userId: Long,
     ): DashboardHomeResponse {
-        validateMembership(clubId, userId)
+        clubMemberPolicy.getActiveMember(clubId, userId)
 
         val club = clubReader.getClubById(clubId)
         val memberCount = clubMemberReader.countActiveByClubId(clubId)
@@ -73,10 +73,9 @@ class GetDashboardQueryService(
         pageNumber: Int,
         pageSize: Int,
     ): Slice<DashboardPostResponse> {
-        validateMembership(clubId, userId)
+        clubMemberPolicy.getActiveMember(clubId, userId)
 
-        // TODO: 해당 클럽 회원인지 검증 후 클럽의 게시물만 조회
-        val posts = postReader.findRecentExcludingBoardType(BoardType.NOTICE, PageRequest.of(pageNumber, pageSize))
+        val posts = postReader.findRecentByClubIdExcludingBoardType(clubId, BoardType.NOTICE, PageRequest.of(pageNumber, pageSize))
         val now = LocalDateTime.now()
         val postIds = posts.content.map { it.id }
         val filesByPostId = fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }
@@ -96,10 +95,9 @@ class GetDashboardQueryService(
         userId: Long,
         size: Int,
     ): List<DashboardNoticeResponse> {
-        validateMembership(clubId, userId)
+        clubMemberPolicy.getActiveMember(clubId, userId)
 
-        // TODO: 해당 클럽 회원인지 검증 후 클럽의 공지만 조회
-        val notices = postReader.findRecentByBoardType(BoardType.NOTICE, PageRequest.of(0, size))
+        val notices = postReader.findRecentByClubIdAndBoardType(clubId, BoardType.NOTICE, PageRequest.of(0, size))
         val now = LocalDateTime.now()
 
         return notices.content.map { dashboardMapper.toNoticeResponse(it, now) }
@@ -109,7 +107,7 @@ class GetDashboardQueryService(
         clubId: Long,
         userId: Long,
     ): List<DashboardScheduleResponse> {
-        validateMembership(clubId, userId)
+        clubMemberPolicy.getActiveMember(clubId, userId)
 
         // TODO: 해당 클럽 회원인지 검증 후 클럽의 일정만 조회
         val monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay()
@@ -125,22 +123,12 @@ class GetDashboardQueryService(
         clubId: Long,
         userId: Long,
     ): DashboardUnreadNoticeResponse? {
-        validateMembership(clubId, userId)
+        clubMemberPolicy.getActiveMember(clubId, userId)
 
-        // TODO: 해당 클럽 회원인지 검증 후 클럽의 공지만 조회
         val since = LocalDateTime.now().minusWeeks(2)
         return postReader
-            .findFirstUnreadNoticeSince(userId, BoardType.NOTICE, since)
+            .findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, since)
             ?.let(dashboardMapper::toUnreadNoticeResponse)
     }
 
-    private fun validateMembership(
-        clubId: Long,
-        userId: Long,
-    ) {
-        val member =
-            clubMemberReader.findByClubIdAndUserId(clubId, userId)
-                ?: throw DashboardNotClubMemberException()
-        if (!member.isActive()) throw DashboardNotClubMemberException()
-    }
 }

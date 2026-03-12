@@ -122,8 +122,45 @@ interface PostRepository :
         """
         SELECT p
         FROM Post p
+        WHERE p.board.club.id = :clubId
+          AND p.board.type = :boardType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findRecentByClubIdAndBoardType(
+        @Param("clubId") clubId: Long,
+        @Param("boardType") boardType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.club.id = :clubId
+          AND p.board.type <> :excludedType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findRecentByClubIdExcludingBoardType(
+        @Param("clubId") clubId: Long,
+        @Param("excludedType") excludedType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
         LEFT JOIN LastNoticeRead lr ON lr.user.id = :userId AND lr.board.id = p.board.id
-        WHERE p.board.type = :boardType
+        WHERE p.board.club.id = :clubId
+          AND p.board.type = :boardType
           AND p.isDeleted = false
           AND p.board.isDeleted = false
           AND p.createdAt >= :since
@@ -132,6 +169,7 @@ interface PostRepository :
         """,
     )
     fun findUnreadNoticeSince(
+        @Param("clubId") clubId: Long,
         @Param("userId") userId: Long,
         @Param("boardType") boardType: BoardType,
         @Param("since") since: LocalDateTime,
@@ -139,8 +177,9 @@ interface PostRepository :
     ): List<Post>
 
     override fun findFirstUnreadNoticeSince(
+        clubId: Long,
         userId: Long,
         boardType: BoardType,
         since: LocalDateTime,
-    ): Post? = findUnreadNoticeSince(userId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
+    ): Post? = findUnreadNoticeSince(clubId, userId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
 }

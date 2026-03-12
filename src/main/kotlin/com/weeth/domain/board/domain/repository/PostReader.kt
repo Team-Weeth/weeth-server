@@ -21,7 +21,20 @@ interface PostReader {
         pageable: Pageable,
     ): Slice<Post>
 
+    fun findRecentByClubIdAndBoardType(
+        clubId: Long,
+        boardType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    fun findRecentByClubIdExcludingBoardType(
+        clubId: Long,
+        excludedType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
     fun findFirstUnreadNoticeSince(
+        clubId: Long,
         userId: Long,
         boardType: BoardType,
         since: LocalDateTime,

@@ -5,10 +5,12 @@ import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
+import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
-import com.weeth.domain.dashboard.application.exception.DashboardNotClubMemberException
 import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -35,6 +37,7 @@ class GetDashboardQueryServiceTest :
     DescribeSpec({
         val clubReader = mockk<ClubReader>()
         val clubMemberReader = mockk<ClubMemberReader>()
+        val clubMemberPolicy = ClubMemberPolicy(clubMemberReader)
         val eventReader = mockk<EventReader>()
         val sessionReader = mockk<SessionReader>()
         val postReader = mockk<PostReader>()
@@ -47,6 +50,7 @@ class GetDashboardQueryServiceTest :
             GetDashboardQueryService(
                 clubReader = clubReader,
                 clubMemberReader = clubMemberReader,
+                clubMemberPolicy = clubMemberPolicy,
                 eventReader = eventReader,
                 sessionReader = sessionReader,
                 postReader = postReader,
@@ -96,18 +100,18 @@ class GetDashboardQueryServiceTest :
             }
 
             context("멤버가 아닌 경우") {
-                it("DashboardNotClubMemberException을 던진다") {
+                it("ClubMemberNotFoundException을 던진다") {
                     every { clubReader.getClubById(clubId) } returns club
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns null
 
-                    shouldThrow<DashboardNotClubMemberException> {
+                    shouldThrow<ClubMemberNotFoundException> {
                         queryService.getHome(clubId, userId)
                     }
                 }
             }
 
             context("비활성 멤버인 경우") {
-                it("DashboardNotClubMemberException을 던진다") {
+                it("MemberNotActiveException을 던진다") {
                     val inactiveMember =
                         ClubTestFixture.createClubMember(
                             club = club,
@@ -116,7 +120,7 @@ class GetDashboardQueryServiceTest :
                     every { clubReader.getClubById(clubId) } returns club
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns inactiveMember
 
-                    shouldThrow<DashboardNotClubMemberException> {
+                    shouldThrow<MemberNotActiveException> {
                         queryService.getHome(clubId, userId)
                     }
                 }
@@ -165,7 +169,7 @@ class GetDashboardQueryServiceTest :
                     val slice = SliceImpl(listOf(post), pageable, false)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findRecentExcludingBoardType(BoardType.NOTICE, any()) } returns slice
+                    every { postReader.findRecentByClubIdExcludingBoardType(clubId, BoardType.NOTICE, any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
@@ -176,10 +180,10 @@ class GetDashboardQueryServiceTest :
             }
 
             context("멤버가 아닌 경우") {
-                it("DashboardNotClubMemberException을 던진다") {
+                it("ClubMemberNotFoundException을 던진다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns null
 
-                    shouldThrow<DashboardNotClubMemberException> {
+                    shouldThrow<ClubMemberNotFoundException> {
                         queryService.getRecentPosts(clubId, userId, 0, 10)
                     }
                 }
@@ -195,7 +199,7 @@ class GetDashboardQueryServiceTest :
                     val slice = SliceImpl(listOf(notice), pageable, false)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findRecentByBoardType(BoardType.NOTICE, any()) } returns slice
+                    every { postReader.findRecentByClubIdAndBoardType(clubId, BoardType.NOTICE, any()) } returns slice
 
                     val result = queryService.getRecentNotices(clubId, userId, 5)
 
@@ -230,7 +234,7 @@ class GetDashboardQueryServiceTest :
                     val notice = PostTestFixture.create(board = noticeBoard)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(userId, BoardType.NOTICE, any()) } returns notice
+                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns notice
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -241,7 +245,7 @@ class GetDashboardQueryServiceTest :
             context("모든 공지를 읽은 경우") {
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(userId, BoardType.NOTICE, any()) } returns null
+                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -252,7 +256,7 @@ class GetDashboardQueryServiceTest :
             context("2주 내 공지가 없는 경우") {
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(userId, BoardType.NOTICE, any()) } returns null
+                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
