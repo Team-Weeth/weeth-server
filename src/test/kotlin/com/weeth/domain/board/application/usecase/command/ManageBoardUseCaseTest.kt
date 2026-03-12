@@ -4,13 +4,17 @@ import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
-import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.board.domain.vo.BoardConfig
+import com.weeth.domain.board.fixture.BoardTestFixture
+import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.enums.Role
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -19,10 +23,16 @@ class ManageBoardUseCaseTest :
     DescribeSpec({
         val boardRepository = mockk<BoardRepository>()
         val boardMapper = BoardMapper()
-        val useCase = ManageBoardUseCase(boardRepository, boardMapper)
+        val clubReader = mockk<ClubReader>()
+        val useCase = ManageBoardUseCase(boardRepository, boardMapper, clubReader)
+
+        val club = ClubTestFixture.createClub()
+        val clubId = club.id
 
         beforeTest {
+            clearMocks(boardRepository, clubReader)
             every { boardRepository.save(any()) } answers { firstArg() }
+            every { clubReader.getClubById(clubId) } returns club
         }
 
         describe("create") {
@@ -36,7 +46,7 @@ class ManageBoardUseCaseTest :
                         isPrivate = true,
                     )
 
-                val result = useCase.create(request)
+                val result = useCase.create(clubId, request)
 
                 result.name shouldBe "운영공지"
                 result.type shouldBe BoardType.NOTICE
@@ -48,10 +58,10 @@ class ManageBoardUseCaseTest :
 
         describe("update") {
             it("일부 필드만 전달되면 해당 필드만 갱신한다") {
-                val board = Board(name = "기존", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                val result = useCase.update(1L, UpdateBoardRequest(name = "변경", isPrivate = true))
+                val result = useCase.update(clubId, 1L, UpdateBoardRequest(name = "변경", isPrivate = true))
 
                 result.name shouldBe "변경"
                 result.commentEnabled shouldBe true
@@ -60,10 +70,10 @@ class ManageBoardUseCaseTest :
             }
 
             it("아무 필드도 전달되지 않으면 기존 값이 그대로 유지된다") {
-                val board = Board(name = "기존", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                val result = useCase.update(1L, UpdateBoardRequest())
+                val result = useCase.update(clubId, 1L, UpdateBoardRequest())
 
                 result.name shouldBe "기존"
                 result.commentEnabled shouldBe true
@@ -75,17 +85,17 @@ class ManageBoardUseCaseTest :
                 every { boardRepository.findByIdAndIsDeletedFalse(999L) } returns null
 
                 shouldThrow<BoardNotFoundException> {
-                    useCase.update(999L, UpdateBoardRequest(name = "변경"))
+                    useCase.update(clubId, 999L, UpdateBoardRequest(name = "변경"))
                 }
             }
         }
 
         describe("delete") {
             it("게시판을 soft delete 처리한다") {
-                val board = Board(name = "일반", type = BoardType.GENERAL)
+                val board = BoardTestFixture.create(club = club, name = "일반", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                useCase.delete(1L)
+                useCase.delete(clubId, 1L)
 
                 board.isDeleted shouldBe true
                 verify(exactly = 0) { boardRepository.delete(any()) }

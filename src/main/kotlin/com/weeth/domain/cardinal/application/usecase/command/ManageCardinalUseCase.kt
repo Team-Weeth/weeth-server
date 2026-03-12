@@ -7,6 +7,7 @@ import com.weeth.domain.cardinal.application.exception.DuplicateCardinalExceptio
 import com.weeth.domain.cardinal.application.mapper.CardinalMapper
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.cardinal.domain.service.CardinalStatusPolicy
+import com.weeth.domain.club.domain.repository.ClubReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -15,22 +16,34 @@ class ManageCardinalUseCase(
     private val cardinalRepository: CardinalRepository,
     private val cardinalMapper: CardinalMapper,
     private val cardinalStatusPolicy: CardinalStatusPolicy,
+    private val clubReader: ClubReader,
 ) {
+    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
-    fun save(request: CardinalSaveRequest) {
-        if (cardinalRepository.findByCardinalNumber(request.cardinalNumber).isPresent) {
+    fun save(
+        clubId: Long,
+        request: CardinalSaveRequest,
+    ) {
+        val club = clubReader.getClubById(clubId)
+        if (cardinalRepository.findByClubIdAndCardinalNumber(clubId, request.cardinalNumber) != null) {
             throw DuplicateCardinalException()
         }
 
-        val cardinal = cardinalRepository.save(cardinalMapper.toEntity(request))
+        val cardinal = cardinalRepository.save(cardinalMapper.toEntity(club, request))
         if (request.inProgress) {
             cardinalStatusPolicy.activateExclusively(cardinal)
         }
     }
 
+    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
-    fun update(request: CardinalUpdateRequest) {
-        val cardinal = cardinalRepository.findById(request.id).orElseThrow { CardinalNotFoundException() }
+    fun update(
+        clubId: Long,
+        request: CardinalUpdateRequest,
+    ) {
+        val cardinal =
+            cardinalRepository.findByIdAndClubId(request.id, clubId) ?: throw CardinalNotFoundException()
+
         cardinal.update(request.year, request.semester)
 
         if (request.inProgress) {

@@ -1,5 +1,6 @@
 package com.weeth.domain.schedule.domain.entity
 
+import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
@@ -14,6 +15,7 @@ import java.time.LocalDateTime
 
 @Entity
 class Event(
+    club: Club,
     var title: String,
     @Column(length = 500)
     var content: String,
@@ -28,6 +30,11 @@ class Event(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_id", nullable = false)
+    var club: Club = club
+        private set
 
     fun update(
         title: String,
@@ -49,6 +56,7 @@ class Event(
 
     companion object {
         fun create(
+            club: Club,
             title: String,
             content: String,
             location: String,
@@ -60,6 +68,7 @@ class Event(
             require(title.isNotBlank()) { "제목은 필수입니다" }
             require(!end.isBefore(start)) { "종료 시간은 시작 시간 이후여야 합니다" }
             return Event(
+                club = club,
                 title = title,
                 content = content,
                 location = location,

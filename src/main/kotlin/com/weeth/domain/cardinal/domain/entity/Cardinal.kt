@@ -1,19 +1,35 @@
 package com.weeth.domain.cardinal.domain.entity
 
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
+import com.weeth.domain.club.domain.entity.Club
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 
 @Entity
+@Table(
+    name = "cardinal",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_club_id_cardinal_number",
+            columnNames = ["club_id", "cardinal_number"],
+        ),
+    ],
+)
 class Cardinal(
+    club: Club,
     id: Long = 0L,
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     val cardinalNumber: Int,
     year: Int? = null,
     semester: Int? = null,
@@ -23,6 +39,11 @@ class Cardinal(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "cardinal_id")
     var id: Long = id
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_id", nullable = false)
+    var club: Club = club
         private set
 
     var year: Int? = year
@@ -54,6 +75,7 @@ class Cardinal(
 
     companion object {
         fun create(
+            club: Club,
             cardinalNumber: Int,
             year: Int? = null,
             semester: Int? = null,
@@ -63,6 +85,7 @@ class Cardinal(
             year?.let { require(it > 0) { "연도는 0보다 커야 합니다." } }
             semester?.let { require(it in 1..2) { "학기는 1 또는 2여야 합니다." } }
             return Cardinal(
+                club = club,
                 cardinalNumber = cardinalNumber,
                 year = year,
                 semester = semester,

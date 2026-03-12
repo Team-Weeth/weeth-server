@@ -17,6 +17,15 @@ class UserController(
 }
 ```
 
+## Club-scoped API
+
+Club resources use `/api/v4/clubs/{clubId}/...`. `clubId` is Base62 TSID — use three annotations together:
+
+```kotlin
+@PathVariable @TsidParam        // IDE warning suppression + Swagger (type: string)
+@TsidPathVariable clubId: Long  // decodes Base62 → Long at runtime
+```
+
 ## Required Annotations
 
 | Annotation | Purpose |
@@ -154,6 +163,17 @@ PATCH  /users/{userId}           # Update user
 DELETE /users/{userId}           # Delete user
 POST   /users/{userId}/activate  # Action on resource
 ```
+
+### Admin Endpoints
+
+`admin` prefix comes **before** `clubs/{clubId}`: `/api/v4/admin/clubs/{clubId}/{resource}`
+
+```
+/api/v4/clubs/{clubId}/boards          # user-facing
+/api/v4/admin/clubs/{clubId}/boards    # admin
+```
+
+Enables a single SecurityConfig rule: `.requestMatchers("/api/v4/admin/**").hasRole("ADMIN")`
 
 ## Query & Path Parameters
 

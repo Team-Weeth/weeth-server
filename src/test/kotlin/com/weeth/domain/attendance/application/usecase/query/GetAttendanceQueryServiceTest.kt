@@ -38,6 +38,7 @@ class GetAttendanceQueryServiceTest :
                 attendanceMapper,
             )
 
+        val clubId = 0L // TODO: PR4에서 실제 clubId 기반으로 전환
         val userId = 10L
 
         describe("find") {
@@ -50,7 +51,7 @@ class GetAttendanceQueryServiceTest :
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns todayAttendance
                 every { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance), eq(false)) } returns mapped
 
-                val actual = queryService.findAttendance(userId)
+                val actual = queryService.findAttendance(clubId, userId)
 
                 actual shouldBe mapped
                 verify { attendanceMapper.toSummaryResponse(eq(user), eq(todayAttendance), eq(false)) }
@@ -64,7 +65,7 @@ class GetAttendanceQueryServiceTest :
                 every { attendanceRepository.findTodayByUserId(eq(userId), any(), any()) } returns null
                 every { attendanceMapper.toSummaryResponse(user, null, false) } returns mapped
 
-                val actual = queryService.findAttendance(userId)
+                val actual = queryService.findAttendance(clubId, userId)
 
                 actual shouldBe mapped
                 verify { attendanceMapper.toSummaryResponse(user, null, false) }
@@ -92,7 +93,7 @@ class GetAttendanceQueryServiceTest :
                 val expectedDetail = mockk<AttendanceDetailResponse>()
                 every { attendanceMapper.toDetailResponse(eq(user), any()) } returns expectedDetail
 
-                val actualDetail = queryService.findAllDetailsByCurrentCardinal(userId)
+                val actualDetail = queryService.findAllDetailsByCurrentCardinal(clubId, userId)
 
                 actualDetail shouldBe expectedDetail
                 verify {
@@ -120,7 +121,7 @@ class GetAttendanceQueryServiceTest :
                 every { attendanceMapper.toInfoResponse(attendance1) } returns response1
                 every { attendanceMapper.toInfoResponse(attendance2) } returns response2
 
-                val result = queryService.findAllAttendanceBySession(sessionId)
+                val result = queryService.findAllAttendanceBySession(clubId, sessionId)
 
                 result shouldBe listOf(response1, response2)
             }

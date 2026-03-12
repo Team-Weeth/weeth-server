@@ -3,6 +3,8 @@ package com.weeth.domain.user.domain.repository
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
+import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.fixture.UserCardinalTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -21,19 +23,21 @@ class UserRepositoryTest(
     private val userRepository: UserRepository,
     private val userCardinalRepository: UserCardinalRepository,
     private val cardinalRepository: CardinalRepository,
+    private val clubRepository: ClubRepository,
 ) : DescribeSpec({
 
         lateinit var cardinal7: com.weeth.domain.cardinal.domain.entity.Cardinal
         lateinit var cardinal8: com.weeth.domain.cardinal.domain.entity.Cardinal
 
         beforeEach {
+            val club = clubRepository.save(ClubTestFixture.createClub())
             cardinal7 =
                 cardinalRepository.save(
-                    CardinalTestFixture.createCardinal(cardinalNumber = 7, year = 2026, semester = 1),
+                    CardinalTestFixture.createCardinal(club = club, cardinalNumber = 7, year = 2026, semester = 1),
                 )
             cardinal8 =
                 cardinalRepository.save(
-                    CardinalTestFixture.createCardinal(cardinalNumber = 8, year = 2026, semester = 2),
+                    CardinalTestFixture.createCardinal(club = club, cardinalNumber = 8, year = 2026, semester = 2),
                 )
 
             val user1 = userRepository.save(UserTestFixture.createActiveUser1())

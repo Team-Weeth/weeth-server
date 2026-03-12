@@ -49,7 +49,8 @@ class AttendanceAdminController(
     ): CommonResponse<List<AttendanceInfoResponse>> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_DETAIL_SUCCESS,
-            getAttendanceQueryService.findAllAttendanceBySession(sessionId),
+            // TODO: PR4에서 clubId 기반으로 전환
+            getAttendanceQueryService.findAllAttendanceBySession(0L, sessionId),
         )
 
     @PatchMapping("/status")

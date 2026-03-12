@@ -22,12 +22,14 @@ class GetSessionQueryService(
     private val userReader: UserReader,
     private val sessionMapper: SessionMapper,
 ) {
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findSession(
+        clubId: Long,
         userId: Long,
         sessionId: Long,
     ): SessionResponse {
         val user = userReader.getById(userId)
-        val session = sessionRepository.findByIdOrNull(sessionId) ?: throw SessionNotFoundException()
+        val session = sessionRepository.findByIdAndClubId(sessionId, clubId) ?: throw SessionNotFoundException()
 
         return if (user.role == Role.ADMIN) {
             sessionMapper.toAdminResponse(session)
@@ -36,12 +38,16 @@ class GetSessionQueryService(
         }
     }
 
-    fun findSessionInfos(cardinal: Int?): SessionInfosResponse {
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
+    fun findSessionInfos(
+        clubId: Long,
+        cardinal: Int?,
+    ): SessionInfosResponse {
         val sessions =
             if (cardinal == null) {
-                sessionRepository.findAllByOrderByStartDesc()
+                sessionRepository.findAllByClubIdOrderByStartDesc(clubId)
             } else {
-                sessionRepository.findAllByCardinalOrderByStartDesc(cardinal)
+                sessionRepository.findAllByClubIdAndCardinalOrderByStartDesc(clubId, cardinal)
             }
 
         val thisWeek = findThisWeek(sessions)

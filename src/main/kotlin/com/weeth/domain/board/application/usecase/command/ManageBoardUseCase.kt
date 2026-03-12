@@ -8,6 +8,7 @@ import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
+import com.weeth.domain.club.domain.repository.ClubReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -15,11 +16,18 @@ import org.springframework.transaction.annotation.Transactional
 class ManageBoardUseCase(
     private val boardRepository: BoardRepository,
     private val boardMapper: BoardMapper,
+    private val clubReader: ClubReader,
 ) {
+    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
-    fun create(request: CreateBoardRequest): BoardDetailResponse {
+    fun create(
+        clubId: Long,
+        request: CreateBoardRequest,
+    ): BoardDetailResponse {
+        val club = clubReader.getClubById(clubId)
         val board =
             Board(
+                club = club,
                 name = request.name,
                 type = request.type,
                 config =
@@ -33,12 +41,15 @@ class ManageBoardUseCase(
         return boardMapper.toDetailResponse(savedBoard)
     }
 
+    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun update(
+        clubId: Long,
         boardId: Long,
         request: UpdateBoardRequest,
     ): BoardDetailResponse {
         val board = findBoard(boardId)
+        if (board.club.id != clubId) throw BoardNotFoundException()
 
         request.name?.let { board.rename(it) }
 
@@ -57,9 +68,14 @@ class ManageBoardUseCase(
         return boardMapper.toDetailResponse(board)
     }
 
+    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
-    fun delete(boardId: Long) {
+    fun delete(
+        clubId: Long,
+        boardId: Long,
+    ) {
         val board = findBoard(boardId)
+        if (board.club.id != clubId) throw BoardNotFoundException()
         board.markDeleted()
     }
 

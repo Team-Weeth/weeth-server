@@ -32,14 +32,16 @@ class ManagePostUseCase(
     private val fileMapper: FileMapper,
     private val postMapper: PostMapper,
 ) {
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     @Transactional
     fun save(
+        clubId: Long,
         boardId: Long,
         request: CreatePostRequest,
         userId: Long,
     ): PostSaveResponse {
         val user = userReader.getById(userId)
-        val board = findBoard(boardId)
+        val board = findBoardInClub(boardId, clubId)
         validateWritePermission(board, user)
 
         val post =
@@ -56,14 +58,17 @@ class ManagePostUseCase(
         return postMapper.toSaveResponse(savedPost)
     }
 
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     @Transactional
     fun update(
+        clubId: Long,
         postId: Long,
         request: UpdatePostRequest,
         userId: Long,
     ): PostSaveResponse {
         val user = userReader.getById(userId)
         val post = findPost(postId)
+        if (post.board.club.id != clubId) throw PostNotFoundException()
         validateOwner(post, userId)
         validateWritePermission(post.board, user)
 
@@ -77,13 +82,16 @@ class ManagePostUseCase(
         return postMapper.toSaveResponse(post)
     }
 
+    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     @Transactional
     fun delete(
+        clubId: Long,
         postId: Long,
         userId: Long,
     ) {
         val user = userReader.getById(userId)
         val post = findPost(postId)
+        if (post.board.club.id != clubId) throw PostNotFoundException()
         validateOwner(post, userId)
         validateWritePermission(post.board, user)
 
@@ -91,8 +99,10 @@ class ManagePostUseCase(
         post.markDeleted()
     }
 
-    private fun findBoard(boardId: Long): Board =
-        boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
+    private fun findBoardInClub(
+        boardId: Long,
+        clubId: Long,
+    ): Board = boardRepository.findByIdAndClubIdAndIsDeletedFalse(boardId, clubId) ?: throw BoardNotFoundException()
 
     private fun findPost(postId: Long): Post =
         postRepository.findActivePostById(postId) ?: throw PostNotFoundException()
