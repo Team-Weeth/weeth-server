@@ -40,7 +40,7 @@ class CardinalUseCaseTest :
                 clubMemberPolicy,
             )
         val getCardinalQueryService =
-            GetCardinalQueryService(cardinalRepository, cardinalReader, clubMemberPolicy, cardinalMapper)
+            GetCardinalQueryService(cardinalReader, clubMemberPolicy, cardinalMapper)
 
         val clubId = 1L
         val userId = 99L
@@ -49,6 +49,12 @@ class CardinalUseCaseTest :
         beforeTest {
             clearMocks(cardinalRepository, cardinalReader, cardinalMapper, clubReader, clubMemberPolicy)
             every { clubReader.getClubById(clubId) } returns club
+            every {
+                clubMemberPolicy.getActiveMember(
+                    clubId,
+                    userId,
+                )
+            } returns ClubTestFixture.createClubMember(club = club)
         }
 
         describe("save") {
