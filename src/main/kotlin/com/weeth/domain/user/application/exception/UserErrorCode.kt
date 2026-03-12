@@ -36,15 +36,12 @@ enum class UserErrorCode(
     @ExplainError("이미 등록된 전화번호로 회원가입을 시도할 때 발생합니다.")
     TEL_EXISTS(20908, HttpStatus.BAD_REQUEST, "이미 존재하는 전화번호입니다."),
 
-    @ExplainError("사용자와 기수 간의 연결 정보를 찾을 수 없을 때 발생합니다.")
-    USER_CARDINAL_NOT_FOUND(20909, HttpStatus.NOT_FOUND, "사용자 기수 정보를 찾을 수 없습니다."),
-
     @ExplainError("잘못된 권한 값이 입력되었을 때 발생합니다.")
-    ROLE_NOT_FOUND(20911, HttpStatus.BAD_REQUEST, "권한을 찾을 수 없습니다."),
+    ROLE_NOT_FOUND(20909, HttpStatus.BAD_REQUEST, "권한을 찾을 수 없습니다."),
 
     @ExplainError("잘못된 상태 값이 입력되었을 때 발생합니다.")
-    STATUS_NOT_FOUND(20912, HttpStatus.BAD_REQUEST, "상태를 찾을 수 없습니다."),
+    STATUS_NOT_FOUND(20910, HttpStatus.BAD_REQUEST, "상태를 찾을 수 없습니다."),
 
     @ExplainError("사용자 순서 지정 시 잘못된 값이 입력되었을 때 발생합니다.")
-    INVALID_USER_ORDER(20913, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
+    INVALID_USER_ORDER(20911, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
 }
