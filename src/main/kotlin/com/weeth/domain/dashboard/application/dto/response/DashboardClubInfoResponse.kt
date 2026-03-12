@@ -7,6 +7,8 @@ data class DashboardClubInfoResponse(
     val id: String,
     @field:Schema(description = "동아리 이름", example = "Leets")
     val name: String,
+    @field:Schema(description = "초대 코드", example = "550e8400-e29b-41d4-a716-446655440000")
+    val code: String,
     @field:Schema(description = "학교 이름", example = "가천대학교")
     val schoolName: String,
     @field:Schema(description = "동아리 설명", example = "IT 동아리")

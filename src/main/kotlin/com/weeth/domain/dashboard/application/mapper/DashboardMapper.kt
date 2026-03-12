@@ -33,6 +33,7 @@ class DashboardMapper(
         memberCount = memberCount,
         profileImageUrl = club.profileImageUrl,
         backgroundImageUrl = club.backgroundImageUrl,
+        code = club.code,
     )
 
     fun toHomeResponse(
