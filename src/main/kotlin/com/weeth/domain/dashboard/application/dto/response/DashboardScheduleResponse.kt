@@ -1,5 +1,6 @@
 package com.weeth.domain.dashboard.application.dto.response
 
+import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
@@ -12,6 +13,6 @@ data class DashboardScheduleResponse(
     val start: LocalDateTime,
     @field:Schema(description = "종료 일시", example = "2026-03-09T16:00:00")
     val end: LocalDateTime,
-    @field:Schema(description = "정기 모임 여부 (true=세션, false=일반 일정)", example = "false")
-    val isMeeting: Boolean,
+    @field:Schema(description = "일정 유형", example = "EVENT")
+    val type: ScheduleType,
 )

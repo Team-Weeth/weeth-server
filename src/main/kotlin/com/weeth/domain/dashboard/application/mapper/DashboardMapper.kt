@@ -14,6 +14,7 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.schedule.domain.entity.Event
 import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
@@ -69,7 +70,7 @@ class DashboardMapper(
             title = event.title,
             start = event.start,
             end = event.end,
-            isMeeting = false,
+            type = ScheduleType.EVENT,
         )
 
     fun toScheduleResponse(session: Session) =
@@ -78,7 +79,7 @@ class DashboardMapper(
             title = session.title,
             start = session.start,
             end = session.end,
-            isMeeting = true,
+            type = ScheduleType.SESSION,
         )
 
     fun toPostResponse(

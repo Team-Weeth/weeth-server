@@ -9,6 +9,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.dashboard.application.exception.DashboardNotClubMemberException
+import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.domain.dashboard.application.mapper.DashboardMapper
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
@@ -141,8 +142,8 @@ class GetDashboardQueryServiceTest :
                     val result = queryService.getHome(clubId, userId)
 
                     result.todaySchedules.size shouldBe 2
-                    result.todaySchedules[0].isMeeting shouldBe false
-                    result.todaySchedules[1].isMeeting shouldBe true
+                    result.todaySchedules[0].type shouldBe ScheduleType.EVENT
+                    result.todaySchedules[1].type shouldBe ScheduleType.SESSION
                 }
             }
         }
@@ -209,7 +210,7 @@ class GetDashboardQueryServiceTest :
                     val result = queryService.getMonthlySchedules(clubId, userId)
 
                     result.size shouldBe 1
-                    result[0].isMeeting shouldBe false
+                    result[0].type shouldBe ScheduleType.EVENT
                 }
             }
         }
