@@ -3,9 +3,11 @@ package com.weeth.domain.dashboard.application.mapper
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.dashboard.application.dto.response.DashboardClubInfoResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardHomeResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardMyClubResponse
+import com.weeth.domain.dashboard.application.dto.response.DashboardMyInfoResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardNoticeResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardPostResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardScheduleResponse
@@ -37,13 +39,22 @@ class DashboardMapper(
         code = club.code,
     )
 
+    fun toMyInfoResponse(user: User) =
+        DashboardMyInfoResponse(
+            name = user.name,
+            profileImageUrl = null, // TODO: 프로필 이미지 기능 구현 후 연동
+            bio = null, // TODO: 자기소개 기능 구현 후 연동
+        )
+
     fun toHomeResponse(
         club: Club,
         memberCount: Long,
+        myInfo: DashboardMyInfoResponse,
         todaySchedules: List<DashboardScheduleResponse>,
         myClubs: List<DashboardMyClubResponse>,
     ) = DashboardHomeResponse(
         club = toClubInfoResponse(club, memberCount),
+        myInfo = myInfo,
         todaySchedules = todaySchedules,
         myClubs = myClubs,
     )

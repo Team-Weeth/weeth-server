@@ -11,6 +11,7 @@ import com.weeth.domain.dashboard.application.dto.response.DashboardScheduleResp
 import com.weeth.domain.dashboard.application.dto.response.DashboardUnreadNoticeResponse
 import com.weeth.domain.dashboard.application.exception.DashboardNotClubMemberException
 import com.weeth.domain.dashboard.application.mapper.DashboardMapper
+import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.schedule.domain.repository.EventReader
@@ -32,6 +33,7 @@ class GetDashboardQueryService(
     private val sessionReader: SessionReader,
     private val postReader: PostReader,
     private val fileReader: FileReader,
+    private val userReader: UserReader,
     private val dashboardMapper: DashboardMapper,
 ) {
     fun getHome(
@@ -54,10 +56,12 @@ class GetDashboardQueryService(
             )
 
         val myClubs = clubMemberReader.findActiveByUserId(userId).map(dashboardMapper::toMyClubResponse)
+        val myInfo = dashboardMapper.toMyInfoResponse(userReader.getById(userId))
 
         return dashboardMapper.toHomeResponse(
             club = club,
             memberCount = memberCount,
+            myInfo = myInfo,
             todaySchedules = dashboardMapper.toScheduleResponses(todayEvents, todaySessions),
             myClubs = myClubs,
         )

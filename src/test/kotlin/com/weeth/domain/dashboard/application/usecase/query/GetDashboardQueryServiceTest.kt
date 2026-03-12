@@ -10,6 +10,8 @@ import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.dashboard.application.exception.DashboardNotClubMemberException
 import com.weeth.domain.dashboard.domain.enums.ScheduleType
+import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.fixture.UserTestFixture
 import com.weeth.domain.dashboard.application.mapper.DashboardMapper
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
@@ -37,6 +39,7 @@ class GetDashboardQueryServiceTest :
         val sessionReader = mockk<SessionReader>()
         val postReader = mockk<PostReader>()
         val fileReader = mockk<FileReader>()
+        val userReader = mockk<UserReader>()
         val fileMapper = mockk<FileMapper>()
         val dashboardMapper = DashboardMapper(fileMapper)
 
@@ -48,6 +51,7 @@ class GetDashboardQueryServiceTest :
                 sessionReader = sessionReader,
                 postReader = postReader,
                 fileReader = fileReader,
+                userReader = userReader,
                 dashboardMapper = dashboardMapper,
             )
 
@@ -55,6 +59,7 @@ class GetDashboardQueryServiceTest :
         val userId = 1L
         val club = ClubTestFixture.createClub()
         val clubMember = ClubTestFixture.createClubMember(club = club)
+        val user = UserTestFixture.createActiveUser1(userId)
 
         beforeTest {
             clearMocks(
@@ -64,6 +69,7 @@ class GetDashboardQueryServiceTest :
                 sessionReader,
                 postReader,
                 fileReader,
+                userReader,
                 fileMapper,
             )
         }
@@ -79,6 +85,7 @@ class GetDashboardQueryServiceTest :
                         sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(any(), any())
                     } returns emptyList()
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
+                    every { userReader.getById(userId) } returns user
 
                     val result = queryService.getHome(clubId, userId)
 
@@ -138,6 +145,7 @@ class GetDashboardQueryServiceTest :
                         sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(any(), any())
                     } returns listOf(session)
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
+                    every { userReader.getById(userId) } returns user
 
                     val result = queryService.getHome(clubId, userId)
 
