@@ -7,9 +7,9 @@ import java.time.LocalDateTime
 interface SessionReader {
     fun getById(sessionId: Long): Session
 
-    fun findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(
-        end: LocalDateTime,
+    fun findByDateRange(
         start: LocalDateTime,
+        end: LocalDateTime,
     ): List<Session>
 
     fun findAllByCardinal(cardinal: Int): List<Session>

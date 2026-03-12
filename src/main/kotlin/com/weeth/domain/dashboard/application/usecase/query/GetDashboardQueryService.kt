@@ -49,11 +49,7 @@ class GetDashboardQueryService(
         val todayStart = LocalDate.now().atStartOfDay()
         val todayEnd = todayStart.plusDays(1).minusNanos(1)
         val todayEvents = eventReader.findByDateRange(todayStart, todayEnd)
-        val todaySessions =
-            sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(
-                todayEnd,
-                todayStart,
-            )
+        val todaySessions = sessionReader.findByDateRange(todayStart, todayEnd)
 
         val myClubs = clubMemberReader.findActiveByUserId(userId).map(dashboardMapper::toMyClubResponse)
         val myInfo = dashboardMapper.toMyInfoResponse(userReader.getById(userId))
@@ -119,7 +115,7 @@ class GetDashboardQueryService(
         val monthEnd = monthStart.plusMonths(1).minusNanos(1)
 
         val events = eventReader.findByDateRange(monthStart, monthEnd)
-        val sessions = sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(monthEnd, monthStart)
+        val sessions = sessionReader.findByDateRange(monthStart, monthEnd)
 
         return dashboardMapper.toScheduleResponses(events, sessions)
     }

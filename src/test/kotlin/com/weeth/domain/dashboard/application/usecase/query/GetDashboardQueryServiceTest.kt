@@ -86,7 +86,7 @@ class GetDashboardQueryServiceTest :
                     every { clubMemberReader.countActiveByClubId(clubId) } returns 10L
                     every { eventReader.findByDateRange(any(), any()) } returns emptyList()
                     every {
-                        sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(any(), any())
+                        sessionReader.findByDateRange(any(), any())
                     } returns emptyList()
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
                     every { userReader.getById(userId) } returns user
@@ -146,7 +146,7 @@ class GetDashboardQueryServiceTest :
                     every { clubMemberReader.countActiveByClubId(clubId) } returns 5L
                     every { eventReader.findByDateRange(any(), any()) } returns listOf(event)
                     every {
-                        sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(any(), any())
+                        sessionReader.findByDateRange(any(), any())
                     } returns listOf(session)
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
                     every { userReader.getById(userId) } returns user
@@ -217,7 +217,7 @@ class GetDashboardQueryServiceTest :
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { eventReader.findByDateRange(any(), any()) } returns listOf(event)
                     every {
-                        sessionReader.findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(any(), any())
+                        sessionReader.findByDateRange(any(), any())
                     } returns emptyList()
 
                     val result = queryService.getMonthlySchedules(clubId, userId)
