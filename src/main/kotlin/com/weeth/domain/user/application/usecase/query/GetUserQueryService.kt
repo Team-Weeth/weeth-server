@@ -15,7 +15,7 @@ class GetUserQueryService(
 ) {
     fun existsByEmail(email: String): Boolean = userRepository.existsByEmailValue(email)
 
-    fun findMyProfile(userId: Long): UserProfileResponse {
+    fun findMyProfile(userId: Long): UserProfileResponse { // todo: 동아리별 정보 추가
         val user = userRepository.getById(userId)
         return mapper.toUserProfileResponse(user)
     }
