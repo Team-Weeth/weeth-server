@@ -19,9 +19,6 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/**
- * Todo: 개행을 추가해 가독성 개선
- */
 @Service
 class ManageReceiptUseCase(
     private val receiptRepository: ReceiptRepository,

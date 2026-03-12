@@ -9,7 +9,6 @@ import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.repository.UserReader
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.DayOfWeek
@@ -45,7 +44,7 @@ class GetSessionQueryService(
         userId: Long,
         cardinal: Int?,
     ): SessionInfosResponse {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val sessions =
             if (cardinal == null) {
                 sessionRepository.findAllByClubIdOrderByStartDesc(clubId)
