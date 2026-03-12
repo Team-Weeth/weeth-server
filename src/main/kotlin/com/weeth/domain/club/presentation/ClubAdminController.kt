@@ -1,5 +1,6 @@
 package com.weeth.domain.club.presentation
 
+import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
@@ -139,5 +140,17 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         adminClubMemberUseCase.updateMemberRole(clubId, userId, request)
         return CommonResponse.success(ClubResponseCode.MEMBER_ROLE_UPDATED_SUCCESS)
+    }
+
+    @PatchMapping("/members/apply-ob")
+    @Operation(summary = "멤버 OB 기수 등록")
+    fun applyOb(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Valid @RequestBody requests: List<ClubMemberApplyObRequest>,
+    ): CommonResponse<Unit> {
+        adminClubMemberUseCase.applyOb(clubId, userId, requests)
+        return CommonResponse.success(ClubResponseCode.MEMBER_APPLY_OB_SUCCESS)
     }
 }
