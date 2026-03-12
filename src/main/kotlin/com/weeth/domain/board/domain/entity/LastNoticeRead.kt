@@ -1,7 +1,7 @@
 package com.weeth.domain.board.domain.entity
 
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.global.common.entity.BaseEntity
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
@@ -11,16 +11,17 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import java.time.LocalDateTime
 
 @Entity
 @Table(
-    name = "notice_read",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "post_id"])],
+    name = "last_notice_read",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "board_id"])],
 )
-class NoticeRead(
+class LastNoticeRead(
     user: User,
-    post: Post,
-) : BaseEntity() {
+    board: Board,
+) {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     var id: Long = 0L
@@ -32,14 +33,22 @@ class NoticeRead(
         private set
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "post_id", nullable = false)
-    var post: Post = post
+    @JoinColumn(name = "board_id", nullable = false)
+    var board: Board = board
         private set
+
+    @Column(nullable = false)
+    var lastReadAt: LocalDateTime = LocalDateTime.now()
+        private set
+
+    fun updateLastReadAt(time: LocalDateTime) {
+        lastReadAt = time
+    }
 
     companion object {
         fun create(
             user: User,
-            post: Post,
-        ) = NoticeRead(user = user, post = post)
+            board: Board,
+        ) = LastNoticeRead(user = user, board = board)
     }
 }

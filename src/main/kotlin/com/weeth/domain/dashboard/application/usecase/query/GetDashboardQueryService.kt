@@ -1,7 +1,6 @@
 package com.weeth.domain.dashboard.application.usecase.query
 
 import com.weeth.domain.board.domain.enums.BoardType
-import com.weeth.domain.board.domain.repository.NoticeReadReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
@@ -32,7 +31,6 @@ class GetDashboardQueryService(
     private val eventReader: EventReader,
     private val sessionReader: SessionReader,
     private val postReader: PostReader,
-    private val noticeReadReader: NoticeReadReader,
     private val fileReader: FileReader,
     private val dashboardMapper: DashboardMapper,
 ) {
@@ -126,11 +124,8 @@ class GetDashboardQueryService(
 
         // TODO: 해당 클럽 회원인지 검증 후 클럽의 공지만 조회
         val since = LocalDateTime.now().minusWeeks(2)
-        val recentNotices = postReader.findRecentByBoardTypeSince(BoardType.NOTICE, since)
-        val readPostIds = noticeReadReader.findReadPostIdsByUserId(userId, since)
-
-        return recentNotices
-            .firstOrNull { it.id !in readPostIds }
+        return postReader
+            .findFirstUnreadNoticeSince(userId, BoardType.NOTICE, since)
             ?.let(dashboardMapper::toUnreadNoticeResponse)
     }
 

@@ -21,13 +21,9 @@ interface PostReader {
         pageable: Pageable,
     ): Slice<Post>
 
-    fun findRecentByBoardTypeSince(
+    fun findFirstUnreadNoticeSince(
+        userId: Long,
         boardType: BoardType,
         since: LocalDateTime,
-    ): List<Post>
-
-    fun findRecentByBoardIdSince(
-        boardId: Long,
-        since: LocalDateTime,
-    ): List<Post>
+    ): Post?
 }

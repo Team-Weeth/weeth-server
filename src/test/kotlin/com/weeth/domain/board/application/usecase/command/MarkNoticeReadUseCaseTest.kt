@@ -1,13 +1,11 @@
 package com.weeth.domain.board.application.usecase.command
 
 import com.weeth.domain.board.application.exception.BoardTypeMismatchException
-import com.weeth.domain.board.domain.entity.NoticeRead
+import com.weeth.domain.board.domain.entity.LastNoticeRead
 import com.weeth.domain.board.domain.repository.BoardRepository
-import com.weeth.domain.board.domain.repository.NoticeReadReader
-import com.weeth.domain.board.domain.repository.NoticeReadRepository
-import com.weeth.domain.board.domain.repository.PostReader
+import com.weeth.domain.board.domain.repository.LastNoticeReadReader
+import com.weeth.domain.board.domain.repository.LastNoticeReadRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
-import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -20,22 +18,20 @@ import io.mockk.verify
 class MarkNoticeReadUseCaseTest :
     DescribeSpec({
         val boardRepository = mockk<BoardRepository>()
-        val postReader = mockk<PostReader>()
-        val noticeReadReader = mockk<NoticeReadReader>()
-        val noticeReadRepository = mockk<NoticeReadRepository>()
+        val lastNoticeReadReader = mockk<LastNoticeReadReader>()
+        val lastNoticeReadRepository = mockk<LastNoticeReadRepository>()
         val userReader = mockk<UserReader>()
 
         val useCase =
             MarkNoticeReadUseCase(
                 boardRepository = boardRepository,
-                postReader = postReader,
-                noticeReadReader = noticeReadReader,
-                noticeReadRepository = noticeReadRepository,
+                lastNoticeReadReader = lastNoticeReadReader,
+                lastNoticeReadRepository = lastNoticeReadRepository,
                 userReader = userReader,
             )
 
         beforeTest {
-            clearMocks(boardRepository, postReader, noticeReadReader, noticeReadRepository, userReader)
+            clearMocks(boardRepository, lastNoticeReadReader, lastNoticeReadRepository, userReader)
         }
 
         describe("execute") {
@@ -43,7 +39,6 @@ class MarkNoticeReadUseCaseTest :
             val boardId = 1L
             val user = UserTestFixture.createActiveUser1(userId)
             val noticeBoard = BoardTestFixture.createNoticeBoard()
-            val post = PostTestFixture.create(board = noticeBoard)
 
             context("공지 타입이 아닌 게시판인 경우") {
                 it("BoardTypeMismatchException을 던진다") {
@@ -56,44 +51,30 @@ class MarkNoticeReadUseCaseTest :
                 }
             }
 
-            context("모든 공지를 이미 읽은 경우") {
-                it("NoticeRead를 저장하지 않고 종료한다") {
+            context("이미 읽은 기록이 있는 경우") {
+                it("lastReadAt을 현재 시각으로 갱신하고 새 레코드를 저장하지 않는다") {
+                    val existing = LastNoticeRead.create(user = user, board = noticeBoard)
                     every { boardRepository.findByIdAndIsDeletedFalse(boardId) } returns noticeBoard
-                    every { postReader.findRecentByBoardIdSince(boardId, any()) } returns listOf(post)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns setOf(post.id)
+                    every { lastNoticeReadReader.findByUserIdAndBoardId(userId, boardId) } returns existing
 
                     useCase.execute(userId, boardId)
 
                     verify(exactly = 0) { userReader.getById(any()) }
-                    verify(exactly = 0) { noticeReadRepository.saveAll(any<List<NoticeRead>>()) }
+                    verify(exactly = 0) { lastNoticeReadRepository.save(any()) }
                 }
             }
 
-            context("읽지 않은 공지가 있는 경우") {
-                it("미읽은 공지를 NoticeRead로 생성하고 일괄 저장한다") {
+            context("처음 읽는 경우") {
+                it("새 LastNoticeRead 레코드를 저장한다") {
                     every { boardRepository.findByIdAndIsDeletedFalse(boardId) } returns noticeBoard
-                    every { postReader.findRecentByBoardIdSince(boardId, any()) } returns listOf(post)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
+                    every { lastNoticeReadReader.findByUserIdAndBoardId(userId, boardId) } returns null
                     every { userReader.getById(userId) } returns user
-                    every { noticeReadRepository.saveAll(any<List<NoticeRead>>()) } answers { firstArg() }
+                    every { lastNoticeReadRepository.save(any<LastNoticeRead>()) } answers { firstArg() }
 
                     useCase.execute(userId, boardId)
 
                     verify(exactly = 1) { userReader.getById(userId) }
-                    verify(exactly = 1) { noticeReadRepository.saveAll(any<List<NoticeRead>>()) }
-                }
-            }
-
-            context("2주 이내 공지가 없는 경우") {
-                it("NoticeRead를 저장하지 않고 종료한다") {
-                    every { boardRepository.findByIdAndIsDeletedFalse(boardId) } returns noticeBoard
-                    every { postReader.findRecentByBoardIdSince(boardId, any()) } returns emptyList()
-                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
-
-                    useCase.execute(userId, boardId)
-
-                    verify(exactly = 0) { userReader.getById(any()) }
-                    verify(exactly = 0) { noticeReadRepository.saveAll(any<List<NoticeRead>>()) }
+                    verify(exactly = 1) { lastNoticeReadRepository.save(any<LastNoticeRead>()) }
                 }
             }
         }

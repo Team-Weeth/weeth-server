@@ -1,7 +1,6 @@
 package com.weeth.domain.dashboard.application.usecase.query
 
 import com.weeth.domain.board.domain.enums.BoardType
-import com.weeth.domain.board.domain.repository.NoticeReadReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
@@ -36,7 +35,6 @@ class GetDashboardQueryServiceTest :
         val eventReader = mockk<EventReader>()
         val sessionReader = mockk<SessionReader>()
         val postReader = mockk<PostReader>()
-        val noticeReadReader = mockk<NoticeReadReader>()
         val fileReader = mockk<FileReader>()
         val fileMapper = mockk<FileMapper>()
         val dashboardMapper = DashboardMapper(fileMapper)
@@ -48,7 +46,6 @@ class GetDashboardQueryServiceTest :
                 eventReader = eventReader,
                 sessionReader = sessionReader,
                 postReader = postReader,
-                noticeReadReader = noticeReadReader,
                 fileReader = fileReader,
                 dashboardMapper = dashboardMapper,
             )
@@ -65,7 +62,6 @@ class GetDashboardQueryServiceTest :
                 eventReader,
                 sessionReader,
                 postReader,
-                noticeReadReader,
                 fileReader,
                 fileMapper,
             )
@@ -225,8 +221,7 @@ class GetDashboardQueryServiceTest :
                     val notice = PostTestFixture.create(board = noticeBoard)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findRecentByBoardTypeSince(BoardType.NOTICE, any()) } returns listOf(notice)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
+                    every { postReader.findFirstUnreadNoticeSince(userId, BoardType.NOTICE, any()) } returns notice
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -236,12 +231,8 @@ class GetDashboardQueryServiceTest :
 
             context("모든 공지를 읽은 경우") {
                 it("null을 반환한다") {
-                    val noticeBoard = BoardTestFixture.create(type = BoardType.NOTICE)
-                    val notice = PostTestFixture.create(board = noticeBoard)
-
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findRecentByBoardTypeSince(BoardType.NOTICE, any()) } returns listOf(notice)
-                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns setOf(notice.id)
+                    every { postReader.findFirstUnreadNoticeSince(userId, BoardType.NOTICE, any()) } returns null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -252,8 +243,7 @@ class GetDashboardQueryServiceTest :
             context("2주 내 공지가 없는 경우") {
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findRecentByBoardTypeSince(BoardType.NOTICE, any()) } returns emptyList()
-                    every { noticeReadReader.findReadPostIdsByUserId(userId, any()) } returns emptySet()
+                    every { postReader.findFirstUnreadNoticeSince(userId, BoardType.NOTICE, any()) } returns null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 

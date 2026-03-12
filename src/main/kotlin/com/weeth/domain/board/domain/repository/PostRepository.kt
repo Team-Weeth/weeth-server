@@ -5,6 +5,7 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.EntityGraph
@@ -121,32 +122,25 @@ interface PostRepository :
         """
         SELECT p
         FROM Post p
+        LEFT JOIN LastNoticeRead lr ON lr.user.id = :userId AND lr.board.id = p.board.id
         WHERE p.board.type = :boardType
           AND p.isDeleted = false
           AND p.board.isDeleted = false
           AND p.createdAt >= :since
+          AND (lr IS NULL OR p.createdAt > lr.lastReadAt)
         ORDER BY p.createdAt DESC, p.id DESC
         """,
     )
-    override fun findRecentByBoardTypeSince(
+    fun findUnreadNoticeSince(
+        @Param("userId") userId: Long,
         @Param("boardType") boardType: BoardType,
         @Param("since") since: LocalDateTime,
+        pageable: Pageable,
     ): List<Post>
 
-    @EntityGraph(attributePaths = ["user"])
-    @Query(
-        """
-        SELECT p
-        FROM Post p
-        WHERE p.board.id = :boardId
-          AND p.isDeleted = false
-          AND p.board.isDeleted = false
-          AND p.createdAt >= :since
-        ORDER BY p.createdAt DESC, p.id DESC
-        """,
-    )
-    override fun findRecentByBoardIdSince(
-        @Param("boardId") boardId: Long,
-        @Param("since") since: LocalDateTime,
-    ): List<Post>
+    override fun findFirstUnreadNoticeSince(
+        userId: Long,
+        boardType: BoardType,
+        since: LocalDateTime,
+    ): Post? = findUnreadNoticeSince(userId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
 }
