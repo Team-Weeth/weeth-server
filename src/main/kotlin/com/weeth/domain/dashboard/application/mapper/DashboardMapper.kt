@@ -118,7 +118,7 @@ class DashboardMapper(
         id = post.id,
         title = post.title,
         content = post.content,
-        time = post.modifiedAt,
+        time = post.createdAt,
         isNew = post.createdAt.isAfter(now.minusHours(24)),
     )
 
