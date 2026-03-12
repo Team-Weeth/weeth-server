@@ -126,12 +126,14 @@ class PostController(
         )
 
     @PostMapping("/{boardId}/notices/read-all")
-    @Operation(summary = "공지 일괄 읽음 처리", description = "공지 게시판 진입 시 2주 이내 미읽은 공지를 모두 읽음 처리합니다.")
+    @Operation(summary = "공지 읽음 처리", description = "공지 게시판 진입 시 마지막 읽음 시간을 현재 시각으로 갱신합니다.")
     fun markAllNoticesRead(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        markNoticeReadUseCase.execute(userId, boardId)
+        markNoticeReadUseCase.execute(userId, clubId, boardId)
         return CommonResponse.success(BoardResponseCode.BOARD_NOTICE_READ_SUCCESS)
     }
 

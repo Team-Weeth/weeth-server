@@ -29,4 +29,7 @@ enum class BoardErrorCode(
 
     @ExplainError("공지 게시판이 아닌 게시판에 읽음 처리를 시도할 때 발생합니다.")
     BOARD_TYPE_MISMATCH(20406, HttpStatus.BAD_REQUEST, "공지 게시판이 아닙니다."),
+
+    @ExplainError("경로의 clubId와 게시판의 소속 클럽이 일치하지 않을 때 발생합니다.")
+    BOARD_NOT_IN_CLUB(20407, HttpStatus.FORBIDDEN, "해당 클럽에 속한 게시판이 아닙니다."),
 }
