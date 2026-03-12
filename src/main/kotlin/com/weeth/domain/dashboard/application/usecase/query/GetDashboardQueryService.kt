@@ -90,11 +90,12 @@ class GetDashboardQueryService(
     fun getRecentNotices(
         clubId: Long,
         userId: Long,
+        size: Int,
     ): List<DashboardNoticeResponse> {
         validateMembership(clubId, userId)
 
         // TODO: 해당 클럽 회원인지 검증 후 클럽의 공지만 조회
-        val notices = postReader.findRecentByBoardType(BoardType.NOTICE, PageRequest.of(0, RECENT_NOTICES_LIMIT))
+        val notices = postReader.findRecentByBoardType(BoardType.NOTICE, PageRequest.of(0, size))
         val now = LocalDateTime.now()
 
         return notices.content.map { dashboardMapper.toNoticeResponse(it, now) }
@@ -127,10 +128,6 @@ class GetDashboardQueryService(
         return postReader
             .findFirstUnreadNoticeSince(userId, BoardType.NOTICE, since)
             ?.let(dashboardMapper::toUnreadNoticeResponse)
-    }
-
-    companion object {
-        private const val RECENT_NOTICES_LIMIT = 5
     }
 
     private fun validateMembership(

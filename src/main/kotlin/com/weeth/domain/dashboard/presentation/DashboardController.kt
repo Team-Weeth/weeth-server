@@ -62,11 +62,12 @@ class DashboardController(
     fun getRecentNotices(
         @PathVariable @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
+        @RequestParam(defaultValue = "5") size: Int,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<List<DashboardNoticeResponse>> =
         CommonResponse.success(
             DashboardResponseCode.DASHBOARD_RECENT_NOTICES_SUCCESS,
-            getDashboardQueryService.getRecentNotices(clubId, userId),
+            getDashboardQueryService.getRecentNotices(clubId, userId, size),
         )
 
     @GetMapping("/monthly-schedules")

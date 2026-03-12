@@ -189,7 +189,7 @@ class GetDashboardQueryServiceTest :
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { postReader.findRecentByBoardType(BoardType.NOTICE, any()) } returns slice
 
-                    val result = queryService.getRecentNotices(clubId, userId)
+                    val result = queryService.getRecentNotices(clubId, userId, 5)
 
                     result.size shouldBe 1
                 }
