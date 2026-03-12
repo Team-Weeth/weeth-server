@@ -1,5 +1,6 @@
 package com.weeth.domain.penalty.application.usecase.command
 
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.penalty.application.dto.request.UpdatePenaltyRequest
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
@@ -7,16 +8,23 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-// todo: PR4에서 Club 기반으로 수정
 @Service
 class UpdatePenaltyUseCase(
     private val penaltyRepository: PenaltyRepository,
+    private val clubMemberPolicy: ClubMemberPolicy,
 ) {
     @Transactional
-    fun update(request: UpdatePenaltyRequest) {
+    fun update(
+        clubId: Long,
+        userId: Long,
+        request: UpdatePenaltyRequest,
+    ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
+
         val penalty =
             penaltyRepository.findByIdOrNull(request.penaltyId)
                 ?: throw PenaltyNotFoundException()
+        if (penalty.clubMember.club.id != clubId) throw PenaltyNotFoundException()
 
         if (!request.penaltyDescription.isNullOrBlank()) {
             penalty.update(request.penaltyDescription)
