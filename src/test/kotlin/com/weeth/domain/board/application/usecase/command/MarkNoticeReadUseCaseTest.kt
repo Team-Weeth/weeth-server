@@ -14,6 +14,7 @@ import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.date.shouldBeAfter
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -90,12 +91,14 @@ class MarkNoticeReadUseCaseTest :
             context("이미 읽은 기록이 있는 경우") {
                 it("lastReadAt을 현재 시각으로 갱신하고 새 레코드를 저장하지 않는다") {
                     val existing = LastNoticeRead.create(user = user, board = noticeBoard)
+                    val beforeExecute = existing.lastReadAt
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { boardRepository.findByIdAndIsDeletedFalse(boardId) } returns noticeBoard
                     every { lastNoticeReadReader.findByUserIdAndBoardId(userId, boardId) } returns existing
 
                     useCase.execute(userId, clubId, boardId)
 
+                    existing.lastReadAt shouldBeAfter beforeExecute
                     verify(exactly = 0) { userReader.getById(any()) }
                     verify(exactly = 0) { lastNoticeReadRepository.save(any()) }
                 }
