@@ -50,7 +50,15 @@ class ManageReceiptUseCaseTest :
         val userId = 10L
 
         beforeTest {
-            clearMocks(receiptRepository, accountRepository, fileReader, fileRepository, cardinalReader, clubMemberPolicy, fileMapper)
+            clearMocks(
+                receiptRepository,
+                accountRepository,
+                fileReader,
+                fileRepository,
+                cardinalReader,
+                clubMemberPolicy,
+                fileMapper,
+            )
         }
 
         fun stubExistingCardinal(

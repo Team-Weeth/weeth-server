@@ -112,5 +112,5 @@ class ClubController(
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
     }
 
-    //TODO: MVP 후 동아리 멤버 조회 기능 구현
+    // TODO: MVP 후 동아리 멤버 조회 기능 구현
 }

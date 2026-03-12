@@ -19,9 +19,7 @@ class UserMapper {
             isNewUser = isNewUser,
         )
 
-    fun toUserProfileResponse(
-        user: User,
-    ): UserProfileResponse =
+    fun toUserProfileResponse(user: User): UserProfileResponse =
         UserProfileResponse(
             user.id,
             user.name,
@@ -33,9 +31,7 @@ class UserMapper {
             user.role,
         )
 
-    fun toUserSummaryResponse(
-        user: User,
-    ): UserSummaryResponse =
+    fun toUserSummaryResponse(user: User): UserSummaryResponse =
         UserSummaryResponse(
             user.id,
             user.name,

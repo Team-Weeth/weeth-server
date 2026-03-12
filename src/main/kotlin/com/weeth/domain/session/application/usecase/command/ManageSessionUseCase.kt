@@ -5,8 +5,8 @@ import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.enums.MemberStatus
-import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
+import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
@@ -73,12 +73,20 @@ class ManageSessionUseCase(
         clubMemberPolicy.requireAdmin(clubId, userId)
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         if (session.club.id != clubId) throw SessionNotFoundException()
-        val attendances = attendanceRepository.findAllBySessionAndClubMemberMemberStatusWithLock(session, MemberStatus.ACTIVE)
+        val attendances =
+            attendanceRepository.findAllBySessionAndClubMemberMemberStatusWithLock(
+                session,
+                MemberStatus.ACTIVE,
+            )
 
         attendances.forEach { a ->
             when (a.status) {
-                AttendanceStatus.ATTEND -> a.clubMember.removeAttend() // 출석률 재계산은 내부에
-                AttendanceStatus.ABSENT -> a.clubMember.removeAbsent() // 출석률 재계산은 내부에
+                AttendanceStatus.ATTEND -> a.clubMember.removeAttend()
+
+                // 출석률 재계산은 내부에
+                AttendanceStatus.ABSENT -> a.clubMember.removeAbsent()
+
+                // 출석률 재계산은 내부에
                 else -> Unit
             }
         }

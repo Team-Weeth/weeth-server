@@ -7,9 +7,9 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
-import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
@@ -51,7 +51,12 @@ class AdminClubMemberUseCaseTest :
                 attendanceRepository,
                 clubMemberCardinalRepository,
             )
-            every { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) } answers { firstArg() }
+            every {
+                attendanceRepository.saveAll(
+                    any<List<com.weeth.domain.attendance.domain.entity.Attendance>>(),
+                )
+            } answers
+                { firstArg() }
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
         }
 
@@ -107,7 +112,14 @@ class AdminClubMemberUseCaseTest :
         describe("applyOb") {
             it("새 기수를 정상 등록한다") {
                 val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
-                val cardinal = CardinalTestFixture.createCardinal(id = 1L, club = adminMember.club, cardinalNumber = 8, year = 2026, semester = 1)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 1L,
+                        club = adminMember.club,
+                        cardinalNumber = 8,
+                        year = 2026,
+                        semester = 1,
+                    )
                 val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
@@ -119,12 +131,21 @@ class AdminClubMemberUseCaseTest :
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))
 
                 verify(exactly = 1) { clubMemberCardinalRepository.save(any()) }
-                verify(exactly = 1) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(
+                    exactly = 1,
+                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
             }
 
             it("중복 기수 요청은 무시한다") {
                 val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
-                val cardinal = CardinalTestFixture.createCardinal(id = 1L, club = adminMember.club, cardinalNumber = 8, year = 2026, semester = 1)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 1L,
+                        club = adminMember.club,
+                        cardinalNumber = 8,
+                        year = 2026,
+                        semester = 1,
+                    )
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
@@ -133,7 +154,9 @@ class AdminClubMemberUseCaseTest :
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8), ClubMemberApplyObRequest(20L, 8)))
 
                 verify(exactly = 0) { clubMemberCardinalRepository.save(any()) }
-                verify(exactly = 0) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(
+                    exactly = 0,
+                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
             }
 
             it("존재하지 않는 기수면 예외가 발생한다") {
@@ -149,7 +172,14 @@ class AdminClubMemberUseCaseTest :
 
             it("현재 기수 등록 시 출석 통계를 초기화한다") {
                 val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
-                val cardinal = CardinalTestFixture.createCardinal(id = 1L, club = adminMember.club, cardinalNumber = 8, year = 2026, semester = 1)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 1L,
+                        club = adminMember.club,
+                        cardinalNumber = 8,
+                        year = 2026,
+                        semester = 1,
+                    )
                 repeat(2) { member.attend() }
                 repeat(1) { member.absent() }
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember

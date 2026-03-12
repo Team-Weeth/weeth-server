@@ -32,8 +32,15 @@ class CardinalUseCaseTest :
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val cardinalStatusPolicy = CardinalStatusPolicy(cardinalRepository)
         val manageCardinalUseCase =
-            ManageCardinalUseCase(cardinalRepository, cardinalMapper, cardinalStatusPolicy, clubReader, clubMemberPolicy)
-        val getCardinalQueryService = GetCardinalQueryService(cardinalRepository, cardinalReader, clubMemberPolicy, cardinalMapper)
+            ManageCardinalUseCase(
+                cardinalRepository,
+                cardinalMapper,
+                cardinalStatusPolicy,
+                clubReader,
+                clubMemberPolicy,
+            )
+        val getCardinalQueryService =
+            GetCardinalQueryService(cardinalRepository, cardinalReader, clubMemberPolicy, cardinalMapper)
 
         val clubId = 1L
         val userId = 99L

@@ -43,7 +43,15 @@ class GetAccountQueryServiceTest :
         val userId = 7L
 
         beforeTest {
-            clearMocks(accountRepository, receiptRepository, fileReader, clubMemberPolicy, accountMapper, receiptMapper, fileMapper)
+            clearMocks(
+                accountRepository,
+                receiptRepository,
+                fileReader,
+                clubMemberPolicy,
+                accountMapper,
+                receiptMapper,
+                fileMapper,
+            )
         }
 
         describe("findByCardinal") {

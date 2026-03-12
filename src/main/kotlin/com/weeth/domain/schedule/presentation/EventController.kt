@@ -31,5 +31,8 @@ class EventController(
         @PathVariable eventId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<EventResponse> =
-        CommonResponse.success(ScheduleResponseCode.EVENT_FIND_SUCCESS, getScheduleQueryService.findEvent(clubId, userId, eventId))
+        CommonResponse.success(
+            ScheduleResponseCode.EVENT_FIND_SUCCESS,
+            getScheduleQueryService.findEvent(clubId, userId, eventId),
+        )
 }

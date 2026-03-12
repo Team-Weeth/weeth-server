@@ -87,7 +87,16 @@ class ManagePostUseCaseTest :
             )
 
         beforeTest {
-            clearMocks(postRepository, boardRepository, userReader, clubMemberPolicy, fileRepository, fileReader, fileMapper, postMapper)
+            clearMocks(
+                postRepository,
+                boardRepository,
+                userReader,
+                clubMemberPolicy,
+                fileRepository,
+                fileReader,
+                fileMapper,
+                postMapper,
+            )
             every { postRepository.save(any()) } answers { firstArg() }
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
             every { fileRepository.saveAll(any<List<File>>()) } returns emptyList()

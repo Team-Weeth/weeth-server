@@ -37,7 +37,11 @@ class GetPenaltyQueryService(
         return cardinals.map { cardinal ->
             val penalties = penaltyRepository.findByClubIdAndCardinalIdOrderByIdDesc(clubId, cardinal.id)
             val clubMembers = penalties.map { it.clubMember }.distinct()
-            val memberCardinalsMap = clubMemberCardinalReader.findAllByClubMembers(clubMembers).groupBy { it.clubMember.id }
+            val memberCardinalsMap =
+                clubMemberCardinalReader
+                    .findAllByClubMembers(
+                        clubMembers,
+                    ).groupBy { it.clubMember.id }
 
             val responses =
                 penalties
@@ -59,7 +63,11 @@ class GetPenaltyQueryService(
     ): PenaltyResponse {
         val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
         val currentCardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
-        val penalties = penaltyRepository.findByClubMemberIdAndCardinalIdOrderByIdDesc(clubMember.id, currentCardinal.id)
+        val penalties =
+            penaltyRepository.findByClubMemberIdAndCardinalIdOrderByIdDesc(
+                clubMember.id,
+                currentCardinal.id,
+            )
         val clubMemberCardinals = clubMemberCardinalReader.findAllByClubMember(clubMember)
 
         return mapper.toResponse(clubMember, penalties, clubMemberCardinals)

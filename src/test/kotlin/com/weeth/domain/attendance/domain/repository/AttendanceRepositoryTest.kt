@@ -98,7 +98,11 @@ class AttendanceRepositoryTest(
 
         describe("findAllBySessionAndClubMemberMemberStatus") {
             it("특정 세션 + 멤버 상태로 출석 목록 조회") {
-                val attendances = attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, MemberStatus.ACTIVE)
+                val attendances =
+                    attendanceRepository.findAllBySessionAndClubMemberMemberStatus(
+                        session,
+                        MemberStatus.ACTIVE,
+                    )
 
                 attendances shouldHaveSize 2
                 attendances.map { it.clubMember.user.name } shouldContainExactlyInAnyOrder listOf("이지훈", "이강혁")

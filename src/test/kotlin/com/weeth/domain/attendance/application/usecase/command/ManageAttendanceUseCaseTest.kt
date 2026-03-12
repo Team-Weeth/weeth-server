@@ -37,14 +37,23 @@ class ManageAttendanceUseCaseTest :
 
         describe("checkIn") {
             val clubMember = ClubMemberTestFixture.createActiveMember()
-            val session = SessionTestFixture.createInProgressSession(cardinal = 1, code = 123456, title = "Test Session", club = clubMember.club)
-            val attendance = com.weeth.domain.attendance.domain.entity.Attendance.create(session, clubMember)
+            val session =
+                SessionTestFixture.createInProgressSession(
+                    cardinal = 1,
+                    code = 123456,
+                    title = "Test Session",
+                    club = clubMember.club,
+                )
+            val attendance =
+                com.weeth.domain.attendance.domain.entity.Attendance
+                    .create(session, clubMember)
 
             it("정상 체크인 시 출석 상태와 멤버 통계를 갱신한다") {
                 every { qrAttendancePort.getCode(session.id) } returns session.code
                 every { sessionReader.getById(session.id) } returns session
                 every { clubMemberPolicy.getActiveMember(clubMember.club.id, clubMember.user.id) } returns clubMember
-                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns attendance
+                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns
+                    attendance
 
                 useCase.checkIn(clubMember.club.id, clubMember.user.id, session.id, session.code)
 
@@ -53,11 +62,19 @@ class ManageAttendanceUseCaseTest :
             }
 
             it("이미 출석 처리된 경우 예외를 던진다") {
-                val attendedAttendance = com.weeth.domain.attendance.domain.entity.Attendance.create(session, clubMember).also { it.attend() }
+                val attendedAttendance =
+                    com.weeth.domain.attendance.domain.entity.Attendance
+                        .create(
+                            session,
+                            clubMember,
+                        ).also {
+                            it.attend()
+                        }
                 every { qrAttendancePort.getCode(session.id) } returns session.code
                 every { sessionReader.getById(session.id) } returns session
                 every { clubMemberPolicy.getActiveMember(clubMember.club.id, clubMember.user.id) } returns clubMember
-                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns attendedAttendance
+                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns
+                    attendedAttendance
 
                 shouldThrow<AlreadyAttendedException> {
                     useCase.checkIn(clubMember.club.id, clubMember.user.id, session.id, session.code)
@@ -80,7 +97,11 @@ class ManageAttendanceUseCaseTest :
             it("관리자가 ATTEND로 변경하면 ClubMember 통계를 갱신한다") {
                 val admin = ClubMemberTestFixture.createAdminMember()
                 val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
-                val attendance = com.weeth.domain.attendance.domain.entity.Attendance.create(SessionTestFixture.createSession(club = admin.club), member)
+                val attendance =
+                    com.weeth.domain.attendance.domain.entity.Attendance.create(
+                        SessionTestFixture.createSession(club = admin.club),
+                        member,
+                    )
 
                 every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { attendanceRepository.findByIdWithClubMember(1L) } returns attendance
@@ -94,7 +115,11 @@ class ManageAttendanceUseCaseTest :
             it("관리자가 PENDING으로 되돌리면 기존 통계를 차감한다") {
                 val admin = ClubMemberTestFixture.createAdminMember()
                 val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
-                val attendance = com.weeth.domain.attendance.domain.entity.Attendance.create(SessionTestFixture.createSession(club = admin.club), member)
+                val attendance =
+                    com.weeth.domain.attendance.domain.entity.Attendance.create(
+                        SessionTestFixture.createSession(club = admin.club),
+                        member,
+                    )
                 attendance.attend()
                 member.attend()
 

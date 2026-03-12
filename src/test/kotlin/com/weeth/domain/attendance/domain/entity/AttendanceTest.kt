@@ -17,7 +17,11 @@ class AttendanceTest :
         describe("attend") {
             it("상태를 ATTEND로 변경한다") {
                 val user = createActiveUser("테스트유저")
-                val attendance = createAttendance(session, ClubMemberTestFixture.createActiveMember(club = session.club, user = user))
+                val attendance =
+                    createAttendance(
+                        session,
+                        ClubMemberTestFixture.createActiveMember(club = session.club, user = user),
+                    )
 
                 attendance.attend()
 
@@ -28,7 +32,11 @@ class AttendanceTest :
         describe("close") {
             it("상태를 ABSENT로 변경한다") {
                 val user = createActiveUser("테스트유저")
-                val attendance = createAttendance(session, ClubMemberTestFixture.createActiveMember(club = session.club, user = user))
+                val attendance =
+                    createAttendance(
+                        session,
+                        ClubMemberTestFixture.createActiveMember(club = session.club, user = user),
+                    )
 
                 attendance.close()
 
@@ -39,14 +47,22 @@ class AttendanceTest :
         describe("isPending") {
             it("상태가 PENDING이면 true를 반환한다") {
                 val user = createActiveUser("테스트유저")
-                val attendance = createAttendance(session, ClubMemberTestFixture.createActiveMember(club = session.club, user = user))
+                val attendance =
+                    createAttendance(
+                        session,
+                        ClubMemberTestFixture.createActiveMember(club = session.club, user = user),
+                    )
 
                 attendance.isPending() shouldBe true
             }
 
             it("상태가 PENDING이 아니면 false를 반환한다") {
                 val user = createActiveUser("테스트유저")
-                val attendance = createAttendance(session, ClubMemberTestFixture.createActiveMember(club = session.club, user = user))
+                val attendance =
+                    createAttendance(
+                        session,
+                        ClubMemberTestFixture.createActiveMember(club = session.club, user = user),
+                    )
                 attendance.attend()
 
                 attendance.isPending() shouldBe false
@@ -56,14 +72,22 @@ class AttendanceTest :
         describe("isWrong") {
             it("코드가 일치하지 않으면 true를 반환한다") {
                 val user = createActiveUser("테스트유저")
-                val attendance = createAttendance(session, ClubMemberTestFixture.createActiveMember(club = session.club, user = user))
+                val attendance =
+                    createAttendance(
+                        session,
+                        ClubMemberTestFixture.createActiveMember(club = session.club, user = user),
+                    )
 
                 attendance.isWrong(9999) shouldBe true
             }
 
             it("코드가 일치하면 false를 반환한다") {
                 val user = createActiveUser("테스트유저")
-                val attendance = createAttendance(session, ClubMemberTestFixture.createActiveMember(club = session.club, user = user))
+                val attendance =
+                    createAttendance(
+                        session,
+                        ClubMemberTestFixture.createActiveMember(club = session.club, user = user),
+                    )
 
                 attendance.isWrong(1234) shouldBe false
             }

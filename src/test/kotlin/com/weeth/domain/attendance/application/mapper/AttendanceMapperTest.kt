@@ -21,7 +21,11 @@ class AttendanceMapperTest :
             it("사용자 + 당일 출석 객체를 MainResponse로 매핑한다") {
                 val today = LocalDate.now()
                 val session = createOneDaySession(today, 1, 1111, "Today")
-                val member = ClubMemberTestFixture.createActiveMember(club = session.club, user = createActiveUser("이지훈"))
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("이지훈"),
+                    )
                 val attendance = createAttendance(session, member)
 
                 val main = mapper.toSummaryResponse(member, attendance)
@@ -49,7 +53,11 @@ class AttendanceMapperTest :
             it("일반 유저는 출석 코드가 null로 매핑된다") {
                 val today = LocalDate.now()
                 val session = createOneDaySession(today, 1, 1234, "Today")
-                val member = ClubMemberTestFixture.createActiveMember(club = session.club, user = createActiveUser("일반유저"))
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("일반유저"),
+                    )
                 val attendance = createAttendance(session, member)
 
                 val main = mapper.toSummaryResponse(member, attendance)
@@ -82,7 +90,11 @@ class AttendanceMapperTest :
         describe("toResponse") {
             it("단일 출석을 AttendanceResponse로 매핑한다") {
                 val session = createOneDaySession(LocalDate.now().minusDays(1), 1, 2222, "D-1")
-                val member = ClubMemberTestFixture.createActiveMember(club = session.club, user = createActiveUser("사용자A"))
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("사용자A"),
+                    )
                 val attendance = createAttendance(session, member)
 
                 val response = mapper.toResponse(attendance)

@@ -81,7 +81,7 @@ class AttendanceAdminController(
         @TsidPathVariable clubId: Long,
         @PathVariable sessionId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        ): CommonResponse<QrTokenResponse> =
+    ): CommonResponse<QrTokenResponse> =
         CommonResponse.success(
             AttendanceResponseCode.QR_TOKEN_GENERATE_SUCCESS,
             generateQrTokenUseCase.execute(sessionId, clubId, userId),

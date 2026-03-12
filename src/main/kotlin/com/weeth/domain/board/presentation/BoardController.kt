@@ -33,5 +33,8 @@ class BoardController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @Parameter(hidden = true) @CurrentUserRole role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): CommonResponse<List<BoardListResponse>> =
-        CommonResponse.success(BoardResponseCode.BOARD_FIND_ALL_SUCCESS, getBoardQueryService.findBoards(clubId, userId, role))
+        CommonResponse.success(
+            BoardResponseCode.BOARD_FIND_ALL_SUCCESS,
+            getBoardQueryService.findBoards(clubId, userId, role),
+        )
 }

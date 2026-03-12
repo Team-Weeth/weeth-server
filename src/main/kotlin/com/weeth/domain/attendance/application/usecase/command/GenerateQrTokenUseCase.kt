@@ -16,7 +16,11 @@ class GenerateQrTokenUseCase(
     private val attendanceMapper: AttendanceMapper,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
-    fun execute(sessionId: Long, clubId: Long, userId: Long): QrTokenResponse {
+    fun execute(
+        sessionId: Long,
+        clubId: Long,
+        userId: Long,
+    ): QrTokenResponse {
         clubMemberPolicy.requireAdmin(clubId, userId)
 
         val session = sessionReader.getById(sessionId)

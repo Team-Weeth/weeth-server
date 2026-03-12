@@ -40,7 +40,13 @@ class GetAttendanceQueryServiceTest :
             it("오늘 출석 요약을 ClubMember 기준으로 반환한다") {
                 val member = ClubMemberTestFixture.createActiveMember()
                 member.attend()
-                val session = SessionTestFixture.createInProgressSession(cardinal = 1, code = 111111, title = "오늘 모임", club = member.club)
+                val session =
+                    SessionTestFixture.createInProgressSession(
+                        cardinal = 1,
+                        code = 111111,
+                        title = "오늘 모임",
+                        club = member.club,
+                    )
                 val attendance = Attendance.create(session, member)
 
                 every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
@@ -60,9 +66,28 @@ class GetAttendanceQueryServiceTest :
                 val member = ClubMemberTestFixture.createActiveMember()
                 repeat(2) { member.attend() }
                 repeat(1) { member.absent() }
-                val cardinal = CardinalTestFixture.createCardinal(id = 1L, club = member.club, cardinalNumber = 8, year = 2026, semester = 1)
-                val session1 = SessionTestFixture.createSession(id = 1L, club = member.club, cardinal = 8, title = "1주차")
-                val session2 = SessionTestFixture.createSession(id = 2L, club = member.club, cardinal = 8, title = "2주차")
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 1L,
+                        club = member.club,
+                        cardinalNumber = 8,
+                        year = 2026,
+                        semester = 1,
+                    )
+                val session1 =
+                    SessionTestFixture.createSession(
+                        id = 1L,
+                        club = member.club,
+                        cardinal = 8,
+                        title = "1주차",
+                    )
+                val session2 =
+                    SessionTestFixture.createSession(
+                        id = 2L,
+                        club = member.club,
+                        cardinal = 8,
+                        title = "2주차",
+                    )
                 val attendances = listOf(Attendance.create(session1, member), Attendance.create(session2, member))
 
                 every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
@@ -88,7 +113,8 @@ class GetAttendanceQueryServiceTest :
 
                 every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { sessionReader.getById(session.id) } returns session
-                every { attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, any()) } returns listOf(attendance)
+                every { attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, any()) } returns
+                    listOf(attendance)
 
                 val result = queryService.findAllAttendanceBySession(admin.club.id, admin.user.id, session.id)
 

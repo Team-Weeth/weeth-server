@@ -1,9 +1,9 @@
 package com.weeth.domain.session.application.usecase.query
 
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
 import com.weeth.domain.schedule.application.mapper.SessionMapper
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionRepository
