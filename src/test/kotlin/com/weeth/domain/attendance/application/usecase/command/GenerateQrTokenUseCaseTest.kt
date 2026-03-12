@@ -3,6 +3,7 @@ package com.weeth.domain.attendance.application.usecase.command
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
@@ -22,10 +23,11 @@ class GenerateQrTokenUseCaseTest :
         val sessionReader = mockk<SessionReader>()
         val qrAttendancePort = mockk<QrAttendancePort>()
         val attendanceMapper = mockk<AttendanceMapper>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
 
-        val useCase = GenerateQrTokenUseCase(sessionReader, qrAttendancePort, attendanceMapper)
+        val useCase = GenerateQrTokenUseCase(sessionReader, qrAttendancePort, attendanceMapper, clubMemberPolicy)
 
-        beforeTest { clearMocks(sessionReader, qrAttendancePort, attendanceMapper) }
+        beforeTest { clearMocks(sessionReader, qrAttendancePort, attendanceMapper, clubMemberPolicy) }
 
         describe("execute") {
             val sessionId = 1L
@@ -45,9 +47,10 @@ class GenerateQrTokenUseCaseTest :
                     every { qrAttendancePort.store(sessionId, code) } just Runs
                     every { attendanceMapper.toQrTokenResponse(eq(session), any()) } returns expectedResponse
 
-                    val result = useCase.execute(sessionId)
+                    val result = useCase.execute(sessionId, 10L, 20L)
 
                     result shouldBe expectedResponse
+                    verify(exactly = 1) { clubMemberPolicy.requireAdmin(10L, 20L) }
                     verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
                 }
             }
@@ -56,7 +59,7 @@ class GenerateQrTokenUseCaseTest :
                 it("SessionNotFoundException을 던진다") {
                     every { sessionReader.getById(sessionId) } throws SessionNotFoundException()
 
-                    shouldThrow<SessionNotFoundException> { useCase.execute(sessionId) }
+                    shouldThrow<SessionNotFoundException> { useCase.execute(sessionId, 10L, 20L) }
 
                     verify(exactly = 0) { qrAttendancePort.store(any(), any()) }
                 }
