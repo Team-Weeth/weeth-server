@@ -31,6 +31,7 @@ class ManageEventUseCase(
         clubMemberPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
+        // TODO: 전역 cardinal 조회 대신 clubId 기준 조회를 사용해야 다른 동아리 기수로 검증이 통과하지 않는다.
         cardinalReader.getByCardinalNumber(request.cardinal)
         eventRepository.save(eventMapper.toEntity(club, request, user))
     }

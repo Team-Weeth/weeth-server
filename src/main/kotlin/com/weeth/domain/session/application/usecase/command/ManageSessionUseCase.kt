@@ -41,6 +41,7 @@ class ManageSessionUseCase(
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
         cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw SessionNotFoundException()
+        // TODO: 현재는 동아리 전체 ACTIVE 멤버에게 출석을 만든다. clubMemberCardinal 기준으로 좁히지 않으면 applyOb 초기화와 중복될 수 있다.
         val clubMembers = clubMemberRepository.findAllByClubIdAndMemberStatus(clubId, MemberStatus.ACTIVE)
 
         val session = sessionMapper.toEntity(club, request, user)

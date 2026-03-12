@@ -65,6 +65,7 @@ class GetScheduleQueryService(
         semester: Int,
     ): Map<Int, List<ScheduleResponse>> {
         clubMemberPolicy.getActiveMember(clubId, userId)
+        // TODO: year/semester 조회도 clubId 기준으로 바꿔야 동아리별 cardinal이 독립적으로 동작한다.
         val cardinal = cardinalReader.getByYearAndSemester(year, semester)
 
         val events =
