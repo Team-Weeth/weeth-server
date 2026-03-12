@@ -8,10 +8,10 @@ data class DashboardHomeResponse(
     val club: DashboardClubInfoResponse,
     @field:Schema(description = "내 활동 정보")
     val myInfo: DashboardMyInfoResponse,
-    @JsonIgnore // MVP 제외
-    // @field:Schema(description = "오늘의 일정")
+    // MVP 제외 (이후 개발 시 @field:Schema(description = "오늘의 일정") 추가)
+    @JsonIgnore
     val todaySchedules: List<DashboardScheduleResponse>,
-    @JsonIgnore // MVP 제외
-    // @field:Schema(description = "가입한 동아리 목록")
+    // MVP 제외 (이후 개발 시 @field:Schema(description = "가입한 동아리 목록") 추가)
+    @JsonIgnore
     val myClubs: List<DashboardMyClubResponse>,
 )

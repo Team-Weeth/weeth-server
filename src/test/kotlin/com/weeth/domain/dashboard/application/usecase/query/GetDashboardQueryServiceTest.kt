@@ -4,17 +4,15 @@ import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
-import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
-import com.weeth.domain.dashboard.domain.enums.ScheduleType
-import com.weeth.domain.user.domain.repository.UserReader
-import com.weeth.domain.user.fixture.UserTestFixture
 import com.weeth.domain.dashboard.application.mapper.DashboardMapper
+import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
@@ -22,6 +20,8 @@ import com.weeth.domain.schedule.domain.repository.EventReader
 import com.weeth.domain.schedule.fixture.ScheduleTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
+import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -169,7 +169,8 @@ class GetDashboardQueryServiceTest :
                     val slice = SliceImpl(listOf(post), pageable, false)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findRecentByClubIdExcludingBoardType(clubId, BoardType.NOTICE, any()) } returns slice
+                    every { postReader.findRecentByClubIdExcludingBoardType(clubId, BoardType.NOTICE, any()) } returns
+                        slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
@@ -234,7 +235,8 @@ class GetDashboardQueryServiceTest :
                     val notice = PostTestFixture.create(board = noticeBoard)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns notice
+                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns
+                        notice
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -245,7 +247,8 @@ class GetDashboardQueryServiceTest :
             context("모든 공지를 읽은 경우") {
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns null
+                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns
+                        null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 
@@ -256,7 +259,8 @@ class GetDashboardQueryServiceTest :
             context("2주 내 공지가 없는 경우") {
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns null
+                    every { postReader.findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, any()) } returns
+                        null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
 

@@ -12,7 +12,6 @@ interface SessionReader {
         start: LocalDateTime,
     ): List<Session>
 
-
     fun findAllByCardinal(cardinal: Int): List<Session>
 
     fun findAllByCardinalOrderByStartAsc(cardinal: Int): List<Session>

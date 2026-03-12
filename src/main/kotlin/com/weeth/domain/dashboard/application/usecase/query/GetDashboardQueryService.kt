@@ -11,11 +11,11 @@ import com.weeth.domain.dashboard.application.dto.response.DashboardPostResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardScheduleResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardUnreadNoticeResponse
 import com.weeth.domain.dashboard.application.mapper.DashboardMapper
-import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.schedule.domain.repository.EventReader
 import com.weeth.domain.session.domain.repository.SessionReader
+import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
 import org.springframework.stereotype.Service
@@ -75,7 +75,12 @@ class GetDashboardQueryService(
     ): Slice<DashboardPostResponse> {
         clubMemberPolicy.getActiveMember(clubId, userId)
 
-        val posts = postReader.findRecentByClubIdExcludingBoardType(clubId, BoardType.NOTICE, PageRequest.of(pageNumber, pageSize))
+        val posts =
+            postReader.findRecentByClubIdExcludingBoardType(
+                clubId,
+                BoardType.NOTICE,
+                PageRequest.of(pageNumber, pageSize),
+            )
         val now = LocalDateTime.now()
         val postIds = posts.content.map { it.id }
         val filesByPostId = fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }
@@ -130,5 +135,4 @@ class GetDashboardQueryService(
             .findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, since)
             ?.let(dashboardMapper::toUnreadNoticeResponse)
     }
-
 }

@@ -3,7 +3,6 @@ package com.weeth.domain.dashboard.application.mapper
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
-import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.dashboard.application.dto.response.DashboardClubInfoResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardHomeResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardMyClubResponse
@@ -12,11 +11,12 @@ import com.weeth.domain.dashboard.application.dto.response.DashboardNoticeRespon
 import com.weeth.domain.dashboard.application.dto.response.DashboardPostResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardScheduleResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardUnreadNoticeResponse
+import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.schedule.domain.entity.Event
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.dashboard.domain.enums.ScheduleType
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
