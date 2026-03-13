@@ -100,7 +100,7 @@ class ClubMemberCardinalPolicyTest :
 
                     every { clubMemberCardinalReader.findLatestCardinalByClubMember(member) } returns null
 
-                    policy.isCurrent(member, cardinal) shouldBe true
+                    policy.isLatestOrFirstCardinal(member, cardinal) shouldBe true
                 }
             }
 
@@ -127,7 +127,7 @@ class ClubMemberCardinalPolicyTest :
                         clubMemberCardinalReader.findLatestCardinalByClubMember(member)
                     } returns latestMemberCardinal
 
-                    policy.isCurrent(member, newCardinal) shouldBe true
+                    policy.isLatestOrFirstCardinal(member, newCardinal) shouldBe true
                 }
             }
 
@@ -146,7 +146,7 @@ class ClubMemberCardinalPolicyTest :
                         clubMemberCardinalReader.findLatestCardinalByClubMember(member)
                     } returns memberCardinal
 
-                    policy.isCurrent(member, cardinal) shouldBe false
+                    policy.isLatestOrFirstCardinal(member, cardinal) shouldBe false
                 }
             }
 
@@ -173,7 +173,7 @@ class ClubMemberCardinalPolicyTest :
                         clubMemberCardinalReader.findLatestCardinalByClubMember(member)
                     } returns latestMemberCardinal
 
-                    policy.isCurrent(member, oldCardinal) shouldBe false
+                    policy.isLatestOrFirstCardinal(member, oldCardinal) shouldBe false
                 }
             }
         }

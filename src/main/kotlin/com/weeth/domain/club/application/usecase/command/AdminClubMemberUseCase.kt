@@ -86,7 +86,7 @@ class AdminClubMemberUseCase(
                 }
 
             if (clubMemberCardinalPolicy.notContains(member, nextCardinal)) {
-                if (clubMemberCardinalPolicy.isCurrent(member, nextCardinal)) {
+                if (clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, nextCardinal)) {
                     member.resetAttendanceStats()
                     initializeAttendances(clubId, member, nextCardinal)
                 }

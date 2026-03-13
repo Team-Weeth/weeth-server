@@ -125,7 +125,7 @@ class AdminClubMemberUseCaseTest :
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
-                every { clubMemberCardinalPolicy.isCurrent(member, cardinal) } returns true
+                every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
 
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))
@@ -186,7 +186,7 @@ class AdminClubMemberUseCaseTest :
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
-                every { clubMemberCardinalPolicy.isCurrent(member, cardinal) } returns true
+                every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns emptyList()
 
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))

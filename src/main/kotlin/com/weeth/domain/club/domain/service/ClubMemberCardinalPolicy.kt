@@ -22,7 +22,12 @@ class ClubMemberCardinalPolicy(
         cardinal: Cardinal,
     ): Boolean = !clubMemberCardinalReader.existsByClubMemberAndCardinalId(clubMember, cardinal.id)
 
-    fun isCurrent(
+    /**
+     * applyOb에서 다음 기수로 등록하기 위해 사용하는 메서드
+     * 하위호환을 위해 기수가 없는 경우라도 다음 기수 활동이 가능하도록 지원
+     * TODO: 앞 단에서 기수가 필수로 저장됨을 보장해야함. (가입, 기수 추가 등)
+     */
+    fun isLatestOrFirstCardinal(
         clubMember: ClubMember,
         cardinal: Cardinal,
     ): Boolean {
