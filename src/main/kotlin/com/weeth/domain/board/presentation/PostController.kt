@@ -7,10 +7,12 @@ import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.command.ManagePostUseCase
+import com.weeth.domain.board.application.usecase.command.MarkNoticeReadUseCase
 import com.weeth.domain.board.application.usecase.query.GetPostQueryService
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.annotation.CurrentUserRole
+import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import com.weeth.global.common.web.TsidParam
@@ -33,10 +35,11 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "BOARD", description = "게시글 API")
 @RestController
 @RequestMapping("/api/v4/clubs/{clubId}/boards")
-@ApiErrorCodeExample(BoardErrorCode::class)
+@ApiErrorCodeExample(BoardErrorCode::class, JwtErrorCode::class)
 class PostController(
     private val managePostUseCase: ManagePostUseCase,
     private val getPostQueryService: GetPostQueryService,
+    private val markNoticeReadUseCase: MarkNoticeReadUseCase,
 ) {
     @PostMapping("/{boardId}/posts")
     @Operation(summary = "게시글 작성")
@@ -124,6 +127,18 @@ class PostController(
             BoardResponseCode.POST_SEARCH_SUCCESS,
             getPostQueryService.searchPosts(clubId, userId, boardId, keyword, pageNumber, pageSize, role),
         )
+
+    @PostMapping("/{boardId}/notices/read-all")
+    @Operation(summary = "공지 읽음 처리", description = "공지 게시판 진입 시 마지막 읽음 시간을 현재 시각으로 갱신합니다.")
+    fun markAllNoticesRead(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable boardId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void?> {
+        markNoticeReadUseCase.execute(userId, clubId, boardId)
+        return CommonResponse.success(BoardResponseCode.BOARD_NOTICE_READ_SUCCESS)
+    }
 
     // todo: 좋아요 관련 API 추가
 }

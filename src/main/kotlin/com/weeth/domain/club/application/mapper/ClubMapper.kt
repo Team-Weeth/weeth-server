@@ -9,7 +9,6 @@ import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.global.common.id.TsidBase62Encoder
-import org.hibernate.metamodel.model.domain.internal.MapMember
 import org.springframework.stereotype.Component
 
 @Component

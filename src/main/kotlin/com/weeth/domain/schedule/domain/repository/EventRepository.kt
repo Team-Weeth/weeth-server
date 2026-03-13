@@ -6,7 +6,21 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
-interface EventRepository : JpaRepository<Event, Long> {
+interface EventRepository :
+    JpaRepository<Event, Long>,
+    EventReader {
+    fun findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(
+        end: LocalDateTime,
+        start: LocalDateTime,
+    ): List<Event>
+
+    override fun findByDateRange(
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): List<Event> = findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start)
+
+    override fun findAllByCardinal(cardinal: Int): List<Event>
+
     fun findAllByClubIdAndCardinal(
         clubId: Long,
         cardinal: Int,

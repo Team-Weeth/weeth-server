@@ -1,8 +1,11 @@
 package com.weeth.domain.board.domain.repository
 
+import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.domain.entity.Post
+import com.weeth.domain.board.domain.enums.BoardType
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.EntityGraph
@@ -11,8 +14,11 @@ import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
 
-interface PostRepository : JpaRepository<Post, Long> {
+interface PostRepository :
+    JpaRepository<Post, Long>,
+    PostReader {
     @EntityGraph(attributePaths = ["user"])
     @Query(
         """
@@ -74,4 +80,106 @@ interface PostRepository : JpaRepository<Post, Long> {
         @Param("keyword") keyword: String,
         pageable: Pageable,
     ): Slice<Post>
+
+    override fun getById(postId: Long): Post = findActivePostById(postId) ?: throw PostNotFoundException()
+
+    override fun findActiveById(postId: Long): Post? = findActivePostById(postId)
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.type = :boardType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findRecentByBoardType(
+        @Param("boardType") boardType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.type <> :excludedType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findRecentExcludingBoardType(
+        @Param("excludedType") excludedType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.club.id = :clubId
+          AND p.board.type = :boardType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findRecentByClubIdAndBoardType(
+        @Param("clubId") clubId: Long,
+        @Param("boardType") boardType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.club.id = :clubId
+          AND p.board.type <> :excludedType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findRecentByClubIdExcludingBoardType(
+        @Param("clubId") clubId: Long,
+        @Param("excludedType") excludedType: BoardType,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        LEFT JOIN LastNoticeRead lr ON lr.user.id = :userId AND lr.board.id = p.board.id
+        WHERE p.board.club.id = :clubId
+          AND p.board.type = :boardType
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+          AND p.createdAt >= :since
+          AND (lr IS NULL OR p.createdAt > lr.lastReadAt)
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    fun findUnreadNoticeSince(
+        @Param("clubId") clubId: Long,
+        @Param("userId") userId: Long,
+        @Param("boardType") boardType: BoardType,
+        @Param("since") since: LocalDateTime,
+        pageable: Pageable,
+    ): List<Post>
+
+    override fun findFirstUnreadNoticeSince(
+        clubId: Long,
+        userId: Long,
+        boardType: BoardType,
+        since: LocalDateTime,
+    ): Post? = findUnreadNoticeSince(clubId, userId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
 }

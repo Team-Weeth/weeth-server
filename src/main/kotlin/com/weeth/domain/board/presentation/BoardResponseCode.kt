@@ -19,4 +19,5 @@ enum class BoardResponseCode(
     BOARD_DELETED_SUCCESS(10408, HttpStatus.OK, "게시판이 성공적으로 삭제되었습니다."),
     BOARD_FIND_ALL_SUCCESS(10409, HttpStatus.OK, "게시판 목록이 성공적으로 조회되었습니다."),
     BOARD_FIND_BY_ID_SUCCESS(10410, HttpStatus.OK, "게시판이 성공적으로 조회되었습니다."),
+    BOARD_NOTICE_READ_SUCCESS(10411, HttpStatus.OK, "공지를 읽음 처리했습니다."),
 }
