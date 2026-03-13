@@ -52,6 +52,7 @@ class ManageAccountUseCaseTest :
 
                     useCase.save(clubId, request, userId)
 
+                    verify(exactly = 1) { clubMemberPolicy.requireAdmin(clubId, userId) }
                     verify(exactly = 1) { accountRepository.save(any()) }
                 }
             }

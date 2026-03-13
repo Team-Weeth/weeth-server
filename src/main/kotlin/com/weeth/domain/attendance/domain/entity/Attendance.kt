@@ -62,6 +62,9 @@ class Attendance(
         fun create(
             session: Session,
             clubMember: ClubMember,
-        ): Attendance = Attendance(session = session, clubMember = clubMember)
+        ): Attendance {
+            require(session.club.id == clubMember.club.id) { "세션과 멤버의 동아리가 일치하지 않습니다" }
+            return Attendance(session = session, clubMember = clubMember)
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.weeth.domain.club.domain.repository
 
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberStatus
 
 interface ClubMemberReader {
     fun findByIdWithLock(clubMemberId: Long): ClubMember?
@@ -15,4 +16,9 @@ interface ClubMemberReader {
     fun findAllByClubId(clubId: Long): List<ClubMember>
 
     fun findAllByUserId(userId: Long): List<ClubMember>
+
+    fun findAllByClubIdAndMemberStatus(
+        clubId: Long,
+        memberStatus: MemberStatus,
+    ): List<ClubMember>
 }

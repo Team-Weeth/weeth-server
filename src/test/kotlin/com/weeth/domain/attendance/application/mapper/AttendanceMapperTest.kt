@@ -111,7 +111,7 @@ class AttendanceMapperTest :
             it("사용자 + Response 리스트를 DetailResponse로 매핑(total = attend + absence)") {
                 val base = LocalDate.now()
                 val m1 = createOneDaySession(base.minusDays(2), 1, 1000, "D-2")
-                val m2 = createOneDaySession(base.minusDays(1), 1, 1001, "D-1")
+                val m2 = createOneDaySession(base.minusDays(1), 1, 1001, "D-1", club = m1.club)
                 val member = ClubMemberTestFixture.createActiveMember(club = m1.club, user = createActiveUser("이지훈"))
                 repeat(3) { member.attend() }
                 repeat(2) { member.absent() }

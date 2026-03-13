@@ -5,7 +5,7 @@ import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.enums.MemberStatus
-import com.weeth.domain.club.domain.repository.ClubMemberRepository
+import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
@@ -28,7 +28,7 @@ class ManageSessionUseCase(
     private val cardinalReader: CardinalReader,
     private val sessionMapper: SessionMapper,
     private val clubReader: ClubReader,
-    private val clubMemberRepository: ClubMemberRepository,
+    private val clubMemberReader: ClubMemberReader,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
     @Transactional
@@ -42,7 +42,7 @@ class ManageSessionUseCase(
         val user = userReader.getById(userId)
         cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw SessionNotFoundException()
         // TODO: 현재는 동아리 전체 ACTIVE 멤버에게 출석을 만든다. clubMemberCardinal 기준으로 좁히지 않으면 applyOb 초기화와 중복될 수 있다.
-        val clubMembers = clubMemberRepository.findAllByClubIdAndMemberStatus(clubId, MemberStatus.ACTIVE)
+        val clubMembers = clubMemberReader.findAllByClubIdAndMemberStatus(clubId, MemberStatus.ACTIVE)
 
         val session = sessionMapper.toEntity(club, request, user)
         sessionRepository.save(session)

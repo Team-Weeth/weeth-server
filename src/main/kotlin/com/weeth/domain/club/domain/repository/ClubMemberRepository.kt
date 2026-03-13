@@ -20,7 +20,7 @@ interface ClubMemberRepository :
         @Param("clubMemberId") clubMemberId: Long,
     ): ClubMember?
 
-    fun findAllByClubIdAndMemberStatus(
+    override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
         memberStatus: MemberStatus,
     ): List<ClubMember>

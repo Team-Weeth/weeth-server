@@ -4,6 +4,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
+import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
 import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
@@ -34,7 +35,7 @@ class SavePenaltyUseCase(
         if (penalty.penaltyType == PenaltyType.PENALTY) {
             val lockedMember =
                 clubMemberRepository.findByIdWithLock(clubMember.id)
-                    ?: clubMember
+                    ?: throw PenaltyNotFoundException()
             lockedMember.incrementPenaltyCount()
         }
     }

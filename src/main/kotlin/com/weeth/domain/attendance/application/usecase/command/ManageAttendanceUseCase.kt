@@ -36,12 +36,12 @@ class ManageAttendanceUseCase(
     ) {
         val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
 
-        val storedCode = qrAttendancePort.getCode(sessionId) ?: throw QrTokenExpiredException()
-        if (storedCode != code) throw AttendanceCodeMismatchException()
-
         val session = sessionReader.getById(sessionId)
         if (session.club.id != clubId) throw AttendanceNotFoundException()
         if (!session.isCheckInAllowed(LocalDateTime.now())) throw SessionNotInProgressException()
+
+        val storedCode = qrAttendancePort.getCode(sessionId) ?: throw QrTokenExpiredException()
+        if (storedCode != code) throw AttendanceCodeMismatchException()
 
         val lockedAttendance =
             attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember)

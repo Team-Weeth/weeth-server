@@ -11,6 +11,12 @@ interface CardinalReader {
         semester: Int,
     ): Cardinal
 
+    fun getByClubIdAndYearAndSemester(
+        clubId: Long,
+        year: Int,
+        semester: Int,
+    ): Cardinal
+
     fun findByIdOrNull(cardinalId: Long): Cardinal?
 
     fun findAllByCardinalNumberDesc(): List<Cardinal>

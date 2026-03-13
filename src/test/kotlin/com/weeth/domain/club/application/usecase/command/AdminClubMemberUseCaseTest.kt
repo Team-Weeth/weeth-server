@@ -136,7 +136,7 @@ class AdminClubMemberUseCaseTest :
                 ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
             }
 
-            it("중복 기수 요청은 무시한다") {
+            it("이미 등록된 기수는 무시한다") {
                 val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
                 val cardinal =
                     CardinalTestFixture.createCardinal(
@@ -151,11 +151,37 @@ class AdminClubMemberUseCaseTest :
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns false
 
-                useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8), ClubMemberApplyObRequest(20L, 8)))
+                useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))
 
                 verify(exactly = 0) { clubMemberCardinalRepository.save(any()) }
                 verify(
                     exactly = 0,
+                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+            }
+
+            it("동일한 요청이 중복으로 전달되면 1회만 처리한다") {
+                val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
+                val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
+                val cardinal =
+                    CardinalTestFixture.createCardinal(
+                        id = 1L,
+                        club = adminMember.club,
+                        cardinalNumber = 8,
+                        year = 2026,
+                        semester = 1,
+                    )
+                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
+                every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
+                every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
+                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
+
+                useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8), ClubMemberApplyObRequest(20L, 8)))
+
+                verify(exactly = 1) { clubMemberCardinalRepository.save(any()) }
+                verify(
+                    exactly = 1,
                 ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
             }
 

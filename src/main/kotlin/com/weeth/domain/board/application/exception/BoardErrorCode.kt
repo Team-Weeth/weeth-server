@@ -18,7 +18,7 @@ enum class BoardErrorCode(
     @ExplainError("ADMIN 전용 게시판에 일반 사용자가 글을 작성할 때 발생합니다.")
     CATEGORY_ACCESS_DENIED(20402, HttpStatus.FORBIDDEN, "해당 카테고리에 대한 권한이 없습니다."),
 
-    @ExplainError("게시판 ID로 조회했으나 해당 게시판이 존재하지 않거나 동아리에 속하지 않는 경우에 발생합니다..")
+    @ExplainError("게시판 ID로 조회했으나 해당 게시판이 존재하지 않거나 동아리에 속하지 않는 경우에 발생합니다.")
     BOARD_NOT_FOUND(20403, HttpStatus.NOT_FOUND, "존재하지 않는 게시판입니다."),
 
     @ExplainError("게시글 ID로 조회했으나 해당 게시글이 존재하지 않을 때 발생합니다.")

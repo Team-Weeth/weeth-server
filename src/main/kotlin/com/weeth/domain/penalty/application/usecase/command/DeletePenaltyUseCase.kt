@@ -6,7 +6,6 @@ import com.weeth.domain.penalty.application.exception.AutoPenaltyDeleteNotAllowe
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
 import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,7 +24,7 @@ class DeletePenaltyUseCase(
         clubMemberPolicy.requireAdmin(clubId, userId)
 
         val penalty =
-            penaltyRepository.findByIdOrNull(penaltyId)
+            penaltyRepository.findByIdWithLock(penaltyId)
                 ?: throw PenaltyNotFoundException()
         if (penalty.clubMember.club.id != clubId) throw PenaltyNotFoundException()
 
