@@ -65,6 +65,7 @@ class SocialLoginUseCase(
                     name = authResult.name ?: "",
                     email = email,
                     status = Status.ACTIVE, // 소셜 로그인으로 회원가입 한 경우 바로 가입 승인
+                    profileImageUrl = authResult.profileImageUrl,
                 ),
             )
 
