@@ -4,11 +4,13 @@ import com.weeth.domain.account.application.dto.request.AccountSaveRequest
 import com.weeth.domain.account.application.exception.AccountErrorCode
 import com.weeth.domain.account.application.usecase.command.ManageAccountUseCase
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_SAVE_SUCCESS
+import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PathVariable
@@ -30,8 +32,9 @@ class AccountAdminController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid dto: AccountSaveRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
-        manageAccountUseCase.save(clubId, dto)
+        manageAccountUseCase.save(clubId, dto, userId)
         return CommonResponse.success(ACCOUNT_SAVE_SUCCESS)
     }
 }

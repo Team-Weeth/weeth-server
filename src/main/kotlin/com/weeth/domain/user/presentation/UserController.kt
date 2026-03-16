@@ -3,7 +3,6 @@ package com.weeth.domain.user.presentation
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
-import com.weeth.domain.user.application.dto.response.UserDetailsResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
@@ -21,8 +20,6 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
-import org.springframework.data.domain.Slice
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
@@ -67,32 +64,6 @@ class UserController(
     ): CommonResponse<Boolean> =
         CommonResponse.success(UserResponseCode.USER_EMAIL_CHECK_SUCCESS, !getUserQueryService.existsByEmail(email))
 
-    @GetMapping("/all")
-    @Operation(summary = "동아리 멤버 전체 조회(전체/기수별)")
-    fun findAllUser(
-        @RequestParam("pageNumber") pageNumber: Int,
-        @RequestParam("pageSize") pageSize: Int,
-        @RequestParam(required = false) cardinal: Int?,
-    ): CommonResponse<Slice<UserSummaryResponse>> =
-        CommonResponse.success(
-            UserResponseCode.USER_FIND_ALL_SUCCESS,
-            getUserQueryService.findAllUser(pageNumber, pageSize, cardinal),
-        )
-
-    @GetMapping("/search")
-    @Operation(summary = "동아리 멤버 검색")
-    fun searchUser(
-        @RequestParam keyword: String,
-    ): CommonResponse<List<UserSummaryResponse>> =
-        CommonResponse.success(UserResponseCode.USER_FIND_BY_ID_SUCCESS, getUserQueryService.searchUser(keyword))
-
-    @GetMapping("/details")
-    @Operation(summary = "특정 멤버 상세 조회")
-    fun findUser(
-        @RequestParam userId: Long,
-    ): CommonResponse<UserDetailsResponse> =
-        CommonResponse.success(UserResponseCode.USER_DETAILS_SUCCESS, getUserQueryService.findUserDetails(userId))
-
     @GetMapping
     @Operation(summary = "내 정보 조회")
     fun find(
@@ -115,14 +86,5 @@ class UserController(
     ): CommonResponse<Void> {
         updateUserProfileUseCase.updateProfile(request, userId)
         return CommonResponse.success(UserResponseCode.USER_UPDATE_SUCCESS)
-    }
-
-    @DeleteMapping
-    @Operation(summary = "동아리 탈퇴")
-    fun leave(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<Void> {
-        authUserUseCase.leave(userId)
-        return CommonResponse.success(UserResponseCode.USER_LEAVE_SUCCESS)
     }
 }

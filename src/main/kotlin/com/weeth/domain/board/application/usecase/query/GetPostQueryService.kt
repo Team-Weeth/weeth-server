@@ -9,6 +9,7 @@ import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.comment.domain.repository.CommentReader
 import com.weeth.domain.file.application.mapper.FileMapper
@@ -27,6 +28,7 @@ import java.time.LocalDateTime
 class GetPostQueryService(
     private val postRepository: PostRepository,
     private val boardRepository: BoardRepository,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val commentReader: CommentReader,
     private val getCommentQueryService: GetCommentQueryService,
     private val fileReader: FileReader,
@@ -37,13 +39,15 @@ class GetPostQueryService(
         private const val MAX_PAGE_SIZE = 50
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findPost(
         clubId: Long,
+        userId: Long,
         postId: Long,
-        role: Role,
+        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): PostDetailResponse {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         val post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
+
         if (post.board.club.id != clubId || post.board.isDeleted || !post.board.isAccessibleBy(role)) {
             throw PostNotFoundException()
         }
@@ -55,16 +59,18 @@ class GetPostQueryService(
         return postMapper.toDetailResponse(post, commentTree, files)
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findPosts(
         clubId: Long,
+        userId: Long,
         boardId: Long,
         pageNumber: Int,
         pageSize: Int,
-        role: Role,
+        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): Slice<PostListResponse> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         validatePage(pageNumber, pageSize)
         validateBoardVisibility(boardId, clubId, role)
+
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
 
@@ -75,15 +81,16 @@ class GetPostQueryService(
         return posts.map { postMapper.toListResponse(it, fileExistsByPostId[it.id] == true, now) }
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun searchPosts(
         clubId: Long,
+        userId: Long,
         boardId: Long,
         keyword: String,
         pageNumber: Int,
         pageSize: Int,
-        role: Role,
+        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): Slice<PostListResponse> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         validatePage(pageNumber, pageSize)
         validateBoardVisibility(boardId, clubId, role)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))

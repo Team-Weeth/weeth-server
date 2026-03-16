@@ -9,6 +9,7 @@ import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.enums.Role
 import io.kotest.assertions.throwables.shouldThrow
@@ -24,13 +25,15 @@ class ManageBoardUseCaseTest :
         val boardRepository = mockk<BoardRepository>()
         val boardMapper = BoardMapper()
         val clubReader = mockk<ClubReader>()
-        val useCase = ManageBoardUseCase(boardRepository, boardMapper, clubReader)
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val useCase = ManageBoardUseCase(boardRepository, boardMapper, clubReader, clubMemberPolicy)
 
         val club = ClubTestFixture.createClub()
         val clubId = club.id
+        val userId = 10L
 
         beforeTest {
-            clearMocks(boardRepository, clubReader)
+            clearMocks(boardRepository, clubReader, clubMemberPolicy)
             every { boardRepository.save(any()) } answers { firstArg() }
             every { clubReader.getClubById(clubId) } returns club
         }
@@ -46,7 +49,7 @@ class ManageBoardUseCaseTest :
                         isPrivate = true,
                     )
 
-                val result = useCase.create(clubId, request)
+                val result = useCase.create(clubId, request, userId)
 
                 result.name shouldBe "운영공지"
                 result.type shouldBe BoardType.NOTICE
@@ -61,7 +64,7 @@ class ManageBoardUseCaseTest :
                 val board = BoardTestFixture.create(club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                val result = useCase.update(clubId, 1L, UpdateBoardRequest(name = "변경", isPrivate = true))
+                val result = useCase.update(clubId, 1L, UpdateBoardRequest(name = "변경", isPrivate = true), userId)
 
                 result.name shouldBe "변경"
                 result.commentEnabled shouldBe true
@@ -73,7 +76,7 @@ class ManageBoardUseCaseTest :
                 val board = BoardTestFixture.create(club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                val result = useCase.update(clubId, 1L, UpdateBoardRequest())
+                val result = useCase.update(clubId, 1L, UpdateBoardRequest(), userId)
 
                 result.name shouldBe "기존"
                 result.commentEnabled shouldBe true
@@ -85,7 +88,7 @@ class ManageBoardUseCaseTest :
                 every { boardRepository.findByIdAndIsDeletedFalse(999L) } returns null
 
                 shouldThrow<BoardNotFoundException> {
-                    useCase.update(clubId, 999L, UpdateBoardRequest(name = "변경"))
+                    useCase.update(clubId, 999L, UpdateBoardRequest(name = "변경"), userId)
                 }
             }
         }
@@ -95,7 +98,7 @@ class ManageBoardUseCaseTest :
                 val board = BoardTestFixture.create(club = club, name = "일반", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                useCase.delete(clubId, 1L)
+                useCase.delete(clubId, 1L, userId)
 
                 board.isDeleted shouldBe true
                 verify(exactly = 0) { boardRepository.delete(any()) }

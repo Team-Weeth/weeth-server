@@ -9,6 +9,7 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -17,14 +18,21 @@ class ManageBoardUseCase(
     private val boardRepository: BoardRepository,
     private val boardMapper: BoardMapper,
     private val clubReader: ClubReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
 ) {
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
+    /**
+     * 게시판 생성 API, 커스텀한 게시판 생성 가능
+     * TODO: MVP, 무료의 경우엔 개수 제한. 공지사항 제외
+     */
     @Transactional
     fun create(
         clubId: Long,
         request: CreateBoardRequest,
+        userId: Long,
     ): BoardDetailResponse {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
+
         val board =
             Board(
                 club = club,
@@ -37,17 +45,19 @@ class ManageBoardUseCase(
                         isPrivate = request.isPrivate,
                     ),
             )
+
         val savedBoard = boardRepository.save(board)
         return boardMapper.toDetailResponse(savedBoard)
     }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun update(
         clubId: Long,
         boardId: Long,
         request: UpdateBoardRequest,
+        userId: Long,
     ): BoardDetailResponse {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val board = findBoard(boardId)
         if (board.club.id != clubId) throw BoardNotFoundException()
 
@@ -68,13 +78,15 @@ class ManageBoardUseCase(
         return boardMapper.toDetailResponse(board)
     }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     @Transactional
     fun delete(
         clubId: Long,
         boardId: Long,
+        userId: Long,
     ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val board = findBoard(boardId)
+
         if (board.club.id != clubId) throw BoardNotFoundException()
         board.markDeleted()
     }

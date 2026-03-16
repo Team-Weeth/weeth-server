@@ -4,6 +4,7 @@ import com.weeth.domain.board.application.dto.response.BoardListResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.query.GetBoardQueryService
 import com.weeth.domain.user.domain.enums.Role
+import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.annotation.CurrentUserRole
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -29,7 +30,11 @@ class BoardController(
     fun findBoards(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
-        @Parameter(hidden = true) @CurrentUserRole role: Role,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Parameter(hidden = true) @CurrentUserRole role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): CommonResponse<List<BoardListResponse>> =
-        CommonResponse.success(BoardResponseCode.BOARD_FIND_ALL_SUCCESS, getBoardQueryService.findBoards(clubId, role))
+        CommonResponse.success(
+            BoardResponseCode.BOARD_FIND_ALL_SUCCESS,
+            getBoardQueryService.findBoards(clubId, userId, role),
+        )
 }

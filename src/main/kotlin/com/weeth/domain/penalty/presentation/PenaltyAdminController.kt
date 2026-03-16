@@ -8,24 +8,28 @@ import com.weeth.domain.penalty.application.usecase.command.DeletePenaltyUseCase
 import com.weeth.domain.penalty.application.usecase.command.SavePenaltyUseCase
 import com.weeth.domain.penalty.application.usecase.command.UpdatePenaltyUseCase
 import com.weeth.domain.penalty.application.usecase.query.GetPenaltyQueryService
+import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.web.TsidParam
+import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-// todo: PR4에서 Club 기반으로 수정
 @Tag(name = "PENALTY ADMIN", description = "[ADMIN] 패널티 어드민 API")
 @RestController
-@RequestMapping("/api/v1/admin/penalties")
+@RequestMapping("/api/v4/admin/clubs/{clubId}/penalties")
 @ApiErrorCodeExample(PenaltyErrorCode::class)
 class PenaltyAdminController(
     private val savePenaltyUseCase: SavePenaltyUseCase,
@@ -36,37 +40,49 @@ class PenaltyAdminController(
     @PostMapping
     @Operation(summary = "패널티 부여")
     fun assignPenalty(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
         @Valid @RequestBody request: SavePenaltyRequest,
     ): CommonResponse<Void?> {
-        savePenaltyUseCase.save(request)
+        savePenaltyUseCase.save(clubId, userId, request)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_ASSIGN_SUCCESS)
     }
 
     @PatchMapping
     @Operation(summary = "패널티 수정")
     fun update(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
         @Valid @RequestBody request: UpdatePenaltyRequest,
     ): CommonResponse<Void?> {
-        updatePenaltyUseCase.update(request)
+        updatePenaltyUseCase.update(clubId, userId, request)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_UPDATE_SUCCESS)
     }
 
     @GetMapping
     @Operation(summary = "전체 패널티 조회")
     fun findAll(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestParam(required = false) cardinal: Int?,
     ): CommonResponse<List<PenaltyByCardinalResponse>> =
         CommonResponse.success(
             PenaltyResponseCode.PENALTY_FIND_ALL_SUCCESS,
-            getPenaltyQueryService.findAllByCardinal(0L, cardinal),
+            getPenaltyQueryService.findAllByCardinal(clubId, userId, cardinal),
         )
 
     @DeleteMapping
     @Operation(summary = "패널티 삭제")
     fun delete(
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestParam penaltyId: Long,
     ): CommonResponse<Void?> {
-        deletePenaltyUseCase.delete(penaltyId)
+        deletePenaltyUseCase.delete(clubId, userId, penaltyId)
         return CommonResponse.success(PenaltyResponseCode.PENALTY_DELETE_SUCCESS)
     }
 }

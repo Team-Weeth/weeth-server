@@ -4,12 +4,14 @@ import com.weeth.domain.cardinal.application.dto.request.CardinalSaveRequest
 import com.weeth.domain.cardinal.application.dto.request.CardinalUpdateRequest
 import com.weeth.domain.cardinal.application.exception.CardinalErrorCode
 import com.weeth.domain.cardinal.application.usecase.command.ManageCardinalUseCase
+import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PatchMapping
@@ -32,8 +34,9 @@ class CardinalAdminController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid request: CardinalUpdateRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
-        manageCardinalUseCase.update(clubId, request)
+        manageCardinalUseCase.update(clubId, request, userId)
         return CommonResponse.success(CardinalResponseCode.CARDINAL_UPDATE_SUCCESS)
     }
 
@@ -43,8 +46,9 @@ class CardinalAdminController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid request: CardinalSaveRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
-        manageCardinalUseCase.save(clubId, request)
+        manageCardinalUseCase.save(clubId, request, userId)
         return CommonResponse.success(CardinalResponseCode.CARDINAL_SAVE_SUCCESS)
     }
 }

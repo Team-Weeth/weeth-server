@@ -9,6 +9,6 @@ enum class EventErrorCode(
     override val status: HttpStatus,
     override val message: String,
 ) : ErrorCodeInterface {
-    @ExplainError("요청한 일정 ID에 해당하는 일정이 존재하지 않을 때 발생합니다.")
+    @ExplainError("요청한 일정 ID에 해당하는 일정이 존재하지 않거나 동아리에 속하지 않은 경우에 발생합니다.")
     EVENT_NOT_FOUND(20800, HttpStatus.NOT_FOUND, "존재하지 않는 일정입니다."),
 }

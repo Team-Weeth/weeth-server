@@ -10,6 +10,7 @@ import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.ReceiptRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
@@ -18,9 +19,6 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/**
- * Todo: 개행을 추가해 가독성 개선
- */
 @Service
 class ManageReceiptUseCase(
     private val receiptRepository: ReceiptRepository,
@@ -28,41 +26,70 @@ class ManageReceiptUseCase(
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val cardinalReader: CardinalReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val fileMapper: FileMapper,
 ) {
     @Transactional
-    fun save(request: ReceiptSaveRequest) {
-        cardinalReader.getByCardinalNumber(request.cardinal)
-        val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
+    fun save(
+        clubId: Long,
+        userId: Long,
+        request: ReceiptSaveRequest,
+    ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
+        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw AccountNotFoundException()
+        val account =
+            accountRepository.findByClubIdAndCardinal(clubId, request.cardinal) ?: throw AccountNotFoundException()
+
         val receipt =
             receiptRepository.save(
                 Receipt.create(request.description, request.source, request.amount, request.date, account),
             )
+
         account.spend(Money.of(request.amount))
+
         fileRepository.saveAll(fileMapper.toFileList(request.files, FileOwnerType.RECEIPT, receipt.id))
     }
 
     @Transactional
     fun update(
+        clubId: Long,
+        userId: Long,
         receiptId: Long,
         request: ReceiptUpdateRequest,
     ) {
-        cardinalReader.getByCardinalNumber(request.cardinal)
-        val account = accountRepository.findByCardinal(request.cardinal) ?: throw AccountNotFoundException()
+        clubMemberPolicy.requireAdmin(clubId, userId)
+        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw AccountNotFoundException()
+        val account =
+            accountRepository.findByClubIdAndCardinal(clubId, request.cardinal) ?: throw AccountNotFoundException()
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
-        if (receipt.account.id != account.id) throw ReceiptAccountMismatchException()
+
+        if (receipt.account.club.id != clubId || receipt.account.id != account.id) {
+            throw ReceiptAccountMismatchException()
+        }
+
         account.adjustSpend(Money.of(receipt.amount), Money.of(request.amount))
+
         if (request.files != null) {
             fileRepository.deleteAll(fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null))
             fileRepository.saveAll(fileMapper.toFileList(request.files, FileOwnerType.RECEIPT, receiptId))
         }
+
         receipt.update(request.description, request.source, request.amount, request.date)
     }
 
     @Transactional
-    fun delete(receiptId: Long) {
+    fun delete(
+        clubId: Long,
+        userId: Long,
+        receiptId: Long,
+    ) {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
+
+        if (receipt.account.club.id != clubId) throw ReceiptAccountMismatchException()
+
         receipt.account.cancelSpend(Money.of(receipt.amount))
+
         fileRepository.deleteAll(fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null))
         receiptRepository.delete(receipt)
     }

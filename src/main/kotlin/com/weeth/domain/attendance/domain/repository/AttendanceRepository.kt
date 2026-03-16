@@ -1,9 +1,9 @@
 package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.enums.Status
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.EntityGraph
@@ -18,40 +18,44 @@ import java.time.LocalDateTime
 interface AttendanceRepository : JpaRepository<Attendance, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
-    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session = :session AND a.user = :user")
-    fun findBySessionAndUserWithLock(
+    @Query(
+        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session = :session AND a.clubMember = :clubMember",
+    )
+    fun findBySessionAndClubMemberWithLock(
         @Param("session") session: Session,
-        @Param("user") user: User,
+        @Param("clubMember") clubMember: ClubMember,
     ): Attendance?
 
-    @EntityGraph(attributePaths = ["user"])
-    fun findAllBySessionAndUserStatus(
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    fun findAllBySessionAndClubMemberMemberStatus(
         session: Session,
-        status: Status,
+        memberStatus: MemberStatus,
     ): List<Attendance>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
-    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session = :session AND a.user.status = :status")
-    fun findAllBySessionAndUserStatusWithLock(
+    @Query(
+        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session = :session AND cm.memberStatus = :status",
+    )
+    fun findAllBySessionAndClubMemberMemberStatusWithLock(
         @Param("session") session: Session,
-        @Param("status") status: Status,
+        @Param("status") status: MemberStatus,
     ): List<Attendance>
 
-    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.id = :id")
-    fun findByIdWithUser(id: Long): Attendance?
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.id = :id")
+    fun findByIdWithClubMember(id: Long): Attendance?
 
     @Query(
         """
         SELECT a FROM Attendance a
         JOIN FETCH a.session s
-        WHERE a.user.id = :userId
+        WHERE a.clubMember.id = :clubMemberId
         AND s.start <= :checkInEnd
         AND s.end > :now
         """,
     )
-    fun findCurrentByUserId(
-        @Param("userId") userId: Long,
+    fun findCurrentByClubMemberId(
+        @Param("clubMemberId") clubMemberId: Long,
         @Param("now") now: LocalDateTime,
         @Param("checkInEnd") checkInEnd: LocalDateTime,
     ): Attendance?
@@ -60,13 +64,13 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         """
         SELECT a FROM Attendance a
         JOIN FETCH a.session s
-        WHERE a.user.id = :userId
+        WHERE a.clubMember.id = :clubMemberId
         AND s.start >= :dayStart
         AND s.end < :dayEnd
         """,
     )
-    fun findTodayByUserId(
-        @Param("userId") userId: Long,
+    fun findTodayByClubMemberId(
+        @Param("clubMemberId") clubMemberId: Long,
         @Param("dayStart") dayStart: LocalDateTime,
         @Param("dayEnd") dayEnd: LocalDateTime,
     ): Attendance?
@@ -75,18 +79,17 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         """
         SELECT a FROM Attendance a
         JOIN FETCH a.session s
-        WHERE a.user.id = :userId
+        WHERE a.clubMember.id = :clubMemberId
         AND s.cardinal = :cardinal
         ORDER BY s.start
         """,
     )
-    fun findAllByUserIdAndCardinal(
-        @Param("userId") userId: Long,
+    fun findAllByClubMemberIdAndCardinal(
+        @Param("clubMemberId") clubMemberId: Long,
         @Param("cardinal") cardinal: Int,
     ): List<Attendance>
 
-    // TODO: QR 코드 출석 기능 구현 시 사용 예정 (여러 세션의 출석자 배치 조회)
-    @Query("SELECT a FROM Attendance a JOIN FETCH a.user WHERE a.session IN :sessions")
+    @Query("SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session IN :sessions")
     fun findAllBySessionIn(
         @Param("sessions") sessions: List<Session>,
     ): List<Attendance>

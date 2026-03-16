@@ -1,5 +1,6 @@
 package com.weeth.domain.session.application.usecase.query
 
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
 import com.weeth.domain.schedule.application.mapper.SessionMapper
@@ -8,7 +9,6 @@ import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.repository.UserReader
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.DayOfWeek
@@ -20,14 +20,15 @@ import java.time.temporal.TemporalAdjusters
 class GetSessionQueryService(
     private val sessionRepository: SessionRepository,
     private val userReader: UserReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val sessionMapper: SessionMapper,
 ) {
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findSession(
         clubId: Long,
         userId: Long,
         sessionId: Long,
     ): SessionResponse {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         val user = userReader.getById(userId)
         val session = sessionRepository.findByIdAndClubId(sessionId, clubId) ?: throw SessionNotFoundException()
 
@@ -38,11 +39,12 @@ class GetSessionQueryService(
         }
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findSessionInfos(
         clubId: Long,
+        userId: Long,
         cardinal: Int?,
     ): SessionInfosResponse {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val sessions =
             if (cardinal == null) {
                 sessionRepository.findAllByClubIdOrderByStartDesc(clubId)

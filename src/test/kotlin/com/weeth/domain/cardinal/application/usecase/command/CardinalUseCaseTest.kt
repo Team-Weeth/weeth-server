@@ -12,6 +12,7 @@ import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.cardinal.domain.service.CardinalStatusPolicy
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -28,17 +29,32 @@ class CardinalUseCaseTest :
         val cardinalReader = mockk<CardinalReader>()
         val cardinalMapper = mockk<CardinalMapper>()
         val clubReader = mockk<ClubReader>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val cardinalStatusPolicy = CardinalStatusPolicy(cardinalRepository)
         val manageCardinalUseCase =
-            ManageCardinalUseCase(cardinalRepository, cardinalMapper, cardinalStatusPolicy, clubReader)
-        val getCardinalQueryService = GetCardinalQueryService(cardinalRepository, cardinalReader, cardinalMapper)
+            ManageCardinalUseCase(
+                cardinalRepository,
+                cardinalMapper,
+                cardinalStatusPolicy,
+                clubReader,
+                clubMemberPolicy,
+            )
+        val getCardinalQueryService =
+            GetCardinalQueryService(cardinalReader, clubMemberPolicy, cardinalMapper)
 
         val clubId = 1L
+        val userId = 99L
         val club = ClubTestFixture.createClub()
 
         beforeTest {
-            clearMocks(cardinalRepository, cardinalReader, cardinalMapper, clubReader)
+            clearMocks(cardinalRepository, cardinalReader, cardinalMapper, clubReader, clubMemberPolicy)
             every { clubReader.getClubById(clubId) } returns club
+            every {
+                clubMemberPolicy.getActiveMember(
+                    clubId,
+                    userId,
+                )
+            } returns ClubTestFixture.createClubMember(club = club)
         }
 
         describe("save") {
@@ -52,7 +68,7 @@ class CardinalUseCaseTest :
                     every { cardinalMapper.toEntity(club, request) } returns toSave
                     every { cardinalRepository.save(toSave) } returns saved
 
-                    manageCardinalUseCase.save(clubId, request)
+                    manageCardinalUseCase.save(clubId, request, userId)
 
                     verify { cardinalRepository.findByClubIdAndCardinalNumber(clubId, 7) }
                     verify { cardinalRepository.save(toSave) }
@@ -75,7 +91,7 @@ class CardinalUseCaseTest :
                     every { cardinalMapper.toEntity(club, request) } returns newCardinalBeforeSave
                     every { cardinalRepository.save(newCardinalBeforeSave) } returns newCardinalAfterSave
 
-                    manageCardinalUseCase.save(clubId, request)
+                    manageCardinalUseCase.save(clubId, request, userId)
 
                     verify { cardinalRepository.findAllInProgressWithLock() }
                     verify { cardinalRepository.save(newCardinalBeforeSave) }
@@ -91,7 +107,7 @@ class CardinalUseCaseTest :
                 val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 6, year = 2024, semester = 2)
                 every { cardinalRepository.findByIdAndClubId(1L, clubId) } returns cardinal
 
-                manageCardinalUseCase.update(clubId, CardinalUpdateRequest(1L, 2025, 1, false))
+                manageCardinalUseCase.update(clubId, CardinalUpdateRequest(1L, 2025, 1, false), userId)
 
                 cardinal.year shouldBe 2025
                 cardinal.semester shouldBe 1
@@ -116,7 +132,7 @@ class CardinalUseCaseTest :
                 every { cardinalMapper.toResponse(cardinal1) } returns response1
                 every { cardinalMapper.toResponse(cardinal2) } returns response2
 
-                val responses = getCardinalQueryService.findAll(clubId)
+                val responses = getCardinalQueryService.findAll(clubId, userId)
 
                 verify { cardinalReader.findAllByClubIdOrderByCardinalNumberAsc(clubId) }
                 verify(exactly = 2) { cardinalMapper.toResponse(any<Cardinal>()) }

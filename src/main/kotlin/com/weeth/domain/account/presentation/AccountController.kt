@@ -4,11 +4,13 @@ import com.weeth.domain.account.application.dto.response.AccountResponse
 import com.weeth.domain.account.application.exception.AccountErrorCode
 import com.weeth.domain.account.application.usecase.query.GetAccountQueryService
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_FIND_SUCCESS
+import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -27,7 +29,8 @@ class AccountController(
     fun find(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable cardinal: Int,
     ): CommonResponse<AccountResponse> =
-        CommonResponse.success(ACCOUNT_FIND_SUCCESS, getAccountQueryService.findByCardinal(clubId, cardinal))
+        CommonResponse.success(ACCOUNT_FIND_SUCCESS, getAccountQueryService.findByCardinal(clubId, userId, cardinal))
 }

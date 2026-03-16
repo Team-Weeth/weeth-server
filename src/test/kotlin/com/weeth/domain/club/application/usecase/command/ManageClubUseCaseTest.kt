@@ -1,7 +1,6 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
-import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -19,8 +18,7 @@ class ManageClubUseCaseTest :
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val userReader = mockk<UserReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
-        val clubMapper = mockk<ClubMapper>()
-        val useCase = ManageClubUseCase(clubRepository, clubMemberRepository, userReader, clubMemberPolicy, clubMapper)
+        val useCase = ManageClubUseCase(clubRepository, clubMemberRepository, userReader, clubMemberPolicy)
         val adminMember =
             com.weeth.domain.club.fixture.ClubMemberTestFixture
                 .createAdminMember()

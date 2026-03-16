@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service
 
 /**
  * 동아리 멤버 관련 비즈니스 규칙 및 권한 검증
+ * TODO: 캐싱 도입
  */
 @Service
 class ClubMemberPolicy(
@@ -38,6 +39,7 @@ class ClubMemberPolicy(
         clubId: Long,
         userId: Long,
     ) = getActiveMember(clubId, userId).also {
+        // TODO: 동아리 생성자를 LEAD로 저장하고 있어 LEAD도 관리자 권한으로 취급할지 정책 정리가 필요하다.
         if (!it.isAdmin()) {
             throw NotClubAdminException()
         }
