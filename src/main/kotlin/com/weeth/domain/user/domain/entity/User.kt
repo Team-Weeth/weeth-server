@@ -68,6 +68,22 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
     var penaltyCount: Int = 0
         private set
 
+    @Column(nullable = false)
+    var termsAgreed: Boolean = false
+        private set
+
+    @Column(nullable = false)
+    var privacyAgreed: Boolean = false
+        private set
+
+    @Column(length = 200)
+    var bio: String? = null
+        private set
+
+    @Column(length = 500)
+    var profileImageUrl: String? = null
+        private set
+
     constructor(
         id: Long = 0L,
         name: String,
@@ -79,6 +95,7 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         role: Role = Role.USER,
         attendanceStats: AttendanceStats = AttendanceStats(),
         penaltyCount: Int = 0,
+        profileImageUrl: String? = null,
     ) : this() {
         this.id = id
         this.name = name.trim()
@@ -90,6 +107,7 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         this.role = role
         this.attendanceStats = attendanceStats
         this.penaltyCount = penaltyCount
+        this.profileImageUrl = profileImageUrl
     }
 
     val emailValue: String
@@ -129,6 +147,7 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         studentId: String,
         tel: PhoneNumber,
         department: String,
+        bio: String?,
     ) {
         require(name.isNotBlank()) { "이름은 공백일 수 없습니다." }
         this.name = name.trim()
@@ -136,6 +155,16 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         this.studentId = studentId
         this.tel = tel
         this.department = department
+        this.bio = bio?.trim()?.takeIf { it.isNotBlank() }
+    }
+
+    fun agreeTerms() {
+        this.termsAgreed = true
+        this.privacyAgreed = true
+    }
+
+    fun updateProfileImageUrl(url: String?) {
+        this.profileImageUrl = url?.trim()
     }
 
     fun accept() {
@@ -190,6 +219,7 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
             tel: String = "",
             department: String = "",
             status: Status = Status.WAITING,
+            profileImageUrl: String? = null,
         ): User =
             User(
                 name = name,
@@ -198,6 +228,7 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
                 tel = PhoneNumber.from(tel),
                 department = department,
                 status = status,
+                profileImageUrl = profileImageUrl,
             )
     }
 }
