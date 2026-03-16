@@ -124,6 +124,16 @@ class UserController(
         return CommonResponse.success(UserResponseCode.USER_TERMS_AGREE_SUCCESS)
     }
 
+    @PutMapping("/profile-image")
+    @Operation(summary = "프로필 이미지 업로드")
+    fun updateProfileImage(
+        @RequestBody @Valid request: FileSaveRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        ): CommonResponse<Void> {
+        updateProfileImageUseCase.execute(userId, request)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_IMAGE_UPDATE_SUCCESS)
+    }
+
     @PatchMapping
     @Operation(summary = "내 정보 수정")
     fun update(

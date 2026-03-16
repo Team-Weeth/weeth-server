@@ -21,4 +21,5 @@ enum class UserResponseCode(
     JWT_REFRESH_SUCCESS(10910, HttpStatus.OK, "토큰 재발급에 성공했습니다."),
     SOCIAL_LOGIN_SUCCESS(10911, HttpStatus.OK, "소셜 로그인이 성공적으로 처리되었습니다."),
     USER_TERMS_AGREE_SUCCESS(10912, HttpStatus.OK, "약관 동의가 성공적으로 처리되었습니다."),
+    USER_PROFILE_IMAGE_UPDATE_SUCCESS(10913, HttpStatus.OK, "프로필 이미지가 성공적으로 수정되었습니다."),
 }
