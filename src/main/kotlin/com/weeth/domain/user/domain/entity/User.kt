@@ -158,7 +158,11 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         this.bio = bio?.trim()?.takeIf { it.isNotBlank() }
     }
 
-    fun agreeTerms() {
+    fun agreeTerms(
+        termsAgreed: Boolean,
+        privacyAgreed: Boolean,
+    ) {
+        require(termsAgreed && privacyAgreed) { "모든 약관에 동의해야 합니다." }
         this.termsAgreed = true
         this.privacyAgreed = true
     }

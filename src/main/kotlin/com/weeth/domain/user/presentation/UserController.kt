@@ -1,5 +1,7 @@
 package com.weeth.domain.user.presentation
 
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
+import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
@@ -7,8 +9,10 @@ import com.weeth.domain.user.application.dto.response.UserDetailsResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
+import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
+import com.weeth.domain.user.application.usecase.command.UpdateProfileImageUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
 import com.weeth.domain.user.application.usecase.query.GetUserQueryService
 import com.weeth.global.auth.annotation.CurrentUser
@@ -26,6 +30,7 @@ import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -39,6 +44,8 @@ class UserController(
     private val authUserUseCase: AuthUserUseCase,
     private val socialLoginUseCase: SocialLoginUseCase,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
+    private val agreeTermsUseCase: AgreeTermsUseCase,
+    private val updateProfileImageUseCase: UpdateProfileImageUseCase,
     private val getUserQueryService: GetUserQueryService,
 ) {
     @PostMapping("/social/kakao")
@@ -106,6 +113,16 @@ class UserController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<UserSummaryResponse> =
         CommonResponse.success(UserResponseCode.USER_FIND_BY_ID_SUCCESS, getUserQueryService.findMyInfo(userId))
+
+    @PostMapping("/terms")
+    @Operation(summary = "약관 동의")
+    fun agreeTerms(
+        @RequestBody @Valid request: AgreeTermsRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        agreeTermsUseCase.execute(userId, request)
+        return CommonResponse.success(UserResponseCode.USER_TERMS_AGREE_SUCCESS)
+    }
 
     @PatchMapping
     @Operation(summary = "내 정보 수정")
