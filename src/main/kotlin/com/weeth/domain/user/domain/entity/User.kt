@@ -135,7 +135,7 @@ class User(
     }
 
     fun updateProfileImageUrl(url: String?) {
-        this.profileImageUrl = url?.trim()
+        this.profileImageUrl = url?.trim()?.takeIf { it.isNotBlank() }
     }
 
     fun accept() {
