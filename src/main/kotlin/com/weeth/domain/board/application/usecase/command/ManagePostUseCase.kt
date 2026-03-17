@@ -12,13 +12,13 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -41,10 +41,10 @@ class ManagePostUseCase(
         request: CreatePostRequest,
         userId: Long,
     ): PostSaveResponse {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val user = userReader.getById(userId)
         val board = findBoardInClub(boardId, clubId)
-        validateWritePermission(board, user)
+        validateWritePermission(board, member)
 
         val post =
             Post.create(
@@ -52,7 +52,7 @@ class ManagePostUseCase(
                 content = request.content,
                 user = user,
                 board = board,
-                cardinalNumber = request.cardinalNumber, // 기수의 경우는 프론트에서 명시적으로 입력을 받을지, 백엔드에서 최신 기수를 넣을지 UX 고민 후 결정
+                cardinalNumber = request.cardinalNumber, // TODO: 백엔드에서 최신 기수 넣어주기
             )
 
         val savedPost = postRepository.save(post)
@@ -67,12 +67,12 @@ class ManagePostUseCase(
         request: UpdatePostRequest,
         userId: Long,
     ): PostSaveResponse {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val user = userReader.getById(userId)
         val post = findPost(postId)
         if (post.board.club.id != clubId) throw PostNotFoundException()
         validateOwner(post, userId)
-        validateWritePermission(post.board, user)
+        validateWritePermission(post.board, member)
 
         post.update(
             newTitle = request.title,
@@ -90,12 +90,12 @@ class ManagePostUseCase(
         postId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val user = userReader.getById(userId)
         val post = findPost(postId)
         if (post.board.club.id != clubId) throw PostNotFoundException()
         validateOwner(post, userId)
-        validateWritePermission(post.board, user)
+        validateWritePermission(post.board, member)
 
         markPostFilesDeleted(post.id)
         post.markDeleted()
@@ -120,9 +120,9 @@ class ManagePostUseCase(
 
     private fun validateWritePermission(
         board: Board,
-        user: User,
+        member: ClubMember,
     ) {
-        if (!board.canWriteBy(user.role)) {
+        if (!board.canWriteBy(member.memberRole)) {
             throw CategoryAccessDeniedException()
         }
     }

@@ -7,8 +7,6 @@ import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionRepository
-import com.weeth.domain.user.domain.enums.Role
-import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.DayOfWeek
@@ -19,7 +17,6 @@ import java.time.temporal.TemporalAdjusters
 @Transactional(readOnly = true)
 class GetSessionQueryService(
     private val sessionRepository: SessionRepository,
-    private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val sessionMapper: SessionMapper,
 ) {
@@ -28,11 +25,10 @@ class GetSessionQueryService(
         userId: Long,
         sessionId: Long,
     ): SessionResponse {
-        clubMemberPolicy.getActiveMember(clubId, userId)
-        val user = userReader.getById(userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val session = sessionRepository.findByIdAndClubId(sessionId, clubId) ?: throw SessionNotFoundException()
 
-        return if (user.role == Role.ADMIN) {
+        return if (member.isAdminOrLead()) {
             sessionMapper.toAdminResponse(session)
         } else {
             sessionMapper.toResponse(session)

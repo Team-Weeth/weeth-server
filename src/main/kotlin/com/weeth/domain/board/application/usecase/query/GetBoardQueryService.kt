@@ -6,7 +6,6 @@ import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
-import com.weeth.domain.user.domain.enums.Role
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -20,13 +19,12 @@ class GetBoardQueryService(
     fun findBoards(
         clubId: Long,
         userId: Long,
-        role: Role,
     ): List<BoardListResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
 
         return boardRepository
             .findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId)
-            .filter { it.isAccessibleBy(role) }
+            .filter { it.isAccessibleBy(member.memberRole) }
             .map(boardMapper::toListResponse)
     }
 

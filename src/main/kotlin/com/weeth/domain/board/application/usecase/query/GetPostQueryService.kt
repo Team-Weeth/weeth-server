@@ -9,13 +9,13 @@ import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.comment.domain.repository.CommentReader
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
-import com.weeth.domain.user.domain.enums.Role
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Sort
@@ -43,12 +43,11 @@ class GetPostQueryService(
         clubId: Long,
         userId: Long,
         postId: Long,
-        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): PostDetailResponse {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
 
-        if (post.board.club.id != clubId || post.board.isDeleted || !post.board.isAccessibleBy(role)) {
+        if (post.board.club.id != clubId || post.board.isDeleted || !post.board.isAccessibleBy(member.memberRole)) {
             throw PostNotFoundException()
         }
 
@@ -65,11 +64,10 @@ class GetPostQueryService(
         boardId: Long,
         pageNumber: Int,
         pageSize: Int,
-        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): Slice<PostListResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         validatePage(pageNumber, pageSize)
-        validateBoardVisibility(boardId, clubId, role)
+        validateBoardVisibility(boardId, clubId, member.memberRole)
 
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
@@ -88,11 +86,10 @@ class GetPostQueryService(
         keyword: String,
         pageNumber: Int,
         pageSize: Int,
-        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): Slice<PostListResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         validatePage(pageNumber, pageSize)
-        validateBoardVisibility(boardId, clubId, role)
+        validateBoardVisibility(boardId, clubId, member.memberRole)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.searchByBoardId(boardId, keyword.trim(), pageable)
 
@@ -127,11 +124,11 @@ class GetPostQueryService(
     private fun validateBoardVisibility( // todo: 볼 권한이 없는 경우 권한 관련 예외를 던져주는게 나을지 UX 상의 후 결정
         boardId: Long,
         clubId: Long,
-        role: Role,
+        memberRole: MemberRole,
     ) {
         val board =
             boardRepository.findByIdAndClubIdAndIsDeletedFalse(boardId, clubId) ?: throw BoardNotFoundException()
-        if (!board.isAccessibleBy(role)) {
+        if (!board.isAccessibleBy(memberRole)) {
             throw BoardNotFoundException()
         }
     }
