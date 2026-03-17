@@ -97,4 +97,97 @@ class UserTest :
             user.leave()
             user.isBannedOrLeft() shouldBe true
         }
+
+        "agreeTerms 성공 — 모두 true" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.agreeTerms(termsAgreed = true, privacyAgreed = true)
+
+            user.termsAgreed shouldBe true
+            user.privacyAgreed shouldBe true
+        }
+
+        "agreeTerms 실패 — termsAgreed가 false" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            shouldThrow<IllegalArgumentException> {
+                user.agreeTerms(termsAgreed = false, privacyAgreed = true)
+            }
+        }
+
+        "agreeTerms 실패 — privacyAgreed가 false" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            shouldThrow<IllegalArgumentException> {
+                user.agreeTerms(termsAgreed = true, privacyAgreed = false)
+            }
+        }
+
+        "updateProfileImageUrl 정상 설정" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.updateProfileImageUrl("https://example.com/image.png")
+
+            user.profileImageUrl shouldBe "https://example.com/image.png"
+        }
+
+        "updateProfileImageUrl null로 초기화" {
+            val user =
+                User(
+                    name = "test",
+                    email = Email.from("test@test.com"),
+                    profileImageUrl = "https://example.com/old.png",
+                )
+
+            user.updateProfileImageUrl(null)
+
+            user.profileImageUrl shouldBe null
+        }
+
+        "updateProfileImageUrl 앞뒤 공백 제거" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.updateProfileImageUrl("  https://example.com/image.png  ")
+
+            user.profileImageUrl shouldBe "https://example.com/image.png"
+        }
+
+        "update시 bio가 trim되고 blank면 null 처리" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.update(
+                name = "test",
+                email = Email.from("test@test.com"),
+                studentId = "123",
+                tel = PhoneNumber.from("01012345678"),
+                department = "컴퓨터공학과",
+                bio = "  안녕하세요  ",
+            )
+            user.bio shouldBe "안녕하세요"
+
+            user.update(
+                name = "test",
+                email = Email.from("test@test.com"),
+                studentId = "123",
+                tel = PhoneNumber.from("01012345678"),
+                department = "컴퓨터공학과",
+                bio = "   ",
+            )
+            user.bio shouldBe null
+        }
+
+        "update시 bio null이면 null 유지" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.update(
+                name = "test",
+                email = Email.from("test@test.com"),
+                studentId = "123",
+                tel = PhoneNumber.from("01012345678"),
+                department = "컴퓨터공학과",
+                bio = null,
+            )
+
+            user.bio shouldBe null
+        }
     })
