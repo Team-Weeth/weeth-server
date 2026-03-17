@@ -5,7 +5,7 @@ import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
-import com.weeth.domain.club.application.dto.response.ClubResponse
+import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.command.ManageClubUseCase
@@ -64,12 +64,11 @@ class ClubController(
     }
 
     @GetMapping("/{clubId}")
-    @Operation(summary = "동아리 정보 조회 (이름, 소개, 이미지)")
+    @Operation(summary = "동아리 공개 정보 조회 (이름, 소개, 프로필 사진) - 인증 불필요")
     fun getClubPublicInfo(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
-    ): CommonResponse<ClubResponse> {
+    ): CommonResponse<ClubPublicResponse> {
         val info = getClubQueryService.findClub(clubId)
 
         return CommonResponse.success(ClubResponseCode.CLUB_FIND_SUCCESS, info)

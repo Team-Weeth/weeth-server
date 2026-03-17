@@ -7,6 +7,7 @@ import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.jwt.filter.JwtAuthenticationProcessingFilter
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.authorization.AuthorizationDecision
 import org.springframework.security.config.Customizer.withDefaults
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
@@ -48,6 +49,8 @@ class SecurityConfig(
                         "/api/v1/users/email",
                     ).permitAll()
                     .requestMatchers("/health-check")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v4/clubs/*")
                     .permitAll()
                     .requestMatchers(
                         "/admin",

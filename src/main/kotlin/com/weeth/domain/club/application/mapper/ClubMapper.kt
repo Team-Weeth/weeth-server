@@ -4,7 +4,7 @@ import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
-import com.weeth.domain.club.application.dto.response.ClubResponse
+import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
@@ -26,13 +26,11 @@ class ClubMapper {
     )
 
     fun toResponse(club: Club) =
-        ClubResponse(
+        ClubPublicResponse(
             id = TsidBase62Encoder.encode(club.id),
             name = club.name,
-            schoolName = club.schoolName,
             description = club.description,
             profileImageUrl = club.profileImageUrl,
-            backgroundImageUrl = club.backgroundImageUrl,
         )
 
     fun toDetailResponse(club: Club) =
