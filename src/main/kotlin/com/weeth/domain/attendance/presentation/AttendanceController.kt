@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -32,7 +31,7 @@ class AttendanceController(
     @PostMapping("/check-in")
     @Operation(summary = "출석체크")
     fun checkIn(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestBody checkIn: CheckInRequest,
@@ -44,7 +43,7 @@ class AttendanceController(
     @GetMapping
     @Operation(summary = "출석 메인페이지")
     fun find(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<AttendanceSummaryResponse> =
@@ -56,7 +55,7 @@ class AttendanceController(
     @GetMapping("/detail")
     @Operation(summary = "출석 내역 상세조회")
     fun findAll(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<AttendanceDetailResponse> =

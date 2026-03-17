@@ -39,7 +39,7 @@ class AttendanceAdminController(
     @PatchMapping("/close")
     @Operation(summary = "출석 마감")
     fun close(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestParam now: LocalDate,
@@ -52,7 +52,7 @@ class AttendanceAdminController(
     @GetMapping("/{sessionId}")
     @Operation(summary = "모든 인원 정기모임 출석 정보 조회")
     fun getAllAttendance(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable sessionId: Long,
@@ -65,7 +65,7 @@ class AttendanceAdminController(
     @PatchMapping("/status")
     @Operation(summary = "모든 인원 정기모임 개별 출석 상태 수정")
     fun updateAttendanceStatus(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestBody @Valid attendanceUpdates: List<UpdateAttendanceStatusRequest>,
@@ -77,7 +77,7 @@ class AttendanceAdminController(
     @PostMapping("/{sessionId}/qr")
     @Operation(summary = "QR 코드 생성")
     fun generateQr(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable sessionId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,

@@ -26,7 +26,7 @@ class EventController(
     @GetMapping("/{eventId}")
     @Operation(summary = "일정 상세 조회")
     fun getEvent(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable eventId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,

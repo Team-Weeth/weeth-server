@@ -37,7 +37,7 @@ class BoardAdminController(
     @GetMapping
     @Operation(summary = "게시판 전체 목록 조회 (삭제/비공개 포함)")
     fun findAllBoards(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<List<BoardDetailResponse>> =
@@ -49,7 +49,7 @@ class BoardAdminController(
     @GetMapping("/{boardId}")
     @Operation(summary = "게시판 상세 조회 (삭제된 게시판 포함)")
     fun findBoard(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -62,7 +62,7 @@ class BoardAdminController(
     @PostMapping
     @Operation(summary = "게시판 생성")
     fun createBoard(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid request: CreateBoardRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -75,7 +75,7 @@ class BoardAdminController(
     @PatchMapping("/{boardId}")
     @Operation(summary = "게시판 설정/이름 수정")
     fun updateBoard(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestBody @Valid request: UpdateBoardRequest,
@@ -89,7 +89,7 @@ class BoardAdminController(
     @DeleteMapping("/{boardId}")
     @Operation(summary = "게시판 삭제")
     fun deleteBoard(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,

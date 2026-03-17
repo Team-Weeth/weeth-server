@@ -42,7 +42,7 @@ class ClubAdminController(
     @Operation(summary = "동아리 상세 정보 조회")
     fun getClubDetail(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
     ): CommonResponse<ClubDetailResponse> {
         val detail = getClubQueryService.findClubDetailForAdmin(clubId, userId)
@@ -53,7 +53,7 @@ class ClubAdminController(
     @Operation(summary = "동아리 정보 수정")
     fun update(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Valid @RequestBody request: ClubUpdateRequest,
     ): CommonResponse<Unit> {
@@ -65,7 +65,7 @@ class ClubAdminController(
     @Operation(summary = "동아리 프로필 사진 삭제")
     fun deleteProfileImage(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
     ): CommonResponse<Unit> {
         manageClubUseCase.deleteProfileImage(clubId, userId)
@@ -76,7 +76,7 @@ class ClubAdminController(
     @Operation(summary = "동아리 배경 사진 삭제")
     fun deleteBackgroundImage(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
     ): CommonResponse<Unit> {
         manageClubUseCase.deleteBackgroundImage(clubId, userId)
@@ -87,7 +87,7 @@ class ClubAdminController(
     @Operation(summary = "초대 코드 재생성 (MVP 미사용)", deprecated = true)
     fun regenerateCode(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
     ): CommonResponse<Unit> {
         manageClubUseCase.regenerateCode(clubId, userId)
@@ -98,7 +98,7 @@ class ClubAdminController(
     @Operation(summary = "동아리 멤버 목록 조회")
     fun getClubMembers(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
     ): CommonResponse<List<ClubMemberResponse>> {
         val members = getClubMemberQueryService.findClubMembersForAdmin(clubId, userId)
@@ -109,7 +109,7 @@ class ClubAdminController(
     @Operation(summary = "멤버 승인")
     fun acceptMember(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable clubMemberId: Long,
     ): CommonResponse<Unit> {
@@ -121,7 +121,7 @@ class ClubAdminController(
     @Operation(summary = "멤버 추방")
     fun banMember(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable clubMemberId: Long,
     ): CommonResponse<Unit> {
@@ -133,7 +133,7 @@ class ClubAdminController(
     @Operation(summary = "멤버 권한 변경")
     fun updateMemberRole(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable clubMemberId: Long,
         @Valid @RequestBody request: ClubMemberRoleUpdateRequest,
@@ -146,7 +146,7 @@ class ClubAdminController(
     @Operation(summary = "멤버 OB 기수 등록")
     fun applyOb(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Valid @RequestBody requests: List<ClubMemberApplyObRequest>,
     ): CommonResponse<Unit> {
