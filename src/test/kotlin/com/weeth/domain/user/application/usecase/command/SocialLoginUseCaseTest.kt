@@ -64,7 +64,7 @@ class SocialLoginUseCaseTest :
                 every {
                     userSocialAccountRepository.findByProviderAndProviderUserId(SocialProvider.APPLE, "apple-user-1")
                 } returns Optional.of(account)
-                every { jwtManageUseCase.create(user.id, user.emailValue, user.role) } returns
+                every { jwtManageUseCase.create(user.id, user.emailValue) } returns
                     JwtDto("access", "refresh")
 
                 val result = useCase.socialLoginByApple(request)

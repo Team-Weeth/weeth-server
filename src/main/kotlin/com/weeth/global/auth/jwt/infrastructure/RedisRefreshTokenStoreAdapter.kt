@@ -1,6 +1,5 @@
 package com.weeth.global.auth.jwt.infrastructure
 
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
 import com.weeth.global.auth.jwt.application.exception.RedisTokenNotFoundException
 import com.weeth.global.auth.jwt.domain.port.RefreshTokenStorePort
@@ -17,7 +16,6 @@ class RedisRefreshTokenStoreAdapter(
     override fun save(
         userId: Long,
         refreshToken: String,
-        role: Role,
         email: String,
     ) {
         val key = getKey(userId)
@@ -25,7 +23,6 @@ class RedisRefreshTokenStoreAdapter(
             key,
             mapOf(
                 TOKEN to refreshToken,
-                ROLE to role.name,
                 EMAIL to email,
             ),
         )
@@ -52,24 +49,6 @@ class RedisRefreshTokenStoreAdapter(
             ?: throw RedisTokenNotFoundException()
     }
 
-    override fun getRole(userId: Long): Role {
-        val key = getKey(userId)
-        val role =
-            redisTemplate.opsForHash<String, String>().get(key, ROLE)
-                ?: throw RedisTokenNotFoundException()
-        return runCatching { Role.valueOf(role) }.getOrElse { throw InvalidTokenException() }
-    }
-
-    override fun updateRole(
-        userId: Long,
-        role: Role,
-    ) {
-        val key = getKey(userId)
-        if (redisTemplate.hasKey(key) == true) {
-            redisTemplate.opsForHash<String, String>().put(key, ROLE, role.name)
-        }
-    }
-
     private fun find(userId: Long): String {
         val key = getKey(userId)
         return redisTemplate.opsForHash<String, String>().get(key, TOKEN)
@@ -81,7 +60,6 @@ class RedisRefreshTokenStoreAdapter(
     companion object {
         private const val PREFIX = "refreshToken:"
         private const val TOKEN = "token"
-        private const val ROLE = "role"
         private const val EMAIL = "email"
     }
 }

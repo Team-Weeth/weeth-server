@@ -42,7 +42,7 @@ class SocialLoginUseCase(
 
         if (user.isBannedOrLeft()) throw UserInActiveException()
 
-        val token = jwtManageUseCase.create(user.id, user.emailValue, user.role)
+        val token = jwtManageUseCase.create(user.id, user.emailValue)
 
         return userMapper.toSocialLoginResponse(token, isNewUser)
     }

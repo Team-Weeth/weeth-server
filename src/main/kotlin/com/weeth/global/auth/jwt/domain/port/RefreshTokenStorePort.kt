@@ -1,12 +1,9 @@
 package com.weeth.global.auth.jwt.domain.port
 
-import com.weeth.domain.user.domain.enums.Role
-
 interface RefreshTokenStorePort {
     fun save(
         userId: Long,
         refreshToken: String,
-        role: Role,
         email: String,
     )
 
@@ -18,11 +15,4 @@ interface RefreshTokenStorePort {
     )
 
     fun getEmail(userId: Long): String
-
-    fun getRole(userId: Long): Role
-
-    fun updateRole(
-        userId: Long,
-        role: Role,
-    )
 }

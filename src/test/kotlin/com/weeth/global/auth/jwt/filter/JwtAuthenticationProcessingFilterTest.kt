@@ -1,6 +1,5 @@
 package com.weeth.global.auth.jwt.filter
 
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.model.AuthenticatedUser
@@ -41,7 +40,7 @@ class JwtAuthenticationProcessingFilterTest :
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
                 every { jwtService.extractClaims("access-token") } returns
-                    JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", Role.ADMIN)
+                    JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com")
 
                 filter.doFilter(request, response, chain)
 
@@ -51,8 +50,7 @@ class JwtAuthenticationProcessingFilterTest :
                 val principal = authentication.principal as AuthenticatedUser
                 principal.id shouldBe 1L
                 principal.email shouldBe "admin@weeth.com"
-                principal.role.name shouldBe "ADMIN"
-                authentication.authorities.any { it.authority == "ROLE_ADMIN" } shouldBe true
+                authentication.authorities.any { it.authority == "ROLE_USER" } shouldBe true
             }
 
             it("토큰이 없으면 인증을 저장하지 않는다") {
