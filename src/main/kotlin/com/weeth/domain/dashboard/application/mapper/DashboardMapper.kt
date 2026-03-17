@@ -16,6 +16,7 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.schedule.domain.entity.Event
 import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
@@ -41,9 +42,8 @@ class DashboardMapper(
 
     fun toMyInfoResponse(user: User) =
         DashboardMyInfoResponse(
-            name = user.name,
-            profileImageUrl = null, // TODO: 프로필 이미지 기능 구현 후 연동
-            bio = null, // TODO: 자기소개 기능 구현 후 연동
+            author = UserInfo.from(user),
+            bio = user.bio,
         )
 
     fun toHomeResponse(
@@ -95,13 +95,11 @@ class DashboardMapper(
 
     fun toPostResponse(
         post: Post,
-        authorProfileImage: File?,
         files: List<File>,
         now: LocalDateTime,
     ) = DashboardPostResponse(
         id = post.id,
-        name = post.user.name,
-        authorProfileImageUrl = authorProfileImage?.let { fileMapper.toFileResponse(it).fileUrl },
+        author = UserInfo.from(post.user),
         title = post.title,
         content = post.content,
         time = post.createdAt,

@@ -2,17 +2,15 @@ package com.weeth.domain.board.application.dto.response
 
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
-import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.user.application.dto.response.UserInfo
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
 data class PostDetailResponse(
     @field:Schema(description = "게시글 ID")
     val id: Long,
-    @field:Schema(description = "작성자명")
-    val name: String,
-    @field:Schema(description = "작성자 역할")
-    val role: Role,
+    @field:Schema(description = "작성자 정보")
+    val author: UserInfo,
     @field:Schema(description = "제목")
     val title: String,
     @field:Schema(description = "내용")
