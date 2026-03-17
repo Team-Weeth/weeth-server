@@ -27,16 +27,16 @@ class UserMapper {
         userCardinals: List<UserCardinal>,
     ): UserProfileResponse =
         UserProfileResponse(
-            user.id,
-            user.name,
-            user.emailValue,
-            user.studentId,
-            user.telValue,
-            user.department,
-            toCardinalNumbers(userCardinals),
-            user.role,
-            user.bio,
-            user.profileImageUrl,
+            id = user.id,
+            name = user.name,
+            email = user.emailValue,
+            studentId = user.studentId,
+            tel = user.telValue,
+            department = user.department,
+            cardinals = toCardinalNumbers(userCardinals),
+            role = user.role,
+            bio = user.bio,
+            profileImageUrl = user.profileImageUrl,
         )
 
     fun toAdminUserResponse(
@@ -44,21 +44,21 @@ class UserMapper {
         userCardinals: List<UserCardinal>,
     ): AdminUserResponse =
         AdminUserResponse(
-            user.id,
-            user.name,
-            user.emailValue,
-            user.studentId,
-            user.telValue,
-            user.department,
-            toCardinalNumbers(userCardinals),
-            user.status,
-            user.role,
-            user.attendanceCount,
-            user.absenceCount,
-            user.attendanceRate,
-            user.penaltyCount,
-            user.createdAt,
-            user.modifiedAt,
+            id = user.id,
+            name = user.name,
+            email = user.emailValue,
+            studentId = user.studentId,
+            tel = user.telValue,
+            department = user.department,
+            cardinals = toCardinalNumbers(userCardinals),
+            status = user.status,
+            role = user.role,
+            attendanceCount = user.attendanceCount,
+            absenceCount = user.absenceCount,
+            attendanceRate = user.attendanceRate,
+            penaltyCount = user.penaltyCount,
+            createdAt = user.createdAt,
+            modifiedAt = user.modifiedAt,
         )
 
     fun toUserSummaryResponse(
@@ -66,10 +66,10 @@ class UserMapper {
         userCardinals: List<UserCardinal>,
     ): UserSummaryResponse =
         UserSummaryResponse(
-            user.id,
-            user.name,
-            toCardinalNumbers(userCardinals),
-            user.role,
+            id = user.id,
+            name = user.name,
+            cardinals = toCardinalNumbers(userCardinals),
+            role = user.role,
         )
 
     fun toUserDetailsResponse(
@@ -77,15 +77,15 @@ class UserMapper {
         userCardinals: List<UserCardinal>,
     ): UserDetailsResponse =
         UserDetailsResponse(
-            user.id,
-            user.name,
-            user.emailValue,
-            user.studentId,
-            user.department,
-            toCardinalNumbers(userCardinals),
-            user.role,
-            user.bio,
-            user.profileImageUrl,
+            id = user.id,
+            name = user.name,
+            email = user.emailValue,
+            studentId = user.studentId,
+            department = user.department,
+            cardinals = toCardinalNumbers(userCardinals),
+            role = user.role,
+            bio = user.bio,
+            profileImageUrl = user.profileImageUrl,
         )
 
     private fun toCardinalNumbers(userCardinals: List<UserCardinal>): List<Int> {
