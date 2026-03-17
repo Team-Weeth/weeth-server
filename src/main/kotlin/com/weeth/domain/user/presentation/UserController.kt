@@ -129,7 +129,7 @@ class UserController(
     fun updateProfileImage(
         @RequestBody @Valid request: FileSaveRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        ): CommonResponse<Void> {
+    ): CommonResponse<Void> {
         updateProfileImageUseCase.execute(userId, request)
         return CommonResponse.success(UserResponseCode.USER_PROFILE_IMAGE_UPDATE_SUCCESS)
     }
