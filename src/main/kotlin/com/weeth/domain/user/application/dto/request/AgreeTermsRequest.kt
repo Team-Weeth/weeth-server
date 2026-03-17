@@ -1,10 +1,13 @@
 package com.weeth.domain.user.application.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.AssertTrue
 
 data class AgreeTermsRequest(
     @field:Schema(description = "서비스 이용약관 동의", example = "true")
+    @field:AssertTrue
     val termsAgreed: Boolean,
     @field:Schema(description = "개인정보 처리방침 동의", example = "true")
+    @field:AssertTrue
     val privacyAgreed: Boolean,
 )
