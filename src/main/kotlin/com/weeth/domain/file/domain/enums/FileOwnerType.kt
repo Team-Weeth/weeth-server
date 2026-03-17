@@ -4,4 +4,5 @@ enum class FileOwnerType {
     POST,
     COMMENT,
     RECEIPT,
+    USER_PROFILE,
 }
