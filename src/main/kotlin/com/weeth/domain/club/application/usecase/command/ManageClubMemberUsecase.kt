@@ -1,6 +1,7 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberBioRequest
 import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.ClubCantJoinException
@@ -65,6 +66,16 @@ class ManageClubMemberUsecase(
                 }
 
         clubMemberRepository.save(member)
+    }
+
+    @Transactional
+    fun updateBio(
+        clubId: Long,
+        userId: Long,
+        request: UpdateMemberBioRequest,
+    ) {
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        member.updateBio(request.bio)
     }
 
     /**

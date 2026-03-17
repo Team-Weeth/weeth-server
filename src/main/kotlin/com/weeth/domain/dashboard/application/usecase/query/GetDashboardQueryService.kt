@@ -40,7 +40,7 @@ class GetDashboardQueryService(
         clubId: Long,
         userId: Long,
     ): DashboardHomeResponse {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val myMember = clubMemberPolicy.getActiveMember(clubId, userId)
 
         val club = clubReader.getClubById(clubId)
         val memberCount = clubMemberReader.countActiveByClubId(clubId)
@@ -51,7 +51,7 @@ class GetDashboardQueryService(
         val todaySessions = sessionReader.findAllByClubIdAndStartBetween(clubId, todayStart, todayEnd)
 
         val myClubs = clubMemberReader.findActiveByUserId(userId).map(dashboardMapper::toMyClubResponse)
-        val myInfo = dashboardMapper.toMyInfoResponse(userReader.getById(userId))
+        val myInfo = dashboardMapper.toMyInfoResponse(userReader.getById(userId), myMember)
 
         return dashboardMapper.toHomeResponse(
             club = club,

@@ -29,7 +29,6 @@ class UserMapper {
             department = user.department,
             cardinals = emptyList(),
             role = user.role,
-            bio = user.bio,
             profileImageUrl = user.profileImageUrl,
         )
 

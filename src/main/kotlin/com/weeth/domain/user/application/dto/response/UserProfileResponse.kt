@@ -20,8 +20,6 @@ data class UserProfileResponse(
     val cardinals: List<Int>,
     @field:Schema(description = "권한", example = "USER", nullable = true)
     val role: Role?,
-    @field:Schema(description = "자기소개")
-    val bio: String?,
     @field:Schema(description = "프로필 이미지 URL")
     val profileImageUrl: String?,
 )

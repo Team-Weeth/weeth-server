@@ -63,6 +63,10 @@ class ClubMember(
     var penaltyCount: Int = 0
         private set
 
+    @Column(length = 30)
+    var bio: String? = null
+        private set
+
     fun accept() {
         check(memberStatus == MemberStatus.WAITING) { "대기 상태인 멤버만 승인할 수 있습니다." }
         memberStatus = MemberStatus.ACTIVE
@@ -109,6 +113,12 @@ class ClubMember(
 
     fun incrementPenaltyCount() {
         penaltyCount++
+    }
+
+    fun updateBio(bio: String?) {
+        val trimmed = bio?.trim()?.takeIf { it.isNotBlank() }
+        require((trimmed?.length ?: 0) <= 30) { "자기소개는 30자 이하여야 합니다." }
+        this.bio = trimmed
     }
 
     fun decrementPenaltyCount() {

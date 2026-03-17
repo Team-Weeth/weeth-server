@@ -2,6 +2,7 @@ package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberBioRequest
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
@@ -23,6 +24,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -110,6 +112,18 @@ class ClubController(
         val meInfo = getClubMemberQueryService.findMyMemberProfile(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
+    }
+
+    @PatchMapping("/{clubId}/members/me/bio")
+    @Operation(summary = "내 자기소개 수정")
+    fun updateMyBio(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Valid @RequestBody request: UpdateMemberBioRequest,
+    ): CommonResponse<Unit> {
+        manageClubMemberUsecase.updateBio(clubId, userId, request)
+        return CommonResponse.success(ClubResponseCode.MEMBER_BIO_UPDATED_SUCCESS)
     }
 
     // TODO: MVP 후 동아리 멤버 조회 기능 구현

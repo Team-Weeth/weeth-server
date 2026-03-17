@@ -22,7 +22,4 @@ data class UpdateUserProfileRequest(
     @field:Schema(description = "학과", example = "컴퓨터공학과")
     @field:NotBlank
     val department: String,
-    @field:Schema(description = "자기소개", example = "안녕하세요!")
-    @field:Size(max = 30)
-    val bio: String? = null,
 )

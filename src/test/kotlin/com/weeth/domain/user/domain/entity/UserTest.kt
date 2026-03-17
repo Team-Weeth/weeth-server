@@ -58,7 +58,6 @@ class UserTest :
                     studentId = "123",
                     tel = PhoneNumber.from("01012345678"),
                     department = "CS",
-                    bio = null,
                 )
             }
         }
@@ -178,44 +177,5 @@ class UserTest :
             user.updateProfileImageUrl("  https://example.com/image.png  ")
 
             user.profileImageUrl shouldBe "https://example.com/image.png"
-        }
-
-        "update시 bio가 trim되고 blank면 null 처리" {
-            val user = User(name = "test", email = Email.from("test@test.com"))
-
-            user.update(
-                name = "test",
-                email = Email.from("test@test.com"),
-                studentId = "123",
-                tel = PhoneNumber.from("01012345678"),
-                department = "컴퓨터공학과",
-                bio = "  안녕하세요  ",
-            )
-            user.bio shouldBe "안녕하세요"
-
-            user.update(
-                name = "test",
-                email = Email.from("test@test.com"),
-                studentId = "123",
-                tel = PhoneNumber.from("01012345678"),
-                department = "컴퓨터공학과",
-                bio = "   ",
-            )
-            user.bio shouldBe null
-        }
-
-        "update시 bio null이면 null 유지" {
-            val user = User(name = "test", email = Email.from("test@test.com"))
-
-            user.update(
-                name = "test",
-                email = Email.from("test@test.com"),
-                studentId = "123",
-                tel = PhoneNumber.from("01012345678"),
-                department = "컴퓨터공학과",
-                bio = null,
-            )
-
-            user.bio shouldBe null
         }
     })

@@ -75,10 +75,6 @@ class User(
     var privacyAgreed: Boolean = false
         private set
 
-    @Column(length = 30)
-    var bio: String? = null
-        private set
-
     @Column(length = 500)
     var profileImageUrl: String? = profileImageUrl?.trim()?.takeIf { it.isNotBlank() }
         private set
@@ -111,7 +107,6 @@ class User(
         studentId: String,
         tel: PhoneNumber,
         department: String,
-        bio: String?,
     ) {
         require(name.isNotBlank()) { "이름은 공백일 수 없습니다." }
         this.name = name.trim()
@@ -119,9 +114,6 @@ class User(
         this.studentId = studentId
         this.tel = tel
         this.department = department
-        val trimmedBio = bio?.trim()?.takeIf { it.isNotBlank() }
-        require((trimmedBio?.length ?: 0) <= 30) { "자기소개는 30자 이하여야 합니다." }
-        this.bio = trimmedBio
     }
 
     fun agreeTerms(

@@ -82,6 +82,7 @@ class ClubMapper {
         department = member.user.department,
         studentId = member.user.studentId,
         cardinals = toCardinalNumbers(cardinals),
+        bio = member.bio,
     )
 
     private fun toCardinalNumbers(cardinals: List<ClubMemberCardinal>): List<Int> {

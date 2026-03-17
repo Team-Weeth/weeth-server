@@ -26,4 +26,6 @@ data class ClubMemberProfileResponse(
     val studentId: String,
     @field:Schema(description = "소속 기수 목록", example = "[6, 7]")
     val cardinals: List<Int>,
+    @field:Schema(description = "자기소개")
+    val bio: String?,
 )
