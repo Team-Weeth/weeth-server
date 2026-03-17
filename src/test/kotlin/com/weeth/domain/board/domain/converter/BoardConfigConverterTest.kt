@@ -1,7 +1,7 @@
 package com.weeth.domain.board.domain.converter
 
 import com.weeth.domain.board.domain.vo.BoardConfig
-import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.club.domain.enums.MemberRole
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -14,7 +14,7 @@ class BoardConfigConverterTest :
             val config =
                 BoardConfig(
                     commentEnabled = false,
-                    writePermission = Role.ADMIN,
+                    writePermission = MemberRole.ADMIN,
                     isPrivate = true,
                 )
 

@@ -87,6 +87,8 @@ class ClubMember(
 
     fun isAdmin(): Boolean = memberRole == MemberRole.ADMIN
 
+    fun isAdminOrLead(): Boolean = memberRole.isAdminOrLead()
+
     fun attend() {
         attendanceStats.attend()
     }

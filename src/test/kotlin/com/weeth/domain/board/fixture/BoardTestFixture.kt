@@ -4,8 +4,8 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.entity.Club
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.fixture.ClubTestFixture
-import com.weeth.domain.user.domain.enums.Role
 
 object BoardTestFixture {
     fun create(
@@ -29,6 +29,6 @@ object BoardTestFixture {
             club = club,
             name = name,
             type = BoardType.NOTICE,
-            config = BoardConfig(writePermission = Role.ADMIN),
+            config = BoardConfig(writePermission = MemberRole.ADMIN),
         )
 }
