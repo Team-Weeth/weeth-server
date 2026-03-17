@@ -9,5 +9,11 @@ interface EventReader {
         end: LocalDateTime,
     ): List<Event>
 
+    fun findByClubIdAndDateRange(
+        clubId: Long,
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): List<Event>
+
     fun findAllByCardinal(cardinal: Int): List<Event>
 }

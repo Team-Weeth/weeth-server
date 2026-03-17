@@ -84,9 +84,9 @@ class GetDashboardQueryServiceTest :
                     every { clubReader.getClubById(clubId) } returns club
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { clubMemberReader.countActiveByClubId(clubId) } returns 10L
-                    every { eventReader.findByDateRange(any(), any()) } returns emptyList()
+                    every { eventReader.findByClubIdAndDateRange(clubId, any(), any()) } returns emptyList()
                     every {
-                        sessionReader.findByDateRange(any(), any())
+                        sessionReader.findAllByClubIdAndStartBetween(clubId, any(), any())
                     } returns emptyList()
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
                     every { userReader.getById(userId) } returns user
@@ -144,9 +144,9 @@ class GetDashboardQueryServiceTest :
                     every { clubReader.getClubById(clubId) } returns club
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { clubMemberReader.countActiveByClubId(clubId) } returns 5L
-                    every { eventReader.findByDateRange(any(), any()) } returns listOf(event)
+                    every { eventReader.findByClubIdAndDateRange(clubId, any(), any()) } returns listOf(event)
                     every {
-                        sessionReader.findByDateRange(any(), any())
+                        sessionReader.findAllByClubIdAndStartBetween(clubId, any(), any())
                     } returns listOf(session)
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
                     every { userReader.getById(userId) } returns user
@@ -215,9 +215,9 @@ class GetDashboardQueryServiceTest :
                     val event = ScheduleTestFixture.createEvent(id = 1L)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { eventReader.findByDateRange(any(), any()) } returns listOf(event)
+                    every { eventReader.findByClubIdAndDateRange(clubId, any(), any()) } returns listOf(event)
                     every {
-                        sessionReader.findByDateRange(any(), any())
+                        sessionReader.findAllByClubIdAndStartBetween(clubId, any(), any())
                     } returns emptyList()
 
                     val result = queryService.getMonthlySchedules(clubId, userId)

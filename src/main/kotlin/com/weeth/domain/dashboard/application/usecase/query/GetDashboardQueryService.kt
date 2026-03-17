@@ -45,11 +45,10 @@ class GetDashboardQueryService(
         val club = clubReader.getClubById(clubId)
         val memberCount = clubMemberReader.countActiveByClubId(clubId)
 
-        // TODO: 해당 클럽 회원인지 검증 후 클럽의 오늘 일정만 조회
         val todayStart = LocalDate.now().atStartOfDay()
         val todayEnd = todayStart.plusDays(1).minusNanos(1)
-        val todayEvents = eventReader.findByDateRange(todayStart, todayEnd)
-        val todaySessions = sessionReader.findByDateRange(todayStart, todayEnd)
+        val todayEvents = eventReader.findByClubIdAndDateRange(clubId, todayStart, todayEnd)
+        val todaySessions = sessionReader.findAllByClubIdAndStartBetween(clubId, todayStart, todayEnd)
 
         val myClubs = clubMemberReader.findActiveByUserId(userId).map(dashboardMapper::toMyClubResponse)
         val myInfo = dashboardMapper.toMyInfoResponse(userReader.getById(userId))
@@ -109,12 +108,11 @@ class GetDashboardQueryService(
     ): List<DashboardScheduleResponse> {
         clubMemberPolicy.getActiveMember(clubId, userId)
 
-        // TODO: 해당 클럽 회원인지 검증 후 클럽의 일정만 조회
         val monthStart = LocalDate.now().withDayOfMonth(1).atStartOfDay()
         val monthEnd = monthStart.plusMonths(1).minusNanos(1)
 
-        val events = eventReader.findByDateRange(monthStart, monthEnd)
-        val sessions = sessionReader.findByDateRange(monthStart, monthEnd)
+        val events = eventReader.findByClubIdAndDateRange(clubId, monthStart, monthEnd)
+        val sessions = sessionReader.findAllByClubIdAndStartBetween(clubId, monthStart, monthEnd)
 
         return dashboardMapper.toScheduleResponses(events, sessions)
     }
