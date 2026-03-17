@@ -76,7 +76,7 @@ class User(
     var privacyAgreed: Boolean = false
         private set
 
-    @Column(length = 200)
+    @Column(length = 30)
     var bio: String? = null
         private set
 
@@ -120,7 +120,9 @@ class User(
         this.studentId = studentId
         this.tel = tel
         this.department = department
-        this.bio = bio?.trim()?.takeIf { it.isNotBlank() }
+        val trimmedBio = bio?.trim()?.takeIf { it.isNotBlank() }
+        require((trimmedBio?.length ?: 0) <= 30) { "자기소개는 30자 이하여야 합니다." }
+        this.bio = trimmedBio
     }
 
     fun agreeTerms(
