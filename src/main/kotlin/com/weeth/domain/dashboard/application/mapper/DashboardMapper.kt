@@ -42,7 +42,7 @@ class DashboardMapper(
 
     fun toMyInfoResponse(user: User) =
         DashboardMyInfoResponse(
-            author = UserInfo.from(user),
+            userInfo = UserInfo.from(user),
             bio = user.bio,
         )
 

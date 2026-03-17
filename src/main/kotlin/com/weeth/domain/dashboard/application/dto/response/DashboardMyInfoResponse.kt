@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 
 data class DashboardMyInfoResponse(
     @field:Schema(description = "사용자 정보")
-    val author: UserInfo,
+    val userInfo: UserInfo,
     @field:Schema(description = "자기소개")
     val bio: String?,
 )
