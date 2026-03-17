@@ -58,6 +58,8 @@ class GetUserQueryServiceTest :
                         user.department,
                         listOf(6),
                         user.role,
+                        user.bio,
+                        user.profileImageUrl,
                     )
 
                 every { userRepository.getById(1L) } returns user
@@ -89,6 +91,8 @@ class GetUserQueryServiceTest :
                         user.department,
                         listOf(7),
                         user.role,
+                        user.bio,
+                        user.profileImageUrl,
                     )
 
                 every { userRepository.getById(2L) } returns user

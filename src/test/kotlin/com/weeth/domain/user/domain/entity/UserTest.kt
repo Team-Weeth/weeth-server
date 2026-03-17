@@ -63,6 +63,7 @@ class UserTest :
                     studentId = "123",
                     tel = PhoneNumber.from("01012345678"),
                     department = "CS",
+                    bio = null,
                 )
             }
         }
