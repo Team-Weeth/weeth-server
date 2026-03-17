@@ -5,7 +5,7 @@ import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.enrichUserProfile
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setUserAttendanceStats
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.session.fixture.SessionTestFixture.createOneDaySession
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldBeNull
@@ -21,10 +21,14 @@ class AttendanceMapperTest :
             it("사용자 + 당일 출석 객체를 MainResponse로 매핑한다") {
                 val today = LocalDate.now()
                 val session = createOneDaySession(today, 1, 1111, "Today")
-                val user = createActiveUser("이지훈")
-                val attendance = createAttendance(session, user)
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("이지훈"),
+                    )
+                val attendance = createAttendance(session, member)
 
-                val main = mapper.toSummaryResponse(user, attendance)
+                val main = mapper.toSummaryResponse(member, attendance)
 
                 main.shouldNotBeNull()
                 main.title shouldBe session.title
@@ -35,9 +39,9 @@ class AttendanceMapperTest :
             }
 
             it("attendance가 null이면 필드는 null로 매핑") {
-                val user = createActiveUser("이지훈")
+                val member = ClubMemberTestFixture.createActiveMember(user = createActiveUser("이지훈"))
 
-                val main = mapper.toSummaryResponse(user, null)
+                val main = mapper.toSummaryResponse(member, null)
 
                 main.shouldNotBeNull()
                 main.title.shouldBeNull()
@@ -49,10 +53,14 @@ class AttendanceMapperTest :
             it("일반 유저는 출석 코드가 null로 매핑된다") {
                 val today = LocalDate.now()
                 val session = createOneDaySession(today, 1, 1234, "Today")
-                val user = createActiveUser("일반유저")
-                val attendance = createAttendance(session, user)
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("일반유저"),
+                    )
+                val attendance = createAttendance(session, member)
 
-                val main = mapper.toSummaryResponse(user, attendance)
+                val main = mapper.toSummaryResponse(member, attendance)
 
                 main.shouldNotBeNull()
                 main.code.shouldBeNull()
@@ -65,9 +73,10 @@ class AttendanceMapperTest :
                 val expectedCode = 1234
                 val session = createOneDaySession(today, 1, expectedCode, "Today")
                 val adminUser = createAdminUser("관리자")
-                val attendance = createAttendance(session, adminUser)
+                val member = ClubMemberTestFixture.createAdminMember(club = session.club, user = adminUser)
+                val attendance = createAttendance(session, member)
 
-                val main = mapper.toSummaryResponse(adminUser, attendance, isAdmin = true)
+                val main = mapper.toSummaryResponse(member, attendance, isAdmin = true)
 
                 main.shouldNotBeNull()
                 main.code shouldBe expectedCode
@@ -81,8 +90,12 @@ class AttendanceMapperTest :
         describe("toResponse") {
             it("단일 출석을 AttendanceResponse로 매핑한다") {
                 val session = createOneDaySession(LocalDate.now().minusDays(1), 1, 2222, "D-1")
-                val user = createActiveUser("사용자A")
-                val attendance = createAttendance(session, user)
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("사용자A"),
+                    )
+                val attendance = createAttendance(session, member)
 
                 val response = mapper.toResponse(attendance)
 
@@ -98,21 +111,22 @@ class AttendanceMapperTest :
             it("사용자 + Response 리스트를 DetailResponse로 매핑(total = attend + absence)") {
                 val base = LocalDate.now()
                 val m1 = createOneDaySession(base.minusDays(2), 1, 1000, "D-2")
-                val m2 = createOneDaySession(base.minusDays(1), 1, 1001, "D-1")
-                val user = createActiveUser("이지훈")
-                setUserAttendanceStats(user, 3, 2)
+                val m2 = createOneDaySession(base.minusDays(1), 1, 1001, "D-1", club = m1.club)
+                val member = ClubMemberTestFixture.createActiveMember(club = m1.club, user = createActiveUser("이지훈"))
+                repeat(3) { member.attend() }
+                repeat(2) { member.absent() }
 
-                val a1 = createAttendance(m1, user)
-                val a2 = createAttendance(m2, user)
+                val a1 = createAttendance(m1, member)
+                val a2 = createAttendance(m2, member)
 
                 val r1 = mapper.toResponse(a1)
                 val r2 = mapper.toResponse(a2)
 
-                val detail = mapper.toDetailResponse(user, listOf(r1, r2))
+                val detail = mapper.toDetailResponse(member, listOf(r1, r2))
 
                 detail.shouldNotBeNull()
                 detail.attendances shouldBe listOf(r1, r2)
-                detail.total shouldBe user.attendanceCount + user.absenceCount
+                detail.total shouldBe member.attendanceStats.attendanceCount + member.attendanceStats.absenceCount
             }
         }
 
@@ -121,8 +135,9 @@ class AttendanceMapperTest :
                 val session = createOneDaySession(LocalDate.now(), 1, 3333, "Info")
                 val user = createActiveUser("유저B")
                 enrichUserProfile(user, "컴퓨터공학과", "20201234")
+                val member = ClubMemberTestFixture.createActiveMember(club = session.club, user = user)
 
-                val attendance = createAttendance(session, user)
+                val attendance = createAttendance(session, member)
                 setAttendanceId(attendance, 10L)
 
                 val info = mapper.toInfoResponse(attendance)

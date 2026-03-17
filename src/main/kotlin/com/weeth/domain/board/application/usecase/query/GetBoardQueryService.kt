@@ -5,6 +5,7 @@ import com.weeth.domain.board.application.dto.response.BoardListResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.user.domain.enums.Role
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,30 +14,41 @@ import org.springframework.transaction.annotation.Transactional
 @Transactional(readOnly = true)
 class GetBoardQueryService(
     private val boardRepository: BoardRepository,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val boardMapper: BoardMapper,
 ) {
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     fun findBoards(
         clubId: Long,
+        userId: Long,
         role: Role,
-    ): List<BoardListResponse> =
-        boardRepository
+    ): List<BoardListResponse> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
+
+        return boardRepository
             .findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId)
             .filter { it.isAccessibleBy(role) }
             .map(boardMapper::toListResponse)
+    }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
     fun findBoardDetailForAdmin(
         clubId: Long,
+        userId: Long,
         boardId: Long,
     ): BoardDetailResponse {
+        clubMemberPolicy.requireAdmin(clubId, userId)
         val board = boardRepository.findByIdAndClubId(boardId, clubId) ?: throw BoardNotFoundException()
+
         return boardMapper.toDetailResponseForAdmin(board)
     }
 
-    // TODO(PR4): 해당 클럽 소속 admin인지 검증 필요
-    fun findAllBoardsForAdmin(clubId: Long): List<BoardDetailResponse> =
-        boardRepository
+    fun findAllBoardsForAdmin(
+        clubId: Long,
+        userId: Long,
+    ): List<BoardDetailResponse> {
+        clubMemberPolicy.requireAdmin(clubId, userId)
+
+        return boardRepository
             .findAllByClubIdOrderByIdAsc(clubId)
             .map(boardMapper::toDetailResponseForAdmin)
+    }
 }

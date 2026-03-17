@@ -1,136 +1,135 @@
 package com.weeth.domain.attendance.application.usecase.command
 
+import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.exception.AlreadyAttendedException
-import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
-import com.weeth.domain.attendance.application.exception.QrTokenExpiredException
-import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture
-import com.weeth.domain.session.application.exception.SessionNotInProgressException
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
-import com.weeth.domain.user.domain.repository.UserReader
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import java.time.LocalDateTime
 
 class ManageAttendanceUseCaseTest :
     DescribeSpec({
-        val userReader = mockk<UserReader>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val sessionReader = mockk<SessionReader>()
         val attendanceRepository = mockk<AttendanceRepository>()
         val qrAttendancePort = mockk<QrAttendancePort>()
 
-        val useCase = ManageAttendanceUseCase(userReader, sessionReader, attendanceRepository, qrAttendancePort)
+        val useCase =
+            ManageAttendanceUseCase(
+                clubMemberPolicy,
+                sessionReader,
+                attendanceRepository,
+                qrAttendancePort,
+            )
 
-        beforeTest { clearMocks(userReader, sessionReader, attendanceRepository, qrAttendancePort) }
+        beforeTest {
+            clearMocks(clubMemberPolicy, sessionReader, attendanceRepository, qrAttendancePort)
+        }
 
         describe("checkIn") {
-            val userId = 1L
-            val code = 123456
-            val sessionId = 10L
+            val clubMember = ClubMemberTestFixture.createActiveMember()
+            val session =
+                SessionTestFixture.createInProgressSession(
+                    cardinal = 1,
+                    code = 123456,
+                    title = "Test Session",
+                    club = clubMember.club,
+                )
+            val attendance =
+                com.weeth.domain.attendance.domain.entity.Attendance
+                    .create(session, clubMember)
 
-            context("유효한 코드 + PENDING 상태 + 출석 가능 시간") {
-                it("출석 상태를 ATTEND로 변경하고 user.attend()를 호출한다") {
-                    val session =
-                        SessionTestFixture.createSession(
-                            id = sessionId,
-                            code = code,
-                            start = LocalDateTime.now().minusMinutes(5),
-                            end = LocalDateTime.now().plusMinutes(55),
-                        )
-                    val user = AttendanceTestFixture.createActiveUser("홍길동")
-                    val attendance = AttendanceTestFixture.createAttendance(session, user)
+            it("정상 체크인 시 출석 상태와 멤버 통계를 갱신한다") {
+                every { qrAttendancePort.getCode(session.id) } returns session.code
+                every { sessionReader.getById(session.id) } returns session
+                every { clubMemberPolicy.getActiveMember(clubMember.club.id, clubMember.user.id) } returns clubMember
+                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns
+                    attendance
 
-                    every { qrAttendancePort.getCode(sessionId) } returns code
-                    every { sessionReader.getById(sessionId) } returns session
-                    every { userReader.getById(userId) } returns user
-                    every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns attendance
+                useCase.checkIn(clubMember.club.id, clubMember.user.id, session.id, session.code)
 
-                    useCase.checkIn(userId, sessionId, code)
+                attendance.status shouldBe com.weeth.domain.attendance.domain.enums.AttendanceStatus.ATTEND
+                clubMember.attendanceStats.attendanceCount shouldBe 1
+            }
 
-                    attendance.status shouldBe AttendanceStatus.ATTEND
+            it("이미 출석 처리된 경우 예외를 던진다") {
+                val attendedAttendance =
+                    com.weeth.domain.attendance.domain.entity.Attendance
+                        .create(
+                            session,
+                            clubMember,
+                        ).also {
+                            it.attend()
+                        }
+                every { qrAttendancePort.getCode(session.id) } returns session.code
+                every { sessionReader.getById(session.id) } returns session
+                every { clubMemberPolicy.getActiveMember(clubMember.club.id, clubMember.user.id) } returns clubMember
+                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns
+                    attendedAttendance
+
+                shouldThrow<AlreadyAttendedException> {
+                    useCase.checkIn(clubMember.club.id, clubMember.user.id, session.id, session.code)
                 }
             }
 
-            context("만료된 QR (Redis miss)") {
-                it("QrTokenExpiredException을 던진다") {
-                    every { qrAttendancePort.getCode(sessionId) } returns null
+            it("출석 레코드가 없으면 예외를 던진다") {
+                every { qrAttendancePort.getCode(session.id) } returns session.code
+                every { sessionReader.getById(session.id) } returns session
+                every { clubMemberPolicy.getActiveMember(clubMember.club.id, clubMember.user.id) } returns clubMember
+                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns null
 
-                    shouldThrow<QrTokenExpiredException> { useCase.checkIn(userId, sessionId, code) }
+                shouldThrow<AttendanceNotFoundException> {
+                    useCase.checkIn(clubMember.club.id, clubMember.user.id, session.id, session.code)
                 }
             }
+        }
 
-            context("코드 불일치") {
-                it("AttendanceCodeMismatchException을 던진다") {
-                    every { qrAttendancePort.getCode(sessionId) } returns 999999
+        describe("updateStatus") {
+            it("관리자가 ATTEND로 변경하면 ClubMember 통계를 갱신한다") {
+                val admin = ClubMemberTestFixture.createAdminMember()
+                val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
+                val attendance =
+                    com.weeth.domain.attendance.domain.entity.Attendance.create(
+                        SessionTestFixture.createSession(club = admin.club),
+                        member,
+                    )
 
-                    shouldThrow<AttendanceCodeMismatchException> { useCase.checkIn(userId, sessionId, code) }
-                }
+                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { attendanceRepository.findByIdWithClubMember(1L) } returns attendance
+
+                useCase.updateStatus(admin.club.id, admin.user.id, listOf(UpdateAttendanceStatusRequest(1L, "ATTEND")))
+
+                attendance.status shouldBe com.weeth.domain.attendance.domain.enums.AttendanceStatus.ATTEND
+                member.attendanceStats.attendanceCount shouldBe 1
             }
 
-            context("출석 가능 시간 외 (세션 시작 10분 전 ~ 종료 10분 후 범위 초과)") {
-                it("SessionNotInProgressException을 던진다") {
-                    val session =
-                        SessionTestFixture.createSession(
-                            id = sessionId,
-                            code = code,
-                            start = LocalDateTime.now().minusHours(3),
-                            end = LocalDateTime.now().minusHours(1),
-                        )
+            it("관리자가 PENDING으로 되돌리면 기존 통계를 차감한다") {
+                val admin = ClubMemberTestFixture.createAdminMember()
+                val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
+                val attendance =
+                    com.weeth.domain.attendance.domain.entity.Attendance.create(
+                        SessionTestFixture.createSession(club = admin.club),
+                        member,
+                    )
+                attendance.attend()
+                member.attend()
 
-                    every { qrAttendancePort.getCode(sessionId) } returns code
-                    every { sessionReader.getById(sessionId) } returns session
+                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { attendanceRepository.findByIdWithClubMember(1L) } returns attendance
 
-                    shouldThrow<SessionNotInProgressException> { useCase.checkIn(userId, sessionId, code) }
-                }
-            }
+                useCase.updateStatus(admin.club.id, admin.user.id, listOf(UpdateAttendanceStatusRequest(1L, "PENDING")))
 
-            context("이미 ATTEND 상태인 출석") {
-                it("AlreadyAttendedException을 던진다") {
-                    val session =
-                        SessionTestFixture.createSession(
-                            id = sessionId,
-                            code = code,
-                            start = LocalDateTime.now().minusMinutes(5),
-                            end = LocalDateTime.now().plusMinutes(55),
-                        )
-                    val user = AttendanceTestFixture.createActiveUser("홍길동")
-                    val attendance = AttendanceTestFixture.createAttendance(session, user).also { it.attend() }
-
-                    every { qrAttendancePort.getCode(sessionId) } returns code
-                    every { sessionReader.getById(sessionId) } returns session
-                    every { userReader.getById(userId) } returns user
-                    every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns attendance
-
-                    shouldThrow<AlreadyAttendedException> { useCase.checkIn(userId, sessionId, code) }
-                }
-            }
-
-            context("Attendance 레코드가 없는 경우") {
-                it("AttendanceNotFoundException을 던진다") {
-                    val session =
-                        SessionTestFixture.createSession(
-                            id = sessionId,
-                            code = code,
-                            start = LocalDateTime.now().minusMinutes(5),
-                            end = LocalDateTime.now().plusMinutes(55),
-                        )
-                    val user = AttendanceTestFixture.createActiveUser("홍길동")
-
-                    every { qrAttendancePort.getCode(sessionId) } returns code
-                    every { sessionReader.getById(sessionId) } returns session
-                    every { userReader.getById(userId) } returns user
-                    every { attendanceRepository.findBySessionAndUserWithLock(session, user) } returns null
-
-                    shouldThrow<AttendanceNotFoundException> { useCase.checkIn(userId, sessionId, code) }
-                }
+                attendance.status shouldBe com.weeth.domain.attendance.domain.enums.AttendanceStatus.PENDING
+                member.attendanceStats.attendanceCount shouldBe 0
             }
         }
     })

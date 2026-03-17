@@ -10,6 +10,7 @@ import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.comment.domain.repository.CommentReader
@@ -37,6 +38,7 @@ class GetPostQueryServiceTest :
     DescribeSpec({
         val postRepository = mockk<PostRepository>()
         val boardRepository = mockk<BoardRepository>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val commentReader = mockk<CommentReader>()
         val getCommentQueryService = mockk<GetCommentQueryService>()
         val fileReader = mockk<FileReader>()
@@ -47,6 +49,7 @@ class GetPostQueryServiceTest :
             GetPostQueryService(
                 postRepository,
                 boardRepository,
+                clubMemberPolicy,
                 commentReader,
                 getCommentQueryService,
                 fileReader,
@@ -55,11 +58,13 @@ class GetPostQueryServiceTest :
             )
 
         val clubId = 1L // findPosts/searchPosts 테스트에서 boardRepository mock 인자로 사용
+        val userId = 1L
 
         beforeTest {
             clearMocks(
                 postRepository,
                 boardRepository,
+                clubMemberPolicy,
                 commentReader,
                 getCommentQueryService,
                 fileReader,
@@ -73,7 +78,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns null
 
                 shouldThrow<PostNotFoundException> {
-                    queryService.findPost(clubId, 1L, Role.USER)
+                    queryService.findPost(clubId, userId, 1L, Role.USER)
                 }
             }
 
@@ -131,7 +136,7 @@ class GetPostQueryServiceTest :
                 every { postMapper.toDetailResponse(post, comments, fileResponses) } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
-                val result = queryService.findPost(actualClubId, 1L, Role.USER)
+                val result = queryService.findPost(actualClubId, userId, 1L, Role.USER)
 
                 result.id shouldBe 1L
                 result.comments.size shouldBe 1
@@ -154,7 +159,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
                 shouldThrow<PostNotFoundException> {
-                    queryService.findPost(actualClubId, 1L, Role.USER)
+                    queryService.findPost(actualClubId, userId, 1L, Role.USER)
                 }
             }
 
@@ -178,7 +183,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
                 shouldThrow<PostNotFoundException> {
-                    queryService.findPost(actualClubId, 1L, Role.USER)
+                    queryService.findPost(actualClubId, userId, 1L, Role.USER)
                 }
             }
         }
@@ -192,7 +197,7 @@ class GetPostQueryServiceTest :
                     SliceImpl(emptyList(), pageable, false)
 
                 shouldThrow<NoSearchResultException> {
-                    queryService.searchPosts(clubId, 1L, "키워드", 0, 10, Role.USER)
+                    queryService.searchPosts(clubId, userId, 1L, "키워드", 0, 10, Role.USER)
                 }
             }
 
@@ -202,7 +207,7 @@ class GetPostQueryServiceTest :
                 every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(1L, clubId) } returns privateBoard
 
                 shouldThrow<BoardNotFoundException> {
-                    queryService.searchPosts(clubId, 1L, "키워드", 0, 10, Role.USER)
+                    queryService.searchPosts(clubId, userId, 1L, "키워드", 0, 10, Role.USER)
                 }
             }
         }
@@ -210,19 +215,19 @@ class GetPostQueryServiceTest :
         describe("validatePage") {
             it("음수 페이지면 예외를 던진다") {
                 shouldThrow<PageNotFoundException> {
-                    queryService.findPosts(clubId, 1L, -1, 10, Role.USER)
+                    queryService.findPosts(clubId, userId, 1L, -1, 10, Role.USER)
                 }
             }
 
             it("pageSize가 0이면 예외를 던진다") {
                 shouldThrow<PageNotFoundException> {
-                    queryService.findPosts(clubId, 1L, 0, 0, Role.USER)
+                    queryService.findPosts(clubId, userId, 1L, 0, 0, Role.USER)
                 }
             }
 
             it("pageSize가 최대값을 초과하면 예외를 던진다") {
                 shouldThrow<PageNotFoundException> {
-                    queryService.findPosts(clubId, 1L, 0, 51, Role.USER)
+                    queryService.findPosts(clubId, userId, 1L, 0, 51, Role.USER)
                 }
             }
         }
@@ -257,7 +262,7 @@ class GetPostQueryServiceTest :
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
                 every { postMapper.toListResponse(any(), any(), any()) } returns response
 
-                val result = queryService.findPosts(clubId, 1L, 0, 10, Role.USER)
+                val result = queryService.findPosts(clubId, userId, 1L, 0, 10, Role.USER)
 
                 result.content.size shouldBe 1
                 verify(exactly = 1) { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) }

@@ -2,7 +2,6 @@ package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
-import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
@@ -25,7 +24,6 @@ class ManageClubUseCase(
     private val clubMemberRepository: ClubMemberRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
-    private val clubMapper: ClubMapper,
 ) {
     /**
      * 새로운 동아리를 생성

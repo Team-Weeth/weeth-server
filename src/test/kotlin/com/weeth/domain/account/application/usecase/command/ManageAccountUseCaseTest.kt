@@ -6,6 +6,7 @@ import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -19,13 +20,15 @@ class ManageAccountUseCaseTest :
         val accountRepository = mockk<AccountRepository>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>(relaxed = true)
         val clubReader = mockk<ClubReader>(relaxed = true)
-        val useCase = ManageAccountUseCase(accountRepository, cardinalReader, clubReader)
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val useCase = ManageAccountUseCase(accountRepository, cardinalReader, clubReader, clubMemberPolicy)
 
         val clubId = 1L
+        val userId = 100L
         val club = ClubTestFixture.createClub()
 
         beforeTest {
-            clearMocks(accountRepository, cardinalReader, clubReader)
+            clearMocks(accountRepository, cardinalReader, clubReader, clubMemberPolicy)
             every { clubReader.getClubById(clubId) } returns club
         }
 
@@ -35,7 +38,7 @@ class ManageAccountUseCaseTest :
                     val request = AccountSaveRequest("설명", 100_000, 40)
                     every { accountRepository.existsByClubIdAndCardinal(clubId, 40) } returns true
 
-                    shouldThrow<AccountExistsException> { useCase.save(clubId, request) }
+                    shouldThrow<AccountExistsException> { useCase.save(clubId, request, userId) }
                 }
             }
 
@@ -47,8 +50,9 @@ class ManageAccountUseCaseTest :
                         CardinalTestFixture.createCardinal(cardinalNumber = 40, year = 2026, semester = 1)
                     every { accountRepository.save(any()) } answers { firstArg() }
 
-                    useCase.save(clubId, request)
+                    useCase.save(clubId, request, userId)
 
+                    verify(exactly = 1) { clubMemberPolicy.requireAdmin(clubId, userId) }
                     verify(exactly = 1) { accountRepository.save(any()) }
                 }
             }

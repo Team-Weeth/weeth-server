@@ -1,25 +1,25 @@
 package com.weeth.domain.penalty.application.mapper
 
 import com.weeth.domain.cardinal.domain.entity.Cardinal
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
 import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyDetailResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.domain.entity.Penalty
 import com.weeth.domain.penalty.domain.enums.PenaltyType
-import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.UserCardinal
 import org.springframework.stereotype.Component
 
 @Component
 class PenaltyMapper {
     fun toEntity(
         request: SavePenaltyRequest,
-        user: User,
+        clubMember: ClubMember,
         cardinal: Cardinal,
     ): Penalty =
         Penalty(
-            user = user,
+            clubMember = clubMember,
             cardinal = cardinal,
             penaltyType = request.penaltyType,
             penaltyDescription = request.penaltyDescription ?: "",
@@ -27,26 +27,26 @@ class PenaltyMapper {
 
     fun toAutoPenalty(
         penaltyDescription: String,
-        user: User,
+        clubMember: ClubMember,
         cardinal: Cardinal,
     ): Penalty =
         Penalty(
-            user = user,
+            clubMember = clubMember,
             cardinal = cardinal,
             penaltyType = PenaltyType.AUTO_PENALTY,
             penaltyDescription = penaltyDescription,
         )
 
     fun toResponse(
-        user: User,
+        clubMember: ClubMember,
         penalties: List<Penalty>,
-        userCardinals: List<UserCardinal>,
+        clubMemberCardinals: List<ClubMemberCardinal>,
     ): PenaltyResponse =
         PenaltyResponse(
-            userId = user.id,
-            name = user.name,
-            penaltyCount = user.penaltyCount,
-            cardinals = userCardinals.map { it.cardinal.cardinalNumber },
+            userId = clubMember.user.id,
+            name = clubMember.user.name,
+            penaltyCount = clubMember.penaltyCount,
+            cardinals = clubMemberCardinals.map { it.cardinal.cardinalNumber },
             penalties = penalties.map(::toDetailResponse),
         )
 

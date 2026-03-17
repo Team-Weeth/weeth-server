@@ -12,6 +12,7 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
@@ -27,12 +28,12 @@ class ManagePostUseCase(
     private val postRepository: PostRepository,
     private val boardRepository: BoardRepository,
     private val userReader: UserReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val fileRepository: FileRepository,
     private val fileReader: FileReader,
     private val fileMapper: FileMapper,
     private val postMapper: PostMapper,
 ) {
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     @Transactional
     fun save(
         clubId: Long,
@@ -40,6 +41,7 @@ class ManagePostUseCase(
         request: CreatePostRequest,
         userId: Long,
     ): PostSaveResponse {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         val user = userReader.getById(userId)
         val board = findBoardInClub(boardId, clubId)
         validateWritePermission(board, user)
@@ -58,7 +60,6 @@ class ManagePostUseCase(
         return postMapper.toSaveResponse(savedPost)
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     @Transactional
     fun update(
         clubId: Long,
@@ -66,6 +67,7 @@ class ManagePostUseCase(
         request: UpdatePostRequest,
         userId: Long,
     ): PostSaveResponse {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         val user = userReader.getById(userId)
         val post = findPost(postId)
         if (post.board.club.id != clubId) throw PostNotFoundException()
@@ -82,13 +84,13 @@ class ManagePostUseCase(
         return postMapper.toSaveResponse(post)
     }
 
-    // TODO(PR4): 해당 클럽 소속 멤버인지 검증 필요
     @Transactional
     fun delete(
         clubId: Long,
         postId: Long,
         userId: Long,
     ) {
+        clubMemberPolicy.getActiveMember(clubId, userId)
         val user = userReader.getById(userId)
         val post = findPost(postId)
         if (post.board.club.id != clubId) throw PostNotFoundException()
@@ -120,8 +122,7 @@ class ManagePostUseCase(
         board: Board,
         user: User,
     ) {
-        val userRole = user.role ?: throw CategoryAccessDeniedException()
-        if (!board.canWriteBy(userRole)) {
+        if (!board.canWriteBy(user.role)) {
             throw CategoryAccessDeniedException()
         }
     }

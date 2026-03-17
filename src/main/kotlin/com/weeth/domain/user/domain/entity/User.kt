@@ -4,13 +4,11 @@ import com.weeth.domain.user.domain.converter.EmailConverter
 import com.weeth.domain.user.domain.converter.PhoneNumberConverter
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
-import com.weeth.domain.user.domain.vo.AttendanceStats
 import com.weeth.domain.user.domain.vo.Email
 import com.weeth.domain.user.domain.vo.PhoneNumber
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
-import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -60,14 +58,6 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
     var role: Role = Role.USER
         private set
 
-    @Embedded
-    var attendanceStats: AttendanceStats = AttendanceStats()
-        private set
-
-    @Column(nullable = false)
-    var penaltyCount: Int = 0
-        private set
-
     @Column(nullable = false)
     var termsAgreed: Boolean = false
         private set
@@ -93,8 +83,6 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         department: String = "",
         status: Status = Status.WAITING,
         role: Role = Role.USER,
-        attendanceStats: AttendanceStats = AttendanceStats(),
-        penaltyCount: Int = 0,
         profileImageUrl: String? = null,
     ) : this() {
         this.id = id
@@ -105,8 +93,6 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         this.department = department
         this.status = status
         this.role = role
-        this.attendanceStats = attendanceStats
-        this.penaltyCount = penaltyCount
         this.profileImageUrl = profileImageUrl
     }
 
@@ -115,15 +101,6 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
 
     val telValue: String
         get() = tel.value
-
-    val attendanceCount: Int
-        get() = attendanceStats.attendanceCount
-
-    val absenceCount: Int
-        get() = attendanceStats.absenceCount
-
-    val attendanceRate: Int
-        get() = attendanceStats.attendanceRate
 
     fun leave() {
         status = Status.LEFT
@@ -181,36 +158,6 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
 
     fun updateRole(role: Role) {
         this.role = role
-    }
-
-    fun resetAttendanceStats() {
-        attendanceStats.reset()
-    }
-
-    fun attend() {
-        attendanceStats.attend()
-    }
-
-    fun removeAttend() {
-        attendanceStats.removeAttend()
-    }
-
-    fun absent() {
-        attendanceStats.absent()
-    }
-
-    fun removeAbsent() {
-        attendanceStats.removeAbsent()
-    }
-
-    fun incrementPenaltyCount() {
-        penaltyCount++
-    }
-
-    fun decrementPenaltyCount() {
-        if (penaltyCount > 0) {
-            penaltyCount--
-        }
     }
 
     fun hasRole(role: Role): Boolean = this.role == role

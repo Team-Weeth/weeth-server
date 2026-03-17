@@ -21,6 +21,12 @@ interface CardinalRepository :
         semester: Int,
     ): Optional<Cardinal>
 
+    fun findByClubIdAndYearAndSemester(
+        clubId: Long,
+        year: Int,
+        semester: Int,
+    ): Optional<Cardinal>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query("SELECT c FROM Cardinal c WHERE c.status = 'IN_PROGRESS'")
@@ -52,6 +58,12 @@ interface CardinalRepository :
         year: Int,
         semester: Int,
     ): Cardinal = findByYearAndSemester(year, semester).orElseThrow { CardinalNotFoundException() }
+
+    override fun getByClubIdAndYearAndSemester(
+        clubId: Long,
+        year: Int,
+        semester: Int,
+    ): Cardinal = findByClubIdAndYearAndSemester(clubId, year, semester).orElseThrow { CardinalNotFoundException() }
 
     override fun findByIdOrNull(cardinalId: Long): Cardinal? = findById(cardinalId).orElse(null)
 

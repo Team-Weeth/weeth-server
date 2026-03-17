@@ -23,17 +23,6 @@ class UserTest :
             user.status shouldBe Status.LEFT
         }
 
-        "attendance 카운터 및 출석률 계산" {
-            val user = User(name = "test", email = Email.from("test@test.com"), studentId = "20200001")
-            user.attend()
-            user.attend()
-            user.absent()
-
-            user.attendanceCount shouldBe 2
-            user.absenceCount shouldBe 1
-            user.attendanceRate shouldBe (2 * 100 / 3)
-        }
-
         "updateRole / hasRole" {
             val user = User(name = "test", email = Email.from("test@test.com"), studentId = "20200001")
             user.updateRole(Role.ADMIN)
@@ -85,15 +74,6 @@ class UserTest :
                 )
 
             user.isProfileCompleted() shouldBe true
-        }
-
-        "패널티 카운트 0일 때 감소해도 0 유지" {
-            val user = User(name = "test", email = Email.from("test@test.com"))
-            user.penaltyCount shouldBe 0
-
-            user.decrementPenaltyCount()
-
-            user.penaltyCount shouldBe 0
         }
 
         "isActive / isInactive 동작" {

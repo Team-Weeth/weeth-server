@@ -5,6 +5,7 @@ import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.user.domain.enums.Role
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -16,10 +17,12 @@ import io.mockk.mockk
 class GetBoardQueryServiceTest :
     DescribeSpec({
         val boardRepository = mockk<BoardRepository>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val boardMapper = BoardMapper()
-        val queryService = GetBoardQueryService(boardRepository, boardMapper)
+        val queryService = GetBoardQueryService(boardRepository, clubMemberPolicy, boardMapper)
 
         val clubId = 1L
+        val userId = 10L
 
         describe("findBoards") {
             it("일반 사용자에게는 공개 게시판만 반환한다") {
@@ -32,7 +35,7 @@ class GetBoardQueryServiceTest :
                 every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns
                     listOf(publicBoard, privateBoard)
 
-                val result = queryService.findBoards(clubId, Role.USER)
+                val result = queryService.findBoards(clubId, userId, Role.USER)
 
                 result shouldHaveSize 1
                 result.first().name shouldBe "일반"
@@ -48,7 +51,7 @@ class GetBoardQueryServiceTest :
                 every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns
                     listOf(publicBoard, privateBoard)
 
-                val result = queryService.findBoards(clubId, Role.ADMIN)
+                val result = queryService.findBoards(clubId, userId, Role.ADMIN)
 
                 result shouldHaveSize 2
                 result.map { it.name } shouldBe listOf("일반", "운영")
@@ -65,7 +68,7 @@ class GetBoardQueryServiceTest :
 
                 every { boardRepository.findAllByClubIdOrderByIdAsc(clubId) } returns listOf(activeBoard, deletedBoard)
 
-                val result = queryService.findAllBoardsForAdmin(clubId)
+                val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
                 result shouldHaveSize 2
                 result.map { it.name } shouldBe listOf("일반", "삭제됨")
@@ -80,7 +83,7 @@ class GetBoardQueryServiceTest :
 
                 every { boardRepository.findAllByClubIdOrderByIdAsc(clubId) } returns listOf(publicBoard, privateBoard)
 
-                val result = queryService.findAllBoardsForAdmin(clubId)
+                val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
                 result shouldHaveSize 2
                 result.map { it.name } shouldBe listOf("일반", "운영")
@@ -95,7 +98,7 @@ class GetBoardQueryServiceTest :
                     }
                 every { boardRepository.findByIdAndClubId(3L, clubId) } returns deletedBoard
 
-                val result = queryService.findBoardDetailForAdmin(clubId, 3L)
+                val result = queryService.findBoardDetailForAdmin(clubId, userId, 3L)
 
                 result.isDeleted shouldBe true
             }
@@ -107,7 +110,7 @@ class GetBoardQueryServiceTest :
                     }
                 every { boardRepository.findByIdAndClubId(2L, clubId) } returns privateBoard
 
-                val result = queryService.findBoardDetailForAdmin(clubId, 2L)
+                val result = queryService.findBoardDetailForAdmin(clubId, userId, 2L)
 
                 result.isPrivate shouldBe true
             }
@@ -116,7 +119,7 @@ class GetBoardQueryServiceTest :
                 every { boardRepository.findByIdAndClubId(999L, clubId) } returns null
 
                 shouldThrow<BoardNotFoundException> {
-                    queryService.findBoardDetailForAdmin(clubId, 999L)
+                    queryService.findBoardDetailForAdmin(clubId, userId, 999L)
                 }
             }
         }

@@ -59,8 +59,9 @@ class EventAdminController(
         @PathVariable @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable eventId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        manageEventUseCase.delete(clubId, eventId)
+        manageEventUseCase.delete(clubId, eventId, userId)
         return CommonResponse.success(ScheduleResponseCode.EVENT_DELETE_SUCCESS)
     }
 }
