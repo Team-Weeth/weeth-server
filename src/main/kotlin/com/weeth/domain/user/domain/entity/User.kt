@@ -19,43 +19,53 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "users")
-class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (생성자 정리, lateinit 제거 등)
+class User(
+    id: Long = 0L,
+    name: String,
+    email: Email,
+    studentId: String = "",
+    tel: PhoneNumber = PhoneNumber.from(""),
+    department: String = "",
+    status: Status = Status.WAITING,
+    role: Role = Role.USER,
+    profileImageUrl: String? = null,
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    var id: Long = 0L
+    var id: Long = id
         private set
 
     @Column(nullable = false, length = 50)
-    lateinit var name: String
+    var name: String = name.trim()
         private set
 
     @Convert(converter = EmailConverter::class)
     @Column(name = "email", nullable = false, length = 255)
-    lateinit var email: Email
+    var email: Email = email
         private set
 
     @Column(nullable = false, length = 20)
-    lateinit var studentId: String
+    var studentId: String = studentId
         private set
 
     @Convert(converter = PhoneNumberConverter::class)
     @Column(name = "tel", nullable = false, length = 20)
-    lateinit var tel: PhoneNumber
+    var tel: PhoneNumber = tel
         private set
 
     @Column(nullable = false, length = 100)
-    lateinit var department: String
+    var department: String = department
         private set
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    var status: Status = Status.WAITING
+    var status: Status = status
         private set
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    var role: Role = Role.USER
+    var role: Role = role
         private set
 
     @Column(nullable = false)
@@ -71,30 +81,8 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         private set
 
     @Column(length = 500)
-    var profileImageUrl: String? = null
+    var profileImageUrl: String? = profileImageUrl
         private set
-
-    constructor(
-        id: Long = 0L,
-        name: String,
-        email: Email,
-        studentId: String = "",
-        tel: PhoneNumber = PhoneNumber.from(""),
-        department: String = "",
-        status: Status = Status.WAITING,
-        role: Role = Role.USER,
-        profileImageUrl: String? = null,
-    ) : this() {
-        this.id = id
-        this.name = name.trim()
-        this.email = email
-        this.studentId = studentId
-        this.tel = tel
-        this.department = department
-        this.status = status
-        this.role = role
-        this.profileImageUrl = profileImageUrl
-    }
 
     val emailValue: String
         get() = email.value
