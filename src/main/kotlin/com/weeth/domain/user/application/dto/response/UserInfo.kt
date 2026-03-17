@@ -12,7 +12,7 @@ data class UserInfo(
     @field:Schema(description = "프로필 이미지 URL")
     val profileImageUrl: String?,
     @field:Schema(description = "권한", example = "USER")
-    val role: Role?,
+    val role: Role,
 ) {
     companion object {
         fun from(user: User) =
