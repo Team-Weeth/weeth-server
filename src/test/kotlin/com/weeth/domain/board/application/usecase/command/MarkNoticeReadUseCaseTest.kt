@@ -47,7 +47,7 @@ class MarkNoticeReadUseCaseTest :
             val userId = 1L
             val clubId = 1L
             val boardId = 1L
-            val user = UserTestFixture.createActiveUser1(userId)
+            val user = UserTestFixture.createActiveUser1(1L)
             val club = ClubTestFixture.createClub().also { ReflectionTestUtils.setField(it, "id", clubId) }
             val clubMember = ClubTestFixture.createClubMember(club = club, user = user)
             val noticeBoard = BoardTestFixture.createNoticeBoard(club = club)

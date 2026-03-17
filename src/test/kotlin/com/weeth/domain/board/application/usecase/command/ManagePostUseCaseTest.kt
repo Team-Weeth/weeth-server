@@ -37,6 +37,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import org.springframework.test.util.ReflectionTestUtils
 
 class ManagePostUseCaseTest :
     DescribeSpec({
@@ -79,12 +80,13 @@ class ManagePostUseCaseTest :
             role: Role = Role.USER,
         ): User =
             User(
-                id = id,
                 name = "적순",
                 email = Email.from("test1@test.com"),
                 status = Status.ACTIVE,
                 role = role,
-            )
+            ).apply {
+                ReflectionTestUtils.setField(this, "id", id)
+            }
 
         beforeTest {
             clearMocks(
@@ -215,7 +217,7 @@ class ManagePostUseCaseTest :
             }
 
             it("files가 있으면 기존 파일을 soft delete 후 교체한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
@@ -251,7 +253,7 @@ class ManagePostUseCaseTest :
             }
 
             it("title이 null이면 기존 제목을 유지한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = Post.create("원래 제목", "원래 내용", user, board)
@@ -267,7 +269,7 @@ class ManagePostUseCaseTest :
             }
 
             it("content가 null이면 기존 내용을 유지한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = Post.create("원래 제목", "원래 내용", user, board)
@@ -331,7 +333,7 @@ class ManagePostUseCaseTest :
 
         describe("delete") {
             it("삭제 시 첨부 파일과 게시글을 soft delete한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+                val user = createUser(1L, Role.USER)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)

@@ -63,7 +63,7 @@ class GetDashboardQueryServiceTest :
         val userId = 1L
         val club = ClubTestFixture.createClub()
         val clubMember = ClubTestFixture.createClubMember(club = club)
-        val user = UserTestFixture.createActiveUser1(userId)
+        val user = UserTestFixture.createActiveUser1(1L)
 
         beforeTest {
             clearMocks(

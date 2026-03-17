@@ -20,7 +20,6 @@ import jakarta.persistence.Table
 @Entity
 @Table(name = "users")
 class User(
-    id: Long = 0L,
     name: String,
     email: Email,
     studentId: String = "",
@@ -33,7 +32,7 @@ class User(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    var id: Long = id
+    var id: Long = 0L
         private set
 
     @Column(nullable = false, length = 50)
