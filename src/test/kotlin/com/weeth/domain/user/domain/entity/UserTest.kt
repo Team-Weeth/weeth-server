@@ -42,6 +42,12 @@ class UserTest :
             user.status shouldBe Status.ACTIVE
         }
 
+        "생성 시 빈 이름은 예외가 발생한다" {
+            shouldThrow<IllegalArgumentException> {
+                User(name = "   ", email = Email.from("test@test.com"))
+            }
+        }
+
         "update에서 빈 이름은 예외가 발생한다" {
             val user = User(name = "test", email = Email.from("test@test.com"))
 
@@ -142,6 +148,28 @@ class UserTest :
             user.updateProfileImageUrl(null)
 
             user.profileImageUrl shouldBe null
+        }
+
+        "생성 시 profileImageUrl 공백은 null로 정규화" {
+            val user =
+                User(
+                    name = "test",
+                    email = Email.from("test@test.com"),
+                    profileImageUrl = "   ",
+                )
+
+            user.profileImageUrl shouldBe null
+        }
+
+        "생성 시 profileImageUrl 앞뒤 공백 제거" {
+            val user =
+                User(
+                    name = "test",
+                    email = Email.from("test@test.com"),
+                    profileImageUrl = "  https://example.com/image.png  ",
+                )
+
+            user.profileImageUrl shouldBe "https://example.com/image.png"
         }
 
         "updateProfileImageUrl 앞뒤 공백 제거" {

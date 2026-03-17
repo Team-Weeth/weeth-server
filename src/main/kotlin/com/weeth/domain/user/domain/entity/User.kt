@@ -37,7 +37,7 @@ class User(
         private set
 
     @Column(nullable = false, length = 50)
-    var name: String = name.trim()
+    var name: String = name.trim().also { require(it.isNotBlank()) { "이름은 공백일 수 없습니다." } }
         private set
 
     @Convert(converter = EmailConverter::class)
@@ -81,7 +81,7 @@ class User(
         private set
 
     @Column(length = 500)
-    var profileImageUrl: String? = profileImageUrl
+    var profileImageUrl: String? = profileImageUrl?.trim()?.takeIf { it.isNotBlank() }
         private set
 
     val emailValue: String
