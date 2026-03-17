@@ -35,6 +35,8 @@ class UserMapper {
             user.department,
             toCardinalNumbers(userCardinals),
             user.role,
+            user.bio,
+            user.profileImageUrl,
         )
 
     fun toAdminUserResponse(
@@ -82,6 +84,8 @@ class UserMapper {
             user.department,
             toCardinalNumbers(userCardinals),
             user.role,
+            user.bio,
+            user.profileImageUrl,
         )
 
     private fun toCardinalNumbers(userCardinals: List<UserCardinal>): List<Int> {

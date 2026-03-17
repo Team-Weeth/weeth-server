@@ -3,6 +3,7 @@ package com.weeth.domain.user.application.dto.request
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Size
 
 data class UpdateUserProfileRequest(
     @field:Schema(description = "이름", example = "홍길동")
@@ -21,4 +22,7 @@ data class UpdateUserProfileRequest(
     @field:Schema(description = "학과", example = "컴퓨터공학과")
     @field:NotBlank
     val department: String,
+    @field:Schema(description = "자기소개", example = "안녕하세요!")
+    @field:Size(max = 200)
+    val bio: String? = null,
 )

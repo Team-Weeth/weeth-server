@@ -26,6 +26,7 @@ class UpdateUserProfileUseCase(
             studentId = request.studentId,
             tel = PhoneNumber.from(request.tel),
             department = request.department,
+            bio = request.bio,
         )
     }
 
