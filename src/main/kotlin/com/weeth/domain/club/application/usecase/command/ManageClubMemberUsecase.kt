@@ -104,15 +104,16 @@ class ManageClubMemberUsecase(
 
         clubMemberCardinalRepository.saveAll(cardinals.map { ClubMemberCardinal.create(member, it) })
 
-        cardinals.forEach { initializeAttendances(clubId, member, it) }
+        initializeAttendances(clubId, member, cardinals)
     }
 
+    // TODO: AdminClubMemberUseCase.initializeAttendances와 중복 — MVP 후 공통 서비스로 추출
     private fun initializeAttendances(
         clubId: Long,
         member: ClubMember,
-        cardinal: Cardinal,
+        cardinals: List<Cardinal>,
     ) {
-        val sessions = sessionReader.findAllByClubIdAndCardinalIn(clubId, listOf(cardinal.cardinalNumber))
+        val sessions = sessionReader.findAllByClubIdAndCardinalIn(clubId, cardinals.map { it.cardinalNumber })
         if (sessions.isEmpty()) return
 
         val attendances = sessions.map { Attendance.create(session = it, clubMember = member) }

@@ -94,8 +94,9 @@ class ManageClubMemberUseCaseTest :
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 31) } returns cardinal31
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
-                    every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30)) } returns listOf(session30)
-                    every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(31)) } returns listOf(session31)
+                    every {
+                        sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30, 31))
+                    } returns listOf(session30, session31)
 
                     useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(30, 31)))
 
@@ -107,11 +108,12 @@ class ManageClubMemberUseCaseTest :
                             },
                         )
                     }
-                    verify(
-                        exactly = 2,
-                    ) {
+                    verify(exactly = 1) {
                         attendanceRepository.saveAll(
-                            any<List<com.weeth.domain.attendance.domain.entity.Attendance>>(),
+                            match<List<com.weeth.domain.attendance.domain.entity.Attendance>> {
+                                it.size ==
+                                    2
+                            },
                         )
                     }
                 }
