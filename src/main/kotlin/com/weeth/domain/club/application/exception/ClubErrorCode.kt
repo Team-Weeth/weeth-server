@@ -35,4 +35,10 @@ enum class ClubErrorCode(
 
     @ExplainError("요청한 멤버가 해당 동아리에 속하지 않을 때 발생합니다.")
     CLUB_MEMBER_NOT_IN_CLUB(21108, HttpStatus.BAD_REQUEST, "해당 동아리에 속한 멤버가 아닙니다."),
+
+    @ExplainError("일반 멤버(USER)로 가입 가능한 동아리 수(최대 1개)를 초과했을 때 발생합니다.")
+    CLUB_JOIN_LIMIT_EXCEEDED(21110, HttpStatus.CONFLICT, "가입 가능한 동아리 수를 초과했습니다."),
+
+    @ExplainError("동아리장(LEAD)으로 생성 가능한 동아리 수(최대 1개)를 초과했을 때 발생합니다.")
+    CLUB_CREATE_LIMIT_EXCEEDED(21111, HttpStatus.CONFLICT, "생성 가능한 동아리 수를 초과했습니다."),
 }
