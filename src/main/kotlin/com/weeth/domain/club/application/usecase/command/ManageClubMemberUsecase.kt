@@ -92,7 +92,7 @@ class ManageClubMemberUsecase(
     ) {
         val member = clubMemberPolicy.getActiveMemberWithLock(clubId, userId)
 
-        if (clubMemberCardinalRepository.findAllByClubMember(member).isNotEmpty()) {
+        if (clubMemberCardinalRepository.existsByClubMember(member)) {
             throw CardinalAlreadySetException()
         }
 

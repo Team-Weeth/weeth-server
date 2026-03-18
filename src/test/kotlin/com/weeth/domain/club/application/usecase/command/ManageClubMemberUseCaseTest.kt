@@ -89,7 +89,7 @@ class ManageClubMemberUseCaseTest :
                     val session31 = SessionTestFixture.createSession(club = club, cardinal = 31)
 
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
-                    every { clubMemberCardinalRepository.findAllByClubMember(member) } returns emptyList()
+                    every { clubMemberCardinalRepository.existsByClubMember(member) } returns false
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal30
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 31) } returns cardinal31
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
@@ -131,7 +131,7 @@ class ManageClubMemberUseCaseTest :
                         )
 
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
-                    every { clubMemberCardinalRepository.findAllByClubMember(member) } returns emptyList()
+                    every { clubMemberCardinalRepository.existsByClubMember(member) } returns false
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
@@ -169,7 +169,7 @@ class ManageClubMemberUseCaseTest :
                         )
 
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
-                    every { clubMemberCardinalRepository.findAllByClubMember(member) } returns emptyList()
+                    every { clubMemberCardinalRepository.existsByClubMember(member) } returns false
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
@@ -190,19 +190,8 @@ class ManageClubMemberUseCaseTest :
 
             context("이미 기수가 설정된 멤버가 재설정을 시도하는 경우") {
                 it("CardinalAlreadySetException이 발생한다") {
-                    val cardinal =
-                        CardinalTestFixture.createCardinal(
-                            id = 1L,
-                            club = club,
-                            cardinalNumber = 30,
-                            year = 2024,
-                            semester = 1,
-                        )
-                    val existingMemberCardinal = ClubMemberCardinal.create(member, cardinal)
-
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
-                    every { clubMemberCardinalRepository.findAllByClubMember(member) } returns
-                        listOf(existingMemberCardinal)
+                    every { clubMemberCardinalRepository.existsByClubMember(member) } returns true
 
                     shouldThrow<CardinalAlreadySetException> {
                         useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(31)))
@@ -215,7 +204,7 @@ class ManageClubMemberUseCaseTest :
             context("존재하지 않는 기수를 요청하는 경우") {
                 it("CardinalNotFoundException이 발생한다") {
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
-                    every { clubMemberCardinalRepository.findAllByClubMember(member) } returns emptyList()
+                    every { clubMemberCardinalRepository.existsByClubMember(member) } returns false
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 99) } returns null
 
                     shouldThrow<CardinalNotFoundException> {
