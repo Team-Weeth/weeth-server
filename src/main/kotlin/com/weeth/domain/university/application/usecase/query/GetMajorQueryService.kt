@@ -12,5 +12,12 @@ class GetMajorQueryService(
     private val universityMapper: UniversityMapper,
 ) {
     @Cacheable(value = ["majors"], key = "'all'")
-    fun getMajors(): List<MajorResponse> = careerNetPort.getMajors().map(universityMapper::toMajorResponse)
+    fun getMajors(): List<MajorResponse> =
+        careerNetPort
+            .getMajors()
+            .sortedWith(
+                compareBy({
+                    it.name.firstOrNull()?.let { c -> c !in '가'..'힣' } ?: true
+                }, { it.name }),
+            ).map(universityMapper::toMajorResponse)
 }
