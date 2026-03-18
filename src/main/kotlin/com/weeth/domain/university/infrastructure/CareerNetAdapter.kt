@@ -1,9 +1,9 @@
 package com.weeth.domain.university.infrastructure
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.weeth.domain.university.application.dto.response.MajorResponse
-import com.weeth.domain.university.application.dto.response.SchoolResponse
 import com.weeth.domain.university.application.exception.CareerNetApiException
+import com.weeth.domain.university.domain.model.MajorData
+import com.weeth.domain.university.domain.model.SchoolData
 import com.weeth.domain.university.domain.port.CareerNetPort
 import com.weeth.global.config.properties.CareerNetProperties
 import org.slf4j.LoggerFactory
@@ -29,28 +29,21 @@ class CareerNetAdapter(
         private val log = LoggerFactory.getLogger(CareerNetAdapter::class.java)
     }
 
-    override fun getSchools(): List<SchoolResponse> {
-        val firstPage = fetchSchoolPage(1)
+    override fun getSchools(): List<SchoolData> =
+        fetchAllPages(::fetchSchoolPage)
+            .map { SchoolData(it.schoolName, it.region) }
+
+    override fun getMajors(): List<MajorData> =
+        fetchAllPages(::fetchMajorPage)
+            .map { MajorData(it.mClass, it.lClass) }
+
+    private fun <T : CareerNetItem> fetchAllPages(fetchPage: (Int) -> List<T>): List<T> {
+        val firstPage = fetchPage(1)
         val totalCount = firstPage.firstOrNull()?.totalCount?.toIntOrNull() ?: 0
         val totalPages = ((totalCount + PER_PAGE - 1) / PER_PAGE).coerceAtLeast(1)
-
         val all = firstPage.toMutableList()
-        for (page in 2..totalPages) {
-            all.addAll(fetchSchoolPage(page))
-        }
-        return all.map { SchoolResponse(it.schoolName, it.region) }
-    }
-
-    override fun getMajors(): List<MajorResponse> {
-        val firstPage = fetchMajorPage(1)
-        val totalCount = firstPage.firstOrNull()?.totalCount?.toIntOrNull() ?: 0
-        val totalPages = ((totalCount + PER_PAGE - 1) / PER_PAGE).coerceAtLeast(1)
-
-        val all = firstPage.toMutableList()
-        for (page in 2..totalPages) {
-            all.addAll(fetchMajorPage(page))
-        }
-        return all.map { MajorResponse(it.mClass, it.lClass) }
+        for (page in 2..totalPages) all.addAll(fetchPage(page))
+        return all
     }
 
     private fun fetchSchoolPage(page: Int): List<CareerNetSchoolItem> =
@@ -102,26 +95,30 @@ class CareerNetAdapter(
         }
 }
 
+private interface CareerNetItem {
+    val totalCount: String
+}
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class CareerNetResponse<T>(
-    val dataSearch: DataSearch<T>,
+    val dataSearch: DataSearch<T>?,
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class DataSearch<T>(
-    val content: List<T>,
+    val content: List<T> = emptyList(),
 )
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class CareerNetSchoolItem(
     val schoolName: String,
     val region: String,
-    val totalCount: String,
-)
+    override val totalCount: String,
+) : CareerNetItem
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 internal data class CareerNetMajorItem(
     val lClass: String,
     val mClass: String,
-    val totalCount: String,
-)
+    override val totalCount: String,
+) : CareerNetItem

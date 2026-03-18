@@ -1,10 +1,10 @@
 package com.weeth.domain.university.domain.port
 
-import com.weeth.domain.university.application.dto.response.MajorResponse
-import com.weeth.domain.university.application.dto.response.SchoolResponse
+import com.weeth.domain.university.domain.model.MajorData
+import com.weeth.domain.university.domain.model.SchoolData
 
 interface CareerNetPort {
-    fun getSchools(): List<SchoolResponse>
+    fun getSchools(): List<SchoolData>
 
-    fun getMajors(): List<MajorResponse>
+    fun getMajors(): List<MajorData>
 }
