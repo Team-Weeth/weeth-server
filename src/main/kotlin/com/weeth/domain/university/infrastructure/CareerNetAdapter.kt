@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.weeth.domain.university.application.exception.CareerNetApiException
 import com.weeth.domain.university.domain.model.MajorData
 import com.weeth.domain.university.domain.model.SchoolData
-import com.weeth.domain.university.domain.port.CareerNetPort
+import com.weeth.domain.university.domain.port.UniversityInfoPort
 import com.weeth.global.config.properties.CareerNetProperties
 import org.slf4j.LoggerFactory
 import org.springframework.core.ParameterizedTypeReference
@@ -15,7 +15,7 @@ import org.springframework.web.client.RestClient
 class CareerNetAdapter(
     private val properties: CareerNetProperties,
     restClientBuilder: RestClient.Builder,
-) : CareerNetPort {
+) : UniversityInfoPort {
     private val restClient =
         restClientBuilder
             .baseUrl(properties.baseUrl)
