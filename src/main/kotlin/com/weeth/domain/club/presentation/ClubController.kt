@@ -114,7 +114,7 @@ class ClubController(
     @Operation(summary = "활동 기수 최초 설정 (최초 1회만 가능)")
     @ResponseStatus(HttpStatus.CREATED)
     fun setInitialCardinals(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @Valid @RequestBody request: ClubMemberCardinalSetRequest,
