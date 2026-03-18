@@ -42,6 +42,10 @@ auth:
       keys_uri: https://appleid.apple.com/auth/keys
       private_key_path: test/AuthKey_TEST.p8
 
+career-net:
+  key: ${CAREER_NET_API_KEY:dummy-key-for-test}
+  base-url: https://www.career.go.kr/cnet/openapi/getOpenApi
+
 cloud:
   aws:
     s3:
