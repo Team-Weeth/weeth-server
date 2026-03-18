@@ -31,7 +31,8 @@ class CacheConfig(
             objectMapper.copy().activateDefaultTyping(
                 BasicPolymorphicTypeValidator
                     .builder()
-                    .allowIfBaseType(Any::class.java)
+                    .allowIfSubType("com.weeth.")
+                    .allowIfSubType("java.util.")
                     .build(),
                 ObjectMapper.DefaultTyping.NON_FINAL,
             )
