@@ -34,7 +34,7 @@ class ReceiptAdminController(
     @PostMapping
     @Operation(summary = "회비 사용 내역 기입")
     fun save(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestBody @Valid dto: ReceiptSaveRequest,
@@ -46,7 +46,7 @@ class ReceiptAdminController(
     @DeleteMapping("/{receiptId}")
     @Operation(summary = "회비 사용 내역 취소")
     fun delete(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable receiptId: Long,
@@ -58,7 +58,7 @@ class ReceiptAdminController(
     @PatchMapping("/{receiptId}")
     @Operation(summary = "회비 사용 내역 수정")
     fun update(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable receiptId: Long,

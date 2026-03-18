@@ -13,7 +13,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -29,7 +28,7 @@ class AccountAdminController(
     @PostMapping
     @Operation(summary = "회비 총 금액 기입")
     fun save(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid dto: AccountSaveRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,

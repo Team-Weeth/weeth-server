@@ -31,7 +31,7 @@ class EventAdminController(
     @PostMapping
     @Operation(summary = "일정 생성")
     fun create(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Valid @RequestBody dto: ScheduleSaveRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -43,7 +43,7 @@ class EventAdminController(
     @PatchMapping("/{eventId}")
     @Operation(summary = "일정 수정")
     fun update(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable eventId: Long,
         @Valid @RequestBody dto: ScheduleUpdateRequest,
@@ -56,7 +56,7 @@ class EventAdminController(
     @DeleteMapping("/{eventId}")
     @Operation(summary = "일정 삭제")
     fun delete(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable eventId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,

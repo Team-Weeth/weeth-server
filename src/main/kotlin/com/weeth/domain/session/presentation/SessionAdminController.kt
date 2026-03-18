@@ -36,7 +36,7 @@ class SessionAdminController(
     @PostMapping
     @Operation(summary = "정기모임 생성")
     fun create(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Valid @RequestBody dto: ScheduleSaveRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -48,7 +48,7 @@ class SessionAdminController(
     @PatchMapping("/{sessionId}")
     @Operation(summary = "정기모임 수정")
     fun update(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable sessionId: Long,
         @Valid @RequestBody dto: ScheduleUpdateRequest,
@@ -61,7 +61,7 @@ class SessionAdminController(
     @DeleteMapping("/{sessionId}")
     @Operation(summary = "정기모임 삭제")
     fun delete(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable sessionId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -73,7 +73,7 @@ class SessionAdminController(
     @GetMapping
     @Operation(summary = "정기모임 목록 조회")
     fun getSessionInfos(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestParam(required = false) cardinal: Int?,
         @Parameter(hidden = true) @CurrentUser userId: Long,
