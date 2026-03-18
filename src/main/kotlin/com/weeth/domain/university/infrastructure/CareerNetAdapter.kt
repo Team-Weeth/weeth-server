@@ -41,9 +41,7 @@ class CareerNetAdapter(
         val firstPage = fetchPage(1)
         val totalCount = firstPage.firstOrNull()?.totalCount?.toIntOrNull() ?: 0
         val totalPages = ((totalCount + PER_PAGE - 1) / PER_PAGE).coerceAtLeast(1)
-        val all = firstPage.toMutableList()
-        for (page in 2..totalPages) all.addAll(fetchPage(page))
-        return all
+        return firstPage + (2..totalPages).flatMap(fetchPage)
     }
 
     private fun fetchSchoolPage(page: Int): List<CareerNetSchoolItem> =
@@ -95,7 +93,7 @@ class CareerNetAdapter(
         }
 }
 
-private interface CareerNetItem {
+internal interface CareerNetItem {
     val totalCount: String
 }
 
