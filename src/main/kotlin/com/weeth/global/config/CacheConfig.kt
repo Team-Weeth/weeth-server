@@ -29,7 +29,8 @@ class CacheConfig(
         // 타입 정보(@class)를 포함한 Redis 전용 ObjectMapper 생성
         val redisObjectMapper =
             objectMapper.copy().activateDefaultTyping(
-                BasicPolymorphicTypeValidator.builder()
+                BasicPolymorphicTypeValidator
+                    .builder()
                     .allowIfBaseType(Any::class.java)
                     .build(),
                 ObjectMapper.DefaultTyping.NON_FINAL,
