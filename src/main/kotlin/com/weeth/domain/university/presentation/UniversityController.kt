@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "UNIVERSITY", description = "학교/학과 API")
 @RestController
-@RequestMapping("/api/v4")
+@RequestMapping("/api/v4/university")
 @ApiErrorCodeExample(UniversityErrorCode::class)
 class UniversityController(
     private val getSchoolQueryService: GetSchoolQueryService,
