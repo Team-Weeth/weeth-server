@@ -25,7 +25,7 @@ class ManageClubMemberUsecase(
 ) {
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
-     * MVP에서는 단일 동아리 지원만 가능
+     * 역할(LEAD/USER)별 가입 제한 정책 적용
      * TODO: 출석 초기화
      */
     @Transactional
