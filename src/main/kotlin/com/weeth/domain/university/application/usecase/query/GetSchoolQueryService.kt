@@ -12,6 +12,5 @@ class GetSchoolQueryService(
     private val universityMapper: UniversityMapper,
 ) {
     @Cacheable(value = ["schools"], key = "'all'")
-    fun getSchools(): List<SchoolResponse> =
-        careerNetPort.getSchools().map(universityMapper::toSchoolResponse)
+    fun getSchools(): List<SchoolResponse> = careerNetPort.getSchools().map(universityMapper::toSchoolResponse)
 }

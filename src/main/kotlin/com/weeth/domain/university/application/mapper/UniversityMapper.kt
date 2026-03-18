@@ -8,13 +8,15 @@ import org.springframework.stereotype.Component
 
 @Component
 class UniversityMapper {
-    fun toSchoolResponse(data: SchoolData) = SchoolResponse(
-        schoolName = data.name,
-        region = data.region,
-    )
+    fun toSchoolResponse(data: SchoolData) =
+        SchoolResponse(
+            schoolName = data.name,
+            region = data.region,
+        )
 
-    fun toMajorResponse(data: MajorData) = MajorResponse(
-        majorName = data.name,
-        category = data.category,
-    )
+    fun toMajorResponse(data: MajorData) =
+        MajorResponse(
+            majorName = data.name,
+            category = data.category,
+        )
 }
