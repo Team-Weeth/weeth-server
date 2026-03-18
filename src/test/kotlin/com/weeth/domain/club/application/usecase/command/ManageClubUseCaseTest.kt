@@ -1,16 +1,21 @@
 package com.weeth.domain.club.application.usecase.command
 
+import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.exception.ClubCreateLimitExceededException
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.repository.UserReader
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 
 class ManageClubUseCaseTest :
     DescribeSpec({
@@ -22,6 +27,31 @@ class ManageClubUseCaseTest :
         val adminMember =
             com.weeth.domain.club.fixture.ClubMemberTestFixture
                 .createAdminMember()
+
+        beforeTest {
+            clearMocks(clubRepository, clubMemberRepository, userReader, clubMemberPolicy)
+        }
+
+        describe("create") {
+            context("이미 LEAD로 1개 동아리를 생성한 사용자가 생성 시도하는 경우") {
+                it("ClubCreateLimitExceededException이 발생한다") {
+                    every { clubMemberPolicy.validateCreateLimit(10L) } throws ClubCreateLimitExceededException()
+
+                    shouldThrow<ClubCreateLimitExceededException> {
+                        useCase.create(
+                            10L,
+                            ClubCreateRequest(
+                                name = "새 동아리",
+                                schoolName = "가천대학교",
+                                description = "소개",
+                            ),
+                        )
+                    }
+
+                    verify(exactly = 0) { clubRepository.save(any()) }
+                }
+            }
+        }
 
         describe("update") {
             it("null 필드는 유지하고 전달된 필드만 수정한다") {

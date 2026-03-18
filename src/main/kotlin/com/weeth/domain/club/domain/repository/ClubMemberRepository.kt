@@ -1,6 +1,7 @@
 package com.weeth.domain.club.domain.repository
 
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
@@ -68,5 +69,20 @@ interface ClubMemberRepository :
     )
     override fun countActiveByClubId(
         @Param("clubId") clubId: Long,
+    ): Long
+
+    @Query(
+        """
+        SELECT COUNT(cm)
+        FROM ClubMember cm
+        WHERE cm.user.id = :userId
+        AND cm.memberStatus = :memberStatus
+        AND cm.memberRole = :memberRole
+        """,
+    )
+    override fun countByUserIdAndMemberStatusAndMemberRole(
+        @Param("userId") userId: Long,
+        @Param("memberStatus") memberStatus: MemberStatus,
+        @Param("memberRole") memberRole: MemberRole,
     ): Long
 }

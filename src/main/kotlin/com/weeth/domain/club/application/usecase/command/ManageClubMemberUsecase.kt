@@ -3,7 +3,6 @@ package com.weeth.domain.club.application.usecase.command
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
-import com.weeth.domain.club.application.exception.ClubCantJoinException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
@@ -43,14 +42,7 @@ class ManageClubMemberUsecase(
             throw AlreadyJoinedException()
         }
 
-        val isJoinedAnotherClub =
-            clubMemberRepository
-                .findAllByUserId(userId)
-                .any { it.club.id != clubId && it.isActive() }
-
-        if (isJoinedAnotherClub) {
-            throw ClubCantJoinException()
-        }
+        clubMemberPolicy.validateJoinLimit(userId)
 
         ClubCodePolicy.validate(club.code, request.code)
 

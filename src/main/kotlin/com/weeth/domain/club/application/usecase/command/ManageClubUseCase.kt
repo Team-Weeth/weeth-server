@@ -36,6 +36,8 @@ class ManageClubUseCase(
         userId: Long,
         request: ClubCreateRequest,
     ) {
+        clubMemberPolicy.validateCreateLimit(userId)
+
         val user =
             userReader.getById(userId)
 
