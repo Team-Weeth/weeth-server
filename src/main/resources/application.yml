@@ -45,3 +45,7 @@ app:
   file:
     cdn-base-url: ${CDN_BASE_URL:}
     presigned-url-expiration-minutes: 5
+
+career-net:
+  key: ${CAREER_NET_API_KEY}
+  base-url: https://www.career.go.kr/cnet/openapi/getOpenApi
