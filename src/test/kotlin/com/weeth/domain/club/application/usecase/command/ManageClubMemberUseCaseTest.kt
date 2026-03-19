@@ -7,10 +7,9 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.exception.CardinalAlreadySetException
-import com.weeth.domain.club.application.exception.ClubCantJoinException
+import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
-import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
