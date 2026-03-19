@@ -32,7 +32,7 @@ class CacheConfig(
                 BasicPolymorphicTypeValidator
                     .builder()
                     .allowIfSubType("com.weeth.")
-                    .allowIfSubType("java.util.")
+                    .allowIfSubType(java.util.ArrayList::class.java)
                     .build(),
                 ObjectMapper.DefaultTyping.NON_FINAL,
             )
