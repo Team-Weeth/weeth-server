@@ -38,4 +38,13 @@ enum class ClubErrorCode(
 
     @ExplainError("이미 활동 기수가 설정된 멤버가 다시 설정을 시도할 때 발생합니다.")
     CARDINAL_ALREADY_SET(21109, HttpStatus.CONFLICT, "이미 활동 기수가 설정되어 있습니다."),
+
+    @ExplainError("LEAD가 아닌 멤버가 LEAD 이양을 시도할 때 발생합니다.")
+    NOT_LEAD(21110, HttpStatus.FORBIDDEN, "LEAD만 권한을 이양할 수 있습니다."),
+
+    @ExplainError("LEAD를 이양이 아닌 직접 역할 변경으로 설정하려 할 때 발생합니다.")
+    LEAD_TRANSFER_ONLY(21111, HttpStatus.BAD_REQUEST, "LEAD는 이양을 통해서만 변경할 수 있습니다."),
+
+    @ExplainError("자기 자신에게 LEAD 권한을 이양하려 할 때 발생합니다.")
+    LEAD_SELF_TRANSFER(21112, HttpStatus.BAD_REQUEST, "자기 자신에게 LEAD를 이양할 수 없습니다."),
 }
