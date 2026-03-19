@@ -7,6 +7,8 @@ import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
+import com.weeth.domain.club.application.exception.LeadSelfTransferException
+import com.weeth.domain.club.application.exception.NotLeadException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
@@ -62,6 +64,22 @@ class AdminClubMemberUseCase(
 
         val member = clubMemberPolicy.getMemberInClub(clubId, request.clubMemberId)
         member.updateRole(request.memberRole)
+    }
+
+    @Transactional
+    fun transferLead(
+        clubId: Long,
+        userId: Long,
+        targetClubMemberId: Long,
+    ) {
+        val currentLead = clubMemberPolicy.getActiveMemberWithLock(clubId, userId)
+        if (!currentLead.isLead()) throw NotLeadException()
+
+        val target = clubMemberPolicy.getActiveMemberInClubWithLock(clubId, targetClubMemberId)
+        if (currentLead.id == target.id) throw LeadSelfTransferException()
+
+        currentLead.releaseLead()
+        target.assignLead()
     }
 
     // TODO: setInitialCardinals와 동시 호출 시 출석 중복 생성 가능 — 멤버 단위 락 추가 검토

@@ -82,10 +82,23 @@ class ClubMember(
     fun isActive(): Boolean = memberStatus == MemberStatus.ACTIVE
 
     fun updateRole(role: MemberRole) {
+        check(role != MemberRole.LEAD) { "LEAD는 이양을 통해서만 변경할 수 있습니다." }
+        check(!isLead()) { "LEAD의 권한은 이양을 통해서만 변경할 수 있습니다." }
         this.memberRole = role
     }
 
     fun isAdmin(): Boolean = memberRole == MemberRole.ADMIN
+
+    fun isLead(): Boolean = memberRole == MemberRole.LEAD
+
+    fun releaseLead() {
+        check(isLead()) { "LEAD만 권한을 내려놓을 수 있습니다." }
+        this.memberRole = MemberRole.ADMIN
+    }
+
+    fun assignLead() {
+        this.memberRole = MemberRole.LEAD
+    }
 
     fun attend() {
         attendanceStats.attend()
