@@ -128,7 +128,7 @@ class ManageClubMemberUsecase(
         clubId: Long,
         userId: Long,
     ) {
-        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMemberWithLock(clubId, userId)
 
         if (member.memberRole == MemberRole.LEAD) {
             throw CannotLeaveAsLeadException()
