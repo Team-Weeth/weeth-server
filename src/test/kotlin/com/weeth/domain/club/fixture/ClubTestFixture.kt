@@ -4,6 +4,7 @@ import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.user.fixture.UserTestFixture
 import org.springframework.test.util.ReflectionTestUtils
@@ -14,7 +15,12 @@ object ClubTestFixture {
         code: String = "TEST001",
         description: String? = "테스트 동아리 소개",
         schoolName: String = "가천대학교",
-        clubContact: ClubContact = ClubContact.from(email = "test@leets.com", phoneNumber = null),
+        clubContact: ClubContact =
+            ClubContact.from(
+                email = "test@leets.com",
+                phoneNumber = "010-0000-0000",
+                primaryContact = PrimaryContact.PHONE,
+            ),
     ): Club {
         val club =
             Club.create(
