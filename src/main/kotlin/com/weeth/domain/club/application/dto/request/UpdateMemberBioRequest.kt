@@ -6,5 +6,5 @@ import jakarta.validation.constraints.Size
 data class UpdateMemberBioRequest(
     @field:Schema(description = "자기소개", example = "안녕하세요!")
     @field:Size(max = 30)
-    val bio: String? = null,
+    val bio: String?,
 )
