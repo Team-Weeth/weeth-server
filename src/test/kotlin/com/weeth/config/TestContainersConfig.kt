@@ -20,7 +20,7 @@ class TestContainersConfig {
             .withExposedPorts(6379)
 
     companion object {
-        private const val MYSQL_IMAGE = "mysql:8.0.36"
+        private const val MYSQL_IMAGE = "mysql:8.0.41"
         private const val REDIS_IMAGE = "redis:7.2.7"
     }
 }
