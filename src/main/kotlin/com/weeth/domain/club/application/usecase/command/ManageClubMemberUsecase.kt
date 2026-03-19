@@ -11,6 +11,12 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
+import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -24,6 +30,8 @@ class ManageClubMemberUsecase(
     private val clubMemberRepository: ClubMemberRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val fileRepository: FileRepository,
+    private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
@@ -66,6 +74,35 @@ class ManageClubMemberUsecase(
                 }
 
         clubMemberRepository.save(member)
+    }
+
+    @Transactional
+    fun updateProfileImageUrl(
+        clubId: Long,
+        userId: Long,
+        request: FileSaveRequest,
+    ) {
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+
+        fileRepository
+            .findAllByOwnerTypeAndOwnerIdAndStatus(
+                FileOwnerType.CLUB_MEMBER_PROFILE,
+                member.id,
+                FileStatus.UPLOADED,
+            ).forEach { it.markDeleted() }
+
+        val file =
+            File.createUploaded(
+                fileName = request.fileName,
+                storageKey = request.storageKey,
+                fileSize = request.fileSize,
+                contentType = request.contentType,
+                ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
+                ownerId = member.id,
+            )
+        fileRepository.save(file)
+
+        member.updateProfileImageUrl(fileAccessUrlPort.resolve(file.storageKey.value))
     }
 
     @Transactional

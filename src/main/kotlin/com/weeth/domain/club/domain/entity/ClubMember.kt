@@ -63,6 +63,10 @@ class ClubMember(
     var penaltyCount: Int = 0
         private set
 
+    @Column(length = 500)
+    var profileImageUrl: String? = null
+        private set
+
     @Column(length = 30)
     var bio: String? = null
         private set
@@ -113,6 +117,10 @@ class ClubMember(
 
     fun incrementPenaltyCount() {
         penaltyCount++
+    }
+
+    fun updateProfileImageUrl(url: String?) {
+        this.profileImageUrl = url
     }
 
     fun updateBio(bio: String?) {

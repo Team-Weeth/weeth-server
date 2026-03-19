@@ -12,6 +12,7 @@ import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.command.ManageClubUseCase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -112,6 +113,18 @@ class ClubController(
         val meInfo = getClubMemberQueryService.findMyMemberProfile(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
+    }
+
+    @PatchMapping("/{clubId}/members/me/profile-image")
+    @Operation(summary = "동아리 프로필 사진 수정")
+    fun updateMyProfileImage(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @PathVariable @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Valid @RequestBody request: FileSaveRequest,
+    ): CommonResponse<Unit> {
+        manageClubMemberUsecase.updateProfileImageUrl(clubId, userId, request)
+        return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_IMAGE_UPDATED_SUCCESS)
     }
 
     @PatchMapping("/{clubId}/members/me/bio")

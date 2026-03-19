@@ -5,4 +5,5 @@ enum class FileOwnerType {
     COMMENT,
     RECEIPT,
     USER_PROFILE,
+    CLUB_MEMBER_PROFILE,
 }

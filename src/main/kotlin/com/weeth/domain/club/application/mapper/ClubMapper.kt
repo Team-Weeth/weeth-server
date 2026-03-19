@@ -82,6 +82,7 @@ class ClubMapper {
         department = member.user.department,
         studentId = member.user.studentId,
         cardinals = toCardinalNumbers(cardinals),
+        profileImageUrl = member.profileImageUrl,
         bio = member.bio,
     )
 

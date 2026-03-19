@@ -18,7 +18,6 @@ class KakaoSocialAuthAdapter(
         val userInfo = kakaoAuthService.getUserInfo(kakaoToken.accessToken)
         val account = userInfo.kakaoAccount
         val email = account.email?.trim()?.lowercase()
-        val profileImageUrl = account.profile?.profileImageUrl?.trim()
         val providerName =
             account.profile
                 ?.nickname
@@ -34,7 +33,6 @@ class KakaoSocialAuthAdapter(
             providerUserId = userInfo.id.toString(),
             email = email,
             emailVerified = account.isEmailVerified,
-            profileImageUrl = profileImageUrl,
             name = providerName,
         )
     }
