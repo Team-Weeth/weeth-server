@@ -2,6 +2,7 @@ package com.weeth.domain.club.domain.entity
 
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -15,7 +16,12 @@ class ClubMemberTest :
                 name = "리츠",
                 code = "LEETS001",
                 schoolName = "가천대학교",
-                clubContact = ClubContact.from(email = "leets@test.com", phoneNumber = null),
+                clubContact =
+                    ClubContact.from(
+                        email = "leets@test.com",
+                        phoneNumber = "010-0000-0000",
+                        primaryContact = PrimaryContact.PHONE,
+                    ),
             )
         val user = UserTestFixture.createActiveUser1()
 

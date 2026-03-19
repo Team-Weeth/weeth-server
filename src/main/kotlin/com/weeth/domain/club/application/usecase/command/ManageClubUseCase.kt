@@ -52,6 +52,7 @@ class ManageClubUseCase(
             ClubContact.from(
                 email = request.contactEmail,
                 phoneNumber = request.contactPhoneNumber,
+                primaryContact = request.primaryContact,
             )
 
         val club =
@@ -111,6 +112,7 @@ class ManageClubUseCase(
             description = request.description,
             contactEmail = request.contactEmail,
             contactPhoneNumber = request.contactPhoneNumber,
+            primaryContact = request.primaryContact,
             profileImageUrl = request.profileImageUrl,
             backgroundImageUrl = request.backgroundImageUrl,
         )
