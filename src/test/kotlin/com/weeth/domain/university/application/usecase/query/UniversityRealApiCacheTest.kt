@@ -28,7 +28,7 @@ class UniversityRealApiCacheTest(
     private val cacheManager: CacheManager,
 ) : DescribeSpec({
 
-        val hasRealApiKey = System.getenv("CAREER_NET_API_KEY") != null
+        val hasRealApiKey = !System.getenv("CAREER_NET_API_KEY").isNullOrBlank()
 
         beforeEach {
             cacheManager.getCache("schools")?.clear()
