@@ -1,15 +1,25 @@
 package com.weeth.domain.club.application.usecase.command
 
+import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
+import com.weeth.domain.cardinal.domain.entity.Cardinal
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
+import com.weeth.domain.club.application.exception.CardinalAlreadySetException
 import com.weeth.domain.club.application.exception.ClubCantJoinException
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -21,13 +31,16 @@ import org.springframework.transaction.annotation.Transactional
 class ManageClubMemberUsecase(
     private val clubRepository: ClubRepository,
     private val clubMemberRepository: ClubMemberRepository,
+    private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
+    private val cardinalReader: CardinalReader,
+    private val sessionReader: SessionReader,
+    private val attendanceRepository: AttendanceRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
      * MVP에서는 단일 동아리 지원만 가능
-     * TODO: 출석 초기화
      */
     @Transactional
     fun join(
@@ -65,6 +78,46 @@ class ManageClubMemberUsecase(
                 }
 
         clubMemberRepository.save(member)
+    }
+
+    /**
+     * 활동 기수를 최초 1회 설정
+     * 이미 설정된 경우 CardinalAlreadySetException 발생
+     */
+    @Transactional
+    fun setInitialCardinals(
+        clubId: Long,
+        userId: Long,
+        request: ClubMemberCardinalSetRequest,
+    ) {
+        val member = clubMemberPolicy.getActiveMemberWithLock(clubId, userId)
+
+        if (clubMemberCardinalRepository.existsByClubMember(member)) {
+            throw CardinalAlreadySetException()
+        }
+
+        val cardinals =
+            request.cardinals.distinct().map { number ->
+                cardinalReader.findByClubIdAndCardinalNumber(clubId, number)
+                    ?: throw CardinalNotFoundException()
+            }
+
+        clubMemberCardinalRepository.saveAll(cardinals.map { ClubMemberCardinal.create(member, it) })
+
+        initializeAttendances(clubId, member, cardinals)
+    }
+
+    // TODO: AdminClubMemberUseCase.initializeAttendances와 중복 — MVP 후 공통 서비스로 추출
+    private fun initializeAttendances(
+        clubId: Long,
+        member: ClubMember,
+        cardinals: List<Cardinal>,
+    ) {
+        val sessions = sessionReader.findAllByClubIdAndCardinalIn(clubId, cardinals.map { it.cardinalNumber })
+        if (sessions.isEmpty()) return
+
+        val attendances = sessions.map { Attendance.create(session = it, clubMember = member) }
+        attendanceRepository.saveAll(attendances)
     }
 
     /**

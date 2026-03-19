@@ -45,6 +45,17 @@ class ClubMemberPolicy(
         }
     }
 
+    fun getActiveMemberWithLock(
+        clubId: Long,
+        userId: Long,
+    ): ClubMember {
+        val member =
+            clubMemberReader.findByClubIdAndUserIdWithLock(clubId, userId)
+                ?: throw ClubMemberNotFoundException()
+        if (!member.isActive()) throw MemberNotActiveException()
+        return member
+    }
+
     fun getMemberInClub(
         clubId: Long,
         clubMemberId: Long,

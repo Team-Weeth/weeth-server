@@ -35,4 +35,7 @@ enum class ClubErrorCode(
 
     @ExplainError("요청한 멤버가 해당 동아리에 속하지 않을 때 발생합니다.")
     CLUB_MEMBER_NOT_IN_CLUB(21108, HttpStatus.BAD_REQUEST, "해당 동아리에 속한 멤버가 아닙니다."),
+
+    @ExplainError("이미 활동 기수가 설정된 멤버가 다시 설정을 시도할 때 발생합니다.")
+    CARDINAL_ALREADY_SET(21109, HttpStatus.CONFLICT, "이미 활동 기수가 설정되어 있습니다."),
 }

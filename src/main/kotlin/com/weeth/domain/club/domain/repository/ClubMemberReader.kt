@@ -13,6 +13,11 @@ interface ClubMemberReader {
         userId: Long,
     ): ClubMember?
 
+    fun findByClubIdAndUserIdWithLock(
+        clubId: Long,
+        userId: Long,
+    ): ClubMember?
+
     fun findAllByClubId(clubId: Long): List<ClubMember>
 
     fun findAllByUserId(userId: Long): List<ClubMember>
