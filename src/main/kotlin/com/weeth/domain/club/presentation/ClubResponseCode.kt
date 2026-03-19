@@ -24,4 +24,5 @@ enum class ClubResponseCode(
     CLUB_PROFILE_IMAGE_DELETED_SUCCESS(11113, HttpStatus.OK, "동아리 프로필 사진이 삭제되었습니다."),
     CLUB_BACKGROUND_IMAGE_DELETED_SUCCESS(11114, HttpStatus.OK, "동아리 배경 사진이 삭제되었습니다."),
     MEMBER_APPLY_OB_SUCCESS(11115, HttpStatus.OK, "멤버의 OB 기수 등록이 완료되었습니다."),
+    MEMBER_CARDINAL_SET_SUCCESS(11116, HttpStatus.CREATED, "활동 기수가 설정되었습니다."),
 }

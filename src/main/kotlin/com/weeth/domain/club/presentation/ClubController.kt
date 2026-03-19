@@ -2,6 +2,7 @@ package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
@@ -106,6 +107,20 @@ class ClubController(
         val meInfo = getClubMemberQueryService.findMyMemberProfile(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
+    }
+
+    @PostMapping("/{clubId}/members/me/cardinals")
+    @Operation(summary = "활동 기수 최초 설정 (최초 1회만 가능)")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun setInitialCardinals(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Valid @RequestBody request: ClubMemberCardinalSetRequest,
+    ): CommonResponse<Unit> {
+        manageClubMemberUsecase.setInitialCardinals(clubId, userId, request)
+
+        return CommonResponse.success(ClubResponseCode.MEMBER_CARDINAL_SET_SUCCESS)
     }
 
     // TODO: MVP 후 동아리 멤버 조회 기능 구현

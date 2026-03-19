@@ -19,10 +19,10 @@ class UserController(
 
 ## Club-scoped API
 
-Club resources use `/api/v4/clubs/{clubId}/...`. `clubId` is Base62 TSID — use three annotations together:
+Club resources use `/api/v4/clubs/{clubId}/...`. `clubId` is Base62 TSID — use two annotations together:
 
 ```kotlin
-@PathVariable @TsidParam        // IDE warning suppression + Swagger (type: string)
+@TsidParam        // Swagger (type: string)
 @TsidPathVariable clubId: Long  // decodes Base62 → Long at runtime
 ```
 
