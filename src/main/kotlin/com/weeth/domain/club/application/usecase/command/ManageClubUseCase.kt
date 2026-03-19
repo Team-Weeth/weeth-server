@@ -36,6 +36,7 @@ class ManageClubUseCase(
      * 새로운 동아리를 생성
      * 생성자는 자동으로 LEAD 권한 설정
      * 1기부터 currentCardinal기까지 Cardinal을 자동 생성하고, LEAD를 최신 기수에 배정
+     * TODO: CDN 도입을 위해 File로 저장하기.
      */
     @Transactional
     fun create(
