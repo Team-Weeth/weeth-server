@@ -120,7 +120,9 @@ class ClubMember(
     }
 
     fun updateProfileImageUrl(url: String?) {
-        this.profileImageUrl = url
+        val trimmed = url?.trim()?.takeIf { it.isNotBlank() }
+        require((trimmed?.length ?: 0) <= 500) { "프로필 이미지 URL은 500자 이하여야 합니다." }
+        this.profileImageUrl = trimmed
     }
 
     fun updateBio(bio: String?) {

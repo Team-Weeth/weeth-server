@@ -45,6 +45,7 @@ class DashboardMapper(
         clubMember: ClubMember,
     ) = DashboardMyInfoResponse(
         userInfo = UserInfo.from(user),
+        profileImageUrl = clubMember.profileImageUrl,
         bio = clubMember.bio,
     )
 
