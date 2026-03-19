@@ -10,7 +10,6 @@ import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetReques
 import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.CardinalAlreadySetException
-import com.weeth.domain.club.application.exception.ClubCantJoinException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
@@ -40,7 +39,8 @@ class ManageClubMemberUsecase(
 ) {
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
-     * MVP에서는 단일 동아리 지원만 가능
+     * 역할(LEAD/USER)별 가입 제한 정책 적용
+     * TODO: 출석 초기화
      */
     @Transactional
     fun join(
@@ -56,14 +56,7 @@ class ManageClubMemberUsecase(
             throw AlreadyJoinedException()
         }
 
-        val isJoinedAnotherClub =
-            clubMemberRepository
-                .findAllByUserId(userId)
-                .any { it.club.id != clubId && it.isActive() }
-
-        if (isJoinedAnotherClub) {
-            throw ClubCantJoinException()
-        }
+        clubMemberPolicy.validateJoinLimit(userId)
 
         ClubCodePolicy.validate(club.code, request.code)
 

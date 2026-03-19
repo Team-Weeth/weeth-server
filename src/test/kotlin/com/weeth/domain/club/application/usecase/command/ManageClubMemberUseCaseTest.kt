@@ -7,7 +7,7 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.exception.CardinalAlreadySetException
-import com.weeth.domain.club.application.exception.ClubCantJoinException
+import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
@@ -23,6 +23,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.clearMocks
 import io.mockk.every
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
 
@@ -217,23 +218,17 @@ class ManageClubMemberUseCaseTest :
         }
 
         describe("join") {
-            context("이미 다른 동아리에서 ACTIVE 상태로 활동 중인 경우") {
-                it("MVP 단일 동아리 정책에 따라 가입할 수 없다") {
+            context("이미 USER로 1개 동아리에 가입한 사용자가 가입 시도하는 경우") {
+                it("ClubJoinLimitExceededException이 발생한다") {
                     val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
-                    val anotherClub = ClubTestFixture.createClub()
                     val user = UserTestFixture.createActiveUser1()
-                    val anotherClubMember =
-                        ClubTestFixture.createClubMember(
-                            club = anotherClub,
-                            user = user,
-                        )
 
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
                     every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
-                    every { clubMemberRepository.findAllByUserId(10L) } returns listOf(anotherClubMember)
+                    every { clubMemberPolicy.validateJoinLimit(10L) } throws ClubJoinLimitExceededException()
 
-                    shouldThrow<ClubCantJoinException> {
+                    shouldThrow<ClubJoinLimitExceededException> {
                         useCase.join(
                             clubId = 1L,
                             userId = 10L,
@@ -242,6 +237,26 @@ class ManageClubMemberUseCaseTest :
                     }
 
                     verify(exactly = 0) { clubMemberRepository.save(any()) }
+                }
+            }
+
+            context("LEAD로 1개 동아리를 생성한 사용자가 USER로 가입 시도하는 경우") {
+                it("역할이 다르므로 가입에 성공한다") {
+                    val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
+                    val user = UserTestFixture.createActiveUser1()
+
+                    every { clubRepository.getClubById(1L) } returns targetClub
+                    every { userReader.getByIdWithLock(10L) } returns user
+                    every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
+                    justRun { clubMemberPolicy.validateJoinLimit(10L) }
+
+                    useCase.join(
+                        clubId = 1L,
+                        userId = 10L,
+                        request = ClubJoinRequest(code = "JOIN-CODE"),
+                    )
+
+                    verify(exactly = 1) { clubMemberRepository.save(any()) }
                 }
             }
         }
