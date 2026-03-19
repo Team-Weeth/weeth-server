@@ -7,12 +7,17 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
+import com.weeth.domain.club.application.exception.LeadSelfTransferException
+import com.weeth.domain.club.application.exception.LeadTransferOnlyException
+import com.weeth.domain.club.application.exception.MemberNotActiveException
+import com.weeth.domain.club.application.exception.NotLeadException
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -22,6 +27,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.test.util.ReflectionTestUtils
 
 class AdminClubMemberUseCaseTest :
     DescribeSpec({
@@ -106,6 +112,96 @@ class AdminClubMemberUseCaseTest :
                 )
 
                 member.memberRole shouldBe MemberRole.ADMIN
+            }
+
+            it("LEAD로 직접 변경 시도하면 예외가 발생한다") {
+                val member = ClubMemberTestFixture.createActiveMember(memberRole = MemberRole.USER)
+                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+
+                shouldThrow<IllegalStateException> {
+                    useCase.updateMemberRole(
+                        1L,
+                        10L,
+                        ClubMemberRoleUpdateRequest(clubMemberId = 20L, memberRole = MemberRole.LEAD),
+                    )
+                }
+            }
+
+            it("LEAD 멤버의 역할을 직접 변경 시도하면 예외가 발생한다") {
+                val leadMember = ClubMemberTestFixture.createLeadMember()
+                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns leadMember
+
+                shouldThrow<IllegalStateException> {
+                    useCase.updateMemberRole(
+                        1L,
+                        10L,
+                        ClubMemberRoleUpdateRequest(clubMemberId = 20L, memberRole = MemberRole.ADMIN),
+                    )
+                }
+            }
+        }
+
+        describe("transferLead") {
+            val club = ClubTestFixture.createClub()
+
+            it("LEAD가 다른 멤버에게 권한을 이양한다") {
+                val lead = ClubMemberTestFixture.createLeadMember(club = club)
+                val target = ClubMemberTestFixture.createActiveMember(club = club)
+                ReflectionTestUtils.setField(lead, "id", 10L)
+                ReflectionTestUtils.setField(target, "id", 20L)
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns lead
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 20L) } returns target
+
+                useCase.transferLead(1L, 10L, 20L)
+
+                lead.memberRole shouldBe MemberRole.ADMIN
+                target.memberRole shouldBe MemberRole.LEAD
+            }
+
+            it("LEAD가 아닌 멤버가 이양을 시도하면 예외가 발생한다") {
+                val nonLead = ClubMemberTestFixture.createActiveMember(club = club)
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns nonLead
+
+                shouldThrow<NotLeadException> {
+                    useCase.transferLead(1L, 10L, 20L)
+                }
+            }
+
+            it("자기 자신에게 이양을 시도하면 예외가 발생한다") {
+                val lead = ClubMemberTestFixture.createLeadMember(club = club)
+                ReflectionTestUtils.setField(lead, "id", 10L)
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns lead
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 10L) } returns lead
+
+                shouldThrow<LeadSelfTransferException> {
+                    useCase.transferLead(1L, 10L, 10L)
+                }
+            }
+
+            it("비활성 멤버에게 이양을 시도하면 예외가 발생한다") {
+                val lead = ClubMemberTestFixture.createLeadMember(club = club)
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns lead
+                every {
+                    clubMemberPolicy.getActiveMemberInClubWithLock(1L, 20L)
+                } throws MemberNotActiveException()
+
+                shouldThrow<MemberNotActiveException> {
+                    useCase.transferLead(1L, 10L, 20L)
+                }
+            }
+
+            it("존재하지 않는 멤버에게 이양을 시도하면 예외가 발생한다") {
+                val lead = ClubMemberTestFixture.createLeadMember(club = club)
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns lead
+                every {
+                    clubMemberPolicy.getActiveMemberInClubWithLock(1L, 99L)
+                } throws ClubMemberNotInClubException()
+
+                shouldThrow<ClubMemberNotInClubException> {
+                    useCase.transferLead(1L, 10L, 99L)
+                }
             }
         }
 

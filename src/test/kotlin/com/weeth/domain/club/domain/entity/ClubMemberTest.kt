@@ -184,4 +184,45 @@ class ClubMemberTest :
                 member.leave()
             }
         }
+
+        "releaseLead — LEAD 멤버를 ADMIN으로 변경한다" {
+            val member = ClubMember(club = club, user = user, memberRole = MemberRole.LEAD)
+
+            member.releaseLead()
+
+            member.memberRole shouldBe MemberRole.ADMIN
+        }
+
+        "releaseLead — LEAD가 아닌 멤버가 호출하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user, memberRole = MemberRole.ADMIN)
+
+            shouldThrow<IllegalStateException> {
+                member.releaseLead()
+            }
+        }
+
+        "assignLead — 멤버를 LEAD로 변경한다" {
+            val member = ClubMember(club = club, user = user)
+            member.accept()
+
+            member.assignLead()
+
+            member.memberRole shouldBe MemberRole.LEAD
+        }
+
+        "updateRole — LEAD로 직접 변경 시도하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user)
+
+            shouldThrow<IllegalStateException> {
+                member.updateRole(MemberRole.LEAD)
+            }
+        }
+
+        "updateRole — LEAD 멤버의 역할을 직접 변경 시도하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user, memberRole = MemberRole.LEAD)
+
+            shouldThrow<IllegalStateException> {
+                member.updateRole(MemberRole.ADMIN)
+            }
+        }
     })
