@@ -15,7 +15,7 @@ import java.time.Duration
 
 /*
     Spring Cache 추상화(@Cacheable)를 Redis와 연결하는 설정
-    키: String, 값: JSON 직렬화, 기본 TTL: 24시간
+    키: String, 값: JSON 직렬화, 기본 TTL: 7일
  */
 @EnableCaching
 @Configuration
@@ -40,7 +40,7 @@ class CacheConfig(
         val defaultConfig =
             RedisCacheConfiguration
                 .defaultCacheConfig()
-                .entryTtl(Duration.ofHours(24))
+                .entryTtl(Duration.ofDays(7))
                 .serializeKeysWith(
                     RedisSerializationContext.SerializationPair.fromSerializer(StringRedisSerializer()),
                 ).serializeValuesWith(
