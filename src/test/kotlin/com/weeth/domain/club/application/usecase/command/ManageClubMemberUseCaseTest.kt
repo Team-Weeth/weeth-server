@@ -3,6 +3,7 @@ package com.weeth.domain.club.application.usecase.command
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.exception.ClubCantJoinException
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
@@ -128,6 +129,16 @@ class ManageClubMemberUseCaseTest :
                     member2.bio shouldBe null
                 }
             }
+
+            context("활성 동아리 멤버십이 없을 때") {
+                it("ClubMemberNotFoundException을 던진다") {
+                    every { clubMemberRepository.findActiveByUserId(userId) } returns emptyList()
+
+                    shouldThrow<ClubMemberNotFoundException> {
+                        useCase.updateProfile(userId, UpdateMemberProfileRequest(bio = "안녕하세요!"))
+                    }
+                }
+            }
         }
 
         describe("deleteProfileImage") {
@@ -161,6 +172,16 @@ class ManageClubMemberUseCaseTest :
                     existingFile.status shouldBe FileStatus.DELETED
                     member1.profileImageUrl shouldBe null
                     member2.profileImageUrl shouldBe null
+                }
+            }
+
+            context("활성 동아리 멤버십이 없을 때") {
+                it("ClubMemberNotFoundException을 던진다") {
+                    every { clubMemberRepository.findActiveByUserId(userId) } returns emptyList()
+
+                    shouldThrow<ClubMemberNotFoundException> {
+                        useCase.deleteProfileImage(userId)
+                    }
                 }
             }
         }

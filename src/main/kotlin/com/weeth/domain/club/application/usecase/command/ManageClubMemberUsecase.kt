@@ -5,6 +5,7 @@ import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.ClubCantJoinException
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
@@ -81,6 +82,7 @@ class ManageClubMemberUsecase(
         request: UpdateMemberProfileRequest,
     ) {
         val members = clubMemberRepository.findActiveByUserId(userId)
+        if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         request.profileImage?.let { profileImage ->
             fileRepository
@@ -111,6 +113,7 @@ class ManageClubMemberUsecase(
     @Transactional
     fun deleteProfileImage(userId: Long) {
         val members = clubMemberRepository.findActiveByUserId(userId)
+        if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         fileRepository
             .findAllByOwnerTypeAndOwnerIdAndStatus(
