@@ -57,6 +57,7 @@ class UserTest :
                     email = Email.from("test@test.com"),
                     studentId = "123",
                     tel = PhoneNumber.from("01012345678"),
+                    school = "가천대학교",
                     department = "CS",
                 )
             }
@@ -75,6 +76,7 @@ class UserTest :
                     email = "test@test.com",
                     studentId = "20200001",
                     tel = "01012345678",
+                    school = "가천대학교",
                     department = "CS",
                 )
 

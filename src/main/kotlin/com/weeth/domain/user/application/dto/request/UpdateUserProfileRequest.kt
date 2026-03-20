@@ -19,6 +19,9 @@ data class UpdateUserProfileRequest(
     @field:Schema(description = "전화번호", example = "01012345678")
     @field:NotBlank
     val tel: String,
+    @field:Schema(description = "학교", example = "가천대학교")
+    @field:NotBlank
+    val school: String,
     @field:Schema(description = "학과", example = "컴퓨터공학과")
     @field:NotBlank
     val department: String,

@@ -26,6 +26,7 @@ class UserMapper {
             email = user.emailValue,
             studentId = user.studentId,
             tel = user.telValue,
+            school = user.school,
             department = user.department,
             cardinals = emptyList(),
             role = user.role,

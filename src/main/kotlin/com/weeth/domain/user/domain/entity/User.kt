@@ -24,6 +24,7 @@ class User(
     email: Email,
     studentId: String = "",
     tel: PhoneNumber = PhoneNumber.from(""),
+    school: String = "",
     department: String = "",
     status: Status = Status.WAITING,
     role: Role = Role.USER,
@@ -51,6 +52,10 @@ class User(
     @Convert(converter = PhoneNumberConverter::class)
     @Column(name = "tel", nullable = false, length = 20)
     var tel: PhoneNumber = tel
+        private set
+
+    @Column(nullable = false, length = 50)
+    var school: String = school
         private set
 
     @Column(nullable = false, length = 100)
@@ -99,6 +104,7 @@ class User(
         name.isNotBlank() &&
             studentId.isNotBlank() &&
             telValue.isNotBlank() &&
+            school.isNotBlank() &&
             department.isNotBlank()
 
     fun update(
@@ -106,6 +112,7 @@ class User(
         email: Email,
         studentId: String,
         tel: PhoneNumber,
+        school: String,
         department: String,
     ) {
         require(name.isNotBlank()) { "이름은 공백일 수 없습니다." }
@@ -113,6 +120,7 @@ class User(
         this.email = email
         this.studentId = studentId
         this.tel = tel
+        this.school = school
         this.department = department
     }
 
@@ -149,6 +157,7 @@ class User(
             email: String,
             studentId: String = "",
             tel: String = "",
+            school: String = "",
             department: String = "",
             status: Status = Status.WAITING,
             profileImageUrl: String? = null,
@@ -158,6 +167,7 @@ class User(
                 email = Email.from(email),
                 studentId = studentId,
                 tel = PhoneNumber.from(tel),
+                school = school,
                 department = department,
                 status = status,
                 profileImageUrl = profileImageUrl,

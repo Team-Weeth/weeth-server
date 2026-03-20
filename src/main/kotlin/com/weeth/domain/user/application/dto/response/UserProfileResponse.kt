@@ -14,6 +14,8 @@ data class UserProfileResponse(
     val studentId: String,
     @field:Schema(description = "전화번호", example = "01012345678")
     val tel: String,
+    @field:Schema(description = "학교", example = "가천대학교")
+    val school: String,
     @field:Schema(description = "학과", example = "컴퓨터공학과")
     val department: String,
     @field:Schema(description = "소속 기수 목록", example = "[6, 7]")
