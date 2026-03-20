@@ -77,17 +77,16 @@ class ManageClubMemberUsecase(
 
     @Transactional
     fun updateProfile(
-        clubId: Long,
         userId: Long,
         request: UpdateMemberProfileRequest,
     ) {
-        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val members = clubMemberRepository.findActiveByUserId(userId)
 
         request.profileImage?.let { profileImage ->
             fileRepository
                 .findAllByOwnerTypeAndOwnerIdAndStatus(
                     FileOwnerType.CLUB_MEMBER_PROFILE,
-                    member.id,
+                    userId,
                     FileStatus.UPLOADED,
                 ).forEach { it.markDeleted() }
 
@@ -98,31 +97,29 @@ class ManageClubMemberUsecase(
                     fileSize = profileImage.fileSize,
                     contentType = profileImage.contentType,
                     ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
-                    ownerId = member.id,
+                    ownerId = userId,
                 )
             fileRepository.save(file)
 
-            member.updateProfileImageUrl(fileAccessUrlPort.resolve(file.storageKey.value))
+            val resolvedUrl = fileAccessUrlPort.resolve(file.storageKey.value)
+            members.forEach { it.updateProfileImageUrl(resolvedUrl) }
         }
 
-        request.bio?.let { member.updateBio(it) }
+        request.bio?.let { bio -> members.forEach { it.updateBio(bio) } }
     }
 
     @Transactional
-    fun deleteProfileImage(
-        clubId: Long,
-        userId: Long,
-    ) {
-        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+    fun deleteProfileImage(userId: Long) {
+        val members = clubMemberRepository.findActiveByUserId(userId)
 
         fileRepository
             .findAllByOwnerTypeAndOwnerIdAndStatus(
                 FileOwnerType.CLUB_MEMBER_PROFILE,
-                member.id,
+                userId,
                 FileStatus.UPLOADED,
             ).forEach { it.markDeleted() }
 
-        member.removeProfileImage()
+        members.forEach { it.removeProfileImage() }
     }
 
     /**

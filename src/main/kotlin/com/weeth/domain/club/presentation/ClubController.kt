@@ -114,26 +114,22 @@ class ClubController(
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
     }
 
-    @PatchMapping("/{clubId}/members/me")
+    @PatchMapping("/members/me")
     @Operation(summary = "내 클럽 활동 프로필 수정 (프로필 사진, 자기소개)")
     fun updateMyProfile(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
-        @TsidPathVariable clubId: Long,
         @Valid @RequestBody request: UpdateMemberProfileRequest,
     ): CommonResponse<Unit> {
-        manageClubMemberUsecase.updateProfile(clubId, userId, request)
+        manageClubMemberUsecase.updateProfile(userId, request)
         return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_UPDATED_SUCCESS)
     }
 
-    @DeleteMapping("/{clubId}/members/me/profile-image")
+    @DeleteMapping("/members/me/profile-image")
     @Operation(summary = "동아리 프로필 사진 삭제")
     fun deleteMyProfileImage(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
-        @TsidPathVariable clubId: Long,
     ): CommonResponse<Unit> {
-        manageClubMemberUsecase.deleteProfileImage(clubId, userId)
+        manageClubMemberUsecase.deleteProfileImage(userId)
         return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_IMAGE_DELETED_SUCCESS)
     }
 
