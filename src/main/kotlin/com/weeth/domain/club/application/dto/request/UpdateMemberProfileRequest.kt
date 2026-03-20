@@ -9,7 +9,6 @@ data class UpdateMemberProfileRequest(
     @field:Schema(description = "프로필 사진")
     @field:Valid
     val profileImage: FileSaveRequest? = null,
-
     @field:Schema(description = "자기소개", example = "안녕하세요!")
     @field:Size(max = 30)
     val bio: String? = null,
