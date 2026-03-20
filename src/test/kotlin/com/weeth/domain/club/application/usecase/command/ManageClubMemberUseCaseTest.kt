@@ -110,6 +110,53 @@ class ManageClubMemberUseCaseTest :
             }
         }
 
+        describe("deleteProfileImage") {
+            val clubId = 1L
+            val userId = 10L
+
+            context("활성 멤버가 프로필 사진을 삭제할 때") {
+                it("기존 파일을 soft delete하고 URL을 null로 만든다") {
+                    val member = ClubMemberTestFixture.createActiveMember(id = 1L)
+                    member.updateProfileImageUrl("https://cdn.example.com/profile.png")
+                    val existingFile =
+                        FileTestFixture.createFile(
+                            id = 1L,
+                            fileName = "profile.png",
+                            ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
+                            ownerId = member.id,
+                        )
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                    every {
+                        fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+                            FileOwnerType.CLUB_MEMBER_PROFILE,
+                            member.id,
+                            FileStatus.UPLOADED,
+                        )
+                    } returns listOf(existingFile)
+
+                    useCase.deleteProfileImage(clubId, userId)
+
+                    existingFile.status shouldBe FileStatus.DELETED
+                    member.profileImageUrl shouldBe null
+                }
+            }
+
+            context("비활성 멤버가 요청할 때") {
+                it("MemberNotActiveException을 던진다") {
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } throws MemberNotActiveException()
+
+                    shouldThrow<MemberNotActiveException> {
+                        useCase.deleteProfileImage(clubId, userId)
+                    }
+
+                    verify(exactly = 0) {
+                        fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any())
+                    }
+                }
+            }
+        }
+
         describe("join") {
             context("이미 다른 동아리에서 ACTIVE 상태로 활동 중인 경우") {
                 it("MVP 단일 동아리 정책에 따라 가입할 수 없다") {
