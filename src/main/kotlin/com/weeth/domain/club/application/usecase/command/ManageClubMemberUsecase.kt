@@ -106,6 +106,23 @@ class ManageClubMemberUsecase(
     }
 
     @Transactional
+    fun deleteProfileImage(
+        clubId: Long,
+        userId: Long,
+    ) {
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+
+        fileRepository
+            .findAllByOwnerTypeAndOwnerIdAndStatus(
+                FileOwnerType.CLUB_MEMBER_PROFILE,
+                member.id,
+                FileStatus.UPLOADED,
+            ).forEach { it.markDeleted() }
+
+        member.removeProfileImage()
+    }
+
+    @Transactional
     fun updateBio(
         clubId: Long,
         userId: Long,

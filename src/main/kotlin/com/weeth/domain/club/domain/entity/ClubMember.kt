@@ -125,6 +125,10 @@ class ClubMember(
         this.profileImageUrl = trimmed
     }
 
+    fun removeProfileImage() {
+        this.profileImageUrl = null
+    }
+
     fun updateBio(bio: String?) {
         val trimmed = bio?.trim()?.takeIf { it.isNotBlank() }
         require((trimmed?.length ?: 0) <= 30) { "자기소개는 30자 이하여야 합니다." }

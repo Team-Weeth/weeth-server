@@ -26,4 +26,5 @@ enum class ClubResponseCode(
     MEMBER_APPLY_OB_SUCCESS(11115, HttpStatus.OK, "멤버의 OB 기수 등록이 완료되었습니다."),
     MEMBER_BIO_UPDATED_SUCCESS(11116, HttpStatus.OK, "자기소개가 성공적으로 수정되었습니다."),
     MEMBER_PROFILE_IMAGE_UPDATED_SUCCESS(11117, HttpStatus.OK, "동아리 프로필 사진이 성공적으로 수정되었습니다."),
+    MEMBER_PROFILE_IMAGE_DELETED_SUCCESS(11118, HttpStatus.OK, "동아리 프로필 사진이 삭제되었습니다."),
 }
