@@ -1,7 +1,7 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
-import com.weeth.domain.club.application.dto.request.UpdateMemberBioRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.ClubCantJoinException
@@ -11,7 +11,6 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
-import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.enums.FileStatus
@@ -77,32 +76,36 @@ class ManageClubMemberUsecase(
     }
 
     @Transactional
-    fun updateProfileImageUrl(
+    fun updateProfile(
         clubId: Long,
         userId: Long,
-        request: FileSaveRequest,
+        request: UpdateMemberProfileRequest,
     ) {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
 
-        fileRepository
-            .findAllByOwnerTypeAndOwnerIdAndStatus(
-                FileOwnerType.CLUB_MEMBER_PROFILE,
-                member.id,
-                FileStatus.UPLOADED,
-            ).forEach { it.markDeleted() }
+        request.profileImage?.let { profileImage ->
+            fileRepository
+                .findAllByOwnerTypeAndOwnerIdAndStatus(
+                    FileOwnerType.CLUB_MEMBER_PROFILE,
+                    member.id,
+                    FileStatus.UPLOADED,
+                ).forEach { it.markDeleted() }
 
-        val file =
-            File.createUploaded(
-                fileName = request.fileName,
-                storageKey = request.storageKey,
-                fileSize = request.fileSize,
-                contentType = request.contentType,
-                ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
-                ownerId = member.id,
-            )
-        fileRepository.save(file)
+            val file =
+                File.createUploaded(
+                    fileName = profileImage.fileName,
+                    storageKey = profileImage.storageKey,
+                    fileSize = profileImage.fileSize,
+                    contentType = profileImage.contentType,
+                    ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
+                    ownerId = member.id,
+                )
+            fileRepository.save(file)
 
-        member.updateProfileImageUrl(fileAccessUrlPort.resolve(file.storageKey.value))
+            member.updateProfileImageUrl(fileAccessUrlPort.resolve(file.storageKey.value))
+        }
+
+        request.bio?.let { member.updateBio(it) }
     }
 
     @Transactional
@@ -120,16 +123,6 @@ class ManageClubMemberUsecase(
             ).forEach { it.markDeleted() }
 
         member.removeProfileImage()
-    }
-
-    @Transactional
-    fun updateBio(
-        clubId: Long,
-        userId: Long,
-        request: UpdateMemberBioRequest,
-    ) {
-        val member = clubMemberPolicy.getActiveMember(clubId, userId)
-        member.updateBio(request.bio)
     }
 
     /**

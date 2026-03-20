@@ -1,6 +1,7 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.exception.ClubCantJoinException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
@@ -56,10 +57,10 @@ class ManageClubMemberUseCaseTest :
             every { fileRepository.save(any()) } answers { firstArg() }
         }
 
-        describe("updateProfileImageUrl") {
+        describe("updateProfile") {
             val clubId = 1L
             val userId = 10L
-            val request =
+            val profileImageRequest =
                 FileSaveRequest(
                     fileName = "profile.png",
                     storageKey = "CLUB_MEMBER_PROFILE/2026-03/00000000-0000-0000-0000-000000000000_profile.png",
@@ -67,8 +68,8 @@ class ManageClubMemberUseCaseTest :
                     contentType = "image/png",
                 )
 
-            context("활성 멤버가 프로필 사진을 업데이트할 때") {
-                it("기존 파일을 삭제하고 새 파일을 저장한 뒤 URL을 업데이트한다") {
+            context("프로필 사진만 변경할 때") {
+                it("기존 파일을 soft delete하고 새 파일을 저장한 뒤 URL을 업데이트한다") {
                     val member = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val existingFile =
                         FileTestFixture.createFile(
@@ -89,11 +90,37 @@ class ManageClubMemberUseCaseTest :
                     } returns listOf(existingFile)
                     every { fileAccessUrlPort.resolve(any()) } returns resolvedUrl
 
-                    useCase.updateProfileImageUrl(clubId, userId, request)
+                    useCase.updateProfile(clubId, userId, UpdateMemberProfileRequest(profileImage = profileImageRequest))
 
                     existingFile.status shouldBe FileStatus.DELETED
                     member.profileImageUrl shouldBe resolvedUrl
                     verify(exactly = 1) { fileRepository.save(any()) }
+                }
+            }
+
+            context("bio만 변경할 때") {
+                it("bio를 업데이트하고 파일 관련 작업은 수행하지 않는다") {
+                    val member = ClubMemberTestFixture.createActiveMember(id = 1L)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+
+                    useCase.updateProfile(clubId, userId, UpdateMemberProfileRequest(bio = "안녕하세요!"))
+
+                    member.bio shouldBe "안녕하세요!"
+                    verify(exactly = 0) { fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any()) }
+                    verify(exactly = 0) { fileRepository.save(any()) }
+                }
+            }
+
+            context("bio를 빈 문자열로 보낼 때") {
+                it("bio가 null로 저장된다") {
+                    val member = ClubMemberTestFixture.createActiveMember(id = 1L)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+
+                    useCase.updateProfile(clubId, userId, UpdateMemberProfileRequest(bio = ""))
+
+                    member.bio shouldBe null
                 }
             }
 
@@ -102,7 +129,7 @@ class ManageClubMemberUseCaseTest :
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } throws MemberNotActiveException()
 
                     shouldThrow<MemberNotActiveException> {
-                        useCase.updateProfileImageUrl(clubId, userId, request)
+                        useCase.updateProfile(clubId, userId, UpdateMemberProfileRequest(profileImage = profileImageRequest))
                     }
 
                     verify(exactly = 0) { fileRepository.save(any()) }
