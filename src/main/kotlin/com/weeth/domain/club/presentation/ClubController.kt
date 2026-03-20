@@ -2,11 +2,11 @@ package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
-import com.weeth.domain.club.application.dto.response.ClubMemberResponse
-import com.weeth.domain.club.application.dto.response.ClubResponse
+import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.command.ManageClubUseCase
@@ -25,7 +25,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -65,12 +64,11 @@ class ClubController(
     }
 
     @GetMapping("/{clubId}")
-    @Operation(summary = "동아리 정보 조회 (이름, 소개, 이미지)")
+    @Operation(summary = "동아리 공개 정보 조회 (이름, 소개, 프로필 사진) - 인증 불필요")
     fun getClubPublicInfo(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
-    ): CommonResponse<ClubResponse> {
+    ): CommonResponse<ClubPublicResponse> {
         val info = getClubQueryService.findClub(clubId)
 
         return CommonResponse.success(ClubResponseCode.CLUB_FIND_SUCCESS, info)
@@ -80,7 +78,7 @@ class ClubController(
     @Operation(summary = "동아리 가입")
     fun join(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Valid @RequestBody request: ClubJoinRequest,
     ): CommonResponse<Unit> {
@@ -93,7 +91,7 @@ class ClubController(
     @Operation(summary = "동아리 탈퇴")
     fun leave(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
     ): CommonResponse<Unit> {
         manageClubMemberUsecase.leave(clubId, userId)
@@ -105,7 +103,7 @@ class ClubController(
     @Operation(summary = "내 멤버 정보 조회")
     fun getMyMemberInfo(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
     ): CommonResponse<ClubMemberProfileResponse> {
         val meInfo = getClubMemberQueryService.findMyMemberProfile(clubId, userId)
@@ -132,6 +130,20 @@ class ClubController(
     ): CommonResponse<Unit> {
         manageClubMemberUsecase.deleteProfileImage(userId)
         return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_IMAGE_DELETED_SUCCESS)
+    }
+
+    @PostMapping("/{clubId}/members/me/cardinals")
+    @Operation(summary = "활동 기수 최초 설정 (최초 1회만 가능)")
+    @ResponseStatus(HttpStatus.CREATED)
+    fun setInitialCardinals(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Valid @RequestBody request: ClubMemberCardinalSetRequest,
+    ): CommonResponse<Unit> {
+        manageClubMemberUsecase.setInitialCardinals(clubId, userId, request)
+
+        return CommonResponse.success(ClubResponseCode.MEMBER_CARDINAL_SET_SUCCESS)
     }
 
     // TODO: MVP 후 동아리 멤버 조회 기능 구현

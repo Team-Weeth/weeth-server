@@ -27,7 +27,7 @@ class AccountController(
     @GetMapping("/{cardinal}")
     @Operation(summary = "회비 내역 조회")
     fun find(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable cardinal: Int,

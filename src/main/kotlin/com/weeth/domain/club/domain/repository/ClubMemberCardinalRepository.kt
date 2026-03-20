@@ -11,6 +11,8 @@ interface ClubMemberCardinalRepository :
     ClubMemberCardinalReader {
     override fun findAllByClubMember(clubMember: ClubMember): List<ClubMemberCardinal>
 
+    fun existsByClubMember(clubMember: ClubMember): Boolean
+
     @Query(
         """
         SELECT cmc

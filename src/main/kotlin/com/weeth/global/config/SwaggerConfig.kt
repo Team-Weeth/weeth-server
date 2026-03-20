@@ -43,6 +43,7 @@ private const val SWAGGER_DESCRIPTION =
         "| Cardinal | 10 | 110xx | 210xx | — |\n" +
         "| Club | 11 | 111xx | 211xx | — |\n" +
         "| Dashboard | 12 | 112xx | 212xx | — |\n" +
+        "| University | 13 | 113xx | — | 313xx |\n" +
         "| Auth/JWT | 90 | — | 290xx | — |\n\n" +
         "> 각 API의 상세 응답 예시는 Swagger의 **Responses** 섹션에서 확인하세요."
 

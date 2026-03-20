@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.data.domain.Slice
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -34,7 +33,7 @@ class DashboardController(
     @GetMapping("/home")
     @Operation(summary = "홈 조회")
     fun getHome(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<DashboardHomeResponse> =
@@ -46,7 +45,7 @@ class DashboardController(
     @GetMapping("/recent-posts")
     @Operation(summary = "최신 게시글 조회")
     fun getRecentPosts(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "10") pageSize: Int,
@@ -60,7 +59,7 @@ class DashboardController(
     @GetMapping("/recent-notices")
     @Operation(summary = "최신 공지 조회")
     fun getRecentNotices(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @RequestParam(defaultValue = "5") size: Int,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -73,7 +72,7 @@ class DashboardController(
     @GetMapping("/monthly-schedules")
     @Operation(summary = "월간 일정 조회")
     fun getMonthlySchedules(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<List<DashboardScheduleResponse>> =
@@ -85,7 +84,7 @@ class DashboardController(
     @GetMapping("/unread-notice")
     @Operation(summary = "2주 이내 읽지 않은 공지 조회")
     fun getUnreadNotice(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable("clubId") clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<DashboardUnreadNoticeResponse?> =

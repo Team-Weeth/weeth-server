@@ -64,6 +64,7 @@ class AdminClubMemberUseCase(
         member.updateRole(request.memberRole)
     }
 
+    // TODO: setInitialCardinals와 동시 호출 시 출석 중복 생성 가능 — 멤버 단위 락 추가 검토
     @Transactional
     fun applyOb(
         clubId: Long,
@@ -96,6 +97,7 @@ class AdminClubMemberUseCase(
         }
     }
 
+    // TODO: ManageClubMemberUsecase.initializeAttendances와 중복 — MVP 후 공통 서비스로 추출
     private fun initializeAttendances(
         clubId: Long,
         member: ClubMember,

@@ -1,10 +1,15 @@
 package com.weeth.domain.club.application.usecase.command
 
+import com.weeth.domain.cardinal.domain.entity.Cardinal
+import com.weeth.domain.cardinal.domain.enums.CardinalStatus
+import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
@@ -22,14 +27,15 @@ import org.springframework.transaction.annotation.Transactional
 class ManageClubUseCase(
     private val clubRepository: ClubRepository,
     private val clubMemberRepository: ClubMemberRepository,
+    private val cardinalRepository: CardinalRepository,
+    private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
     /**
      * 새로운 동아리를 생성
      * 생성자는 자동으로 LEAD 권한 설정
-     * 동아리 생성은 관리자 권한이 필요 없음
-     * todo: 기수 관련 설정 필수 처리
+     * 1기부터 currentCardinal기까지 Cardinal을 자동 생성하고, LEAD를 최신 기수에 배정
      */
     @Transactional
     fun create(
@@ -37,7 +43,9 @@ class ManageClubUseCase(
         request: ClubCreateRequest,
     ) {
         val user =
-            userReader.getById(userId)
+            userReader.getByIdWithLock(userId)
+
+        clubMemberPolicy.validateCreateLimit(userId)
 
         val code = ClubCodePolicy.generateCode()
         val clubContact =
@@ -70,6 +78,21 @@ class ManageClubUseCase(
                 }
 
         clubMemberRepository.save(leadMember)
+
+        // 1기 - currentCardinal기까지 Cardinal 자동 생성
+        val cardinals =
+            (1..request.currentCardinal).map { number ->
+                Cardinal.create(
+                    club = club,
+                    cardinalNumber = number,
+                    status = if (number == request.currentCardinal) CardinalStatus.IN_PROGRESS else CardinalStatus.DONE,
+                )
+            }
+
+        cardinalRepository.saveAll(cardinals)
+
+        // LEAD 멤버를 최신 기수에 배정
+        clubMemberCardinalRepository.save(ClubMemberCardinal.create(leadMember, cardinals.last()))
     }
 
     @Transactional

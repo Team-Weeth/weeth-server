@@ -19,10 +19,10 @@ class UserController(
 
 ## Club-scoped API
 
-Club resources use `/api/v4/clubs/{clubId}/...`. `clubId` is Base62 TSID — use three annotations together:
+Club resources use `/api/v4/clubs/{clubId}/...`. `clubId` is Base62 TSID — use two annotations together:
 
 ```kotlin
-@PathVariable @TsidParam        // IDE warning suppression + Swagger (type: string)
+@TsidParam        // Swagger (type: string)
 @TsidPathVariable clubId: Long  // decodes Base62 → Long at runtime
 ```
 
@@ -105,6 +105,7 @@ enum class UserResponseCode(
 | 10 | cardinal   | 11000~        | 21000~             | —                 |
 | 11 | club       | 11100~        | 21100~             | —                 |
 | 12 | dashboard  | 11200~        | 21200~             | —                 |
+| 13 | university | 11300~        | —                  | 31300~            |
 | 90 | jwt/auth   | —             | 29000~             | —                 |
 | 99 | common     | —             | —                  | 39900~            |
 
@@ -124,6 +125,7 @@ enum class UserResponseCode(
 | Cardinal | `CardinalResponseCode` | `110xx` | `domain/cardinal/presentation/` |
 | Club | `ClubResponseCode` | `111xx` | `domain/club/presentation/` |
 | Dashboard | `DashboardResponseCode` | `112xx` | `domain/dashboard/presentation/` |
+| University | `UniversityResponseCode` | `113xx` | `domain/university/presentation/` |
 
 ## Domain Error Codes
 
@@ -141,6 +143,7 @@ enum class UserResponseCode(
 | Cardinal | `CardinalErrorCode` | `210xx` | `domain/cardinal/application/exception/` |
 | Club | `ClubErrorCode` | `211xx` | `domain/club/application/exception/` |
 | Dashboard | `DashboardErrorCode` | `212xx` | `domain/dashboard/application/exception/` |
+| University | `UniversityErrorCode` | `313xx` (infra) | `domain/university/application/exception/` |
 | JWT (Global) | `JwtErrorCode` | `290xx` | `global/auth/jwt/application/exception/` |
 
 ## HTTP Methods

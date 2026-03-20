@@ -1,6 +1,7 @@
 package com.weeth.domain.club.domain.repository
 
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
@@ -30,6 +31,14 @@ interface ClubMemberRepository :
     override fun findByClubIdAndUserId(
         clubId: Long,
         userId: Long,
+    ): ClubMember?
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT cm FROM ClubMember cm WHERE cm.club.id = :clubId AND cm.user.id = :userId")
+    override fun findByClubIdAndUserIdWithLock(
+        @Param("clubId") clubId: Long,
+        @Param("userId") userId: Long,
     ): ClubMember?
 
     @Query(
@@ -68,5 +77,20 @@ interface ClubMemberRepository :
     )
     override fun countActiveByClubId(
         @Param("clubId") clubId: Long,
+    ): Long
+
+    @Query(
+        """
+        SELECT COUNT(cm)
+        FROM ClubMember cm
+        WHERE cm.user.id = :userId
+        AND cm.memberStatus = :memberStatus
+        AND cm.memberRole = :memberRole
+        """,
+    )
+    override fun countByUserIdAndMemberStatusAndMemberRole(
+        @Param("userId") userId: Long,
+        @Param("memberStatus") memberStatus: MemberStatus,
+        @Param("memberRole") memberRole: MemberRole,
     ): Long
 }
