@@ -1,6 +1,5 @@
 package com.weeth.domain.user.presentation
 
-import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
@@ -11,7 +10,6 @@ import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
-import com.weeth.domain.user.application.usecase.command.UpdateProfileImageUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
 import com.weeth.domain.user.application.usecase.query.GetUserQueryService
 import com.weeth.global.auth.annotation.CurrentUser
@@ -27,7 +25,6 @@ import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -42,7 +39,6 @@ class UserController(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val agreeTermsUseCase: AgreeTermsUseCase,
-    private val updateProfileImageUseCase: UpdateProfileImageUseCase,
     private val getUserQueryService: GetUserQueryService,
 ) {
     @PostMapping("/social/kakao")
@@ -93,16 +89,6 @@ class UserController(
     ): CommonResponse<Void?> {
         agreeTermsUseCase.execute(userId, request)
         return CommonResponse.success(UserResponseCode.USER_TERMS_AGREE_SUCCESS)
-    }
-
-    @PutMapping("/profile-image")
-    @Operation(summary = "프로필 이미지 업로드")
-    fun updateProfileImage(
-        @RequestBody @Valid request: FileSaveRequest,
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<Void?> {
-        updateProfileImageUseCase.execute(userId, request)
-        return CommonResponse.success(UserResponseCode.USER_PROFILE_IMAGE_UPDATE_SUCCESS)
     }
 
     @PatchMapping
