@@ -6,8 +6,8 @@ import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
-import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
+import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.CardinalAlreadySetException
 import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
