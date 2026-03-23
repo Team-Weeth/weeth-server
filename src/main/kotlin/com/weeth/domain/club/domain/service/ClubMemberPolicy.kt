@@ -27,13 +27,7 @@ class ClubMemberPolicy(
     fun getActiveMember(
         clubId: Long,
         userId: Long,
-    ): ClubMember {
-        val member =
-            clubMemberReader.findByClubIdAndUserId(clubId, userId)
-                ?: throw ClubMemberNotFoundException()
-        if (!member.isActive()) throw MemberNotActiveException()
-        return member
-    }
+    ): ClubMember = resolveActiveMember { clubMemberReader.findByClubIdAndUserId(clubId, userId) }
 
     /**
      * 사용자가 동아리 관리자인지 검증
@@ -52,32 +46,24 @@ class ClubMemberPolicy(
     fun getActiveMemberWithLock(
         clubId: Long,
         userId: Long,
-    ): ClubMember {
-        val member =
-            clubMemberReader.findByClubIdAndUserIdWithLock(clubId, userId)
-                ?: throw ClubMemberNotFoundException()
-        if (!member.isActive()) throw MemberNotActiveException()
-        return member
-    }
+    ): ClubMember = resolveActiveMember { clubMemberReader.findByClubIdAndUserIdWithLock(clubId, userId) }
 
     fun getMemberInClub(
         clubId: Long,
         clubMemberId: Long,
-    ): ClubMember {
-        val member =
-            clubMemberReader.findByIdOrNull(clubMemberId)
-                ?: throw ClubMemberNotFoundException()
-        if (member.club.id != clubId) throw ClubMemberNotInClubException()
+    ): ClubMember = resolveMemberInClub(clubId) { clubMemberReader.findByIdOrNull(clubMemberId) }
+
+    private fun resolveActiveMember(reader: () -> ClubMember?): ClubMember {
+        val member = reader() ?: throw ClubMemberNotFoundException()
+        if (!member.isActive()) throw MemberNotActiveException()
         return member
     }
 
-    fun getMemberInClubWithLock(
+    private fun resolveMemberInClub(
         clubId: Long,
-        clubMemberId: Long,
+        reader: () -> ClubMember?,
     ): ClubMember {
-        val member =
-            clubMemberReader.findByIdWithLock(clubMemberId)
-                ?: throw ClubMemberNotFoundException()
+        val member = reader() ?: throw ClubMemberNotFoundException()
         if (member.club.id != clubId) throw ClubMemberNotInClubException()
         return member
     }

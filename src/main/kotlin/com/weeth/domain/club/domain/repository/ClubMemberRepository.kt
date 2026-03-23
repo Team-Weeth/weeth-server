@@ -21,6 +21,13 @@ interface ClubMemberRepository :
         @Param("clubMemberId") clubMemberId: Long,
     ): ClubMember?
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT cm FROM ClubMember cm JOIN FETCH cm.user JOIN FETCH cm.club WHERE cm.id IN :ids")
+    override fun findAllByIdsWithLock(
+        @Param("ids") ids: List<Long>,
+    ): List<ClubMember>
+
     override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
         memberStatus: MemberStatus,

@@ -23,4 +23,7 @@ enum class AttendanceErrorCode(
 
     @ExplainError("해당 세션에 이미 출석 처리된 사용자가 다시 출석을 시도할 때 발생합니다.")
     ALREADY_ATTENDED(20204, HttpStatus.CONFLICT, "이미 출석 처리된 세션입니다."),
+
+    @ExplainError("출석이 자동 마감 처리된 후 체크인을 시도할 때 발생합니다.")
+    ATTENDANCE_ALREADY_CLOSED(20205, HttpStatus.CONFLICT, "이미 마감된 출석입니다."),
 }

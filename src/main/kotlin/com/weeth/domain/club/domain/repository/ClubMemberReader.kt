@@ -7,6 +7,8 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 interface ClubMemberReader {
     fun findByIdWithLock(clubMemberId: Long): ClubMember?
 
+    fun findAllByIdsWithLock(ids: List<Long>): List<ClubMember>
+
     fun findByIdOrNull(clubMemberId: Long): ClubMember?
 
     fun findByClubIdAndUserId(

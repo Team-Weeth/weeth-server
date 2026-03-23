@@ -2,6 +2,7 @@ package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.exception.AlreadyAttendedException
+import com.weeth.domain.attendance.application.exception.AttendanceAlreadyClosedException
 import com.weeth.domain.attendance.application.exception.AttendanceCodeMismatchException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.application.exception.QrTokenExpiredException
@@ -11,8 +12,8 @@ import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
-import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.application.exception.SessionNotInProgressException
+import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
@@ -48,7 +49,7 @@ class ManageAttendanceUseCase(
 
         when (lockedAttendance.status) {
             AttendanceStatus.ATTEND -> throw AlreadyAttendedException()
-            AttendanceStatus.ABSENT -> throw SessionNotInProgressException()
+            AttendanceStatus.ABSENT -> throw AttendanceAlreadyClosedException()
             AttendanceStatus.PENDING -> Unit
         }
 
@@ -59,13 +60,14 @@ class ManageAttendanceUseCase(
     @Transactional
     fun autoClose() {
         val sessions = sessionReader.findAllByStatusAndEndBeforeOrderByEndAsc(SessionStatus.OPEN, LocalDateTime.now())
+        sessions.forEach { session -> closeSingleSession(session) }
+    }
 
-        sessions.forEach { session ->
-            session.close()
-            val attendances =
-                attendanceRepository.findAllBySessionAndClubMemberMemberStatusWithLock(session, MemberStatus.ACTIVE)
-            closePendingAttendances(attendances)
-        }
+    private fun closeSingleSession(session: Session) {
+        session.close()
+        val attendances =
+            attendanceRepository.findAllBySessionAndClubMemberMemberStatusWithLock(session, MemberStatus.ACTIVE)
+        closePendingAttendances(attendances)
     }
 
     @Transactional
@@ -75,10 +77,12 @@ class ManageAttendanceUseCase(
         attendanceUpdates: List<UpdateAttendanceStatusRequest>,
     ) {
         clubMemberPolicy.requireAdmin(clubId, userId)
-        attendanceUpdates.forEach { update ->
-            val attendance =
-                attendanceRepository.findByIdWithClubMemberWithLock(update.attendanceId)
-                    ?: throw AttendanceNotFoundException()
+        // 데드락 방지: 일관된 순서로 락 획득
+        val ids = attendanceUpdates.map { it.attendanceId }.sorted()
+        val attendanceMap = attendanceRepository.findAllByIdsWithLock(ids).associateBy { it.id }
+        // 데드락 방지: 처리 순서도 ID 오름차순으로 통일
+        attendanceUpdates.sortedBy { it.attendanceId }.forEach { update ->
+            val attendance = attendanceMap[update.attendanceId] ?: throw AttendanceNotFoundException()
             if (attendance.clubMember.club.id != clubId) throw AttendanceNotFoundException()
 
             val member = attendance.clubMember

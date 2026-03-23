@@ -7,9 +7,12 @@ import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
+import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
+import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
@@ -24,6 +27,7 @@ class AdminClubMemberUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
     private val cardinalReader: CardinalReader,
+    private val clubMemberReader: ClubMemberReader,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
@@ -76,10 +80,19 @@ class AdminClubMemberUseCase(
         val uniqueRequests = requests.distinctBy { it.clubMemberId to it.cardinal }
         if (uniqueRequests.isEmpty()) return
 
+        val memberIds = uniqueRequests.map { it.clubMemberId }.distinct().sorted()
+        val memberMap =
+            clubMemberReader
+                .findAllByIdsWithLock(memberIds)
+                .also { members ->
+                    if (members.any { it.club.id != clubId }) throw ClubMemberNotInClubException()
+                }
+                .associateBy { it.id }
+
         val cardinalByNumber = mutableMapOf<Int, Cardinal>()
 
         uniqueRequests.forEach { request ->
-            val member = clubMemberPolicy.getMemberInClubWithLock(clubId, request.clubMemberId)
+            val member = memberMap[request.clubMemberId] ?: throw ClubMemberNotFoundException()
             val nextCardinal =
                 cardinalByNumber.getOrPut(request.cardinal) {
                     cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal)
