@@ -46,7 +46,11 @@ class ManageAttendanceUseCase(
             attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember)
                 ?: throw AttendanceNotFoundException()
 
-        if (lockedAttendance.status == AttendanceStatus.ATTEND) throw AlreadyAttendedException()
+        when (lockedAttendance.status) {
+            AttendanceStatus.ATTEND -> throw AlreadyAttendedException()
+            AttendanceStatus.ABSENT -> throw SessionNotInProgressException()
+            AttendanceStatus.PENDING -> Unit
+        }
 
         lockedAttendance.attend()
         clubMember.attend()
@@ -59,7 +63,7 @@ class ManageAttendanceUseCase(
         sessions.forEach { session ->
             session.close()
             val attendances =
-                attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, MemberStatus.ACTIVE)
+                attendanceRepository.findAllBySessionAndClubMemberMemberStatusWithLock(session, MemberStatus.ACTIVE)
             closePendingAttendances(attendances)
         }
     }
@@ -73,7 +77,7 @@ class ManageAttendanceUseCase(
         clubMemberPolicy.requireAdmin(clubId, userId)
         attendanceUpdates.forEach { update ->
             val attendance =
-                attendanceRepository.findByIdWithClubMember(update.attendanceId)
+                attendanceRepository.findByIdWithClubMemberWithLock(update.attendanceId)
                     ?: throw AttendanceNotFoundException()
             if (attendance.clubMember.club.id != clubId) throw AttendanceNotFoundException()
 
