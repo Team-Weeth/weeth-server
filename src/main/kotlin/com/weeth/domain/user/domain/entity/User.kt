@@ -1,7 +1,6 @@
 package com.weeth.domain.user.domain.entity
 
 import com.weeth.domain.user.domain.converter.EmailConverter
-import com.weeth.domain.user.domain.converter.PhoneNumberConverter
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.Email
 import com.weeth.global.common.converter.PhoneNumberConverter

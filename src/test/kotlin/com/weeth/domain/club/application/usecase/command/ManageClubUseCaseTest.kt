@@ -207,7 +207,7 @@ class ManageClubUseCaseTest :
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
                 club.clubContact.phoneNumber shouldBe "01099998888"
-                club.clubContact.phoneNumber shouldBe "010-9999-8888"
+                club.clubContact.phoneNumber shouldBe "01099998888"
                 club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-02/uuid_profile.png"
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
