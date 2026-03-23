@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 class AttendanceScheduler(
     private val manageAttendanceUseCase: ManageAttendanceUseCase,
 ) {
-    @Scheduled(cron = "0 0 22 * * THU", zone = "Asia/Seoul")
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
     fun autoCloseAttendance() {
         manageAttendanceUseCase.autoClose()
     }
