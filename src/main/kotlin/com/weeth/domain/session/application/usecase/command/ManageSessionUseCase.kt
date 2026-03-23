@@ -3,10 +3,10 @@ package com.weeth.domain.session.application.usecase.command
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
-import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
@@ -26,7 +26,6 @@ class ManageSessionUseCase(
     private val cardinalReader: CardinalReader,
     private val sessionMapper: SessionMapper,
     private val clubReader: ClubReader,
-    private val clubMemberReader: ClubMemberReader,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
@@ -39,17 +38,11 @@ class ManageSessionUseCase(
         clubMemberPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
-        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw SessionNotFoundException()
-        val allActiveMembers = clubMemberReader.findAllByClubIdAndMemberStatus(clubId, MemberStatus.ACTIVE)
+        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw CardinalNotFoundException()
         val membersWithCardinal =
-            if (allActiveMembers.isEmpty()) {
-                emptyList()
-            } else {
-                clubMemberCardinalReader
-                    .findAllByClubMembers(allActiveMembers)
-                    .filter { it.cardinal.cardinalNumber == request.cardinal }
-                    .map { it.clubMember }
-            }
+            clubMemberCardinalReader
+                .findAllByClubIdAndCardinalNumber(clubId, request.cardinal, MemberStatus.ACTIVE)
+                .map { it.clubMember }
 
         val session = sessionMapper.toEntity(club, request, user)
         sessionRepository.save(session)
