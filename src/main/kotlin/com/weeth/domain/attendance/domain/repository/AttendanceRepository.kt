@@ -42,6 +42,7 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         @Param("status") status: MemberStatus,
     ): List<Attendance>
 
+    // 교착 방지: id 오름차순 정렬로 일관된 락 획득 순서 보장
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(
