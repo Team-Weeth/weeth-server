@@ -44,8 +44,7 @@ class DashboardMapper(
         user: User,
         clubMember: ClubMember,
     ) = DashboardMyInfoResponse(
-        userInfo = UserInfo.from(user),
-        profileImageUrl = clubMember.profileImageUrl,
+        userInfo = UserInfo.from(user, clubMember),
         bio = clubMember.bio,
     )
 
@@ -98,11 +97,12 @@ class DashboardMapper(
 
     fun toPostResponse(
         post: Post,
+        authorMember: ClubMember,
         files: List<File>,
         now: LocalDateTime,
     ) = DashboardPostResponse(
         id = post.id,
-        author = UserInfo.from(post.user),
+        author = UserInfo.from(post.user, authorMember),
         title = post.title,
         content = post.content,
         time = post.createdAt,

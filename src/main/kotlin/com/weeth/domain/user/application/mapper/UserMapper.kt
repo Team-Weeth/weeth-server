@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.mapper
 
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserSummaryResponse
@@ -19,7 +20,10 @@ class UserMapper {
             isNewUser = isNewUser,
         )
 
-    fun toUserProfileResponse(user: User): UserProfileResponse =
+    fun toUserProfileResponse(
+        user: User,
+        clubMember: ClubMember,
+    ): UserProfileResponse =
         UserProfileResponse(
             id = user.id,
             name = user.name,
@@ -29,8 +33,19 @@ class UserMapper {
             school = user.school,
             department = user.department,
             cardinals = emptyList(),
-            role = user.role,
-            profileImageUrl = user.profileImageUrl,
+            role = clubMember.memberRole,
+            profileImageUrl = clubMember.profileImageUrl,
+        )
+
+    fun toUserSummaryResponse(
+        user: User,
+        clubMember: ClubMember,
+    ): UserSummaryResponse =
+        UserSummaryResponse(
+            id = user.id,
+            name = user.name,
+            cardinals = emptyList(),
+            role = clubMember.memberRole,
         )
 
     fun toUserSummaryResponse(user: User): UserSummaryResponse =
@@ -38,6 +53,6 @@ class UserMapper {
             id = user.id,
             name = user.name,
             cardinals = emptyList(),
-            role = user.role,
+            role = null,
         )
 }

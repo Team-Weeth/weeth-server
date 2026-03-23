@@ -1,5 +1,6 @@
 package com.weeth.domain.comment.application.mapper
 
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.domain.entity.Comment
 import com.weeth.domain.file.application.dto.response.FileResponse
@@ -10,12 +11,13 @@ import org.springframework.stereotype.Component
 class CommentMapper {
     fun toCommentDto(
         comment: Comment,
+        authorMember: ClubMember,
         children: List<CommentResponse>,
         fileUrls: List<FileResponse>,
     ): CommentResponse =
         CommentResponse(
             id = comment.id,
-            author = UserInfo.from(comment.user),
+            author = UserInfo.from(comment.user, authorMember),
             content = comment.content,
             time = comment.modifiedAt,
             fileUrls = fileUrls,

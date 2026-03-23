@@ -4,6 +4,7 @@ import com.weeth.domain.board.application.dto.response.PostDetailResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.domain.entity.Post
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.user.application.dto.response.UserInfo
@@ -16,11 +17,12 @@ class PostMapper {
 
     fun toDetailResponse(
         post: Post,
+        authorMember: ClubMember,
         comments: List<CommentResponse>,
         files: List<FileResponse>,
     ) = PostDetailResponse(
         id = post.id,
-        author = UserInfo.from(post.user),
+        author = UserInfo.from(post.user, authorMember),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
@@ -31,11 +33,12 @@ class PostMapper {
 
     fun toListResponse(
         post: Post,
+        authorMember: ClubMember,
         hasFile: Boolean,
         now: LocalDateTime,
     ) = PostListResponse(
         id = post.id,
-        author = UserInfo.from(post.user),
+        author = UserInfo.from(post.user, authorMember),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
