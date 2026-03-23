@@ -15,7 +15,8 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubJoinPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
@@ -32,7 +33,8 @@ class ManageClubUseCase(
     private val cardinalRepository: CardinalRepository,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
     private val userReader: UserReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubJoinPolicy: ClubJoinPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
     /**
      * 새로운 동아리를 생성
@@ -48,7 +50,7 @@ class ManageClubUseCase(
         val user =
             userReader.getByIdWithLock(userId)
 
-        clubMemberPolicy.validateCreateLimit(userId)
+        clubJoinPolicy.validateCreateLimit(userId)
         validatePrimaryContactEmail(request.primaryContact, request.contactEmail)
 
         val code = ClubCodePolicy.generateCode()
@@ -106,7 +108,7 @@ class ManageClubUseCase(
         userId: Long,
         request: ClubUpdateRequest,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
 
@@ -134,7 +136,7 @@ class ManageClubUseCase(
         clubId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
         val newCode = ClubCodePolicy.generateCode()
@@ -146,7 +148,7 @@ class ManageClubUseCase(
         clubId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
         club.removeProfileImage()
@@ -157,7 +159,7 @@ class ManageClubUseCase(
         clubId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
         club.removeBackgroundImage()

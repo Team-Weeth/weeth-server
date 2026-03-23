@@ -6,6 +6,7 @@ import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -18,8 +19,9 @@ class GetBoardQueryServiceTest :
     DescribeSpec({
         val boardRepository = mockk<BoardRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val boardMapper = BoardMapper()
-        val queryService = GetBoardQueryService(boardRepository, clubMemberPolicy, boardMapper)
+        val queryService = GetBoardQueryService(boardRepository, clubMemberPolicy, clubPermissionPolicy, boardMapper)
 
         val clubId = 1L
         val userId = 10L

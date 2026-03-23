@@ -1,6 +1,7 @@
 package com.weeth.domain.session.application.usecase.query
 
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
 import com.weeth.domain.schedule.application.mapper.SessionMapper
@@ -18,6 +19,7 @@ import java.time.temporal.TemporalAdjusters
 class GetSessionQueryService(
     private val sessionRepository: SessionRepository,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val sessionMapper: SessionMapper,
 ) {
     fun findSession(
@@ -40,7 +42,7 @@ class GetSessionQueryService(
         userId: Long,
         cardinal: Int?,
     ): SessionInfosResponse {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val sessions =
             if (cardinal == null) {
                 sessionRepository.findAllByClubIdOrderByStartDesc(clubId)

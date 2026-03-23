@@ -19,6 +19,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
+import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
@@ -43,6 +44,7 @@ class ManageClubMemberUsecase(
     private val attendanceRepository: AttendanceRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubJoinPolicy: ClubJoinPolicy,
     private val fileRepository: FileRepository,
     private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
@@ -65,7 +67,7 @@ class ManageClubMemberUsecase(
             throw AlreadyJoinedException()
         }
 
-        clubMemberPolicy.validateJoinLimit(userId)
+        clubJoinPolicy.validateJoinLimit(userId)
 
         ClubCodePolicy.validate(club.code, request.code)
 

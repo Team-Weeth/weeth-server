@@ -16,6 +16,7 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
@@ -32,6 +33,7 @@ import org.springframework.test.util.ReflectionTestUtils
 class AdminClubMemberUseCaseTest :
     DescribeSpec({
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val clubMemberCardinalPolicy = mockk<ClubMemberCardinalPolicy>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>(relaxed = true)
         val sessionReader = mockk<SessionReader>(relaxed = true)
@@ -40,6 +42,7 @@ class AdminClubMemberUseCaseTest :
         val useCase =
             AdminClubMemberUseCase(
                 clubMemberPolicy,
+                clubPermissionPolicy,
                 clubMemberCardinalPolicy,
                 cardinalReader,
                 sessionReader,
@@ -51,6 +54,7 @@ class AdminClubMemberUseCaseTest :
         beforeTest {
             clearMocks(
                 clubMemberPolicy,
+                clubPermissionPolicy,
                 clubMemberCardinalPolicy,
                 cardinalReader,
                 sessionReader,
@@ -69,7 +73,7 @@ class AdminClubMemberUseCaseTest :
         describe("accept") {
             it("같은 동아리 소속 멤버를 승인한다") {
                 val member = ClubMemberTestFixture.createWaitingMember()
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
 
                 useCase.accept(1L, 10L, 20L)
@@ -78,7 +82,7 @@ class AdminClubMemberUseCaseTest :
             }
 
             it("다른 동아리 소속 멤버면 예외가 발생한다") {
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } throws ClubMemberNotInClubException()
 
                 shouldThrow<ClubMemberNotInClubException> {
@@ -90,7 +94,7 @@ class AdminClubMemberUseCaseTest :
         describe("ban") {
             it("같은 동아리 소속 멤버를 추방한다") {
                 val member = ClubMemberTestFixture.createActiveMember()
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
 
                 useCase.ban(1L, 10L, 20L)
@@ -102,7 +106,7 @@ class AdminClubMemberUseCaseTest :
         describe("updateMemberRole") {
             it("같은 동아리 소속 멤버의 권한을 변경한다") {
                 val member = ClubMemberTestFixture.createActiveMember(memberRole = MemberRole.USER)
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
 
                 useCase.updateMemberRole(
@@ -116,7 +120,7 @@ class AdminClubMemberUseCaseTest :
 
             it("LEAD로 직접 변경 시도하면 예외가 발생한다") {
                 val member = ClubMemberTestFixture.createActiveMember(memberRole = MemberRole.USER)
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
 
                 shouldThrow<LeadTransferOnlyException> {
@@ -130,7 +134,7 @@ class AdminClubMemberUseCaseTest :
 
             it("LEAD 멤버의 역할을 직접 변경 시도하면 예외가 발생한다") {
                 val leadMember = ClubMemberTestFixture.createLeadMember()
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns leadMember
 
                 shouldThrow<LeadTransferOnlyException> {
@@ -217,7 +221,7 @@ class AdminClubMemberUseCaseTest :
                         semester = 1,
                     )
                 val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
@@ -242,7 +246,7 @@ class AdminClubMemberUseCaseTest :
                         year = 2026,
                         semester = 1,
                     )
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns false
@@ -266,7 +270,7 @@ class AdminClubMemberUseCaseTest :
                         year = 2026,
                         semester = 1,
                     )
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
@@ -283,7 +287,7 @@ class AdminClubMemberUseCaseTest :
 
             it("존재하지 않는 기수면 예외가 발생한다") {
                 val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns null
 
@@ -304,7 +308,7 @@ class AdminClubMemberUseCaseTest :
                     )
                 repeat(2) { member.attend() }
                 repeat(1) { member.absent() }
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true

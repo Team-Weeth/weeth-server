@@ -9,7 +9,7 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.repository.ClubReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,7 +18,7 @@ class ManageBoardUseCase(
     private val boardRepository: BoardRepository,
     private val boardMapper: BoardMapper,
     private val clubReader: ClubReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
     /**
      * 게시판 생성 API, 커스텀한 게시판 생성 가능
@@ -30,7 +30,7 @@ class ManageBoardUseCase(
         request: CreateBoardRequest,
         userId: Long,
     ): BoardDetailResponse {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
 
         val board =
@@ -57,7 +57,7 @@ class ManageBoardUseCase(
         request: UpdateBoardRequest,
         userId: Long,
     ): BoardDetailResponse {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val board = findBoard(boardId)
         if (board.club.id != clubId) throw BoardNotFoundException()
 
@@ -84,7 +84,7 @@ class ManageBoardUseCase(
         boardId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val board = findBoard(boardId)
 
         if (board.club.id != clubId) throw BoardNotFoundException()

@@ -8,6 +8,7 @@ import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
@@ -22,6 +23,7 @@ import io.mockk.verify
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val clubMemberCardinalPolicy = mockk<ClubMemberCardinalPolicy>()
         val sessionReader = mockk<SessionReader>()
         val attendanceRepository = mockk<AttendanceRepository>()
@@ -30,6 +32,7 @@ class GetAttendanceQueryServiceTest :
         val queryService =
             GetAttendanceQueryService(
                 clubMemberPolicy,
+                clubPermissionPolicy,
                 clubMemberCardinalPolicy,
                 sessionReader,
                 attendanceRepository,
@@ -111,7 +114,7 @@ class GetAttendanceQueryServiceTest :
                 val session = SessionTestFixture.createSession(id = 10L, club = admin.club, title = "세션")
                 val attendance = Attendance.create(session, member).also { it.attend() }
 
-                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { clubPermissionPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { sessionReader.getById(session.id) } returns session
                 every { attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, any()) } returns
                     listOf(attendance)
@@ -127,7 +130,7 @@ class GetAttendanceQueryServiceTest :
                 val admin = ClubMemberTestFixture.createAdminMember()
                 val otherSession = SessionTestFixture.createSession(id = 10L)
 
-                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { clubPermissionPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { sessionReader.getById(otherSession.id) } returns otherSession
 
                 shouldThrow<AttendanceNotFoundException> {

@@ -16,6 +16,7 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AdminClubMemberUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
     private val cardinalReader: CardinalReader,
     private val sessionReader: SessionReader,
@@ -38,7 +40,7 @@ class AdminClubMemberUseCase(
         userId: Long,
         clubMemberId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
         member.accept()
@@ -50,7 +52,7 @@ class AdminClubMemberUseCase(
         userId: Long,
         clubMemberId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
         member.ban()
@@ -62,7 +64,7 @@ class AdminClubMemberUseCase(
         userId: Long,
         request: ClubMemberRoleUpdateRequest,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, request.clubMemberId)
         if (request.memberRole == MemberRole.LEAD) throw LeadTransferOnlyException()
@@ -93,7 +95,7 @@ class AdminClubMemberUseCase(
         userId: Long,
         requests: List<ClubMemberApplyObRequest>,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val uniqueRequests = requests.distinctBy { it.clubMemberId to it.cardinal }
         if (uniqueRequests.isEmpty()) return
