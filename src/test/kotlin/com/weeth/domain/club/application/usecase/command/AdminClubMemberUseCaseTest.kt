@@ -119,7 +119,7 @@ class AdminClubMemberUseCaseTest :
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
 
-                shouldThrow<IllegalStateException> {
+                shouldThrow<LeadTransferOnlyException> {
                     useCase.updateMemberRole(
                         1L,
                         10L,
@@ -133,7 +133,7 @@ class AdminClubMemberUseCaseTest :
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns leadMember
 
-                shouldThrow<IllegalStateException> {
+                shouldThrow<LeadTransferOnlyException> {
                     useCase.updateMemberRole(
                         1L,
                         10L,
