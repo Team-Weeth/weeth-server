@@ -1,5 +1,6 @@
 package com.weeth.domain.club.domain.entity
 
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.global.common.entity.BaseEntity
 import com.weeth.global.common.id.TsidGenerator
@@ -45,7 +46,7 @@ class Club(
     var code: String = code
         private set
 
-    @Column(length = 100)
+    @Column(length = 30)
     var description: String? = description
         private set
 
@@ -73,6 +74,7 @@ class Club(
         description: String?,
         contactEmail: String?,
         contactPhoneNumber: String?,
+        primaryContact: PrimaryContact?,
         profileImageUrl: String?,
         backgroundImageUrl: String?,
     ) {
@@ -84,20 +86,25 @@ class Club(
             require(it.isNotBlank()) { "학교 이름은 비어 있을 수 없습니다." }
             this.schoolName = it.trim()
         }
-        description?.let { this.description = it }
+        description?.let {
+            require(it.length <= MAX_DESCRIPTION_LENGTH) { "소개글은 ${MAX_DESCRIPTION_LENGTH}자 이하여야 합니다." }
+            this.description = it
+        }
 
-        updateContact(contactEmail, contactPhoneNumber)
+        updateContact(contactEmail, contactPhoneNumber, primaryContact)
         updateImageUrl(profileImageUrl, backgroundImageUrl)
     }
 
     private fun updateContact(
         contactEmail: String?,
         contactPhoneNumber: String?,
+        primaryContact: PrimaryContact?,
     ) {
-        if (contactEmail != null || contactPhoneNumber != null) {
+        if (contactEmail != null || contactPhoneNumber != null || primaryContact != null) {
             clubContact.update(
-                email = contactEmail ?: clubContact.email,
-                phoneNumber = contactPhoneNumber ?: clubContact.phoneNumber,
+                email = contactEmail,
+                phoneNumber = contactPhoneNumber,
+                primaryContact = primaryContact,
             )
         }
     }
@@ -133,6 +140,8 @@ class Club(
     }
 
     companion object {
+        private const val MAX_DESCRIPTION_LENGTH = 30
+
         fun create(
             name: String,
             code: String,
@@ -145,6 +154,9 @@ class Club(
             require(name.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
             require(code.isNotBlank()) { "초대 코드는 비어 있을 수 없습니다." }
             require(schoolName.isNotBlank()) { "학교 이름은 비어 있을 수 없습니다." }
+            description?.let {
+                require(it.length <= MAX_DESCRIPTION_LENGTH) { "소개글은 ${MAX_DESCRIPTION_LENGTH}자 이하여야 합니다." }
+            }
             return Club(
                 name = name,
                 code = code,

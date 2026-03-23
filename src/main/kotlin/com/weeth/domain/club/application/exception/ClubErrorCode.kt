@@ -41,4 +41,7 @@ enum class ClubErrorCode(
 
     @ExplainError("동아리장(LEAD)으로 생성 가능한 동아리 수(최대 1개)를 초과했을 때 발생합니다.")
     CLUB_CREATE_LIMIT_EXCEEDED(21111, HttpStatus.CONFLICT, "생성 가능한 동아리 수를 초과했습니다."),
+
+    @ExplainError("주 연락처를 이메일로 설정했으나 이메일이 입력되지 않았을 때 발생합니다.")
+    EMAIL_REQUIRED_FOR_PRIMARY_CONTACT(21112, HttpStatus.BAD_REQUEST, "주 연락처를 이메일로 설정하려면 이메일을 입력해야 합니다."),
 }

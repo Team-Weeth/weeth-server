@@ -5,10 +5,12 @@ import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.exception.EmailRequiredForPrimaryContactException
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
@@ -36,6 +38,7 @@ class ManageClubUseCase(
      * 새로운 동아리를 생성
      * 생성자는 자동으로 LEAD 권한 설정
      * 1기부터 currentCardinal기까지 Cardinal을 자동 생성하고, LEAD를 최신 기수에 배정
+     * TODO: CDN 도입을 위해 File로 저장하기.
      */
     @Transactional
     fun create(
@@ -46,12 +49,14 @@ class ManageClubUseCase(
             userReader.getByIdWithLock(userId)
 
         clubMemberPolicy.validateCreateLimit(userId)
+        validatePrimaryContactEmail(request.primaryContact, request.contactEmail)
 
         val code = ClubCodePolicy.generateCode()
         val clubContact =
             ClubContact.from(
                 email = request.contactEmail,
                 phoneNumber = request.contactPhoneNumber,
+                primaryContact = request.primaryContact,
             )
 
         val club =
@@ -105,12 +110,20 @@ class ManageClubUseCase(
 
         val club = clubRepository.getClubById(clubId)
 
+        if (request.primaryContact == PrimaryContact.EMAIL) {
+            val resolvedEmail = request.contactEmail ?: club.clubContact.email
+            if (resolvedEmail == null) {
+                throw EmailRequiredForPrimaryContactException()
+            }
+        }
+
         club.update(
             name = request.name,
             schoolName = request.schoolName,
             description = request.description,
             contactEmail = request.contactEmail,
             contactPhoneNumber = request.contactPhoneNumber,
+            primaryContact = request.primaryContact,
             profileImageUrl = request.profileImageUrl,
             backgroundImageUrl = request.backgroundImageUrl,
         )
@@ -148,5 +161,14 @@ class ManageClubUseCase(
 
         val club = clubRepository.getClubById(clubId)
         club.removeBackgroundImage()
+    }
+
+    private fun validatePrimaryContactEmail(
+        primaryContact: PrimaryContact,
+        contactEmail: String?,
+    ) {
+        if (primaryContact == PrimaryContact.EMAIL && contactEmail == null) {
+            throw EmailRequiredForPrimaryContactException()
+        }
     }
 }
