@@ -37,4 +37,9 @@ interface ClubMemberReader {
         memberStatus: MemberStatus,
         memberRole: MemberRole,
     ): Long
+
+    fun findAllByClubIdAndUserIds(
+        clubId: Long,
+        userIds: List<Long>,
+    ): List<ClubMember>
 }
