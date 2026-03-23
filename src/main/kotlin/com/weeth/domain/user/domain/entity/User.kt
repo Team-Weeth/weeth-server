@@ -2,7 +2,6 @@ package com.weeth.domain.user.domain.entity
 
 import com.weeth.domain.user.domain.converter.EmailConverter
 import com.weeth.domain.user.domain.converter.PhoneNumberConverter
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.Email
 import com.weeth.domain.user.domain.vo.PhoneNumber
@@ -27,8 +26,6 @@ class User(
     school: String = "",
     department: String = "",
     status: Status = Status.WAITING,
-    role: Role = Role.USER,
-    profileImageUrl: String? = null,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -67,21 +64,12 @@ class User(
     var status: Status = status
         private set
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    var role: Role = role
-        private set
-
     @Column(nullable = false)
     var termsAgreed: Boolean = false
         private set
 
     @Column(nullable = false)
     var privacyAgreed: Boolean = false
-        private set
-
-    @Column(length = 500)
-    var profileImageUrl: String? = profileImageUrl?.trim()?.takeIf { it.isNotBlank() }
         private set
 
     val emailValue: String
@@ -129,12 +117,8 @@ class User(
         privacyAgreed: Boolean,
     ) {
         require(termsAgreed && privacyAgreed) { "모든 약관에 동의해야 합니다." }
-        this.termsAgreed = termsAgreed
-        this.privacyAgreed = privacyAgreed
-    }
-
-    fun updateProfileImageUrl(url: String?) {
-        this.profileImageUrl = url?.trim()?.takeIf { it.isNotBlank() }
+        this.termsAgreed = true
+        this.privacyAgreed = true
     }
 
     fun accept() {
@@ -145,12 +129,6 @@ class User(
         status = Status.BANNED
     }
 
-    fun updateRole(role: Role) {
-        this.role = role
-    }
-
-    fun hasRole(role: Role): Boolean = this.role == role
-
     companion object {
         fun create(
             name: String,
@@ -160,7 +138,6 @@ class User(
             school: String = "",
             department: String = "",
             status: Status = Status.WAITING,
-            profileImageUrl: String? = null,
         ): User =
             User(
                 name = name,
@@ -170,7 +147,6 @@ class User(
                 school = school,
                 department = department,
                 status = status,
-                profileImageUrl = profileImageUrl,
             )
     }
 }
