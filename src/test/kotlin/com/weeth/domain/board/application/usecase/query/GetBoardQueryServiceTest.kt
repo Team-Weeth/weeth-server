@@ -72,7 +72,8 @@ class GetBoardQueryServiceTest :
                         markDeleted()
                     }
 
-                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns listOf(activeBoard, deletedBoard)
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns
+                    listOf(activeBoard, deletedBoard)
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
@@ -87,7 +88,8 @@ class GetBoardQueryServiceTest :
                         updateConfig(config.copy(isPrivate = true))
                     }
 
-                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns listOf(publicBoard, privateBoard)
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns
+                    listOf(publicBoard, privateBoard)
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 

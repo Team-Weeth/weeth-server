@@ -64,13 +64,14 @@ class ManageBoardUseCaseTest :
 
             it("기존 게시판이 없으면 displayOrder 0으로 생성한다") {
                 every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
-                val request = CreateBoardRequest(
-                    name = "첫 게시판",
-                    type = BoardType.GENERAL,
-                    commentEnabled = true,
-                    writePermission = MemberRole.USER,
-                    isPrivate = false,
-                )
+                val request =
+                    CreateBoardRequest(
+                        name = "첫 게시판",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
 
                 val result = useCase.create(clubId, request, userId)
 
@@ -79,13 +80,14 @@ class ManageBoardUseCaseTest :
 
             it("기존 게시판이 있으면 마지막 순서 다음으로 생성한다") {
                 every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns 2
-                val request = CreateBoardRequest(
-                    name = "새 게시판",
-                    type = BoardType.GENERAL,
-                    commentEnabled = true,
-                    writePermission = MemberRole.USER,
-                    isPrivate = false,
-                )
+                val request =
+                    CreateBoardRequest(
+                        name = "새 게시판",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
 
                 val result = useCase.create(clubId, request, userId)
 

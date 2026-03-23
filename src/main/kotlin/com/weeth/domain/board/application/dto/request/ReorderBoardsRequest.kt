@@ -8,4 +8,3 @@ data class ReorderBoardsRequest(
     @field:NotEmpty
     val boardIds: List<Long>,
 )
-
