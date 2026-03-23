@@ -28,4 +28,6 @@ enum class ClubResponseCode(
     MEMBER_PROFILE_IMAGE_DELETED_SUCCESS(11117, HttpStatus.OK, "동아리 프로필 사진이 삭제되었습니다."),
     MEMBER_PROFILE_UPDATED_SUCCESS(11118, HttpStatus.OK, "프로필이 성공적으로 수정되었습니다."),
     LEAD_TRANSFERRED_SUCCESS(11119, HttpStatus.OK, "LEAD 권한이 이양되었습니다."),
+    MEMBERSHIP_STATUS_FIND_SUCCESS(11120, HttpStatus.OK, "동아리 가입 상태를 성공적으로 조회했습니다."),
+    MEMBER_SUMMARY_FIND_SUCCESS(11121, HttpStatus.OK, "내 요약 정보를 성공적으로 조회했습니다."),
 }
