@@ -1,6 +1,7 @@
 package com.weeth.domain.user.application.mapper
 
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserSummaryResponse
@@ -9,7 +10,9 @@ import com.weeth.global.auth.jwt.application.dto.JwtDto
 import org.springframework.stereotype.Component
 
 @Component
-class UserMapper {
+class UserMapper(
+    private val fileAccessUrlPort: FileAccessUrlPort,
+) {
     fun toSocialLoginResponse(
         token: JwtDto,
         isNewUser: Boolean,
@@ -34,7 +37,7 @@ class UserMapper {
             department = user.department,
             cardinals = emptyList(),
             role = clubMember.memberRole,
-            profileImageUrl = clubMember.profileImageUrl,
+            profileImageUrl = clubMember.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
         )
 
     fun toUserSummaryResponse(

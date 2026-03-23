@@ -4,11 +4,14 @@ import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.domain.entity.Comment
 import com.weeth.domain.file.application.dto.response.FileResponse
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserInfo
 import org.springframework.stereotype.Component
 
 @Component
-class CommentMapper {
+class CommentMapper(
+    private val fileAccessUrlPort: FileAccessUrlPort,
+) {
     fun toCommentDto(
         comment: Comment,
         authorMember: ClubMember,
@@ -17,7 +20,12 @@ class CommentMapper {
     ): CommentResponse =
         CommentResponse(
             id = comment.id,
-            author = UserInfo.from(comment.user, authorMember),
+            author =
+                UserInfo.of(
+                    comment.user,
+                    authorMember.memberRole,
+                    authorMember.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
+                ),
             content = comment.content,
             time = comment.modifiedAt,
             fileUrls = fileUrls,
