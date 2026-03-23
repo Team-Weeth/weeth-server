@@ -48,7 +48,8 @@ class ManageBoardUseCase(
                         writePermission = request.writePermission,
                         isPrivate = request.isPrivate,
                     ),
-            ).apply { reorder(nextOrder) }
+            )
+        board.reorder(nextOrder)
 
         val savedBoard = boardRepository.save(board)
         return boardMapper.toDetailResponse(savedBoard)
