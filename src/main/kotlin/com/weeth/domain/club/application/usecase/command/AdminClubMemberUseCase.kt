@@ -110,7 +110,7 @@ class AdminClubMemberUseCase(
 
             if (clubMemberCardinalPolicy.notContains(member, nextCardinal)) {
                 if (clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, nextCardinal)) {
-                    member.resetAttendanceStats()
+                    member.resetAttendanceStats() // TODO: 페널티 카운트도 초기화
                     initializeAttendances(clubId, member, nextCardinal)
                 }
 
