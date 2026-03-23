@@ -79,10 +79,13 @@ class GetDashboardQueryService(
         val now = LocalDateTime.now()
         val postIds = posts.content.map { it.id }
         val filesByPostId = fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }
+        val authorIds = posts.content.map { it.user.id }.distinct()
+        val memberMap = clubMemberReader.findAllByClubIdAndUserIds(clubId, authorIds).associateBy { it.user.id }
 
         return posts.map { post ->
             dashboardMapper.toPostResponse(
                 post = post,
+                authorMember = memberMap.getValue(post.user.id),
                 files = filesByPostId[post.id] ?: emptyList(),
                 now = now,
             )
