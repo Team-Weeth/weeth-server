@@ -256,6 +256,54 @@ class GetPostQueryServiceTest :
             }
         }
 
+        describe("findAllPosts") {
+            it("접근 가능한 게시판의 게시글을 최신순으로 반환한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
+                val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
+                val pageable = PageRequest.of(0, 10)
+                val postSlice = SliceImpl(listOf(post), pageable, false)
+                val response =
+                    com.weeth.domain.board.application.dto.response.PostListResponse(
+                        id = post.id,
+                        author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = MemberRole.USER),
+                        boardId = board.id,
+                        boardName = "일반",
+                        title = "제목",
+                        content = "내용",
+                        time = LocalDateTime.now(),
+                        commentCount = 0,
+                        hasFile = false,
+                        isNew = true,
+                    )
+
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns listOf(board)
+                every { postRepository.findAllActiveByBoardIds(any(), any()) } returns postSlice
+                every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
+                every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(member)
+                every { postMapper.toListResponse(any(), any(), any(), any()) } returns response
+
+                val result = queryService.findAllPosts(clubId, userId, 0, 10)
+
+                result.content.size shouldBe 1
+            }
+
+            it("접근 가능한 게시판이 없으면 빈 슬라이스를 반환한다") {
+                val board = BoardTestFixture.create(name = "비공개", type = BoardType.GENERAL)
+                board.updateConfig(board.config.copy(isPrivate = true))
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club)
+
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns listOf(board)
+
+                val result = queryService.findAllPosts(clubId, userId, 0, 10)
+
+                result.content shouldBe emptyList()
+            }
+        }
+
         describe("findPosts") {
             it("목록 조회 시 mapper를 통해 응답으로 변환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
@@ -274,6 +322,8 @@ class GetPostQueryServiceTest :
                     com.weeth.domain.board.application.dto.response.PostListResponse(
                         id = 10L,
                         author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = MemberRole.USER),
+                        boardId = board.id,
+                        boardName = "일반 게시판",
                         title = "제목",
                         content = "내용",
                         time = LocalDateTime.now(),

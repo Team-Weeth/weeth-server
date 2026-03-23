@@ -19,6 +19,22 @@ import java.time.LocalDateTime
 interface PostRepository :
     JpaRepository<Post, Long>,
     PostReader {
+    @EntityGraph(attributePaths = ["user", "board"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.id IN :boardIds
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    fun findAllActiveByBoardIds(
+        @Param("boardIds") boardIds: List<Long>,
+        pageable: Pageable,
+    ): Slice<Post>
+
     @EntityGraph(attributePaths = ["user"])
     @Query(
         """

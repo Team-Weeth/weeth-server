@@ -42,6 +42,8 @@ class PostMapper(
     ) = PostListResponse(
         id = post.id,
         author = UserInfo.of(post.user, authorMember.memberRole, resolveProfileImage(authorMember)),
+        boardId = post.board.id,
+        boardName = post.board.name,
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
