@@ -6,6 +6,7 @@ import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -15,13 +16,14 @@ class GetClubMemberQueryService(
     private val clubMemberReader: ClubMemberReader,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMapper: ClubMapper,
 ) {
     fun findClubMembersForAdmin(
         clubId: Long,
         userId: Long,
     ): List<ClubMemberResponse> {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val members = clubMemberReader.findAllByClubId(clubId)
 
         if (members.isEmpty()) {

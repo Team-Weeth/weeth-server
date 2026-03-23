@@ -1,6 +1,6 @@
 package com.weeth.domain.user.application.dto.response
 
-import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.club.domain.enums.MemberRole
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class UserSummaryResponse(
@@ -10,6 +10,6 @@ data class UserSummaryResponse(
     val name: String,
     @field:Schema(description = "소속 기수 목록", example = "[6, 7]")
     val cardinals: List<Int>,
-    @field:Schema(description = "권한", example = "USER", nullable = true)
-    val role: Role?,
+    @field:Schema(description = "동아리 내 권한", example = "USER", nullable = true)
+    val role: MemberRole?,
 )

@@ -11,6 +11,7 @@ import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendanc
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionReader
@@ -25,6 +26,7 @@ import io.mockk.mockk
 class ManageAttendanceUseCaseTest :
     DescribeSpec({
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val sessionReader = mockk<SessionReader>()
         val attendanceRepository = mockk<AttendanceRepository>()
         val qrAttendancePort = mockk<QrAttendancePort>()
@@ -32,13 +34,14 @@ class ManageAttendanceUseCaseTest :
         val useCase =
             ManageAttendanceUseCase(
                 clubMemberPolicy,
+                clubPermissionPolicy,
                 sessionReader,
                 attendanceRepository,
                 qrAttendancePort,
             )
 
         beforeTest {
-            clearMocks(clubMemberPolicy, sessionReader, attendanceRepository, qrAttendancePort)
+            clearMocks(clubMemberPolicy, clubPermissionPolicy, sessionReader, attendanceRepository, qrAttendancePort)
         }
 
         describe("checkIn") {
@@ -116,7 +119,7 @@ class ManageAttendanceUseCaseTest :
                     createAttendance(SessionTestFixture.createSession(club = admin.club), member)
                         .also { setAttendanceId(it, 1L) }
 
-                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { clubPermissionPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { attendanceRepository.findAllByIdsWithLock(listOf(1L)) } returns listOf(attendance)
 
                 useCase.updateStatus(admin.club.id, admin.user.id, listOf(UpdateAttendanceStatusRequest(1L, "ATTEND")))
@@ -134,7 +137,7 @@ class ManageAttendanceUseCaseTest :
                 attendance.attend()
                 member.attend()
 
-                every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { clubPermissionPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { attendanceRepository.findAllByIdsWithLock(listOf(1L)) } returns listOf(attendance)
 
                 useCase.updateStatus(admin.club.id, admin.user.id, listOf(UpdateAttendanceStatusRequest(1L, "PENDING")))

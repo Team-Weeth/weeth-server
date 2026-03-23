@@ -7,10 +7,12 @@ import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
 import com.weeth.domain.club.application.exception.ClubCreateLimitExceededException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubJoinPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.repository.UserReader
@@ -33,7 +35,8 @@ class ManageClubUseCaseTest :
         val cardinalRepository = mockk<CardinalRepository>()
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>()
         val userReader = mockk<UserReader>()
-        val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubJoinPolicy = mockk<ClubJoinPolicy>()
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val useCase =
             ManageClubUseCase(
                 clubRepository,
@@ -41,7 +44,8 @@ class ManageClubUseCaseTest :
                 cardinalRepository,
                 clubMemberCardinalRepository,
                 userReader,
-                clubMemberPolicy,
+                clubJoinPolicy,
+                clubPermissionPolicy,
             )
         val adminMember =
             com.weeth.domain.club.fixture.ClubMemberTestFixture
@@ -54,13 +58,14 @@ class ManageClubUseCaseTest :
                 cardinalRepository,
                 clubMemberCardinalRepository,
                 userReader,
-                clubMemberPolicy,
+                clubJoinPolicy,
+                clubPermissionPolicy,
             )
             every { clubRepository.save(any()) } answers { firstArg() }
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { cardinalRepository.saveAll(any<List<Cardinal>>()) } answers { firstArg() }
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
-            every { clubMemberPolicy.validateCreateLimit(any()) } just Runs
+            every { clubJoinPolicy.validateCreateLimit(any()) } just Runs
         }
 
         describe("create") {
@@ -78,6 +83,8 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 3,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
                     )
@@ -101,6 +108,8 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 3,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
                     )
@@ -119,6 +128,8 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 1,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
                     )
@@ -133,7 +144,7 @@ class ManageClubUseCaseTest :
             context("이미 LEAD로 1개 동아리를 생성한 사용자가 생성 시도하는 경우") {
                 it("ClubCreateLimitExceededException이 발생하고, 이후 로직이 실행되지 않는다") {
                     every { userReader.getByIdWithLock(13L) } returns user
-                    every { clubMemberPolicy.validateCreateLimit(13L) } throws ClubCreateLimitExceededException()
+                    every { clubJoinPolicy.validateCreateLimit(13L) } throws ClubCreateLimitExceededException()
 
                     shouldThrow<ClubCreateLimitExceededException> {
                         useCase.create(
@@ -143,12 +154,14 @@ class ManageClubUseCaseTest :
                                 schoolName = "가천대학교",
                                 description = "소개",
                                 currentCardinal = 3,
+                                contactPhoneNumber = "01000000000",
+                                primaryContact = PrimaryContact.PHONE,
                             ),
                         )
                     }
 
                     verify(exactly = 1) { userReader.getByIdWithLock(13L) }
-                    verify(exactly = 1) { clubMemberPolicy.validateCreateLimit(13L) }
+                    verify(exactly = 1) { clubJoinPolicy.validateCreateLimit(13L) }
                     verify(exactly = 0) { clubRepository.save(any()) }
                     verify(exactly = 0) { clubMemberRepository.save(any()) }
                     verify(exactly = 0) { cardinalRepository.saveAll(any<List<Cardinal>>()) }
@@ -163,7 +176,12 @@ class ManageClubUseCaseTest :
                         name = "기존 동아리",
                         schoolName = "가천대학교",
                         description = "기존 소개",
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
                 club.update(
                     null,
@@ -171,11 +189,12 @@ class ManageClubUseCaseTest :
                     null,
                     null,
                     null,
-                    "https://example.com/profile.png",
-                    "https://example.com/background.png",
+                    null,
+                    "CLUB_PROFILE/2026-02/uuid_profile.png",
+                    "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.update(
@@ -183,7 +202,7 @@ class ManageClubUseCaseTest :
                     10L,
                     ClubUpdateRequest(
                         schoolName = "연세대학교",
-                        contactPhoneNumber = "010-9999-8888",
+                        contactPhoneNumber = "01099998888",
                     ),
                 )
 
@@ -191,18 +210,23 @@ class ManageClubUseCaseTest :
                 club.schoolName shouldBe "연세대학교"
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
-                club.clubContact.phoneNumber shouldBe "010-9999-8888"
-                club.profileImageUrl shouldBe "https://example.com/profile.png"
-                club.backgroundImageUrl shouldBe "https://example.com/background.png"
+                club.clubContact.phoneNumber shouldBe "01099998888"
+                club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-02/uuid_profile.png"
+                club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
             it("모든 필드가 null이면 기존 값이 유지된다") {
                 val club =
                     ClubTestFixture.createClub(
                         description = "기존 소개",
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = null),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01000000000",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.update(1L, 10L, ClubUpdateRequest())
@@ -211,7 +235,7 @@ class ManageClubUseCaseTest :
                 club.schoolName shouldBe "가천대학교"
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
-                club.clubContact.phoneNumber shouldBe null
+                club.clubContact.phoneNumber shouldBe "01000000000"
             }
         }
 
@@ -219,7 +243,12 @@ class ManageClubUseCaseTest :
             it("프로필 사진만 삭제하고 배경 사진은 유지한다") {
                 val club =
                     ClubTestFixture.createClub(
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
                 club.update(
                     null,
@@ -227,17 +256,18 @@ class ManageClubUseCaseTest :
                     null,
                     null,
                     null,
-                    "https://example.com/profile.png",
-                    "https://example.com/background.png",
+                    null,
+                    "CLUB_PROFILE/2026-02/uuid_profile.png",
+                    "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.deleteProfileImage(1L, 10L)
 
-                club.profileImageUrl shouldBe null
-                club.backgroundImageUrl shouldBe "https://example.com/background.png"
+                club.profileImageStorageKey shouldBe null
+                club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
         }
 
@@ -245,7 +275,12 @@ class ManageClubUseCaseTest :
             it("배경 사진만 삭제하고 프로필 사진은 유지한다") {
                 val club =
                     ClubTestFixture.createClub(
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
                 club.update(
                     null,
@@ -253,17 +288,18 @@ class ManageClubUseCaseTest :
                     null,
                     null,
                     null,
-                    "https://example.com/profile.png",
-                    "https://example.com/background.png",
+                    null,
+                    "CLUB_PROFILE/2026-02/uuid_profile.png",
+                    "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
-                club.profileImageUrl shouldBe "https://example.com/profile.png"
-                club.backgroundImageUrl shouldBe null
+                club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-02/uuid_profile.png"
+                club.backgroundImageStorageKey shouldBe null
             }
         }
     })

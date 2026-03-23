@@ -9,6 +9,7 @@ import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -18,6 +19,7 @@ import java.time.LocalDate
 @Transactional(readOnly = true)
 class GetAttendanceQueryService(
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
@@ -37,7 +39,7 @@ class GetAttendanceQueryService(
                 today.plusDays(1).atStartOfDay(),
             )
 
-        return attendanceMapper.toSummaryResponse(clubMember, todayAttendance, isAdmin = clubMember.isAdmin())
+        return attendanceMapper.toSummaryResponse(clubMember, todayAttendance, isAdmin = clubMember.isAdminOrLead())
     }
 
     fun findAllDetailsByCurrentCardinal(
@@ -59,7 +61,7 @@ class GetAttendanceQueryService(
         userId: Long,
         sessionId: Long,
     ): List<AttendanceInfoResponse> {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val session = sessionReader.getById(sessionId)
 
         if (session.club.id != clubId) {

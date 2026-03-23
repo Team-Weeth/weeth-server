@@ -1,7 +1,5 @@
 package com.weeth.domain.club.application.dto.response
 
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import io.swagger.v3.oas.annotations.media.Schema

@@ -76,11 +76,11 @@ class SecurityConfig(
                         AuthorizationDecision(allowed)
                     }.requestMatchers("/actuator/health")
                     .permitAll()
-                    // TODO: 전역 User.role 대신 clubMember 기반 권한 검증으로 교체해야 동아리별 ADMIN/LEAD가 admin API를 사용할 수 있다.
+                    // 실제 관리자 권한 검증은 ClubMemberPolicy.requireAdmin()에서 수행
                     .requestMatchers(
                         "/api/v1/admin/**",
                         "/api/v4/admin/**",
-                    ).hasRole("ADMIN")
+                    ).authenticated()
                     .anyRequest()
                     .authenticated()
             }.exceptionHandling { exceptionHandling ->

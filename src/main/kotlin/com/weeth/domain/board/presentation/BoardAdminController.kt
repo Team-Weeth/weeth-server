@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -28,7 +27,6 @@ import org.springframework.web.bind.annotation.RestController
 @Tag(name = "Board-Admin", description = "Board Admin API")
 @RestController
 @RequestMapping("/api/v4/admin/clubs/{clubId}/boards")
-@PreAuthorize("hasRole('ADMIN')")
 @ApiErrorCodeExample(BoardErrorCode::class)
 class BoardAdminController(
     private val manageBoardUseCase: ManageBoardUseCase,

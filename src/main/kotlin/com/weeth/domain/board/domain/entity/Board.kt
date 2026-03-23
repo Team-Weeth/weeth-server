@@ -4,7 +4,7 @@ import com.weeth.domain.board.domain.converter.BoardConfigConverter
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.entity.Club
-import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
@@ -63,11 +63,12 @@ class Board(
         get() = config.commentEnabled
 
     val isAdminOnly: Boolean
-        get() = config.writePermission == Role.ADMIN
+        get() = config.writePermission.isAdminOrLead()
 
-    fun isAccessibleBy(role: Role): Boolean = role == Role.ADMIN || !config.isPrivate
+    fun isAccessibleBy(memberRole: MemberRole): Boolean = memberRole.isAdminOrLead() || !config.isPrivate
 
-    fun canWriteBy(role: Role): Boolean = isAccessibleBy(role) && (!isAdminOnly || role == Role.ADMIN)
+    fun canWriteBy(memberRole: MemberRole): Boolean =
+        isAccessibleBy(memberRole) && (memberRole.isAdminOrLead() || !isAdminOnly)
 
     fun updateConfig(newConfig: BoardConfig) {
         config = newConfig

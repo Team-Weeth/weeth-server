@@ -9,12 +9,17 @@ import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
+import com.weeth.domain.club.application.exception.LeadSelfTransferException
+import com.weeth.domain.club.application.exception.LeadTransferOnlyException
+import com.weeth.domain.club.application.exception.NotLeadException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class AdminClubMemberUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
     private val cardinalReader: CardinalReader,
     private val clubMemberReader: ClubMemberReader,
@@ -38,7 +44,7 @@ class AdminClubMemberUseCase(
         userId: Long,
         clubMemberId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
         member.accept()
@@ -50,7 +56,7 @@ class AdminClubMemberUseCase(
         userId: Long,
         clubMemberId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
         member.ban()
@@ -62,19 +68,38 @@ class AdminClubMemberUseCase(
         userId: Long,
         request: ClubMemberRoleUpdateRequest,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, request.clubMemberId)
+        if (request.memberRole == MemberRole.LEAD) throw LeadTransferOnlyException()
+        if (member.isLead()) throw LeadTransferOnlyException()
         member.updateRole(request.memberRole)
     }
 
+    @Transactional
+    fun transferLead(
+        clubId: Long,
+        userId: Long,
+        targetClubMemberId: Long,
+    ) {
+        val currentLead = clubMemberPolicy.getActiveMemberWithLock(clubId, userId)
+        if (!currentLead.isLead()) throw NotLeadException()
+
+        val target = clubMemberPolicy.getActiveMemberInClubWithLock(clubId, targetClubMemberId)
+        if (currentLead.id == target.id) throw LeadSelfTransferException()
+
+        currentLead.releaseLead()
+        target.assignLead()
+    }
+
+    // TODO: setInitialCardinals와 동시 호출 시 출석 중복 생성 가능 — 멤버 단위 락 추가 검토
     @Transactional
     fun applyOb(
         clubId: Long,
         userId: Long,
         requests: List<ClubMemberApplyObRequest>,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val uniqueRequests = requests.distinctBy { it.clubMemberId to it.cardinal }
         if (uniqueRequests.isEmpty()) return
@@ -99,7 +124,7 @@ class AdminClubMemberUseCase(
 
             if (clubMemberCardinalPolicy.notContains(member, nextCardinal)) {
                 if (clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, nextCardinal)) {
-                    member.resetAttendanceStats()
+                    member.resetAttendanceStats() // TODO: 페널티 카운트도 초기화
                     initializeAttendances(clubId, member, nextCardinal)
                 }
 

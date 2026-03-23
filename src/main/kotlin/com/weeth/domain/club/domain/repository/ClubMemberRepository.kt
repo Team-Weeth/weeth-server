@@ -100,4 +100,18 @@ interface ClubMemberRepository :
         @Param("memberStatus") memberStatus: MemberStatus,
         @Param("memberRole") memberRole: MemberRole,
     ): Long
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user
+        WHERE cm.club.id = :clubId
+        AND cm.user.id IN :userIds
+        """,
+    )
+    override fun findAllByClubIdAndUserIds(
+        @Param("clubId") clubId: Long,
+        @Param("userIds") userIds: List<Long>,
+    ): List<ClubMember>
 }

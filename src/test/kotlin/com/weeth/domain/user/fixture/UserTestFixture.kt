@@ -1,7 +1,6 @@
 package com.weeth.domain.user.fixture
 
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.Email
 import org.springframework.test.util.ReflectionTestUtils
@@ -40,7 +39,6 @@ object UserTestFixture {
             name = "적순",
             email = Email.from("admin@test.com"),
             status = Status.ACTIVE,
-            role = Role.ADMIN,
         ).applyId(id)
 
     private fun User.applyId(id: Long): User =

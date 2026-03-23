@@ -12,6 +12,7 @@ import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.application.exception.SessionNotInProgressException
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.enums.SessionStatus
@@ -23,6 +24,7 @@ import java.time.LocalDateTime
 @Service
 class ManageAttendanceUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
     private val qrAttendancePort: QrAttendancePort,
@@ -76,7 +78,7 @@ class ManageAttendanceUseCase(
         userId: Long,
         attendanceUpdates: List<UpdateAttendanceStatusRequest>,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         if (attendanceUpdates.isEmpty()) return
         // 데드락 방지: 일관된 순서로 락 획득
         val ids = attendanceUpdates.map { it.attendanceId }.sorted()

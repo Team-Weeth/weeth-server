@@ -1,6 +1,8 @@
 package com.weeth.domain.comment.application.usecase.query
 
 import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.comment.application.mapper.CommentMapper
 import com.weeth.domain.comment.fixture.CommentTestFixture
@@ -8,7 +10,6 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.user.application.dto.response.UserInfo
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -27,6 +28,8 @@ class GetCommentQueryServiceTest :
 
         val user = UserTestFixture.createActiveUser1(1L)
         val post = PostTestFixture.create(user = user)
+        val member = ClubMemberTestFixture.createActiveMember(user = user)
+        val memberMap = mapOf(user.id to member)
 
         beforeTest {
             clearMocks(fileReader, fileMapper, commentMapper)
@@ -37,7 +40,7 @@ class GetCommentQueryServiceTest :
             children: List<CommentResponse> = emptyList(),
         ) = CommentResponse(
             id = id,
-            author = UserInfo(id = 1L, name = "테스트유저", profileImageUrl = null, role = Role.USER),
+            author = UserInfo(id = 1L, name = "테스트유저", profileImageUrl = null, role = MemberRole.USER),
             content = "content",
             time = LocalDateTime.now(),
             fileUrls = emptyList(),
@@ -46,7 +49,7 @@ class GetCommentQueryServiceTest :
 
         describe("toCommentTreeResponses") {
             it("빈 리스트면 빈 리스트를 반환하고 파일 조회를 하지 않는다") {
-                val result = service.toCommentTreeResponses(emptyList())
+                val result = service.toCommentTreeResponses(emptyList(), memberMap)
 
                 result shouldBe emptyList()
                 verify(exactly = 0) { fileReader.findAll(any(), any<Long>(), any()) }
@@ -58,9 +61,9 @@ class GetCommentQueryServiceTest :
                 val response = stubResponse(1L)
 
                 every { fileReader.findAll(FileOwnerType.COMMENT, listOf(1L), any()) } returns emptyList()
-                every { commentMapper.toCommentDto(comment, emptyList(), emptyList()) } returns response
+                every { commentMapper.toCommentDto(comment, member, emptyList(), emptyList()) } returns response
 
-                val result = service.toCommentTreeResponses(listOf(comment))
+                val result = service.toCommentTreeResponses(listOf(comment), memberMap)
 
                 result.size shouldBe 1
                 result[0].id shouldBe 1L
@@ -74,10 +77,12 @@ class GetCommentQueryServiceTest :
                 val parentResponse = stubResponse(10L, children = listOf(childResponse))
 
                 every { fileReader.findAll(FileOwnerType.COMMENT, listOf(10L, 11L), any()) } returns emptyList()
-                every { commentMapper.toCommentDto(child, emptyList(), emptyList()) } returns childResponse
-                every { commentMapper.toCommentDto(parent, listOf(childResponse), emptyList()) } returns parentResponse
+                every { commentMapper.toCommentDto(child, member, emptyList(), emptyList()) } returns childResponse
+                every {
+                    commentMapper.toCommentDto(parent, member, listOf(childResponse), emptyList())
+                } returns parentResponse
 
-                val result = service.toCommentTreeResponses(listOf(parent, child))
+                val result = service.toCommentTreeResponses(listOf(parent, child), memberMap)
 
                 result.size shouldBe 1
                 result[0].id shouldBe 10L

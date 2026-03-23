@@ -4,7 +4,6 @@ import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
-import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
@@ -67,13 +66,7 @@ class UserController(
     ): CommonResponse<Boolean> =
         CommonResponse.success(UserResponseCode.USER_EMAIL_CHECK_SUCCESS, !getUserQueryService.existsByEmail(email))
 
-    @GetMapping
-    @Operation(summary = "내 정보 조회")
-    fun find(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<UserProfileResponse> =
-        CommonResponse.success(UserResponseCode.USER_FIND_BY_ID_SUCCESS, getUserQueryService.findMyProfile(userId))
-
+    @Deprecated("WTH-205에서 club-scoped API로 대체 예정")
     @GetMapping("/info")
     @Operation(summary = "전역 내 정보 조회 API")
     fun findMyInfo(

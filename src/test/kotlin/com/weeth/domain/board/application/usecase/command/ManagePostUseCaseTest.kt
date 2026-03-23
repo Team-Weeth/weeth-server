@@ -15,6 +15,7 @@ import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
@@ -23,7 +24,6 @@ import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.domain.vo.Email
@@ -75,15 +75,11 @@ class ManagePostUseCaseTest :
                 ownerId = ownerId,
             )
 
-        fun createUser(
-            id: Long = 1L,
-            role: Role = Role.USER,
-        ): User =
+        fun createUser(id: Long = 1L): User =
             User(
                 name = "적순",
                 email = Email.from("test1@test.com"),
                 status = Status.ACTIVE,
-                role = role,
             ).apply {
                 ReflectionTestUtils.setField(this, "id", id)
             }
@@ -105,13 +101,13 @@ class ManagePostUseCaseTest :
             every { fileReader.findAll(any(), any<Long>(), any()) } returns emptyList()
             every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(1L)
             every { fileRepository.delete(any()) } just runs
-            // update/delete 공통 기본값: USER 역할의 작성자
-            every { userReader.getById(any()) } returns createUser(1L, Role.USER)
+            // update/delete 공통 기본값: 작성자
+            every { userReader.getById(any()) } returns UserTestFixture.createActiveUser1(1L)
         }
 
         describe("save") {
             it("일반 게시판에서 게시글을 저장한다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
@@ -125,12 +121,12 @@ class ManagePostUseCaseTest :
             }
 
             it("ADMIN 전용 게시판에 일반 사용자가 작성하면 예외를 던진다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board =
                     BoardTestFixture.create(
                         name = "공지",
                         type = BoardType.NOTICE,
-                        config = BoardConfig(writePermission = Role.ADMIN),
+                        config = BoardConfig(writePermission = MemberRole.ADMIN),
                     )
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
@@ -145,7 +141,7 @@ class ManagePostUseCaseTest :
             }
 
             it("비공개 게시판에 일반 사용자가 작성하면 예외를 던진다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board =
                     BoardTestFixture.create(
                         name = "비공개",
@@ -165,7 +161,7 @@ class ManagePostUseCaseTest :
             }
 
             it("cardinalNumber가 전달되면 게시글에 반영된다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val request =
                     CreatePostRequest(
@@ -187,7 +183,7 @@ class ManagePostUseCaseTest :
             }
 
             it("존재하지 않는 boardId면 예외를 던진다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val request = CreatePostRequest(title = "제목", content = "내용")
 
                 every { userReader.getById(1L) } returns user
@@ -201,7 +197,7 @@ class ManagePostUseCaseTest :
 
         describe("update") {
             it("files가 null이면 기존 파일을 유지한다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = Post.create("제목", "내용", user, board)
@@ -217,7 +213,7 @@ class ManagePostUseCaseTest :
             }
 
             it("files가 있으면 기존 파일을 soft delete 후 교체한다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
@@ -253,7 +249,7 @@ class ManagePostUseCaseTest :
             }
 
             it("title이 null이면 기존 제목을 유지한다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = Post.create("원래 제목", "원래 내용", user, board)
@@ -269,7 +265,7 @@ class ManagePostUseCaseTest :
             }
 
             it("content가 null이면 기존 내용을 유지한다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = Post.create("원래 제목", "원래 내용", user, board)
@@ -293,12 +289,12 @@ class ManagePostUseCaseTest :
             }
 
             it("게시판이 ADMIN 전용으로 바뀐 후 일반 사용자가 수정하면 예외를 던진다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board =
                     BoardTestFixture.create(
                         name = "공지",
                         type = BoardType.NOTICE,
-                        config = BoardConfig(writePermission = Role.ADMIN),
+                        config = BoardConfig(writePermission = MemberRole.ADMIN),
                     )
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
@@ -312,7 +308,7 @@ class ManagePostUseCaseTest :
             }
 
             it("게시판이 비공개로 바뀐 후 일반 사용자가 수정하면 예외를 던진다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board =
                     BoardTestFixture.create(
                         name = "비공개",
@@ -333,7 +329,7 @@ class ManagePostUseCaseTest :
 
         describe("delete") {
             it("삭제 시 첨부 파일과 게시글을 soft delete한다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
@@ -359,12 +355,12 @@ class ManagePostUseCaseTest :
             }
 
             it("게시판이 ADMIN 전용으로 바뀐 후 일반 사용자가 삭제하면 예외를 던진다") {
-                val user = createUser(1L, Role.USER)
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board =
                     BoardTestFixture.create(
                         name = "공지",
                         type = BoardType.NOTICE,
-                        config = BoardConfig(writePermission = Role.ADMIN),
+                        config = BoardConfig(writePermission = MemberRole.ADMIN),
                     )
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
@@ -381,7 +377,7 @@ class ManagePostUseCaseTest :
         describe("owner validation") {
             it("작성자가 아니면 수정 시 예외를 던진다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
-                val otherUser = createUser(2L, Role.USER)
+                val otherUser = UserTestFixture.createActiveUser1(2L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", user = owner, board = board)

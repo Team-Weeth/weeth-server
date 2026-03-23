@@ -8,7 +8,7 @@ import com.weeth.domain.cardinal.application.mapper.CardinalMapper
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.cardinal.domain.service.CardinalStatusPolicy
 import com.weeth.domain.club.domain.repository.ClubReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,7 +18,7 @@ class ManageCardinalUseCase(
     private val cardinalMapper: CardinalMapper,
     private val cardinalStatusPolicy: CardinalStatusPolicy,
     private val clubReader: ClubReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
     @Transactional
     fun save(
@@ -26,7 +26,7 @@ class ManageCardinalUseCase(
         request: CardinalSaveRequest,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
 
         if (cardinalRepository.findByClubIdAndCardinalNumber(clubId, request.cardinalNumber) != null) {
@@ -46,7 +46,7 @@ class ManageCardinalUseCase(
         request: CardinalUpdateRequest,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val cardinal =
             cardinalRepository.findByIdAndClubId(request.id, clubId) ?: throw CardinalNotFoundException()
 

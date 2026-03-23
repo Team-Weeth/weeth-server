@@ -1,5 +1,6 @@
 package com.weeth.domain.club.application.dto.response
 
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class ClubDetailResponse(
@@ -15,8 +16,10 @@ data class ClubDetailResponse(
     val description: String?,
     @field:Schema(description = "연락 이메일", example = "club@example.com")
     val contactEmail: String?,
-    @field:Schema(description = "연락 전화번호", example = "010-1234-5678")
+    @field:Schema(description = "연락 전화번호", example = "01012345678")
     val contactPhoneNumber: String?,
+    @field:Schema(description = "주 연락처", example = "PHONE")
+    val primaryContact: PrimaryContact,
     @field:Schema(description = "프로필 사진 URL")
     val profileImageUrl: String?,
     @field:Schema(description = "배경 사진 URL")

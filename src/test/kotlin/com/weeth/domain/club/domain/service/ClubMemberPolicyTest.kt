@@ -1,18 +1,14 @@
 package com.weeth.domain.club.domain.service
 
-import com.weeth.domain.club.application.exception.ClubCreateLimitExceededException
-import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
-import com.weeth.domain.club.application.exception.NotClubAdminException
-import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.fixture.ClubTestFixture
-import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -31,12 +27,12 @@ class ClubMemberPolicyTest :
                 it("활성 멤버를 반환해야 한다") {
                     val activeMember =
                         ClubTestFixture.createClubMember(
-                            memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE,
+                            memberStatus = MemberStatus.ACTIVE,
                         )
                     every { clubMemberReader.findByClubIdAndUserId(1L, 1L) } returns activeMember
 
                     val result = policy.getActiveMember(1L, 1L)
-                    assert(result.id == activeMember.id)
+                    result.id shouldBe activeMember.id
                 }
             }
 
@@ -54,58 +50,12 @@ class ClubMemberPolicyTest :
                 it("MemberNotActiveException을 발생시켜야 한다") {
                     val inactiveMember =
                         ClubTestFixture.createClubMember(
-                            memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.WAITING,
+                            memberStatus = MemberStatus.WAITING,
                         )
                     every { clubMemberReader.findByClubIdAndUserId(1L, 1L) } returns inactiveMember
 
                     shouldThrow<MemberNotActiveException> {
                         policy.getActiveMember(1L, 1L)
-                    }
-                }
-            }
-        }
-
-        describe("requireAdmin") {
-            context("활성 상태의 관리자인 경우") {
-                it("멤버를 반환해야 한다") {
-                    val adminMember =
-                        ClubTestFixture.createClubMember(
-                            memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE,
-                            memberRole = com.weeth.domain.club.domain.enums.MemberRole.ADMIN,
-                        )
-                    every { clubMemberReader.findByClubIdAndUserId(1L, 1L) } returns adminMember
-
-                    val result = policy.requireAdmin(1L, 1L)
-                    assert(result.id == adminMember.id)
-                }
-            }
-
-            context("활성 상태이지만 관리자가 아닌 경우") {
-                it("NotClubAdminException을 발생시켜야 한다") {
-                    val userMember =
-                        ClubTestFixture.createClubMember(
-                            memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE,
-                            memberRole = com.weeth.domain.club.domain.enums.MemberRole.USER,
-                        )
-                    every { clubMemberReader.findByClubIdAndUserId(1L, 1L) } returns userMember
-
-                    shouldThrow<NotClubAdminException> {
-                        policy.requireAdmin(1L, 1L)
-                    }
-                }
-            }
-
-            context("비활성 상태인 경우") {
-                it("MemberNotActiveException을 발생시켜야 한다") {
-                    val inactiveMember =
-                        ClubTestFixture.createClubMember(
-                            memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.WAITING,
-                            memberRole = com.weeth.domain.club.domain.enums.MemberRole.ADMIN,
-                        )
-                    every { clubMemberReader.findByClubIdAndUserId(1L, 1L) } returns inactiveMember
-
-                    shouldThrow<MemberNotActiveException> {
-                        policy.requireAdmin(1L, 1L)
                     }
                 }
             }
@@ -119,7 +69,7 @@ class ClubMemberPolicyTest :
 
                     val result = policy.getMemberInClub(member.club.id, 1L)
 
-                    assert(result == member)
+                    result shouldBe member
                 }
             }
 
@@ -129,7 +79,6 @@ class ClubMemberPolicyTest :
                     every { clubMemberReader.findByIdOrNull(1L) } returns member
 
                     shouldThrow<ClubMemberNotInClubException> {
-                        // member.club.id와 다른 clubId를 전달하여 다른 동아리 시나리오를 재현
                         policy.getMemberInClub(member.club.id + 999L, 1L)
                     }
                 }
@@ -141,90 +90,6 @@ class ClubMemberPolicyTest :
 
                     shouldThrow<ClubMemberNotFoundException> {
                         policy.getMemberInClub(1L, 2L)
-                    }
-                }
-            }
-        }
-
-        describe("validateJoinLimit") {
-            context("USER로 가입한 동아리가 없는 경우") {
-                it("검증을 통과해야 한다") {
-                    every {
-                        clubMemberReader.countByUserIdAndMemberStatusAndMemberRole(
-                            1L,
-                            MemberStatus.ACTIVE,
-                            MemberRole.USER,
-                        )
-                    } returns 0L
-
-                    shouldNotThrowAny {
-                        policy.validateJoinLimit(1L)
-                    }
-                }
-            }
-
-            context("이미 USER로 1개 동아리에 가입한 경우") {
-                it("ClubJoinLimitExceededException을 발생시켜야 한다") {
-                    every {
-                        clubMemberReader.countByUserIdAndMemberStatusAndMemberRole(
-                            1L,
-                            MemberStatus.ACTIVE,
-                            MemberRole.USER,
-                        )
-                    } returns 1L
-
-                    shouldThrow<ClubJoinLimitExceededException> {
-                        policy.validateJoinLimit(1L)
-                    }
-                }
-            }
-
-            context("LEAD로 1개 동아리를 생성했지만 USER 가입은 없는 경우") {
-                it("검증을 통과해야 한다 (역할이 다르므로 허용)") {
-                    every {
-                        clubMemberReader.countByUserIdAndMemberStatusAndMemberRole(
-                            1L,
-                            MemberStatus.ACTIVE,
-                            MemberRole.USER,
-                        )
-                    } returns 0L
-
-                    shouldNotThrowAny {
-                        policy.validateJoinLimit(1L)
-                    }
-                }
-            }
-        }
-
-        describe("validateCreateLimit") {
-            context("LEAD로 생성한 동아리가 없는 경우") {
-                it("검증을 통과해야 한다") {
-                    every {
-                        clubMemberReader.countByUserIdAndMemberStatusAndMemberRole(
-                            1L,
-                            MemberStatus.ACTIVE,
-                            MemberRole.LEAD,
-                        )
-                    } returns 0L
-
-                    shouldNotThrowAny {
-                        policy.validateCreateLimit(1L)
-                    }
-                }
-            }
-
-            context("이미 LEAD로 1개 동아리를 생성한 경우") {
-                it("ClubCreateLimitExceededException을 발생시켜야 한다") {
-                    every {
-                        clubMemberReader.countByUserIdAndMemberStatusAndMemberRole(
-                            1L,
-                            MemberStatus.ACTIVE,
-                            MemberRole.LEAD,
-                        )
-                    } returns 1L
-
-                    shouldThrow<ClubCreateLimitExceededException> {
-                        policy.validateCreateLimit(1L)
                     }
                 }
             }

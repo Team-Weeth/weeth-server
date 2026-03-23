@@ -5,15 +5,18 @@ import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.exception.EmailRequiredForPrimaryContactException
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubJoinPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
@@ -30,12 +33,14 @@ class ManageClubUseCase(
     private val cardinalRepository: CardinalRepository,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
     private val userReader: UserReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubJoinPolicy: ClubJoinPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
     /**
      * 새로운 동아리를 생성
      * 생성자는 자동으로 LEAD 권한 설정
      * 1기부터 currentCardinal기까지 Cardinal을 자동 생성하고, LEAD를 최신 기수에 배정
+     * TODO: CDN 도입을 위해 File로 저장하기.
      */
     @Transactional
     fun create(
@@ -45,13 +50,15 @@ class ManageClubUseCase(
         val user =
             userReader.getByIdWithLock(userId)
 
-        clubMemberPolicy.validateCreateLimit(userId)
+        clubJoinPolicy.validateCreateLimit(userId)
+        validatePrimaryContactEmail(request.primaryContact, request.contactEmail)
 
         val code = ClubCodePolicy.generateCode()
         val clubContact =
             ClubContact.from(
                 email = request.contactEmail,
                 phoneNumber = request.contactPhoneNumber,
+                primaryContact = request.primaryContact,
             )
 
         val club =
@@ -61,8 +68,8 @@ class ManageClubUseCase(
                 schoolName = request.schoolName,
                 clubContact = clubContact,
                 description = request.description,
-                profileImageUrl = request.profileImageUrl,
-                backgroundImageUrl = request.backgroundImageUrl,
+                profileImageStorageKey = request.profileImageStorageKey,
+                backgroundImageStorageKey = request.backgroundImageStorageKey,
             )
 
         clubRepository.save(club)
@@ -101,9 +108,16 @@ class ManageClubUseCase(
         userId: Long,
         request: ClubUpdateRequest,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
+
+        if (request.primaryContact == PrimaryContact.EMAIL) {
+            val resolvedEmail = request.contactEmail ?: club.clubContact.email
+            if (resolvedEmail == null) {
+                throw EmailRequiredForPrimaryContactException()
+            }
+        }
 
         club.update(
             name = request.name,
@@ -111,8 +125,9 @@ class ManageClubUseCase(
             description = request.description,
             contactEmail = request.contactEmail,
             contactPhoneNumber = request.contactPhoneNumber,
-            profileImageUrl = request.profileImageUrl,
-            backgroundImageUrl = request.backgroundImageUrl,
+            primaryContact = request.primaryContact,
+            profileImageStorageKey = request.profileImageStorageKey,
+            backgroundImageStorageKey = request.backgroundImageStorageKey,
         )
     }
 
@@ -121,7 +136,7 @@ class ManageClubUseCase(
         clubId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
         val newCode = ClubCodePolicy.generateCode()
@@ -133,7 +148,7 @@ class ManageClubUseCase(
         clubId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
         club.removeProfileImage()
@@ -144,9 +159,18 @@ class ManageClubUseCase(
         clubId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
         club.removeBackgroundImage()
+    }
+
+    private fun validatePrimaryContactEmail(
+        primaryContact: PrimaryContact,
+        contactEmail: String?,
+    ) {
+        if (primaryContact == PrimaryContact.EMAIL && contactEmail == null) {
+            throw EmailRequiredForPrimaryContactException()
+        }
     }
 }

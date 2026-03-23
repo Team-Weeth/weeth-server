@@ -64,7 +64,7 @@ class ClubMember(
         private set
 
     @Column(length = 500)
-    var profileImageUrl: String? = null
+    var profileImageStorageKey: String? = null
         private set
 
     @Column(length = 30)
@@ -90,10 +90,23 @@ class ClubMember(
     fun isActive(): Boolean = memberStatus == MemberStatus.ACTIVE
 
     fun updateRole(role: MemberRole) {
+        check(role != MemberRole.LEAD) { "LEAD는 이양을 통해서만 변경할 수 있습니다." }
+        check(!isLead()) { "LEAD의 권한은 이양을 통해서만 변경할 수 있습니다." }
         this.memberRole = role
     }
 
-    fun isAdmin(): Boolean = memberRole == MemberRole.ADMIN
+    fun isAdminOrLead(): Boolean = memberRole.isAdminOrLead()
+
+    fun isLead(): Boolean = memberRole == MemberRole.LEAD
+
+    fun releaseLead() {
+        check(isLead()) { "LEAD만 권한을 내려놓을 수 있습니다." }
+        this.memberRole = MemberRole.ADMIN
+    }
+
+    fun assignLead() {
+        this.memberRole = MemberRole.LEAD
+    }
 
     fun attend() {
         attendanceStats.attend()
@@ -119,14 +132,14 @@ class ClubMember(
         penaltyCount++
     }
 
-    fun updateProfileImageUrl(url: String?) {
-        val trimmed = url?.trim()?.takeIf { it.isNotBlank() }
-        require((trimmed?.length ?: 0) <= 500) { "프로필 이미지 URL은 500자 이하여야 합니다." }
-        this.profileImageUrl = trimmed
+    fun updateProfileImageUrl(storageKey: String?) {
+        val trimmed = storageKey?.trim()?.takeIf { it.isNotBlank() }
+        require((trimmed?.length ?: 0) <= 500) { "프로필 이미지 storageKey는 500자 이하여야 합니다." }
+        this.profileImageStorageKey = trimmed
     }
 
     fun removeProfileImage() {
-        this.profileImageUrl = null
+        this.profileImageStorageKey = null
     }
 
     fun updateBio(bio: String?) {

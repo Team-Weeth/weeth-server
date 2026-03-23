@@ -2,6 +2,7 @@ package com.weeth.domain.club.domain.entity
 
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -15,7 +16,12 @@ class ClubMemberTest :
                 name = "리츠",
                 code = "LEETS001",
                 schoolName = "가천대학교",
-                clubContact = ClubContact.from(email = "leets@test.com", phoneNumber = null),
+                clubContact =
+                    ClubContact.from(
+                        email = "leets@test.com",
+                        phoneNumber = "01000000000",
+                        primaryContact = PrimaryContact.PHONE,
+                    ),
             )
         val user = UserTestFixture.createActiveUser1()
 
@@ -71,13 +77,13 @@ class ClubMemberTest :
             member.updateRole(MemberRole.ADMIN)
 
             member.memberRole shouldBe MemberRole.ADMIN
-            member.isAdmin() shouldBe true
+            member.isAdminOrLead() shouldBe true
         }
 
         "isAdmin — USER 역할일 때 false" {
             val member = ClubMember(club = club, user = user)
 
-            member.isAdmin() shouldBe false
+            member.isAdminOrLead() shouldBe false
         }
 
         "attend/absent — 출석 통계를 올바르게 계산한다" {
@@ -182,6 +188,47 @@ class ClubMemberTest :
 
             shouldThrow<IllegalStateException> {
                 member.leave()
+            }
+        }
+
+        "releaseLead — LEAD 멤버를 ADMIN으로 변경한다" {
+            val member = ClubMember(club = club, user = user, memberRole = MemberRole.LEAD)
+
+            member.releaseLead()
+
+            member.memberRole shouldBe MemberRole.ADMIN
+        }
+
+        "releaseLead — LEAD가 아닌 멤버가 호출하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user, memberRole = MemberRole.ADMIN)
+
+            shouldThrow<IllegalStateException> {
+                member.releaseLead()
+            }
+        }
+
+        "assignLead — 멤버를 LEAD로 변경한다" {
+            val member = ClubMember(club = club, user = user)
+            member.accept()
+
+            member.assignLead()
+
+            member.memberRole shouldBe MemberRole.LEAD
+        }
+
+        "updateRole — LEAD로 직접 변경 시도하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user)
+
+            shouldThrow<IllegalStateException> {
+                member.updateRole(MemberRole.LEAD)
+            }
+        }
+
+        "updateRole — LEAD 멤버의 역할을 직접 변경 시도하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user, memberRole = MemberRole.LEAD)
+
+            shouldThrow<IllegalStateException> {
+                member.updateRole(MemberRole.ADMIN)
             }
         }
     })

@@ -39,13 +39,13 @@ class JwtAuthenticationProcessingFilter(
 
     private fun saveAuthentication(accessToken: String) {
         val claims = jwtTokenExtractor.extractClaims(accessToken) ?: throw TokenNotFoundException()
-        val principal = AuthenticatedUser(claims.id, claims.email, claims.role)
+        val principal = AuthenticatedUser(claims.id, claims.email)
 
         val authentication =
             UsernamePasswordAuthenticationToken(
                 principal,
                 null,
-                listOf(SimpleGrantedAuthority("ROLE_${claims.role.name}")),
+                listOf(SimpleGrantedAuthority("ROLE_USER")),
             )
 
         SecurityContextHolder.getContext().authentication = authentication

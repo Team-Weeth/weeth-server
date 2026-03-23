@@ -1,7 +1,7 @@
 package com.weeth.domain.board.application.dto.request
 
 import com.weeth.domain.board.domain.enums.BoardType
-import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.club.domain.enums.MemberRole
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -18,7 +18,7 @@ data class CreateBoardRequest(
     @field:Schema(description = "댓글 허용 여부", example = "true")
     val commentEnabled: Boolean = true,
     @field:Schema(description = "게시글 작성 권한", example = "USER")
-    val writePermission: Role = Role.USER,
+    val writePermission: MemberRole = MemberRole.USER,
     @field:Schema(description = "비공개 게시판 여부", example = "false")
     val isPrivate: Boolean = false,
 )

@@ -11,7 +11,7 @@ import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.account.fixture.ReceiptTestFixture
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
@@ -34,7 +34,7 @@ class ManageReceiptUseCaseTest :
         val fileReader = mockk<FileReader>()
         val fileRepository = mockk<FileRepository>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>(relaxed = true)
-        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val fileMapper = mockk<FileMapper>()
         val useCase =
             ManageReceiptUseCase(
@@ -43,7 +43,7 @@ class ManageReceiptUseCaseTest :
                 fileReader,
                 fileRepository,
                 cardinalReader,
-                clubMemberPolicy,
+                clubPermissionPolicy,
                 fileMapper,
             )
 
@@ -56,7 +56,7 @@ class ManageReceiptUseCaseTest :
                 fileReader,
                 fileRepository,
                 cardinalReader,
-                clubMemberPolicy,
+                clubPermissionPolicy,
                 fileMapper,
             )
         }

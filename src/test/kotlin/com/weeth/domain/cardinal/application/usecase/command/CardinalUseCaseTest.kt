@@ -13,6 +13,7 @@ import com.weeth.domain.cardinal.domain.service.CardinalStatusPolicy
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -30,6 +31,7 @@ class CardinalUseCaseTest :
         val cardinalMapper = mockk<CardinalMapper>()
         val clubReader = mockk<ClubReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val cardinalStatusPolicy = CardinalStatusPolicy(cardinalRepository)
         val manageCardinalUseCase =
             ManageCardinalUseCase(
@@ -37,7 +39,7 @@ class CardinalUseCaseTest :
                 cardinalMapper,
                 cardinalStatusPolicy,
                 clubReader,
-                clubMemberPolicy,
+                clubPermissionPolicy,
             )
         val getCardinalQueryService =
             GetCardinalQueryService(cardinalReader, clubMemberPolicy, cardinalMapper)
@@ -47,7 +49,14 @@ class CardinalUseCaseTest :
         val club = ClubTestFixture.createClub()
 
         beforeTest {
-            clearMocks(cardinalRepository, cardinalReader, cardinalMapper, clubReader, clubMemberPolicy)
+            clearMocks(
+                cardinalRepository,
+                cardinalReader,
+                cardinalMapper,
+                clubReader,
+                clubMemberPolicy,
+                clubPermissionPolicy,
+            )
             every { clubReader.getClubById(clubId) } returns club
             every {
                 clubMemberPolicy.getActiveMember(

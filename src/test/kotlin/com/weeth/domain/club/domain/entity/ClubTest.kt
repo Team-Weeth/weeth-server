@@ -1,5 +1,6 @@
 package com.weeth.domain.club.domain.entity
 
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.hypersistence.tsid.TSID
@@ -11,7 +12,12 @@ import io.kotest.matchers.shouldBe
 
 class ClubTest :
     StringSpec({
-        val defaultContact = ClubContact.from(email = "leets@test.com", phoneNumber = null)
+        val defaultContact =
+            ClubContact.from(
+                email = "leets@test.com",
+                phoneNumber = "01000000000",
+                primaryContact = PrimaryContact.PHONE,
+            )
 
         "Club 생성 — 이름과 코드를 가진다" {
             val club = Club.create(name = "리츠", code = "LEETS001", schoolName = "가천대학교", clubContact = defaultContact)
@@ -43,8 +49,9 @@ class ClubTest :
                 description = "업데이트된 소개",
                 contactEmail = null,
                 contactPhoneNumber = null,
-                profileImageUrl = null,
-                backgroundImageUrl = null,
+                primaryContact = null,
+                profileImageStorageKey = null,
+                backgroundImageStorageKey = null,
             )
 
             club.name shouldBe "리츠2기"
@@ -55,7 +62,7 @@ class ClubTest :
             val club = Club.create(name = "리츠", code = "LEETS001", schoolName = "가천대학교", clubContact = defaultContact)
 
             shouldThrow<IllegalArgumentException> {
-                club.update("", null, null, null, null, null, null)
+                club.update("", null, null, null, null, null, null, null)
             }
         }
 
@@ -63,7 +70,7 @@ class ClubTest :
             val club = Club.create(name = "리츠", code = "LEETS001", schoolName = "가천대학교", clubContact = defaultContact)
 
             shouldThrow<IllegalArgumentException> {
-                club.update("   ", null, null, null, null, null, null)
+                club.update("   ", null, null, null, null, null, null, null)
             }
         }
 

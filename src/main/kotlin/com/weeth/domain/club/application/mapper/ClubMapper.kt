@@ -8,11 +8,14 @@ import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 
 @Component
-class ClubMapper {
+class ClubMapper(
+    private val fileAccessUrlPort: FileAccessUrlPort,
+) {
     fun toInfoResponse(
         club: Club,
         member: ClubMember,
@@ -30,7 +33,7 @@ class ClubMapper {
             id = TsidBase62Encoder.encode(club.id),
             name = club.name,
             description = club.description,
-            profileImageUrl = club.profileImageUrl,
+            profileImageUrl = resolveClubImage(club.profileImageStorageKey),
         )
 
     fun toDetailResponse(club: Club) =
@@ -42,8 +45,9 @@ class ClubMapper {
             description = club.description,
             contactEmail = club.clubContact.email,
             contactPhoneNumber = club.clubContact.phoneNumber,
-            profileImageUrl = club.profileImageUrl,
-            backgroundImageUrl = club.backgroundImageUrl,
+            primaryContact = club.clubContact.primaryContact,
+            profileImageUrl = resolveClubImage(club.profileImageStorageKey),
+            backgroundImageUrl = resolveClubImage(club.backgroundImageStorageKey),
         )
 
     fun toMemberResponse(
@@ -80,9 +84,11 @@ class ClubMapper {
         department = member.user.department,
         studentId = member.user.studentId,
         cardinals = toCardinalNumbers(cardinals),
-        profileImageUrl = member.profileImageUrl,
+        profileImageUrl = member.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
         bio = member.bio,
     )
+
+    private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
 
     private fun toCardinalNumbers(cardinals: List<ClubMemberCardinal>): List<Int> {
         if (cardinals.isEmpty()) {

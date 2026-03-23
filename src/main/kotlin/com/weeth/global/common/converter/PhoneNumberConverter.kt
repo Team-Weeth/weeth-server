@@ -1,6 +1,6 @@
-package com.weeth.domain.user.domain.converter
+package com.weeth.global.common.converter
 
-import com.weeth.domain.user.domain.vo.PhoneNumber
+import com.weeth.global.common.vo.PhoneNumber
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter
 

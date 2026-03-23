@@ -7,7 +7,9 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,13 +23,16 @@ class GetClubMemberQueryServiceTest :
         val clubMemberReader = mockk<ClubMemberReader>()
         val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
-        val clubMapper = ClubMapper()
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val clubMapper = ClubMapper(fileAccessUrlPort)
 
         val service =
             GetClubMemberQueryService(
                 clubMemberReader = clubMemberReader,
                 clubMemberCardinalReader = clubMemberCardinalReader,
                 clubMemberPolicy = clubMemberPolicy,
+                clubPermissionPolicy = clubPermissionPolicy,
                 clubMapper = clubMapper,
             )
 
@@ -46,7 +51,7 @@ class GetClubMemberQueryServiceTest :
                             ClubMemberCardinal.create(member, cardinal6),
                         )
 
-                    every { clubMemberPolicy.requireAdmin(1L, 99L) } returns admin
+                    every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                     every { clubMemberReader.findAllByClubId(1L) } returns listOf(member)
                     every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns memberCardinals
 
@@ -66,7 +71,7 @@ class GetClubMemberQueryServiceTest :
                     response.attendanceRate shouldBe member.attendanceStats.attendanceRate
                     response.penaltyCount shouldBe member.penaltyCount
                     response.cardinals shouldBe listOf(6, 7)
-                    verify(exactly = 1) { clubMemberPolicy.requireAdmin(1L, 99L) }
+                    verify(exactly = 1) { clubPermissionPolicy.requireAdmin(1L, 99L) }
                     verify(exactly = 1) { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) }
                 }
             }

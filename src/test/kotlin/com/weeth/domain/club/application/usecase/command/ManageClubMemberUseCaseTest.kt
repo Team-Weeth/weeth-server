@@ -7,13 +7,16 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
+import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.CardinalAlreadySetException
 import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
@@ -46,6 +49,7 @@ class ManageClubMemberUseCaseTest :
         val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
         val userReader = mockk<UserReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubJoinPolicy = mockk<ClubJoinPolicy>()
         val fileRepository = mockk<FileRepository>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
 
@@ -59,6 +63,7 @@ class ManageClubMemberUseCaseTest :
                 attendanceRepository = attendanceRepository,
                 userReader = userReader,
                 clubMemberPolicy = clubMemberPolicy,
+                clubJoinPolicy = clubJoinPolicy,
                 fileRepository = fileRepository,
                 fileAccessUrlPort = fileAccessUrlPort,
             )
@@ -73,6 +78,7 @@ class ManageClubMemberUseCaseTest :
                 attendanceRepository,
                 userReader,
                 clubMemberPolicy,
+                clubJoinPolicy,
                 fileRepository,
                 fileAccessUrlPort,
             )
@@ -101,8 +107,6 @@ class ManageClubMemberUseCaseTest :
                             ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
                             ownerId = userId,
                         )
-                    val resolvedUrl = "https://cdn.example.com/profile.png"
-
                     every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
                     every {
                         fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
@@ -111,13 +115,11 @@ class ManageClubMemberUseCaseTest :
                             FileStatus.UPLOADED,
                         )
                     } returns listOf(existingFile)
-                    every { fileAccessUrlPort.resolve(any()) } returns resolvedUrl
-
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(profileImage = profileImageRequest))
 
                     existingFile.status shouldBe FileStatus.DELETED
-                    member1.profileImageUrl shouldBe resolvedUrl
-                    member2.profileImageUrl shouldBe resolvedUrl
+                    member1.profileImageStorageKey shouldBe profileImageRequest.storageKey
+                    member2.profileImageStorageKey shouldBe profileImageRequest.storageKey
                     verify(exactly = 1) { fileRepository.save(any()) }
                 }
             }
@@ -170,8 +172,8 @@ class ManageClubMemberUseCaseTest :
                 it("모든 활성 ClubMember의 파일을 soft delete하고 URL을 null로 만든다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
-                    member1.updateProfileImageUrl("https://cdn.example.com/profile.png")
-                    member2.updateProfileImageUrl("https://cdn.example.com/profile.png")
+                    member1.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
+                    member2.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
                     val existingFile =
                         FileTestFixture.createFile(
                             id = 1L,
@@ -192,8 +194,8 @@ class ManageClubMemberUseCaseTest :
                     useCase.deleteProfileImage(userId)
 
                     existingFile.status shouldBe FileStatus.DELETED
-                    member1.profileImageUrl shouldBe null
-                    member2.profileImageUrl shouldBe null
+                    member1.profileImageStorageKey shouldBe null
+                    member2.profileImageStorageKey shouldBe null
                 }
             }
 
@@ -361,6 +363,26 @@ class ManageClubMemberUseCaseTest :
             }
         }
 
+        describe("leave") {
+            it("LEAD 멤버가 탈퇴를 시도하면 예외가 발생한다") {
+                val leadMember = ClubMemberTestFixture.createLeadMember()
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns leadMember
+
+                shouldThrow<CannotLeaveAsLeadException> {
+                    useCase.leave(1L, 10L)
+                }
+            }
+
+            it("일반 멤버가 탈퇴하면 LEFT 상태로 전환된다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
+
+                useCase.leave(1L, 10L)
+
+                member.memberStatus shouldBe MemberStatus.LEFT
+            }
+        }
+
         describe("join") {
             context("이미 USER로 1개 동아리에 가입한 사용자가 가입 시도하는 경우") {
                 it("ClubJoinLimitExceededException이 발생한다") {
@@ -370,7 +392,7 @@ class ManageClubMemberUseCaseTest :
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
                     every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
-                    every { clubMemberPolicy.validateJoinLimit(10L) } throws ClubJoinLimitExceededException()
+                    every { clubJoinPolicy.validateJoinLimit(10L) } throws ClubJoinLimitExceededException()
 
                     shouldThrow<ClubJoinLimitExceededException> {
                         useCase.join(
@@ -392,7 +414,7 @@ class ManageClubMemberUseCaseTest :
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
                     every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
-                    justRun { clubMemberPolicy.validateJoinLimit(10L) }
+                    justRun { clubJoinPolicy.validateJoinLimit(10L) }
 
                     useCase.join(
                         clubId = 1L,

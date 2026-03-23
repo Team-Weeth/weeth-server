@@ -6,7 +6,8 @@ import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
-import com.weeth.domain.user.domain.enums.Role
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -18,8 +19,9 @@ class GetBoardQueryServiceTest :
     DescribeSpec({
         val boardRepository = mockk<BoardRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val boardMapper = BoardMapper()
-        val queryService = GetBoardQueryService(boardRepository, clubMemberPolicy, boardMapper)
+        val queryService = GetBoardQueryService(boardRepository, clubMemberPolicy, clubPermissionPolicy, boardMapper)
 
         val clubId = 1L
         val userId = 10L
@@ -31,11 +33,13 @@ class GetBoardQueryServiceTest :
                     BoardTestFixture.create(name = "운영", type = BoardType.NOTICE).apply {
                         updateConfig(config.copy(isPrivate = true))
                     }
+                val member = ClubMemberTestFixture.createActiveMember()
 
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
                 every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns
                     listOf(publicBoard, privateBoard)
 
-                val result = queryService.findBoards(clubId, userId, Role.USER)
+                val result = queryService.findBoards(clubId, userId)
 
                 result shouldHaveSize 1
                 result.first().name shouldBe "일반"
@@ -47,11 +51,13 @@ class GetBoardQueryServiceTest :
                     BoardTestFixture.create(name = "운영", type = BoardType.NOTICE).apply {
                         updateConfig(config.copy(isPrivate = true))
                     }
+                val adminMember = ClubMemberTestFixture.createAdminMember()
 
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns adminMember
                 every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns
                     listOf(publicBoard, privateBoard)
 
-                val result = queryService.findBoards(clubId, userId, Role.ADMIN)
+                val result = queryService.findBoards(clubId, userId)
 
                 result shouldHaveSize 2
                 result.map { it.name } shouldBe listOf("일반", "운영")

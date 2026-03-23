@@ -9,13 +9,15 @@ import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.comment.domain.repository.CommentReader
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
-import com.weeth.domain.user.domain.enums.Role
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Sort
@@ -29,6 +31,7 @@ class GetPostQueryService(
     private val postRepository: PostRepository,
     private val boardRepository: BoardRepository,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubMemberReader: ClubMemberReader,
     private val commentReader: CommentReader,
     private val getCommentQueryService: GetCommentQueryService,
     private val fileReader: FileReader,
@@ -43,20 +46,24 @@ class GetPostQueryService(
         clubId: Long,
         userId: Long,
         postId: Long,
-        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): PostDetailResponse {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
 
-        if (post.board.club.id != clubId || post.board.isDeleted || !post.board.isAccessibleBy(role)) {
+        if (post.board.club.id != clubId || post.board.isDeleted || !post.board.isAccessibleBy(member.memberRole)) {
             throw PostNotFoundException()
         }
 
         val files = fileReader.findAll(FileOwnerType.POST, post.id).map(fileMapper::toFileResponse)
         val comments = commentReader.findAllByPostId(post.id)
-        val commentTree = getCommentQueryService.toCommentTreeResponses(comments)
 
-        return postMapper.toDetailResponse(post, commentTree, files)
+        val commentAuthorIds = comments.map { it.user.id }.distinct()
+        val allAuthorIds = (commentAuthorIds + post.user.id).distinct()
+        val memberMap = buildMemberMap(clubId, allAuthorIds)
+
+        val commentTree = getCommentQueryService.toCommentTreeResponses(comments, memberMap)
+
+        return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files)
     }
 
     fun findPosts(
@@ -65,20 +72,22 @@ class GetPostQueryService(
         boardId: Long,
         pageNumber: Int,
         pageSize: Int,
-        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): Slice<PostListResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         validatePage(pageNumber, pageSize)
-        validateBoardVisibility(boardId, clubId, role)
+        validateBoardVisibility(boardId, clubId, member.memberRole)
 
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
 
         val postIds = posts.content.map { it.id }
         val fileExistsByPostId = buildFileExistsMap(postIds)
+        val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
         val now = LocalDateTime.now()
 
-        return posts.map { postMapper.toListResponse(it, fileExistsByPostId[it.id] == true, now) }
+        return posts.map { post ->
+            postMapper.toListResponse(post, memberMap.getValue(post.user.id), fileExistsByPostId[post.id] == true, now)
+        }
     }
 
     fun searchPosts(
@@ -88,11 +97,10 @@ class GetPostQueryService(
         keyword: String,
         pageNumber: Int,
         pageSize: Int,
-        role: Role, // TODO: 멀티 테넨시 지원으로 Jwt에 포함한 Role은 삭제 예정
     ): Slice<PostListResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
         validatePage(pageNumber, pageSize)
-        validateBoardVisibility(boardId, clubId, role)
+        validateBoardVisibility(boardId, clubId, member.memberRole)
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.searchByBoardId(boardId, keyword.trim(), pageable)
 
@@ -102,9 +110,23 @@ class GetPostQueryService(
 
         val postIds = posts.content.map { it.id }
         val fileExistsByPostId = buildFileExistsMap(postIds)
+        val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
         val now = LocalDateTime.now()
 
-        return posts.map { postMapper.toListResponse(it, fileExistsByPostId[it.id] == true, now) }
+        return posts.map { post ->
+            postMapper.toListResponse(post, memberMap.getValue(post.user.id), fileExistsByPostId[post.id] == true, now)
+        }
+    }
+
+    /**
+     * Post, Comment 조회 시 작성자 정보를 매핑하기 위한 헬퍼 메서드
+     */
+    private fun buildMemberMap(
+        clubId: Long,
+        userIds: List<Long>,
+    ): Map<Long, ClubMember> {
+        if (userIds.isEmpty()) return emptyMap()
+        return clubMemberReader.findAllByClubIdAndUserIds(clubId, userIds).associateBy { it.user.id }
     }
 
     private fun validatePage(
@@ -127,11 +149,11 @@ class GetPostQueryService(
     private fun validateBoardVisibility( // todo: 볼 권한이 없는 경우 권한 관련 예외를 던져주는게 나을지 UX 상의 후 결정
         boardId: Long,
         clubId: Long,
-        role: Role,
+        memberRole: MemberRole,
     ) {
         val board =
             boardRepository.findByIdAndClubIdAndIsDeletedFalse(boardId, clubId) ?: throw BoardNotFoundException()
-        if (!board.isAccessibleBy(role)) {
+        if (!board.isAccessibleBy(memberRole)) {
             throw BoardNotFoundException()
         }
     }
