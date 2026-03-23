@@ -22,32 +22,29 @@ class ClubMemberPolicy(
     fun getActiveMember(
         clubId: Long,
         userId: Long,
-    ): ClubMember {
-        val member =
-            clubMemberReader.findByClubIdAndUserId(clubId, userId)
-                ?: throw ClubMemberNotFoundException()
-        if (!member.isActive()) throw MemberNotActiveException()
-        return member
-    }
+    ): ClubMember = resolveActiveMember { clubMemberReader.findByClubIdAndUserId(clubId, userId) }
 
     fun getActiveMemberWithLock(
         clubId: Long,
         userId: Long,
-    ): ClubMember {
-        val member =
-            clubMemberReader.findByClubIdAndUserIdWithLock(clubId, userId)
-                ?: throw ClubMemberNotFoundException()
-        if (!member.isActive()) throw MemberNotActiveException()
-        return member
-    }
+    ): ClubMember = resolveActiveMember { clubMemberReader.findByClubIdAndUserIdWithLock(clubId, userId) }
 
     fun getMemberInClub(
         clubId: Long,
         clubMemberId: Long,
+    ): ClubMember = resolveMemberInClub(clubId) { clubMemberReader.findByIdOrNull(clubMemberId) }
+
+    private fun resolveActiveMember(reader: () -> ClubMember?): ClubMember {
+        val member = reader() ?: throw ClubMemberNotFoundException()
+        if (!member.isActive()) throw MemberNotActiveException()
+        return member
+    }
+
+    private fun resolveMemberInClub(
+        clubId: Long,
+        reader: () -> ClubMember?,
     ): ClubMember {
-        val member =
-            clubMemberReader.findByIdOrNull(clubMemberId)
-                ?: throw ClubMemberNotFoundException()
+        val member = reader() ?: throw ClubMemberNotFoundException()
         if (member.club.id != clubId) throw ClubMemberNotInClubException()
         return member
     }

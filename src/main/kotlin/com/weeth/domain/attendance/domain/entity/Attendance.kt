@@ -31,7 +31,8 @@ class Attendance(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "attendance_id")
-    val id: Long = 0
+    var id: Long = 0L
+        private set
 
     @Enumerated(EnumType.STRING)
     var status: AttendanceStatus = status

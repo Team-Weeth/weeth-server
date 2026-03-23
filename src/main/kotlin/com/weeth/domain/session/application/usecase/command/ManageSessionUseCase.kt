@@ -3,9 +3,10 @@ package com.weeth.domain.session.application.usecase.command
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.enums.MemberStatus
-import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
@@ -17,9 +18,6 @@ import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
-/**
- * TODO: 출석 생성/삭제 관련해서 출석 초기화 로직과 함께 엣지 케이스나 개선 사항 점검 (join, applyOb)
- */
 @Service
 class ManageSessionUseCase(
     private val sessionRepository: SessionRepository,
@@ -28,7 +26,7 @@ class ManageSessionUseCase(
     private val cardinalReader: CardinalReader,
     private val sessionMapper: SessionMapper,
     private val clubReader: ClubReader,
-    private val clubMemberReader: ClubMemberReader,
+    private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
     @Transactional
@@ -40,14 +38,16 @@ class ManageSessionUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
-        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw SessionNotFoundException()
-        // TODO: 현재는 동아리 전체 ACTIVE 멤버에게 출석을 만든다. clubMemberCardinal 기준으로 좁히지 않으면 applyOb 초기화와 중복될 수 있다.
-        val clubMembers = clubMemberReader.findAllByClubIdAndMemberStatus(clubId, MemberStatus.ACTIVE)
+        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw CardinalNotFoundException()
+        val membersWithCardinal =
+            clubMemberCardinalReader
+                .findAllByClubIdAndCardinalNumber(clubId, request.cardinal, MemberStatus.ACTIVE)
+                .map { it.clubMember }
 
         val session = sessionMapper.toEntity(club, request, user)
         sessionRepository.save(session)
 
-        attendanceRepository.saveAll(clubMembers.map { Attendance.create(session, it) })
+        attendanceRepository.saveAll(membersWithCardinal.map { Attendance.create(session, it) })
     }
 
     @Transactional
