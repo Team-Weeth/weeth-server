@@ -4,7 +4,6 @@ import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.enums.Role
 import org.springframework.test.util.ReflectionTestUtils
 import java.util.UUID
 
@@ -19,7 +18,7 @@ object AttendanceTestFixture {
                 department = "",
             ).also { it.accept() }
 
-    fun createAdminUser(name: String): User = createActiveUser(name).also { it.updateRole(Role.ADMIN) }
+    fun createAdminUser(name: String): User = createActiveUser(name)
 
     fun createAttendance(
         session: Session,

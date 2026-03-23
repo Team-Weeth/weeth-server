@@ -103,8 +103,6 @@ class ManageClubMemberUseCaseTest :
                             ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
                             ownerId = userId,
                         )
-                    val resolvedUrl = "https://cdn.example.com/profile.png"
-
                     every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
                     every {
                         fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
@@ -113,13 +111,11 @@ class ManageClubMemberUseCaseTest :
                             FileStatus.UPLOADED,
                         )
                     } returns listOf(existingFile)
-                    every { fileAccessUrlPort.resolve(any()) } returns resolvedUrl
-
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(profileImage = profileImageRequest))
 
                     existingFile.status shouldBe FileStatus.DELETED
-                    member1.profileImageUrl shouldBe resolvedUrl
-                    member2.profileImageUrl shouldBe resolvedUrl
+                    member1.profileImageStorageKey shouldBe profileImageRequest.storageKey
+                    member2.profileImageStorageKey shouldBe profileImageRequest.storageKey
                     verify(exactly = 1) { fileRepository.save(any()) }
                 }
             }
@@ -172,8 +168,8 @@ class ManageClubMemberUseCaseTest :
                 it("모든 활성 ClubMember의 파일을 soft delete하고 URL을 null로 만든다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
-                    member1.updateProfileImageUrl("https://cdn.example.com/profile.png")
-                    member2.updateProfileImageUrl("https://cdn.example.com/profile.png")
+                    member1.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
+                    member2.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
                     val existingFile =
                         FileTestFixture.createFile(
                             id = 1L,
@@ -194,8 +190,8 @@ class ManageClubMemberUseCaseTest :
                     useCase.deleteProfileImage(userId)
 
                     existingFile.status shouldBe FileStatus.DELETED
-                    member1.profileImageUrl shouldBe null
-                    member2.profileImageUrl shouldBe null
+                    member1.profileImageStorageKey shouldBe null
+                    member2.profileImageStorageKey shouldBe null
                 }
             }
 

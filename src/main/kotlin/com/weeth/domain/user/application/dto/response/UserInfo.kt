@@ -1,7 +1,7 @@
 package com.weeth.domain.user.application.dto.response
 
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.enums.Role
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class UserInfo(
@@ -11,16 +11,19 @@ data class UserInfo(
     val name: String,
     @field:Schema(description = "프로필 이미지 URL")
     val profileImageUrl: String?,
-    @field:Schema(description = "권한", example = "USER")
-    val role: Role,
+    @field:Schema(description = "동아리 내 권한", example = "USER")
+    val role: MemberRole,
 ) {
     companion object {
-        fun from(user: User) =
-            UserInfo(
-                id = user.id,
-                name = user.name,
-                profileImageUrl = user.profileImageUrl,
-                role = user.role,
-            )
+        fun of(
+            user: User,
+            role: MemberRole,
+            resolvedProfileImageUrl: String?,
+        ) = UserInfo(
+            id = user.id,
+            name = user.name,
+            profileImageUrl = resolvedProfileImageUrl,
+            role = role,
+        )
     }
 }

@@ -28,8 +28,8 @@ class Club(
     description: String? = null,
     schoolName: String,
     clubContact: ClubContact,
-    profileImageUrl: String? = null,
-    backgroundImageUrl: String? = null,
+    profileImageStorageKey: String? = null,
+    backgroundImageStorageKey: String? = null,
 ) : BaseEntity() {
     // TSID(Time-Sorted Unique Identifier)로 관리
     // Client 반환시 Base62 인코딩해서 String으로 반환
@@ -58,12 +58,14 @@ class Club(
     var clubContact: ClubContact = clubContact
         private set
 
-    @Column(length = 500)
-    var profileImageUrl: String? = profileImageUrl // 우선 URL로 저장 후 File로 붙일지 논의
+    // TODO: FileSaveRequest + File 도메인 연동 필요 (ClubMember 프로필과 동일 패턴으로 전환)
+    @Column(name = "profile_image_url", length = 500)
+    var profileImageStorageKey: String? = profileImageStorageKey
         private set
 
-    @Column(length = 500)
-    var backgroundImageUrl: String? = backgroundImageUrl
+    // TODO: FileSaveRequest + File 도메인 연동 필요 (ClubMember 프로필과 동일 패턴으로 전환)
+    @Column(name = "background_image_url", length = 500)
+    var backgroundImageStorageKey: String? = backgroundImageStorageKey
         private set
 
     // todo: 동아리 삭제 지원
@@ -75,8 +77,8 @@ class Club(
         contactEmail: String?,
         contactPhoneNumber: String?,
         primaryContact: PrimaryContact?,
-        profileImageUrl: String?,
-        backgroundImageUrl: String?,
+        profileImageStorageKey: String?,
+        backgroundImageStorageKey: String?,
     ) {
         name?.let {
             require(it.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
@@ -92,7 +94,7 @@ class Club(
         }
 
         updateContact(contactEmail, contactPhoneNumber, primaryContact)
-        updateImageUrl(profileImageUrl, backgroundImageUrl)
+        updateImageStorageKey(profileImageStorageKey, backgroundImageStorageKey)
     }
 
     private fun updateContact(
@@ -109,13 +111,13 @@ class Club(
         }
     }
 
-    private fun updateImageUrl(
-        profileImageUrl: String?,
-        backgroundImageUrl: String?,
+    private fun updateImageStorageKey(
+        profileImageStorageKey: String?,
+        backgroundImageStorageKey: String?,
     ) {
-        if (profileImageUrl != null || backgroundImageUrl != null) {
-            this.profileImageUrl = profileImageUrl ?: this.profileImageUrl
-            this.backgroundImageUrl = backgroundImageUrl ?: this.backgroundImageUrl
+        if (profileImageStorageKey != null || backgroundImageStorageKey != null) {
+            this.profileImageStorageKey = profileImageStorageKey ?: this.profileImageStorageKey
+            this.backgroundImageStorageKey = backgroundImageStorageKey ?: this.backgroundImageStorageKey
         }
     }
 
@@ -125,11 +127,11 @@ class Club(
     }
 
     fun removeProfileImage() {
-        this.profileImageUrl = null
+        this.profileImageStorageKey = null
     }
 
     fun removeBackgroundImage() {
-        this.backgroundImageUrl = null
+        this.backgroundImageStorageKey = null
     }
 
     @PrePersist
@@ -148,8 +150,8 @@ class Club(
             schoolName: String,
             clubContact: ClubContact,
             description: String? = null,
-            profileImageUrl: String? = null,
-            backgroundImageUrl: String? = null,
+            profileImageStorageKey: String? = null,
+            backgroundImageStorageKey: String? = null,
         ): Club {
             require(name.isNotBlank()) { "동아리 이름은 비어 있을 수 없습니다." }
             require(code.isNotBlank()) { "초대 코드는 비어 있을 수 없습니다." }
@@ -163,8 +165,8 @@ class Club(
                 description = description,
                 schoolName = schoolName,
                 clubContact = clubContact,
-                profileImageUrl = profileImageUrl,
-                backgroundImageUrl = backgroundImageUrl,
+                profileImageStorageKey = profileImageStorageKey,
+                backgroundImageStorageKey = backgroundImageStorageKey,
             ).apply {
                 // 객체 생성시 TSID 할당
                 id = TsidGenerator.nextId()

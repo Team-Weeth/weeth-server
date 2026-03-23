@@ -15,6 +15,7 @@ import com.weeth.domain.dashboard.application.mapper.DashboardMapper
 import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.schedule.domain.repository.EventReader
 import com.weeth.domain.schedule.fixture.ScheduleTestFixture
@@ -44,7 +45,8 @@ class GetDashboardQueryServiceTest :
         val fileReader = mockk<FileReader>()
         val userReader = mockk<UserReader>()
         val fileMapper = mockk<FileMapper>()
-        val dashboardMapper = DashboardMapper(fileMapper)
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val dashboardMapper = DashboardMapper(fileMapper, fileAccessUrlPort)
 
         val queryService =
             GetDashboardQueryService(
@@ -164,14 +166,16 @@ class GetDashboardQueryServiceTest :
             context("멤버인 경우") {
                 it("공지 제외한 최신 게시글을 반환한다") {
                     val board = BoardTestFixture.create(type = BoardType.GENERAL)
-                    val post = PostTestFixture.create(board = board)
+                    val post = PostTestFixture.create(board = board, user = user)
+                    val memberWithUser = ClubTestFixture.createClubMember(club = club, user = user)
                     val pageable = PageRequest.of(0, 10)
                     val slice = SliceImpl(listOf(post), pageable, false)
 
-                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
+                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns memberWithUser
                     every { postReader.findRecentByClubIdExcludingBoardType(clubId, BoardType.NOTICE, any()) } returns
                         slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
+                    every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(memberWithUser)
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 

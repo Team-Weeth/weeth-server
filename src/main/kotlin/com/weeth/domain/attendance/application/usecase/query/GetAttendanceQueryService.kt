@@ -37,7 +37,7 @@ class GetAttendanceQueryService(
                 today.plusDays(1).atStartOfDay(),
             )
 
-        return attendanceMapper.toSummaryResponse(clubMember, todayAttendance, isAdmin = clubMember.isAdmin())
+        return attendanceMapper.toSummaryResponse(clubMember, todayAttendance, isAdmin = clubMember.isAdminOrLead())
     }
 
     fun findAllDetailsByCurrentCardinal(

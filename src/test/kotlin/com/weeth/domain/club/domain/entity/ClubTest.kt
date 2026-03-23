@@ -50,8 +50,8 @@ class ClubTest :
                 contactEmail = null,
                 contactPhoneNumber = null,
                 primaryContact = null,
-                profileImageUrl = null,
-                backgroundImageUrl = null,
+                profileImageStorageKey = null,
+                backgroundImageStorageKey = null,
             )
 
             club.name shouldBe "리츠2기"

@@ -66,8 +66,8 @@ class ManageClubUseCase(
                 schoolName = request.schoolName,
                 clubContact = clubContact,
                 description = request.description,
-                profileImageUrl = request.profileImageUrl,
-                backgroundImageUrl = request.backgroundImageUrl,
+                profileImageStorageKey = request.profileImageStorageKey,
+                backgroundImageStorageKey = request.backgroundImageStorageKey,
             )
 
         clubRepository.save(club)
@@ -124,8 +124,8 @@ class ManageClubUseCase(
             contactEmail = request.contactEmail,
             contactPhoneNumber = request.contactPhoneNumber,
             primaryContact = request.primaryContact,
-            profileImageUrl = request.profileImageUrl,
-            backgroundImageUrl = request.backgroundImageUrl,
+            profileImageStorageKey = request.profileImageStorageKey,
+            backgroundImageStorageKey = request.backgroundImageStorageKey,
         )
     }
 

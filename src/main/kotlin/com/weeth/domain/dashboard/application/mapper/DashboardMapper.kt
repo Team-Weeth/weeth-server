@@ -14,6 +14,7 @@ import com.weeth.domain.dashboard.application.dto.response.DashboardUnreadNotice
 import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.schedule.domain.entity.Event
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.application.dto.response.UserInfo
@@ -25,6 +26,7 @@ import java.time.LocalDateTime
 @Component
 class DashboardMapper(
     private val fileMapper: FileMapper,
+    private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
     fun toClubInfoResponse(
         club: Club,
@@ -35,8 +37,8 @@ class DashboardMapper(
         schoolName = club.schoolName,
         description = club.description,
         memberCount = memberCount,
-        profileImageUrl = club.profileImageUrl,
-        backgroundImageUrl = club.backgroundImageUrl,
+        profileImageUrl = resolveClubImage(club.profileImageStorageKey),
+        backgroundImageUrl = resolveClubImage(club.backgroundImageStorageKey),
         code = club.code,
     )
 
@@ -44,8 +46,7 @@ class DashboardMapper(
         user: User,
         clubMember: ClubMember,
     ) = DashboardMyInfoResponse(
-        userInfo = UserInfo.from(user),
-        profileImageUrl = clubMember.profileImageUrl,
+        userInfo = UserInfo.of(user, clubMember.memberRole, resolveProfileImage(clubMember)),
         bio = clubMember.bio,
     )
 
@@ -68,7 +69,7 @@ class DashboardMapper(
             name = cm.club.name,
             schoolName = cm.club.schoolName,
             description = cm.club.description,
-            profileImageUrl = cm.club.profileImageUrl,
+            profileImageUrl = resolveClubImage(cm.club.profileImageStorageKey),
         )
 
     fun toScheduleResponses(
@@ -98,11 +99,12 @@ class DashboardMapper(
 
     fun toPostResponse(
         post: Post,
+        authorMember: ClubMember,
         files: List<File>,
         now: LocalDateTime,
     ) = DashboardPostResponse(
         id = post.id,
-        author = UserInfo.from(post.user),
+        author = UserInfo.of(post.user, authorMember.memberRole, resolveProfileImage(authorMember)),
         title = post.title,
         content = post.content,
         time = post.createdAt,
@@ -129,4 +131,9 @@ class DashboardMapper(
             title = post.title,
             content = post.content,
         )
+
+    private fun resolveProfileImage(member: ClubMember): String? =
+        member.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) }
+
+    private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
 }

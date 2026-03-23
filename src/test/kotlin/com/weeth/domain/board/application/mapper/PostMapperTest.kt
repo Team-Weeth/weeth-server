@@ -1,12 +1,14 @@
 package com.weeth.domain.board.application.mapper
 
 import com.weeth.domain.board.domain.entity.Post
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.enums.Role
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -15,15 +17,18 @@ import java.time.LocalDateTime
 
 class PostMapperTest :
     DescribeSpec({
-        val mapper = PostMapper()
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val mapper = PostMapper(fileAccessUrlPort)
         val now = LocalDateTime.now()
         val user = mockk<User>()
         val post = mockk<Post>()
+        val authorMember = mockk<ClubMember>()
 
         every { user.id } returns 1L
         every { user.name } returns "테스터"
-        every { user.role } returns Role.USER
-        every { user.profileImageUrl } returns null
+
+        every { authorMember.memberRole } returns MemberRole.USER
+        every { authorMember.profileImageStorageKey } returns null
 
         every { post.id } returns 1L
         every { post.title } returns "제목"
@@ -35,7 +40,7 @@ class PostMapperTest :
 
         describe("toListResponse") {
             it("24시간 이내 생성된 게시글은 isNew=true") {
-                val response = mapper.toListResponse(post, hasFile = true, now = now)
+                val response = mapper.toListResponse(post, authorMember, hasFile = true, now = now)
 
                 response.id shouldBe 1L
                 response.hasFile shouldBe true
@@ -49,7 +54,7 @@ class PostMapperTest :
                     listOf(
                         CommentResponse(
                             id = 10L,
-                            author = UserInfo(id = 2L, name = "댓글작성자", profileImageUrl = null, role = Role.USER),
+                            author = UserInfo(id = 2L, name = "댓글작성자", profileImageUrl = null, role = MemberRole.USER),
                             content = "댓글",
                             time = LocalDateTime.now(),
                             fileUrls = emptyList(),
@@ -69,7 +74,7 @@ class PostMapperTest :
                         ),
                     )
 
-                val response = mapper.toDetailResponse(post, comments, files)
+                val response = mapper.toDetailResponse(post, authorMember, comments, files)
 
                 response.id shouldBe 1L
                 response.commentCount shouldBe 2

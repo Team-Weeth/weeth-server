@@ -37,14 +37,13 @@ class ClubMemberPolicy(
 
     /**
      * 사용자가 동아리 관리자인지 검증
-     * 활성 상태이고 + 관리자 권한
+     * 활성 상태이고 + ADMIN 또는 LEAD 권한
      */
     fun requireAdmin(
         clubId: Long,
         userId: Long,
     ) = getActiveMember(clubId, userId).also {
-        // TODO: 동아리 생성자를 LEAD로 저장하고 있어 LEAD도 관리자 권한으로 취급할지 정책 정리가 필요하다.
-        if (!it.isAdmin()) {
+        if (!it.isAdminOrLead()) {
             throw NotClubAdminException()
         }
     }

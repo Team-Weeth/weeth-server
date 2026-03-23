@@ -109,8 +109,7 @@ class ManageClubMemberUsecase(
                 )
             fileRepository.save(file)
 
-            val resolvedUrl = fileAccessUrlPort.resolve(file.storageKey.value)
-            members.forEach { it.updateProfileImageUrl(resolvedUrl) }
+            members.forEach { it.updateProfileImageUrl(file.storageKey.value) }
         }
 
         request.bio?.let { bio -> members.forEach { it.updateBio(bio) } }
