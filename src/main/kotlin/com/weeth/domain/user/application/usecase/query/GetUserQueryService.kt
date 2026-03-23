@@ -26,7 +26,6 @@ class GetUserQueryService(
         return mapper.toUserProfileResponse(user, member)
     }
 
-    // TODO: WTH-205에서 UserClubController에 연결 예정
     fun findMyInfo(
         clubId: Long,
         userId: Long,

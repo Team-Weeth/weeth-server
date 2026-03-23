@@ -2,8 +2,10 @@ package com.weeth.domain.club.application.usecase.query
 
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
+import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.mapper.ClubMapper
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -19,11 +21,10 @@ class GetClubQueryService(
     private val clubMapper: ClubMapper,
 ) {
     fun findMyClubs(userId: Long): List<ClubInfoResponse> {
-        val members = clubMemberReader.findAllByUserId(userId)
+        val members = clubMemberReader.findAllByUserIdWithClub(userId)
 
         return members.map { member ->
-            val club = clubReader.getClubById(member.club.id)
-            clubMapper.toInfoResponse(club, member)
+            clubMapper.toInfoResponse(member.club, member)
         }
     }
 
@@ -41,5 +42,22 @@ class GetClubQueryService(
         val club = clubReader.getClubById(clubId)
 
         return clubMapper.toDetailResponse(club)
+    }
+
+    fun findMembershipStatus(userId: Long): ClubMembershipStatusResponse {
+        val members = clubMemberReader.findAllByUserIdWithClub(userId)
+
+        val activeMember = members.firstOrNull { it.memberStatus == MemberStatus.ACTIVE }
+        val waitingMember = members.firstOrNull { it.memberStatus == MemberStatus.WAITING }
+
+        val activeClub = activeMember?.let { clubMapper.toInfoResponse(it.club, it) }
+        val waitingClub = waitingMember?.let { clubMapper.toInfoResponse(it.club, it) }
+
+        return ClubMembershipStatusResponse(
+            hasActiveClub = activeMember != null,
+            hasWaitingClub = waitingMember != null,
+            activeClub = activeClub,
+            waitingClub = waitingClub,
+        )
     }
 }
