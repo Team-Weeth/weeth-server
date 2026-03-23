@@ -7,6 +7,8 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.comment.application.dto.response.CommentResponse
@@ -19,7 +21,6 @@ import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.domain.vo.Email
@@ -44,6 +45,7 @@ class CommentQueryPerformanceTest(
     private val commentRepository: CommentRepository,
     private val fileRepository: FileRepository,
     private val clubRepository: ClubRepository,
+    private val clubMemberRepository: ClubMemberRepository,
     private val entityManager: EntityManager,
 ) : DescribeSpec({
         val runPerformanceTests = System.getProperty("runPerformanceTests")?.toBoolean() ?: false
@@ -55,7 +57,6 @@ class CommentQueryPerformanceTest(
                     email = Email.from("perf-user@test.com"),
                     department = "컴퓨터공학과",
                     status = Status.ACTIVE,
-                    role = Role.USER,
                 ),
             )
 
@@ -84,14 +85,25 @@ class CommentQueryPerformanceTest(
                 ),
             )
 
+        data class SetupResult(
+            val commentIds: List<Long>,
+            val memberMap: Map<Long, ClubMember>,
+        )
+
         fun setupData(
             rootCount: Int,
             childrenPerRoot: Int,
             filesPerComment: Int,
-        ): List<Long> {
+        ): SetupResult {
             val user = createUser()
             val board = createBoard()
             val post = createPost(user, board)
+            val clubMember =
+                clubMemberRepository
+                    .save(
+                        ClubMember.create(club = board.club, user = user),
+                    ).apply { accept() }
+            val memberMap = mapOf(user.id to clubMember)
 
             val commentIds = mutableListOf<Long>()
             repeat(rootCount) { rootIdx ->
@@ -134,7 +146,7 @@ class CommentQueryPerformanceTest(
                 }
             }
 
-            return commentIds
+            return SetupResult(commentIds, memberMap)
         }
 
         describe("comment file query performance") {
@@ -144,7 +156,12 @@ class CommentQueryPerformanceTest(
                 childrenPerRoot: Int,
                 filesPerComment: Int,
             ) {
-                setupData(rootCount = rootCount, childrenPerRoot = childrenPerRoot, filesPerComment = filesPerComment)
+                val (_, memberMap) =
+                    setupData(
+                        rootCount = rootCount,
+                        childrenPerRoot = childrenPerRoot,
+                        filesPerComment = filesPerComment,
+                    )
 
                 val fileMapper =
                     FileMapper(
@@ -162,7 +179,7 @@ class CommentQueryPerformanceTest(
                 val legacy =
                     QueryCountUtil.count(entityManager) {
                         val comments = commentRepository.findAll().sortedBy { it.id }
-                        val tree = legacyService.toCommentTreeResponses(comments)
+                        val tree = legacyService.toCommentTreeResponses(comments, memberMap)
                         tree.size shouldBe rootCount
                     }
 
@@ -171,7 +188,7 @@ class CommentQueryPerformanceTest(
                 val improved =
                     QueryCountUtil.count(entityManager) {
                         val comments = commentRepository.findAll().sortedBy { it.id }
-                        val tree = improvedService.toCommentTreeResponses(comments)
+                        val tree = improvedService.toCommentTreeResponses(comments, memberMap)
                         tree.size shouldBe rootCount
                     }
 
@@ -195,7 +212,10 @@ private class LegacyCommentQueryService(
     private val fileMapper: FileMapper,
     private val commentMapper: CommentMapper,
 ) {
-    fun toCommentTreeResponses(comments: List<Comment>): List<CommentResponse> {
+    fun toCommentTreeResponses(
+        comments: List<Comment>,
+        memberMap: Map<Long, ClubMember>,
+    ): List<CommentResponse> {
         if (comments.isEmpty()) {
             return emptyList()
         }
@@ -207,16 +227,17 @@ private class LegacyCommentQueryService(
 
         return comments
             .filter { it.parent == null }
-            .map { mapToCommentResponse(it, childrenByParentId) }
+            .map { mapToCommentResponse(it, childrenByParentId, memberMap) }
     }
 
     private fun mapToCommentResponse(
         comment: Comment,
         childrenByParentId: Map<Long, List<Comment>>,
+        memberMap: Map<Long, ClubMember>,
     ): CommentResponse {
         val children =
             childrenByParentId[comment.id]
-                ?.map { mapToCommentResponse(it, childrenByParentId) }
+                ?.map { mapToCommentResponse(it, childrenByParentId, memberMap) }
                 ?: emptyList()
 
         val files =
@@ -224,6 +245,7 @@ private class LegacyCommentQueryService(
                 .findAll(FileOwnerType.COMMENT, comment.id)
                 .map(fileMapper::toFileResponse)
 
-        return commentMapper.toCommentDto(comment, children, files)
+        val authorMember = memberMap.getValue(comment.user.id)
+        return commentMapper.toCommentDto(comment, authorMember, children, files)
     }
 }

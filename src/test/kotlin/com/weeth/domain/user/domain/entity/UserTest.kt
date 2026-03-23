@@ -1,6 +1,5 @@
 package com.weeth.domain.user.domain.entity
 
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.Email
 import com.weeth.domain.user.domain.vo.PhoneNumber
@@ -21,13 +20,6 @@ class UserTest :
 
             user.leave()
             user.status shouldBe Status.LEFT
-        }
-
-        "updateRole / hasRole" {
-            val user = User(name = "test", email = Email.from("test@test.com"), studentId = "20200001")
-            user.updateRole(Role.ADMIN)
-
-            user.hasRole(Role.ADMIN) shouldBe true
         }
 
         "User.create 기본 status는 WAITING이다" {
@@ -128,56 +120,5 @@ class UserTest :
             shouldThrow<IllegalArgumentException> {
                 user.agreeTerms(termsAgreed = true, privacyAgreed = false)
             }
-        }
-
-        "updateProfileImageUrl 정상 설정" {
-            val user = User(name = "test", email = Email.from("test@test.com"))
-
-            user.updateProfileImageUrl("https://example.com/image.png")
-
-            user.profileImageUrl shouldBe "https://example.com/image.png"
-        }
-
-        "updateProfileImageUrl null로 초기화" {
-            val user =
-                User(
-                    name = "test",
-                    email = Email.from("test@test.com"),
-                    profileImageUrl = "https://example.com/old.png",
-                )
-
-            user.updateProfileImageUrl(null)
-
-            user.profileImageUrl shouldBe null
-        }
-
-        "생성 시 profileImageUrl 공백은 null로 정규화" {
-            val user =
-                User(
-                    name = "test",
-                    email = Email.from("test@test.com"),
-                    profileImageUrl = "   ",
-                )
-
-            user.profileImageUrl shouldBe null
-        }
-
-        "생성 시 profileImageUrl 앞뒤 공백 제거" {
-            val user =
-                User(
-                    name = "test",
-                    email = Email.from("test@test.com"),
-                    profileImageUrl = "  https://example.com/image.png  ",
-                )
-
-            user.profileImageUrl shouldBe "https://example.com/image.png"
-        }
-
-        "updateProfileImageUrl 앞뒤 공백 제거" {
-            val user = User(name = "test", email = Email.from("test@test.com"))
-
-            user.updateProfileImageUrl("  https://example.com/image.png  ")
-
-            user.profileImageUrl shouldBe "https://example.com/image.png"
         }
     })

@@ -1,6 +1,5 @@
 package com.weeth.global.auth.resolver
 
-import com.weeth.domain.user.domain.enums.Role
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.AnonymousAuthenticationException
 import com.weeth.global.auth.model.AuthenticatedUser
@@ -47,7 +46,7 @@ class CurrentUserArgumentResolverTest :
             val method = DummyController::class.java.getDeclaredMethod("target", java.lang.Long.TYPE)
             val parameter = MethodParameter(method, 0)
             val request = MockHttpServletRequest()
-            val principal = AuthenticatedUser(id = 99L, email = "test@weeth.com", role = Role.USER)
+            val principal = AuthenticatedUser(id = 99L, email = "test@weeth.com")
             SecurityContextHolder.getContext().authentication =
                 UsernamePasswordAuthenticationToken(principal, null, emptyList())
 

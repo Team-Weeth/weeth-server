@@ -23,7 +23,10 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.domain.vo.Email
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -72,15 +75,11 @@ class ManagePostUseCaseTest :
                 ownerId = ownerId,
             )
 
-        fun createUser(
-            id: Long = 1L,
-            role: Role = Role.USER,
-        ): User =
+        fun createUser(id: Long = 1L): User =
             User(
                 name = "적순",
                 email = Email.from("test1@test.com"),
                 status = Status.ACTIVE,
-                role = role,
             ).apply {
                 ReflectionTestUtils.setField(this, "id", id)
             }
