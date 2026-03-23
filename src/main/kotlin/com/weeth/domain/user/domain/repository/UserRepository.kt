@@ -3,7 +3,7 @@ package com.weeth.domain.user.domain.repository
 import com.weeth.domain.user.application.exception.UserNotFoundException
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.vo.Email
-import com.weeth.domain.user.domain.vo.PhoneNumber
+import com.weeth.global.common.vo.PhoneNumber
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.JpaRepository

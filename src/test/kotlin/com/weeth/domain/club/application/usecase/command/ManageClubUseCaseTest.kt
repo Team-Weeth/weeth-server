@@ -7,6 +7,7 @@ import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
 import com.weeth.domain.club.application.exception.ClubCreateLimitExceededException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
@@ -78,6 +79,8 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 3,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
                     )
@@ -101,6 +104,8 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 3,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
                     )
@@ -119,6 +124,8 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 1,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
                     )
@@ -143,6 +150,8 @@ class ManageClubUseCaseTest :
                                 schoolName = "가천대학교",
                                 description = "소개",
                                 currentCardinal = 3,
+                                contactPhoneNumber = "01000000000",
+                                primaryContact = PrimaryContact.PHONE,
                             ),
                         )
                     }
@@ -163,9 +172,15 @@ class ManageClubUseCaseTest :
                         name = "기존 동아리",
                         schoolName = "가천대학교",
                         description = "기존 소개",
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
                 club.update(
+                    null,
                     null,
                     null,
                     null,
@@ -183,7 +198,7 @@ class ManageClubUseCaseTest :
                     10L,
                     ClubUpdateRequest(
                         schoolName = "연세대학교",
-                        contactPhoneNumber = "010-9999-8888",
+                        contactPhoneNumber = "01099998888",
                     ),
                 )
 
@@ -191,6 +206,7 @@ class ManageClubUseCaseTest :
                 club.schoolName shouldBe "연세대학교"
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
+                club.clubContact.phoneNumber shouldBe "01099998888"
                 club.clubContact.phoneNumber shouldBe "010-9999-8888"
                 club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-02/uuid_profile.png"
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
@@ -200,7 +216,12 @@ class ManageClubUseCaseTest :
                 val club =
                     ClubTestFixture.createClub(
                         description = "기존 소개",
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = null),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01000000000",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
@@ -211,7 +232,7 @@ class ManageClubUseCaseTest :
                 club.schoolName shouldBe "가천대학교"
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
-                club.clubContact.phoneNumber shouldBe null
+                club.clubContact.phoneNumber shouldBe "01000000000"
             }
         }
 
@@ -219,9 +240,15 @@ class ManageClubUseCaseTest :
             it("프로필 사진만 삭제하고 배경 사진은 유지한다") {
                 val club =
                     ClubTestFixture.createClub(
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
                 club.update(
+                    null,
                     null,
                     null,
                     null,
@@ -245,9 +272,15 @@ class ManageClubUseCaseTest :
             it("배경 사진만 삭제하고 프로필 사진은 유지한다") {
                 val club =
                     ClubTestFixture.createClub(
-                        clubContact = ClubContact.from(email = "club@example.com", phoneNumber = "010-1111-2222"),
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
                     )
                 club.update(
+                    null,
                     null,
                     null,
                     null,

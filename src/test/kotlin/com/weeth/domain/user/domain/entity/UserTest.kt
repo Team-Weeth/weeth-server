@@ -2,7 +2,7 @@ package com.weeth.domain.user.domain.entity
 
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.Email
-import com.weeth.domain.user.domain.vo.PhoneNumber
+import com.weeth.global.common.vo.PhoneNumber
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe

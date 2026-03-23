@@ -1,4 +1,4 @@
-package com.weeth.domain.user.domain.vo
+package com.weeth.global.common.vo
 
 data class PhoneNumber private constructor(
     val value: String,

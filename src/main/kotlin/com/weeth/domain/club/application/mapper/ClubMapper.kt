@@ -45,6 +45,7 @@ class ClubMapper(
             description = club.description,
             contactEmail = club.clubContact.email,
             contactPhoneNumber = club.clubContact.phoneNumber,
+            primaryContact = club.clubContact.primaryContact,
             profileImageUrl = resolveClubImage(club.profileImageStorageKey),
             backgroundImageUrl = resolveClubImage(club.backgroundImageStorageKey),
         )
