@@ -42,6 +42,12 @@ class UserTest :
             user.status shouldBe Status.ACTIVE
         }
 
+        "생성 시 빈 이름은 예외가 발생한다" {
+            shouldThrow<IllegalArgumentException> {
+                User(name = "   ", email = Email.from("test@test.com"))
+            }
+        }
+
         "update에서 빈 이름은 예외가 발생한다" {
             val user = User(name = "test", email = Email.from("test@test.com"))
 
@@ -51,6 +57,7 @@ class UserTest :
                     email = Email.from("test@test.com"),
                     studentId = "123",
                     tel = PhoneNumber.from("01012345678"),
+                    school = "가천대학교",
                     department = "CS",
                 )
             }
@@ -69,6 +76,7 @@ class UserTest :
                     email = "test@test.com",
                     studentId = "20200001",
                     tel = "01012345678",
+                    school = "가천대학교",
                     department = "CS",
                 )
 
@@ -95,5 +103,81 @@ class UserTest :
             user.accept()
             user.leave()
             user.isBannedOrLeft() shouldBe true
+        }
+
+        "agreeTerms 성공 — 모두 true" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.agreeTerms(termsAgreed = true, privacyAgreed = true)
+
+            user.termsAgreed shouldBe true
+            user.privacyAgreed shouldBe true
+        }
+
+        "agreeTerms 실패 — termsAgreed가 false" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            shouldThrow<IllegalArgumentException> {
+                user.agreeTerms(termsAgreed = false, privacyAgreed = true)
+            }
+        }
+
+        "agreeTerms 실패 — privacyAgreed가 false" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            shouldThrow<IllegalArgumentException> {
+                user.agreeTerms(termsAgreed = true, privacyAgreed = false)
+            }
+        }
+
+        "updateProfileImageUrl 정상 설정" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.updateProfileImageUrl("https://example.com/image.png")
+
+            user.profileImageUrl shouldBe "https://example.com/image.png"
+        }
+
+        "updateProfileImageUrl null로 초기화" {
+            val user =
+                User(
+                    name = "test",
+                    email = Email.from("test@test.com"),
+                    profileImageUrl = "https://example.com/old.png",
+                )
+
+            user.updateProfileImageUrl(null)
+
+            user.profileImageUrl shouldBe null
+        }
+
+        "생성 시 profileImageUrl 공백은 null로 정규화" {
+            val user =
+                User(
+                    name = "test",
+                    email = Email.from("test@test.com"),
+                    profileImageUrl = "   ",
+                )
+
+            user.profileImageUrl shouldBe null
+        }
+
+        "생성 시 profileImageUrl 앞뒤 공백 제거" {
+            val user =
+                User(
+                    name = "test",
+                    email = Email.from("test@test.com"),
+                    profileImageUrl = "  https://example.com/image.png  ",
+                )
+
+            user.profileImageUrl shouldBe "https://example.com/image.png"
+        }
+
+        "updateProfileImageUrl 앞뒤 공백 제거" {
+            val user = User(name = "test", email = Email.from("test@test.com"))
+
+            user.updateProfileImageUrl("  https://example.com/image.png  ")
+
+            user.profileImageUrl shouldBe "https://example.com/image.png"
         }
     })

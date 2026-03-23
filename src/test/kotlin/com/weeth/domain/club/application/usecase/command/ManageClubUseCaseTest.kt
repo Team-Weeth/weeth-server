@@ -5,6 +5,7 @@ import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.exception.ClubCreateLimitExceededException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
@@ -14,10 +15,13 @@ import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.Runs
 import io.mockk.clearMocks
 import io.mockk.every
+import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -56,6 +60,7 @@ class ManageClubUseCaseTest :
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { cardinalRepository.saveAll(any<List<Cardinal>>()) } answers { firstArg() }
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
+            every { clubMemberPolicy.validateCreateLimit(any()) } just Runs
         }
 
         describe("create") {
@@ -64,7 +69,7 @@ class ManageClubUseCaseTest :
             context("N기 동아리를 개설하는 경우") {
                 it("1기부터 N기까지 Cardinal이 생성되며, 마지막 기수만 IN_PROGRESS이다") {
                     val cardinalSlot = slot<List<Cardinal>>()
-                    every { userReader.getById(10L) } returns user
+                    every { userReader.getByIdWithLock(10L) } returns user
                     every { cardinalRepository.saveAll(capture(cardinalSlot)) } answers { firstArg() }
 
                     useCase.create(
@@ -88,7 +93,7 @@ class ManageClubUseCaseTest :
                 }
 
                 it("LEAD 멤버가 최신 기수에 ClubMemberCardinal로 배정된다") {
-                    every { userReader.getById(10L) } returns user
+                    every { userReader.getByIdWithLock(10L) } returns user
 
                     useCase.create(
                         10L,
@@ -105,7 +110,7 @@ class ManageClubUseCaseTest :
 
                 it("1기만 있는 동아리 개설 시 Cardinal 1개가 IN_PROGRESS로 생성된다") {
                     val cardinalSlot = slot<List<Cardinal>>()
-                    every { userReader.getById(10L) } returns user
+                    every { userReader.getByIdWithLock(10L) } returns user
                     every { cardinalRepository.saveAll(capture(cardinalSlot)) } answers { firstArg() }
 
                     useCase.create(
@@ -122,6 +127,31 @@ class ManageClubUseCaseTest :
                     cardinals.size shouldBe 1
                     cardinals[0].cardinalNumber shouldBe 1
                     cardinals[0].status shouldBe CardinalStatus.IN_PROGRESS
+                }
+            }
+
+            context("이미 LEAD로 1개 동아리를 생성한 사용자가 생성 시도하는 경우") {
+                it("ClubCreateLimitExceededException이 발생하고, 이후 로직이 실행되지 않는다") {
+                    every { userReader.getByIdWithLock(13L) } returns user
+                    every { clubMemberPolicy.validateCreateLimit(13L) } throws ClubCreateLimitExceededException()
+
+                    shouldThrow<ClubCreateLimitExceededException> {
+                        useCase.create(
+                            13L,
+                            ClubCreateRequest(
+                                name = "새 동아리",
+                                schoolName = "가천대학교",
+                                description = "소개",
+                                currentCardinal = 3,
+                            ),
+                        )
+                    }
+
+                    verify(exactly = 1) { userReader.getByIdWithLock(13L) }
+                    verify(exactly = 1) { clubMemberPolicy.validateCreateLimit(13L) }
+                    verify(exactly = 0) { clubRepository.save(any()) }
+                    verify(exactly = 0) { clubMemberRepository.save(any()) }
+                    verify(exactly = 0) { cardinalRepository.saveAll(any<List<Cardinal>>()) }
                 }
             }
         }

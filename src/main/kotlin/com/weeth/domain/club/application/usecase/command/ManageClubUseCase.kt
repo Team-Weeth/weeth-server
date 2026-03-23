@@ -43,7 +43,9 @@ class ManageClubUseCase(
         request: ClubCreateRequest,
     ) {
         val user =
-            userReader.getById(userId)
+            userReader.getByIdWithLock(userId)
+
+        clubMemberPolicy.validateCreateLimit(userId)
 
         val code = ClubCodePolicy.generateCode()
         val clubContact =

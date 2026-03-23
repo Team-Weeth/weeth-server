@@ -6,6 +6,7 @@ import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
+import com.weeth.domain.user.application.dto.response.UserInfo
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
@@ -19,8 +20,7 @@ class PostMapper {
         files: List<FileResponse>,
     ) = PostDetailResponse(
         id = post.id,
-        name = post.user.name,
-        role = post.user.role,
+        author = UserInfo.from(post.user),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
@@ -35,8 +35,7 @@ class PostMapper {
         now: LocalDateTime,
     ) = PostListResponse(
         id = post.id,
-        name = post.user.name,
-        role = post.user.role,
+        author = UserInfo.from(post.user),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,

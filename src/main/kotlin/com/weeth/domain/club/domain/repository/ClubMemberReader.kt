@@ -1,6 +1,7 @@
 package com.weeth.domain.club.domain.repository
 
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 
 interface ClubMemberReader {
@@ -30,4 +31,10 @@ interface ClubMemberReader {
         clubId: Long,
         memberStatus: MemberStatus,
     ): List<ClubMember>
+
+    fun countByUserIdAndMemberStatusAndMemberRole(
+        userId: Long,
+        memberStatus: MemberStatus,
+        memberRole: MemberRole,
+    ): Long
 }

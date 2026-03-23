@@ -3,6 +3,7 @@ package com.weeth.domain.club.presentation
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
@@ -23,6 +24,7 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -107,6 +109,27 @@ class ClubController(
         val meInfo = getClubMemberQueryService.findMyMemberProfile(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ME_SUCCESS, meInfo)
+    }
+
+    // TODO: 추후 동아리별 프로필 수정으로 변경 시 clubId 경로 변수 추가 및 단일 ClubMember만 수정하도록 변경
+    @PatchMapping("/members/me")
+    @Operation(summary = "내 클럽 활동 프로필 수정 (프로필 사진, 자기소개)")
+    fun updateMyProfile(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Valid @RequestBody request: UpdateMemberProfileRequest,
+    ): CommonResponse<Unit> {
+        manageClubMemberUsecase.updateProfile(userId, request)
+        return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_UPDATED_SUCCESS)
+    }
+
+    // TODO: 추후 동아리별 프로필 수정으로 변경 시 clubId 경로 변수 추가 및 단일 ClubMember만 수정하도록 변경
+    @DeleteMapping("/members/me/profile-image")
+    @Operation(summary = "동아리 프로필 사진 삭제")
+    fun deleteMyProfileImage(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Unit> {
+        manageClubMemberUsecase.deleteProfileImage(userId)
+        return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_IMAGE_DELETED_SUCCESS)
     }
 
     @PostMapping("/{clubId}/members/me/cardinals")

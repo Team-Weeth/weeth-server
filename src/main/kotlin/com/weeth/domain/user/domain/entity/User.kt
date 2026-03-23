@@ -19,7 +19,17 @@ import jakarta.persistence.Table
 
 @Entity
 @Table(name = "users")
-class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (생성자 정리, lateinit 제거 등)
+class User(
+    name: String,
+    email: Email,
+    studentId: String = "",
+    tel: PhoneNumber = PhoneNumber.from(""),
+    school: String = "",
+    department: String = "",
+    status: Status = Status.WAITING,
+    role: Role = Role.USER,
+    profileImageUrl: String? = null,
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
@@ -27,56 +37,52 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         private set
 
     @Column(nullable = false, length = 50)
-    lateinit var name: String
+    var name: String = name.trim().also { require(it.isNotBlank()) { "이름은 공백일 수 없습니다." } }
         private set
 
     @Convert(converter = EmailConverter::class)
     @Column(name = "email", nullable = false, length = 255)
-    lateinit var email: Email
+    var email: Email = email
         private set
 
     @Column(nullable = false, length = 20)
-    lateinit var studentId: String
+    var studentId: String = studentId
         private set
 
     @Convert(converter = PhoneNumberConverter::class)
     @Column(name = "tel", nullable = false, length = 20)
-    lateinit var tel: PhoneNumber
+    var tel: PhoneNumber = tel
+        private set
+
+    @Column(nullable = false, length = 50)
+    var school: String = school
         private set
 
     @Column(nullable = false, length = 100)
-    lateinit var department: String
+    var department: String = department
         private set
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    var status: Status = Status.WAITING
+    var status: Status = status
         private set
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    var role: Role = Role.USER
+    var role: Role = role
         private set
 
-    constructor(
-        id: Long = 0L,
-        name: String,
-        email: Email,
-        studentId: String = "",
-        tel: PhoneNumber = PhoneNumber.from(""),
-        department: String = "",
-        status: Status = Status.WAITING,
-        role: Role = Role.USER,
-    ) : this() {
-        this.id = id
-        this.name = name.trim()
-        this.email = email
-        this.studentId = studentId
-        this.tel = tel
-        this.department = department
-        this.status = status
-        this.role = role
-    }
+    @Column(nullable = false)
+    var termsAgreed: Boolean = false
+        private set
+
+    @Column(nullable = false)
+    var privacyAgreed: Boolean = false
+        private set
+
+    @Column(length = 500)
+    var profileImageUrl: String? = profileImageUrl?.trim()?.takeIf { it.isNotBlank() }
+        private set
 
     val emailValue: String
         get() = email.value
@@ -98,6 +104,7 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         name.isNotBlank() &&
             studentId.isNotBlank() &&
             telValue.isNotBlank() &&
+            school.isNotBlank() &&
             department.isNotBlank()
 
     fun update(
@@ -105,6 +112,7 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         email: Email,
         studentId: String,
         tel: PhoneNumber,
+        school: String,
         department: String,
     ) {
         require(name.isNotBlank()) { "이름은 공백일 수 없습니다." }
@@ -112,7 +120,21 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
         this.email = email
         this.studentId = studentId
         this.tel = tel
+        this.school = school
         this.department = department
+    }
+
+    fun agreeTerms(
+        termsAgreed: Boolean,
+        privacyAgreed: Boolean,
+    ) {
+        require(termsAgreed && privacyAgreed) { "모든 약관에 동의해야 합니다." }
+        this.termsAgreed = termsAgreed
+        this.privacyAgreed = privacyAgreed
+    }
+
+    fun updateProfileImageUrl(url: String?) {
+        this.profileImageUrl = url?.trim()?.takeIf { it.isNotBlank() }
     }
 
     fun accept() {
@@ -135,16 +157,20 @@ class User protected constructor() : BaseEntity() { // todo: 엔티티 정리 (�
             email: String,
             studentId: String = "",
             tel: String = "",
+            school: String = "",
             department: String = "",
             status: Status = Status.WAITING,
+            profileImageUrl: String? = null,
         ): User =
             User(
                 name = name,
                 email = Email.from(email),
                 studentId = studentId,
                 tel = PhoneNumber.from(tel),
+                school = school,
                 department = department,
                 status = status,
+                profileImageUrl = profileImageUrl,
             )
     }
 }

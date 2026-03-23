@@ -52,6 +52,8 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v4/clubs/*")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v4/university/*")
+                    .permitAll()
                     .requestMatchers(
                         "/admin",
                         "/admin/login",

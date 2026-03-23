@@ -55,7 +55,7 @@ class ClubMapper {
         name = member.user.name,
         email = member.user.emailValue,
         tel = member.user.telValue,
-        school = null, // todo: User 도메인 반영 작업시 학교 정보 추가
+        school = member.user.school,
         department = member.user.department,
         studentId = member.user.studentId,
         cardinals = toCardinalNumbers(cardinals),
@@ -76,10 +76,12 @@ class ClubMapper {
         name = member.user.name,
         email = member.user.emailValue,
         tel = member.user.telValue,
-        school = null, // todo: User 도메인 반영 작업시 학교 정보 추가
+        school = member.user.school,
         department = member.user.department,
         studentId = member.user.studentId,
         cardinals = toCardinalNumbers(cardinals),
+        profileImageUrl = member.profileImageUrl,
+        bio = member.bio,
     )
 
     private fun toCardinalNumbers(cardinals: List<ClubMemberCardinal>): List<Int> {

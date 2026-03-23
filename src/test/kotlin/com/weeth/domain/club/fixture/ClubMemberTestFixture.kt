@@ -6,9 +6,11 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.fixture.UserTestFixture
+import org.springframework.test.util.ReflectionTestUtils
 
 object ClubMemberTestFixture {
     fun createActiveMember(
+        id: Long = 0L,
         club: Club = ClubTestFixture.createClub(),
         user: User = UserTestFixture.createActiveUser1(),
         memberRole: MemberRole = MemberRole.USER,
@@ -18,7 +20,7 @@ object ClubMemberTestFixture {
             user = user,
             memberStatus = MemberStatus.ACTIVE,
             memberRole = memberRole,
-        )
+        ).also { if (id != 0L) ReflectionTestUtils.setField(it, "id", id) }
 
     fun createWaitingMember(
         club: Club = ClubTestFixture.createClub(),
