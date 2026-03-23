@@ -83,7 +83,6 @@ class Post(
     fun update(
         newTitle: String?,
         newContent: String?,
-        newCardinalNumber: Int?,
     ) {
         newTitle?.let {
             require(it.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
@@ -93,7 +92,6 @@ class Post(
             require(it.isNotBlank()) { "내용은 비어 있을 수 없습니다" }
             content = it
         }
-        newCardinalNumber?.let { cardinalNumber = it }
     }
 
     fun markDeleted() {

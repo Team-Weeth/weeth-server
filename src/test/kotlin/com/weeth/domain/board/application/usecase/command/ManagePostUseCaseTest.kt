@@ -15,6 +15,8 @@ import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
@@ -45,6 +47,7 @@ class ManagePostUseCaseTest :
         val boardRepository = mockk<BoardRepository>()
         val userReader = mockk<UserReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val cardinalReader = mockk<CardinalReader>()
         val fileRepository = mockk<FileRepository>()
         val fileReader = mockk<FileReader>()
         val fileMapper = mockk<FileMapper>()
@@ -56,6 +59,7 @@ class ManagePostUseCaseTest :
                 boardRepository,
                 userReader,
                 clubMemberPolicy,
+                cardinalReader,
                 fileRepository,
                 fileReader,
                 fileMapper,
@@ -90,6 +94,7 @@ class ManagePostUseCaseTest :
                 boardRepository,
                 userReader,
                 clubMemberPolicy,
+                cardinalReader,
                 fileRepository,
                 fileReader,
                 fileMapper,
@@ -101,6 +106,7 @@ class ManagePostUseCaseTest :
             every { fileReader.findAll(any(), any<Long>(), any()) } returns emptyList()
             every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(1L)
             every { fileRepository.delete(any()) } just runs
+            every { cardinalReader.findInProgressByClubId(any()) } returns null
             // update/delete 공통 기본값: 작성자
             every { userReader.getById(any()) } returns UserTestFixture.createActiveUser1(1L)
         }
@@ -160,15 +166,32 @@ class ManagePostUseCaseTest :
                 verify(exactly = 0) { postRepository.save(any<Post>()) }
             }
 
-            it("cardinalNumber가 전달되면 게시글에 반영된다") {
+            it("IN_PROGRESS 기수가 존재하면 게시글에 자동 반영된다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
-                val request =
-                    CreatePostRequest(
-                        title = "게시글",
-                        content = "내용",
+                val cardinal =
+                    CardinalTestFixture.createCardinalInProgress(
                         cardinalNumber = 6,
+                        year = 2026,
+                        semester = 1,
                     )
+                val request = CreatePostRequest(title = "게시글", content = "내용")
+
+                every { userReader.getById(1L) } returns user
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(11L, 1L) } returns board
+                every { cardinalReader.findInProgressByClubId(1L) } returns cardinal
+
+                useCase.save(1L, 11L, request, 1L)
+
+                verify {
+                    postRepository.save(match { it.cardinalNumber == 6 })
+                }
+            }
+
+            it("IN_PROGRESS 기수가 없으면 cardinalNumber가 null로 저장된다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val request = CreatePostRequest(title = "게시글", content = "내용")
 
                 every { userReader.getById(1L) } returns user
                 every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(11L, 1L) } returns board
@@ -176,9 +199,7 @@ class ManagePostUseCaseTest :
                 useCase.save(1L, 11L, request, 1L)
 
                 verify {
-                    postRepository.save(
-                        match { it.cardinalNumber == 6 },
-                    )
+                    postRepository.save(match { it.cardinalNumber == null })
                 }
             }
 

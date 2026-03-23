@@ -32,4 +32,6 @@ interface CardinalReader {
     ): List<Cardinal>
 
     fun findAllByClubIdOrderByCardinalNumberAsc(clubId: Long): List<Cardinal>
+
+    fun findInProgressByClubId(clubId: Long): Cardinal?
 }
