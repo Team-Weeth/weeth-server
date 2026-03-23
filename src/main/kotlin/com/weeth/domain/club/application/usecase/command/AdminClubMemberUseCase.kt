@@ -86,8 +86,7 @@ class AdminClubMemberUseCase(
                 .findAllByIdsWithLock(memberIds)
                 .also { members ->
                     if (members.any { it.club.id != clubId }) throw ClubMemberNotInClubException()
-                }
-                .associateBy { it.id }
+                }.associateBy { it.id }
 
         val cardinalByNumber = mutableMapOf<Int, Cardinal>()
 

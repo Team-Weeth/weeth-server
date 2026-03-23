@@ -112,8 +112,9 @@ class ManageAttendanceUseCaseTest :
             it("관리자가 ATTEND로 변경하면 ClubMember 통계를 갱신한다") {
                 val admin = ClubMemberTestFixture.createAdminMember()
                 val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
-                val attendance = createAttendance(SessionTestFixture.createSession(club = admin.club), member)
-                    .also { setAttendanceId(it, 1L) }
+                val attendance =
+                    createAttendance(SessionTestFixture.createSession(club = admin.club), member)
+                        .also { setAttendanceId(it, 1L) }
 
                 every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { attendanceRepository.findAllByIdsWithLock(listOf(1L)) } returns listOf(attendance)
@@ -127,8 +128,9 @@ class ManageAttendanceUseCaseTest :
             it("관리자가 PENDING으로 되돌리면 기존 통계를 차감한다") {
                 val admin = ClubMemberTestFixture.createAdminMember()
                 val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
-                val attendance = createAttendance(SessionTestFixture.createSession(club = admin.club), member)
-                    .also { setAttendanceId(it, 1L) }
+                val attendance =
+                    createAttendance(SessionTestFixture.createSession(club = admin.club), member)
+                        .also { setAttendanceId(it, 1L) }
                 attendance.attend()
                 member.attend()
 
