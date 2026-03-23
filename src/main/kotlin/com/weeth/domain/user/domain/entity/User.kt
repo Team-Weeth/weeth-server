@@ -1,12 +1,12 @@
 package com.weeth.domain.user.domain.entity
 
 import com.weeth.domain.user.domain.converter.EmailConverter
-import com.weeth.domain.user.domain.converter.PhoneNumberConverter
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.Email
-import com.weeth.domain.user.domain.vo.PhoneNumber
+import com.weeth.global.common.converter.PhoneNumberConverter
 import com.weeth.global.common.entity.BaseEntity
+import com.weeth.global.common.vo.PhoneNumber
 import jakarta.persistence.Column
 import jakarta.persistence.Convert
 import jakarta.persistence.Entity

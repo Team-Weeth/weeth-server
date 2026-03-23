@@ -5,7 +5,7 @@ import com.weeth.domain.user.application.exception.StudentIdExistsException
 import com.weeth.domain.user.application.exception.TelExistsException
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.domain.vo.Email
-import com.weeth.domain.user.domain.vo.PhoneNumber
+import com.weeth.global.common.vo.PhoneNumber
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 

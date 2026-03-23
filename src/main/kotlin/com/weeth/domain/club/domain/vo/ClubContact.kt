@@ -1,6 +1,7 @@
 package com.weeth.domain.club.domain.vo
 
 import com.weeth.domain.club.domain.enums.PrimaryContact
+import com.weeth.global.common.vo.PhoneNumber
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
 import jakarta.persistence.EnumType
@@ -22,7 +23,7 @@ class ClubContact(
         private set
 
     @Column(name = "contact_phone_number", nullable = false, length = 20)
-    var phoneNumber: String = phoneNumber
+    var phoneNumber: String = PhoneNumber.from(phoneNumber).value
         private set
 
     @Enumerated(EnumType.STRING)
@@ -36,8 +37,7 @@ class ClubContact(
         primaryContact: PrimaryContact?,
     ) {
         phoneNumber?.let {
-            require(it.isNotBlank()) { "전화번호는 비어 있을 수 없습니다." }
-            this.phoneNumber = it
+            this.phoneNumber = PhoneNumber.from(it).value
         }
         this.email = email ?: this.email
         primaryContact?.let {
