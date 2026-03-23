@@ -104,4 +104,16 @@ class ClubMemberPolicy(
         private const val MAX_LEAD_CLUBS = 1
         private const val MAX_USER_CLUBS = 1
     }
+
+    fun getActiveMemberInClubWithLock(
+        clubId: Long,
+        clubMemberId: Long,
+    ): ClubMember {
+        val member =
+            clubMemberReader.findByIdWithLock(clubMemberId)
+                ?: throw ClubMemberNotFoundException()
+        if (member.club.id != clubId) throw ClubMemberNotInClubException()
+        if (!member.isActive()) throw MemberNotActiveException()
+        return member
+    }
 }

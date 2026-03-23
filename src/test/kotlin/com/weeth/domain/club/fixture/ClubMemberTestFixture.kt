@@ -43,4 +43,15 @@ object ClubMemberTestFixture {
             memberStatus = MemberStatus.ACTIVE,
             memberRole = MemberRole.ADMIN,
         )
+
+    fun createLeadMember(
+        club: Club = ClubTestFixture.createClub(),
+        user: User = UserTestFixture.createActiveUser1(),
+    ): ClubMember =
+        ClubMember(
+            club = club,
+            user = user,
+            memberStatus = MemberStatus.ACTIVE,
+            memberRole = MemberRole.LEAD,
+        )
 }
