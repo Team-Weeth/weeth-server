@@ -17,7 +17,6 @@ import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
@@ -51,29 +50,6 @@ class ManageAttendanceUseCase(
 
         lockedAttendance.attend()
         clubMember.attend()
-    }
-
-    @Transactional
-    fun close(
-        clubId: Long,
-        userId: Long,
-        now: LocalDate,
-        cardinal: Int,
-    ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
-        val targetSession =
-            sessionReader
-                .findAllByClubIdAndCardinalIn(clubId, listOf(cardinal))
-                .firstOrNull { session ->
-                    session.start.toLocalDate().isEqual(now) &&
-                        session.end.toLocalDate().isEqual(now)
-                }
-                ?: throw SessionNotFoundException()
-
-        targetSession.close()
-        val attendances =
-            attendanceRepository.findAllBySessionAndClubMemberMemberStatus(targetSession, MemberStatus.ACTIVE)
-        closePendingAttendances(attendances)
     }
 
     @Transactional

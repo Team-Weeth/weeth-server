@@ -23,9 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.time.LocalDate
 
 @Tag(name = "ATTENDANCE ADMIN", description = "[ADMIN] 출석 어드민 API")
 @RestController
@@ -36,19 +34,6 @@ class AttendanceAdminController(
     private val getAttendanceQueryService: GetAttendanceQueryService,
     private val generateQrTokenUseCase: GenerateQrTokenUseCase,
 ) {
-    @PatchMapping("/close")
-    @Operation(summary = "출석 마감")
-    fun close(
-        @TsidParam
-        @TsidPathVariable clubId: Long,
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-        @RequestParam now: LocalDate,
-        @RequestParam cardinal: Int,
-    ): CommonResponse<Void?> {
-        manageAttendanceUseCase.close(clubId, userId, now, cardinal)
-        return CommonResponse.success(AttendanceResponseCode.ATTENDANCE_CLOSE_SUCCESS)
-    }
-
     @GetMapping("/{sessionId}")
     @Operation(summary = "모든 인원 정기모임 출석 정보 조회")
     fun getAllAttendance(
