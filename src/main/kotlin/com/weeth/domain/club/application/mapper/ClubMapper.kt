@@ -84,6 +84,8 @@ class ClubMapper(
         department = member.user.department,
         studentId = member.user.studentId,
         cardinals = toCardinalNumbers(cardinals),
+        memberRole = member.memberRole,
+        memberStatus = member.memberStatus,
         profileImageUrl = member.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
         bio = member.bio,
     )

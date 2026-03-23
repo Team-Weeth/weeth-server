@@ -26,6 +26,10 @@ data class ClubMemberProfileResponse(
     val studentId: String,
     @field:Schema(description = "소속 기수 목록", example = "[6, 7]")
     val cardinals: List<Int>,
+    @field:Schema(description = "멤버 권한", example = "USER")
+    val memberRole: MemberRole,
+    @field:Schema(description = "멤버 상태", example = "ACTIVE")
+    val memberStatus: MemberStatus,
     @field:Schema(description = "동아리 프로필 이미지 URL", example = "https://cdn.example.com/profile.jpg")
     val profileImageUrl: String?,
     @field:Schema(description = "자기소개")
