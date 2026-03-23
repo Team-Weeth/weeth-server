@@ -1,16 +1,15 @@
 package com.weeth.domain.dashboard.application.dto.response
 
 import com.weeth.domain.file.application.dto.response.FileResponse
+import com.weeth.domain.user.application.dto.response.UserInfo
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
 data class DashboardPostResponse(
     @field:Schema(description = "게시글 ID", example = "1")
     val id: Long,
-    @field:Schema(description = "작성자 이름", example = "홍길동")
-    val name: String,
-    @field:Schema(description = "작성자 프로필 이미지 URL")
-    val authorProfileImageUrl: String?,
+    @field:Schema(description = "작성자 정보")
+    val author: UserInfo,
     @field:Schema(description = "제목", example = "안녕하세요")
     val title: String,
     @field:Schema(description = "내용", example = "오늘은 날씨가 좋네요")

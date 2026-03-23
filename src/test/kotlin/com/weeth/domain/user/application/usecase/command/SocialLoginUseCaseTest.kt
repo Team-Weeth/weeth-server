@@ -55,7 +55,6 @@ class SocialLoginUseCaseTest :
                         providerUserId = "apple-user-1",
                         email = "",
                         emailVerified = false,
-                        profileImageUrl = null,
                         name = null,
                     )
 
@@ -85,7 +84,6 @@ class SocialLoginUseCaseTest :
                         providerUserId = "apple-user-2",
                         email = "",
                         emailVerified = false,
-                        profileImageUrl = null,
                         name = null,
                     )
 

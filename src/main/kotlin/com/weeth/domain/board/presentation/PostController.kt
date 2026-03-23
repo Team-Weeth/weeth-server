@@ -42,7 +42,7 @@ class PostController(
     @PostMapping("/{boardId}/posts")
     @Operation(summary = "게시글 작성")
     fun save(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestBody @Valid request: CreatePostRequest,
@@ -56,7 +56,7 @@ class PostController(
     @GetMapping("/{boardId}/posts")
     @Operation(summary = "게시글 목록 조회")
     fun findPosts(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestParam(defaultValue = "0") pageNumber: Int,
@@ -71,7 +71,7 @@ class PostController(
     @GetMapping("/posts/{postId}")
     @Operation(summary = "게시글 상세 조회")
     fun findPost(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -84,7 +84,7 @@ class PostController(
     @PatchMapping("/posts/{postId}")
     @Operation(summary = "게시글 수정")
     fun update(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @RequestBody @Valid request: UpdatePostRequest,
@@ -98,7 +98,7 @@ class PostController(
     @DeleteMapping("/posts/{postId}")
     @Operation(summary = "게시글 삭제")
     fun delete(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -110,7 +110,7 @@ class PostController(
     @GetMapping("/{boardId}/posts/search")
     @Operation(summary = "게시글 검색")
     fun searchPosts(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @RequestParam keyword: String,
@@ -126,7 +126,7 @@ class PostController(
     @PostMapping("/{boardId}/notices/read-all")
     @Operation(summary = "공지 읽음 처리", description = "공지 게시판 진입 시 마지막 읽음 시간을 현재 시각으로 갱신합니다.")
     fun markAllNoticesRead(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable boardId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,

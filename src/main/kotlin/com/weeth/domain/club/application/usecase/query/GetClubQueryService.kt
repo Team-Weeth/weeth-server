@@ -2,7 +2,7 @@ package com.weeth.domain.club.application.usecase.query
 
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
-import com.weeth.domain.club.application.dto.response.ClubResponse
+import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
@@ -27,7 +27,7 @@ class GetClubQueryService(
         }
     }
 
-    fun findClub(clubId: Long): ClubResponse {
+    fun findClub(clubId: Long): ClubPublicResponse {
         val club = clubReader.getClubById(clubId)
 
         return clubMapper.toResponse(club)

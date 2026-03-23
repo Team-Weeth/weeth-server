@@ -21,21 +21,23 @@ class UserMapper {
 
     fun toUserProfileResponse(user: User): UserProfileResponse =
         UserProfileResponse(
-            user.id,
-            user.name,
-            user.emailValue,
-            user.studentId,
-            user.telValue,
-            user.department,
-            emptyList(),
-            user.role,
+            id = user.id,
+            name = user.name,
+            email = user.emailValue,
+            studentId = user.studentId,
+            tel = user.telValue,
+            school = user.school,
+            department = user.department,
+            cardinals = emptyList(),
+            role = user.role,
+            profileImageUrl = user.profileImageUrl,
         )
 
     fun toUserSummaryResponse(user: User): UserSummaryResponse =
         UserSummaryResponse(
-            user.id,
-            user.name,
-            emptyList(),
-            user.role,
+            id = user.id,
+            name = user.name,
+            cardinals = emptyList(),
+            role = user.role,
         )
 }

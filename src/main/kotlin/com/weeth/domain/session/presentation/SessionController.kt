@@ -26,7 +26,7 @@ class SessionController(
     @GetMapping("/{sessionId}")
     @Operation(summary = "정기모임 상세 조회")
     fun getSession(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @PathVariable sessionId: Long,

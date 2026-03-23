@@ -15,7 +15,6 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PatchMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -31,7 +30,7 @@ class CardinalAdminController(
     @PatchMapping
     @Operation(summary = "기수 정보 수정 API")
     fun update(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid request: CardinalUpdateRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -43,7 +42,7 @@ class CardinalAdminController(
     @PostMapping
     @Operation(summary = "새로운 기수 정보 저장 API")
     fun save(
-        @PathVariable @TsidParam
+        @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestBody @Valid request: CardinalSaveRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,

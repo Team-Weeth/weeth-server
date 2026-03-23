@@ -34,6 +34,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import org.springframework.test.util.ReflectionTestUtils
 
 class ManagePostUseCaseTest :
     DescribeSpec({
@@ -70,6 +71,19 @@ class ManagePostUseCaseTest :
                 ownerType = FileOwnerType.POST,
                 ownerId = ownerId,
             )
+
+        fun createUser(
+            id: Long = 1L,
+            role: Role = Role.USER,
+        ): User =
+            User(
+                name = "적순",
+                email = Email.from("test1@test.com"),
+                status = Status.ACTIVE,
+                role = role,
+            ).apply {
+                ReflectionTestUtils.setField(this, "id", id)
+            }
 
         beforeTest {
             clearMocks(

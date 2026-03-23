@@ -52,6 +52,9 @@ dependencies {
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
+    // Cache
+    implementation("org.springframework.boot:spring-boot-starter-cache")
+
     // Actuator + Prometheus
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")

@@ -7,6 +7,5 @@ data class SocialAuthResult(
     val providerUserId: String,
     val email: String,
     val emailVerified: Boolean,
-    val profileImageUrl: String?,
     val name: String?,
 )

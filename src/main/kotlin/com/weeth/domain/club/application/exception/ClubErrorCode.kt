@@ -30,9 +30,15 @@ enum class ClubErrorCode(
     @ExplainError("비활성 멤버가 동아리 리소스에 접근할 때 발생합니다.")
     MEMBER_NOT_ACTIVE(21106, HttpStatus.FORBIDDEN, "비활성 멤버입니다."),
 
-    @ExplainError("MVP 단계에서 여러 동아리에 지원하려고 하는 경우 발생합니다. MVP는 단일 동아리 지원만 가능합니다.")
-    CLUB_CANT_JOIN(21107, HttpStatus.BAD_REQUEST, "MVP에서 동아리는 1개만 지원 가능합니다."),
-
     @ExplainError("요청한 멤버가 해당 동아리에 속하지 않을 때 발생합니다.")
     CLUB_MEMBER_NOT_IN_CLUB(21108, HttpStatus.BAD_REQUEST, "해당 동아리에 속한 멤버가 아닙니다."),
+
+    @ExplainError("이미 활동 기수가 설정된 멤버가 다시 설정을 시도할 때 발생합니다.")
+    CARDINAL_ALREADY_SET(21109, HttpStatus.CONFLICT, "이미 활동 기수가 설정되어 있습니다."),
+
+    @ExplainError("일반 멤버(USER)로 가입 가능한 동아리 수(최대 1개)를 초과했을 때 발생합니다.")
+    CLUB_JOIN_LIMIT_EXCEEDED(21110, HttpStatus.CONFLICT, "가입 가능한 동아리 수를 초과했습니다."),
+
+    @ExplainError("동아리장(LEAD)으로 생성 가능한 동아리 수(최대 1개)를 초과했을 때 발생합니다.")
+    CLUB_CREATE_LIMIT_EXCEEDED(21111, HttpStatus.CONFLICT, "생성 가능한 동아리 수를 초과했습니다."),
 }

@@ -62,7 +62,7 @@ class SocialLoginUseCase(
         val user =
             userRepository.save(
                 User.create(
-                    name = authResult.name ?: "",
+                    name = authResult.name?.takeIf { it.isNotBlank() } ?: email.substringBefore("@"),
                     email = email,
                     status = Status.ACTIVE, // 소셜 로그인으로 회원가입 한 경우 바로 가입 승인
                 ),
