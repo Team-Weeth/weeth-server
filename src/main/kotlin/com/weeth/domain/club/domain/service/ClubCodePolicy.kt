@@ -17,10 +17,8 @@ object ClubCodePolicy {
         clubCode: String,
         providedCode: String,
     ) {
-        if (clubCode != providedCode) {
-            if (!clubCode.equals(providedCode.trim(), ignoreCase = true)) {
-                throw InvalidClubCodeException()
-            }
+        if (!clubCode.equals(providedCode.trim(), ignoreCase = true)) {
+            throw InvalidClubCodeException()
         }
     }
 }
