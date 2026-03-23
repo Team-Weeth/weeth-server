@@ -71,6 +71,17 @@ class ClubMemberPolicy(
         return member
     }
 
+    fun getMemberInClubWithLock(
+        clubId: Long,
+        clubMemberId: Long,
+    ): ClubMember {
+        val member =
+            clubMemberReader.findByIdWithLock(clubMemberId)
+                ?: throw ClubMemberNotFoundException()
+        if (member.club.id != clubId) throw ClubMemberNotInClubException()
+        return member
+    }
+
     /**
      * 일반 멤버(USER)로 가입 가능한 동아리 수 제한 검증
      */

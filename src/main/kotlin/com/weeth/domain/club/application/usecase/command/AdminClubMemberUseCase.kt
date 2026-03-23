@@ -79,7 +79,7 @@ class AdminClubMemberUseCase(
         val cardinalByNumber = mutableMapOf<Int, Cardinal>()
 
         uniqueRequests.forEach { request ->
-            val member = clubMemberPolicy.getMemberInClub(clubId, request.clubMemberId)
+            val member = clubMemberPolicy.getMemberInClubWithLock(clubId, request.clubMemberId)
             val nextCardinal =
                 cardinalByNumber.getOrPut(request.cardinal) {
                     cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal)
@@ -97,7 +97,6 @@ class AdminClubMemberUseCase(
         }
     }
 
-    // TODO: ManageClubMemberUsecase.initializeAttendances와 중복 — MVP 후 공통 서비스로 추출
     private fun initializeAttendances(
         clubId: Long,
         member: ClubMember,

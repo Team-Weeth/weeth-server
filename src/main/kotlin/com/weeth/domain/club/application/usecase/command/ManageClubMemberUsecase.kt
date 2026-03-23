@@ -49,7 +49,7 @@ class ManageClubMemberUsecase(
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
      * 역할(LEAD/USER)별 가입 제한 정책 적용
-     * TODO: 출석 초기화
+     * 출석 초기화는 setInitialCardinals() 호출 시 처리됨
      */
     @Transactional
     fun join(
