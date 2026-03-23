@@ -8,9 +8,11 @@ import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.exception.LeadSelfTransferException
+import com.weeth.domain.club.application.exception.LeadTransferOnlyException
 import com.weeth.domain.club.application.exception.NotLeadException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -63,6 +65,8 @@ class AdminClubMemberUseCase(
         clubMemberPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, request.clubMemberId)
+        if (request.memberRole == MemberRole.LEAD) throw LeadTransferOnlyException()
+        if (member.isLead()) throw LeadTransferOnlyException()
         member.updateRole(request.memberRole)
     }
 
