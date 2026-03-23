@@ -1,9 +1,11 @@
 package com.weeth.domain.board.application.usecase.command
 
 import com.weeth.domain.board.application.dto.request.CreateBoardRequest
+import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
+import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.repository.BoardRepository
@@ -89,6 +91,23 @@ class ManageBoardUseCase(
 
         if (board.club.id != clubId) throw BoardNotFoundException()
         board.markDeleted()
+    }
+
+    @Transactional
+    fun reorder(
+        clubId: Long,
+        request: ReorderBoardsRequest,
+        userId: Long,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val boards = boardRepository.findAllByClubIdAndIdIn(clubId, request.boardIds)
+        if (boards.size != request.boardIds.size) throw BoardNotInClubException()
+
+        val boardById = boards.associateBy { it.id }
+        request.boardIds.forEachIndexed { index, boardId ->
+            boardById.getValue(boardId).reorder(index)
+        }
     }
 
     private fun findBoard(boardId: Long): Board =

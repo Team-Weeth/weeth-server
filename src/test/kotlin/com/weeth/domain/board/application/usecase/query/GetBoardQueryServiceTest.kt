@@ -36,7 +36,7 @@ class GetBoardQueryServiceTest :
                 val member = ClubMemberTestFixture.createActiveMember()
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
-                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns
                     listOf(publicBoard, privateBoard)
 
                 val result = queryService.findBoards(clubId, userId)
@@ -54,7 +54,7 @@ class GetBoardQueryServiceTest :
                 val adminMember = ClubMemberTestFixture.createAdminMember()
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns adminMember
-                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns
                     listOf(publicBoard, privateBoard)
 
                 val result = queryService.findBoards(clubId, userId)
@@ -72,7 +72,7 @@ class GetBoardQueryServiceTest :
                         markDeleted()
                     }
 
-                every { boardRepository.findAllByClubIdOrderByIdAsc(clubId) } returns listOf(activeBoard, deletedBoard)
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns listOf(activeBoard, deletedBoard)
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
@@ -87,7 +87,7 @@ class GetBoardQueryServiceTest :
                         updateConfig(config.copy(isPrivate = true))
                     }
 
-                every { boardRepository.findAllByClubIdOrderByIdAsc(clubId) } returns listOf(publicBoard, privateBoard)
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns listOf(publicBoard, privateBoard)
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 

@@ -1,8 +1,10 @@
 package com.weeth.domain.board.application.usecase.command
 
 import com.weeth.domain.board.application.dto.request.CreateBoardRequest
+import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.exception.BoardNotFoundException
+import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
@@ -102,6 +104,32 @@ class ManageBoardUseCaseTest :
 
                 board.isDeleted shouldBe true
                 verify(exactly = 0) { boardRepository.delete(any()) }
+            }
+        }
+
+        describe("reorder") {
+            it("요청 순서대로 displayOrder를 저장한다") {
+                val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
+                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
+                val board3 = BoardTestFixture.create(id = 3L, club = club, name = "C", type = BoardType.GENERAL)
+                every { boardRepository.findAllByClubIdAndIdIn(clubId, listOf(2L, 3L, 1L)) } returns
+                    listOf(board1, board2, board3)
+
+                useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(2L, 3L, 1L)), userId)
+
+                board2.displayOrder shouldBe 0
+                board3.displayOrder shouldBe 1
+                board1.displayOrder shouldBe 2
+            }
+
+            it("다른 클럽 게시판이 포함되면 예외를 던진다") {
+                val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
+                // 요청은 2개인데 DB에서 1개만 조회됨 → 다른 클럽 소속이거나 존재하지 않음
+                every { boardRepository.findAllByClubIdAndIdIn(clubId, listOf(1L, 99L)) } returns listOf(board1)
+
+                shouldThrow<BoardNotInClubException> {
+                    useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 99L)), userId)
+                }
             }
         }
     })

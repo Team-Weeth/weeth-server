@@ -11,12 +11,17 @@ interface BoardRepository : JpaRepository<Board, Long> {
         clubId: Long,
     ): Board?
 
-    fun findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId: Long): List<Board>
+    fun findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId: Long): List<Board>
 
     fun findByIdAndClubIdAndIsDeletedFalse(
         boardId: Long,
         clubId: Long,
     ): Board?
 
-    fun findAllByClubIdOrderByIdAsc(clubId: Long): List<Board>
+    fun findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId: Long): List<Board>
+
+    fun findAllByClubIdAndIdIn(
+        clubId: Long,
+        ids: List<Long>,
+    ): List<Board>
 }

@@ -279,7 +279,7 @@ class GetPostQueryServiceTest :
                     )
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
-                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns listOf(board)
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns listOf(board)
                 every { postRepository.findAllActiveByBoardIds(any(), any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
                 every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(member)
@@ -296,7 +296,7 @@ class GetPostQueryServiceTest :
                 val member = ClubMemberTestFixture.createActiveMember(club = board.club)
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
-                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId) } returns listOf(board)
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns listOf(board)
 
                 val result = queryService.findAllPosts(clubId, userId, 0, 10)
 

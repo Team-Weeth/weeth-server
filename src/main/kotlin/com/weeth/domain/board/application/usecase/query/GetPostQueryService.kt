@@ -77,7 +77,8 @@ class GetPostQueryService(
         validatePage(pageNumber, pageSize)
 
         val accessibleBoardIds =
-            boardRepository.findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId)
+            boardRepository
+                .findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
                 .filter { it.isAccessibleBy(member.memberRole) }
                 .map { it.id }
 

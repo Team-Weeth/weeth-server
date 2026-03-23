@@ -90,4 +90,20 @@ class BoardEntityTest :
             board.restore()
             board.isDeleted shouldBe false
         }
+
+        "reorder는 displayOrder를 변경한다" {
+            val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+
+            board.reorder(3)
+
+            board.displayOrder shouldBe 3
+        }
+
+        "reorder는 음수 순서이면 예외를 던진다" {
+            val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+
+            shouldThrow<IllegalArgumentException> {
+                board.reorder(-1)
+            }
+        }
     })

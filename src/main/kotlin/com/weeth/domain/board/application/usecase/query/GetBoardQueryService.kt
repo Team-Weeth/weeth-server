@@ -25,7 +25,7 @@ class GetBoardQueryService(
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
 
         return boardRepository
-            .findAllByClubIdAndIsDeletedFalseOrderByIdAsc(clubId)
+            .findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
             .filter { it.isAccessibleBy(member.memberRole) }
             .map(boardMapper::toListResponse)
     }
@@ -48,7 +48,7 @@ class GetBoardQueryService(
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
         return boardRepository
-            .findAllByClubIdOrderByIdAsc(clubId)
+            .findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
             .map(boardMapper::toDetailResponseForAdmin)
     }
 }
