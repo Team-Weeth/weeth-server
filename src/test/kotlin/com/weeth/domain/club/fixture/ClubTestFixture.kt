@@ -10,6 +10,7 @@ import org.springframework.test.util.ReflectionTestUtils
 
 object ClubTestFixture {
     fun createClub(
+        id: Long = 0L,
         name: String = "테스트 동아리",
         code: String = "TEST001",
         description: String? = "테스트 동아리 소개",
@@ -24,6 +25,7 @@ object ClubTestFixture {
                 schoolName = schoolName,
                 clubContact = clubContact,
             )
+        if (id != 0L) ReflectionTestUtils.setField(club, "id", id)
         return club
     }
 

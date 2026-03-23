@@ -2,14 +2,17 @@ package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.dto.request.UpdateAttendanceStatusRequest
 import com.weeth.domain.attendance.application.exception.AlreadyAttendedException
+import com.weeth.domain.attendance.application.exception.AttendanceAlreadyClosedException
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
-import com.weeth.domain.session.application.exception.SessionNotInProgressException
+import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -39,21 +42,27 @@ class ManageAttendanceUseCaseTest :
         }
 
         describe("checkIn") {
-            val clubMember = ClubMemberTestFixture.createActiveMember()
-            val session =
-                SessionTestFixture.createInProgressSession(
-                    cardinal = 1,
-                    code = 123456,
-                    title = "Test Session",
-                    club = clubMember.club,
-                )
-            val attendance = createAttendance(session, clubMember)
+            lateinit var clubMember: ClubMember
+            lateinit var session: Session
+
+            beforeTest {
+                clubMember = ClubMemberTestFixture.createActiveMember()
+                session =
+                    SessionTestFixture.createInProgressSession(
+                        cardinal = 1,
+                        code = 123456,
+                        title = "Test Session",
+                        club = clubMember.club,
+                    )
+            }
 
             it("정상 체크인 시 출석 상태와 멤버 통계를 갱신한다") {
+                val attendance = createAttendance(session, clubMember)
                 every { qrAttendancePort.getCode(session.id) } returns session.code
                 every { sessionReader.getById(session.id) } returns session
                 every { clubMemberPolicy.getActiveMember(clubMember.club.id, clubMember.user.id) } returns clubMember
-                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns attendance
+                every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns
+                    attendance
 
                 useCase.checkIn(clubMember.club.id, clubMember.user.id, session.id, session.code)
 
@@ -82,7 +91,7 @@ class ManageAttendanceUseCaseTest :
                 every { attendanceRepository.findBySessionAndClubMemberWithLock(session, clubMember) } returns
                     absentAttendance
 
-                shouldThrow<SessionNotInProgressException> {
+                shouldThrow<AttendanceAlreadyClosedException> {
                     useCase.checkIn(clubMember.club.id, clubMember.user.id, session.id, session.code)
                 }
             }
@@ -104,9 +113,10 @@ class ManageAttendanceUseCaseTest :
                 val admin = ClubMemberTestFixture.createAdminMember()
                 val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
                 val attendance = createAttendance(SessionTestFixture.createSession(club = admin.club), member)
+                    .also { setAttendanceId(it, 1L) }
 
                 every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
-                every { attendanceRepository.findByIdWithClubMemberWithLock(1L) } returns attendance
+                every { attendanceRepository.findAllByIdsWithLock(listOf(1L)) } returns listOf(attendance)
 
                 useCase.updateStatus(admin.club.id, admin.user.id, listOf(UpdateAttendanceStatusRequest(1L, "ATTEND")))
 
@@ -118,11 +128,12 @@ class ManageAttendanceUseCaseTest :
                 val admin = ClubMemberTestFixture.createAdminMember()
                 val member = ClubMemberTestFixture.createActiveMember(club = admin.club)
                 val attendance = createAttendance(SessionTestFixture.createSession(club = admin.club), member)
+                    .also { setAttendanceId(it, 1L) }
                 attendance.attend()
                 member.attend()
 
                 every { clubMemberPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
-                every { attendanceRepository.findByIdWithClubMemberWithLock(1L) } returns attendance
+                every { attendanceRepository.findAllByIdsWithLock(listOf(1L)) } returns listOf(attendance)
 
                 useCase.updateStatus(admin.club.id, admin.user.id, listOf(UpdateAttendanceStatusRequest(1L, "PENDING")))
 

@@ -10,9 +10,11 @@ import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
+import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -28,6 +30,7 @@ class AdminClubMemberUseCaseTest :
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubMemberCardinalPolicy = mockk<ClubMemberCardinalPolicy>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>(relaxed = true)
+        val clubMemberReader = mockk<ClubMemberReader>(relaxed = true)
         val sessionReader = mockk<SessionReader>(relaxed = true)
         val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>(relaxed = true)
@@ -36,17 +39,20 @@ class AdminClubMemberUseCaseTest :
                 clubMemberPolicy,
                 clubMemberCardinalPolicy,
                 cardinalReader,
+                clubMemberReader,
                 sessionReader,
                 attendanceRepository,
                 clubMemberCardinalRepository,
             )
-        val adminMember = ClubMemberTestFixture.createAdminMember()
+        val club = ClubTestFixture.createClub(id = 1L)
+        val adminMember = ClubMemberTestFixture.createAdminMember(club = club)
 
         beforeTest {
             clearMocks(
                 clubMemberPolicy,
                 clubMemberCardinalPolicy,
                 cardinalReader,
+                clubMemberReader,
                 sessionReader,
                 attendanceRepository,
                 clubMemberCardinalRepository,
@@ -111,7 +117,7 @@ class AdminClubMemberUseCaseTest :
 
         describe("applyOb") {
             it("새 기수를 정상 등록한다") {
-                val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = adminMember.club)
                 val cardinal =
                     CardinalTestFixture.createCardinal(
                         id = 1L,
@@ -122,7 +128,7 @@ class AdminClubMemberUseCaseTest :
                     )
                 val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
@@ -137,7 +143,7 @@ class AdminClubMemberUseCaseTest :
             }
 
             it("이미 등록된 기수는 무시한다") {
-                val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = adminMember.club)
                 val cardinal =
                     CardinalTestFixture.createCardinal(
                         id = 1L,
@@ -147,7 +153,7 @@ class AdminClubMemberUseCaseTest :
                         semester = 1,
                     )
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns false
 
@@ -161,7 +167,7 @@ class AdminClubMemberUseCaseTest :
 
             it("동일한 요청이 중복으로 전달되면 1회만 처리한다") {
                 val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
-                val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = adminMember.club)
                 val cardinal =
                     CardinalTestFixture.createCardinal(
                         id = 1L,
@@ -171,7 +177,7 @@ class AdminClubMemberUseCaseTest :
                         semester = 1,
                     )
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
@@ -186,9 +192,9 @@ class AdminClubMemberUseCaseTest :
             }
 
             it("존재하지 않는 기수면 예외가 발생한다") {
-                val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = adminMember.club)
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns null
 
                 shouldThrow<CardinalNotFoundException> {
@@ -196,8 +202,18 @@ class AdminClubMemberUseCaseTest :
                 }
             }
 
+            it("다른 클럽 소속 멤버 ID가 포함된 경우 예외가 발생한다") {
+                val otherClubMember = ClubMemberTestFixture.createActiveMember(id = 20L)
+                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(otherClubMember)
+
+                shouldThrow<ClubMemberNotInClubException> {
+                    useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))
+                }
+            }
+
             it("현재 기수 등록 시 출석 통계를 초기화한다") {
-                val member = ClubMemberTestFixture.createActiveMember(club = adminMember.club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = adminMember.club)
                 val cardinal =
                     CardinalTestFixture.createCardinal(
                         id = 1L,
@@ -209,7 +225,7 @@ class AdminClubMemberUseCaseTest :
                 repeat(2) { member.attend() }
                 repeat(1) { member.absent() }
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
