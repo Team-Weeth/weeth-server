@@ -7,6 +7,7 @@ import com.weeth.domain.comment.fixture.CommentTestFixture
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
@@ -36,8 +37,7 @@ class GetCommentQueryServiceTest :
             children: List<CommentResponse> = emptyList(),
         ) = CommentResponse(
             id = id,
-            name = "테스트유저",
-            role = Role.USER,
+            author = UserInfo(id = 1L, name = "테스트유저", profileImageUrl = null, role = Role.USER),
             content = "content",
             time = LocalDateTime.now(),
             fileUrls = emptyList(),

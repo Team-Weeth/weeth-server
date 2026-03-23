@@ -19,6 +19,12 @@ interface EventRepository :
         end: LocalDateTime,
     ): List<Event> = findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start)
 
+    override fun findByClubIdAndDateRange(
+        clubId: Long,
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): List<Event> = findByClubIdAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(clubId, end, start)
+
     override fun findAllByCardinal(cardinal: Int): List<Event>
 
     fun findAllByClubIdAndCardinal(

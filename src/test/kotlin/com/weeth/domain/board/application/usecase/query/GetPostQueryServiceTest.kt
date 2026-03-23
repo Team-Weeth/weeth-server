@@ -20,6 +20,7 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.domain.enums.Role
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -119,8 +120,7 @@ class GetPostQueryServiceTest :
                 val detail =
                     com.weeth.domain.board.application.dto.response.PostDetailResponse(
                         id = 1L,
-                        name = "적순",
-                        role = Role.USER,
+                        author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = Role.USER),
                         title = "제목",
                         content = "내용",
                         time = LocalDateTime.now(),
@@ -248,8 +248,7 @@ class GetPostQueryServiceTest :
                 val response =
                     com.weeth.domain.board.application.dto.response.PostListResponse(
                         id = 10L,
-                        name = "적순",
-                        role = Role.USER,
+                        author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = Role.USER),
                         title = "제목",
                         content = "내용",
                         time = LocalDateTime.now(),

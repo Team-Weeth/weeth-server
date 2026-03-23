@@ -23,7 +23,6 @@ class AppleSocialAuthAdapter(
             providerUserId = userInfo.appleId,
             email = email,
             emailVerified = userInfo.emailVerified,
-            profileImageUrl = null,
             name = providerName,
         )
     }

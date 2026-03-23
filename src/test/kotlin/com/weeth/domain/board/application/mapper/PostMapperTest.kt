@@ -4,6 +4,7 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.enums.Role
 import io.kotest.core.spec.style.DescribeSpec
@@ -19,8 +20,10 @@ class PostMapperTest :
         val user = mockk<User>()
         val post = mockk<Post>()
 
+        every { user.id } returns 1L
         every { user.name } returns "테스터"
         every { user.role } returns Role.USER
+        every { user.profileImageUrl } returns null
 
         every { post.id } returns 1L
         every { post.title } returns "제목"
@@ -46,8 +49,7 @@ class PostMapperTest :
                     listOf(
                         CommentResponse(
                             id = 10L,
-                            name = "댓글작성자",
-                            role = Role.USER,
+                            author = UserInfo(id = 2L, name = "댓글작성자", profileImageUrl = null, role = Role.USER),
                             content = "댓글",
                             time = LocalDateTime.now(),
                             fileUrls = emptyList(),

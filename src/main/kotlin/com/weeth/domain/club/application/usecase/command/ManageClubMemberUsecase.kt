@@ -7,9 +7,11 @@ import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.exception.AlreadyJoinedException
 import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.CardinalAlreadySetException
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
@@ -18,6 +20,11 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubCodePolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
@@ -36,6 +43,8 @@ class ManageClubMemberUsecase(
     private val attendanceRepository: AttendanceRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val fileRepository: FileRepository,
+    private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
@@ -71,6 +80,55 @@ class ManageClubMemberUsecase(
                 }
 
         clubMemberRepository.save(member)
+    }
+
+    @Transactional
+    fun updateProfile(
+        userId: Long,
+        request: UpdateMemberProfileRequest,
+    ) {
+        val members = clubMemberRepository.findActiveByUserId(userId)
+        if (members.isEmpty()) throw ClubMemberNotFoundException()
+
+        request.profileImage?.let { profileImage ->
+            fileRepository
+                .findAllByOwnerTypeAndOwnerIdAndStatus(
+                    FileOwnerType.CLUB_MEMBER_PROFILE,
+                    userId,
+                    FileStatus.UPLOADED,
+                ).forEach { it.markDeleted() }
+
+            val file =
+                File.createUploaded(
+                    fileName = profileImage.fileName,
+                    storageKey = profileImage.storageKey,
+                    fileSize = profileImage.fileSize,
+                    contentType = profileImage.contentType,
+                    ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
+                    ownerId = userId,
+                )
+            fileRepository.save(file)
+
+            val resolvedUrl = fileAccessUrlPort.resolve(file.storageKey.value)
+            members.forEach { it.updateProfileImageUrl(resolvedUrl) }
+        }
+
+        request.bio?.let { bio -> members.forEach { it.updateBio(bio) } }
+    }
+
+    @Transactional
+    fun deleteProfileImage(userId: Long) {
+        val members = clubMemberRepository.findActiveByUserId(userId)
+        if (members.isEmpty()) throw ClubMemberNotFoundException()
+
+        fileRepository
+            .findAllByOwnerTypeAndOwnerIdAndStatus(
+                FileOwnerType.CLUB_MEMBER_PROFILE,
+                userId,
+                FileStatus.UPLOADED,
+            ).forEach { it.markDeleted() }
+
+        members.forEach { it.removeProfileImage() }
     }
 
     /**
