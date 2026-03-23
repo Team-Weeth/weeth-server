@@ -77,6 +77,7 @@ class ManageAttendanceUseCase(
         attendanceUpdates: List<UpdateAttendanceStatusRequest>,
     ) {
         clubMemberPolicy.requireAdmin(clubId, userId)
+        if (attendanceUpdates.isEmpty()) return
         // 데드락 방지: 일관된 순서로 락 획득
         val ids = attendanceUpdates.map { it.attendanceId }.sorted()
         val attendanceMap = attendanceRepository.findAllByIdsWithLock(ids).associateBy { it.id }
