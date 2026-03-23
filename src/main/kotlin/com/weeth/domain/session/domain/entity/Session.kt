@@ -23,19 +23,15 @@ import kotlin.random.asKotlinRandom
 @Table(name = "meeting") // 테이블명 Session으로 수정
 class Session(
     club: Club,
-    var title: String,
-    @Column(length = 500)
-    var content: String? = null,
-    var location: String? = null,
-    var cardinal: Int,
-    var start: LocalDateTime,
-    var end: LocalDateTime,
-    var code: Int,
-    @Enumerated(EnumType.STRING)
-    var status: SessionStatus = SessionStatus.OPEN,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    var user: User? = null,
+    title: String,
+    content: String? = null,
+    location: String? = null,
+    cardinal: Int,
+    start: LocalDateTime,
+    end: LocalDateTime,
+    code: Int,
+    status: SessionStatus = SessionStatus.OPEN,
+    user: User? = null,
 ) : BaseEntity() {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "club_id", nullable = false)
@@ -44,7 +40,39 @@ class Session(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0
+    var id: Long = 0L
+        private set
+
+    var title: String = title
+        private set
+
+    @Column(length = 500)
+    var content: String? = content
+        private set
+
+    var location: String? = location
+        private set
+
+    var cardinal: Int = cardinal
+        private set
+
+    var start: LocalDateTime = start
+        private set
+
+    var end: LocalDateTime = end
+        private set
+
+    var code: Int = code
+        private set
+
+    @Enumerated(EnumType.STRING)
+    var status: SessionStatus = status
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    var user: User? = user
+        private set
 
     fun close() {
         check(status == SessionStatus.OPEN) { "이미 종료된 세션입니다" }
