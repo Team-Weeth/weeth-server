@@ -6,6 +6,7 @@ import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
+import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.repository.BoardRepository
@@ -101,8 +102,11 @@ class ManageBoardUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val boards = boardRepository.findAllByClubIdAndIdIn(clubId, request.boardIds)
-        if (boards.size != request.boardIds.size) throw BoardNotInClubException()
+        val uniqueIds = request.boardIds.toSet()
+        if (uniqueIds.size != request.boardIds.size) throw DuplicateBoardIdException()
+
+        val boards = boardRepository.findAllByClubIdAndIdIn(clubId, uniqueIds.toList())
+        if (boards.size != uniqueIds.size) throw BoardNotInClubException()
 
         val boardById = boards.associateBy { it.id }
         request.boardIds.forEachIndexed { index, boardId ->

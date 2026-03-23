@@ -5,6 +5,7 @@ import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
+import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
@@ -130,6 +131,14 @@ class ManageBoardUseCaseTest :
                 shouldThrow<BoardNotInClubException> {
                     useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 99L)), userId)
                 }
+            }
+
+            it("중복된 boardId가 포함되면 예외를 던진다") {
+                // DB 조회 전에 중복 체크로 예외 발생 → repository 호출 없음
+                shouldThrow<DuplicateBoardIdException> {
+                    useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 1L, 2L)), userId)
+                }
+                verify(exactly = 0) { boardRepository.findAllByClubIdAndIdIn(any(), any()) }
             }
         }
     })

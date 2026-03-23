@@ -32,4 +32,7 @@ enum class BoardErrorCode(
 
     @ExplainError("경로의 clubId와 게시판의 소속 클럽이 일치하지 않을 때 발생합니다.")
     BOARD_NOT_IN_CLUB(20407, HttpStatus.FORBIDDEN, "해당 클럽에 속한 게시판이 아닙니다."),
+
+    @ExplainError("순서 변경 요청에 중복된 게시판 ID가 포함되어 있을 때 발생합니다.")
+    DUPLICATE_BOARD_ID(20408, HttpStatus.BAD_REQUEST, "중복된 게시판 ID가 포함되어 있습니다."),
 }

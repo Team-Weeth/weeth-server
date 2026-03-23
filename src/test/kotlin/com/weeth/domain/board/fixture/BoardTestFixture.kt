@@ -6,6 +6,7 @@ import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.fixture.ClubTestFixture
+import org.springframework.test.util.ReflectionTestUtils
 
 object BoardTestFixture {
     fun create(
@@ -16,11 +17,7 @@ object BoardTestFixture {
         config: BoardConfig = BoardConfig(),
     ): Board {
         val board = Board(club = club, name = name, type = type, config = config)
-        if (id != 0L) {
-            val field = Board::class.java.getDeclaredField("id")
-            field.isAccessible = true
-            field.set(board, id)
-        }
+        if (id != 0L) ReflectionTestUtils.setField(board, "id", id)
         return board
     }
 
