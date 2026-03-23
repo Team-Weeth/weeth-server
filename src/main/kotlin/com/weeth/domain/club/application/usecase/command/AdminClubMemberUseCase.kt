@@ -108,6 +108,7 @@ class AdminClubMemberUseCase(
         }
     }
 
+    // TODO: ManageClubMemberUsecase.initializeAttendances와 중복 — MVP 후 공통 서비스로 추출
     private fun initializeAttendances(
         clubId: Long,
         member: ClubMember,
