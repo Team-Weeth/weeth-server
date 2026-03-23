@@ -5,10 +5,12 @@ import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.exception.EmailRequiredForPrimaryContactException
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
@@ -47,6 +49,7 @@ class ManageClubUseCase(
             userReader.getByIdWithLock(userId)
 
         clubMemberPolicy.validateCreateLimit(userId)
+        validatePrimaryContactEmail(request.primaryContact, request.contactEmail)
 
         val code = ClubCodePolicy.generateCode()
         val clubContact =
@@ -107,6 +110,13 @@ class ManageClubUseCase(
 
         val club = clubRepository.getClubById(clubId)
 
+        if (request.primaryContact == PrimaryContact.EMAIL) {
+            val resolvedEmail = request.contactEmail ?: club.clubContact.email
+            if (resolvedEmail == null) {
+                throw EmailRequiredForPrimaryContactException()
+            }
+        }
+
         club.update(
             name = request.name,
             schoolName = request.schoolName,
@@ -151,5 +161,14 @@ class ManageClubUseCase(
 
         val club = clubRepository.getClubById(clubId)
         club.removeBackgroundImage()
+    }
+
+    private fun validatePrimaryContactEmail(
+        primaryContact: PrimaryContact,
+        contactEmail: String?,
+    ) {
+        if (primaryContact == PrimaryContact.EMAIL && contactEmail == null) {
+            throw EmailRequiredForPrimaryContactException()
+        }
     }
 }
