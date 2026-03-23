@@ -171,8 +171,8 @@ class ManageClubUseCaseTest :
                     null,
                     null,
                     null,
-                    "https://example.com/profile.png",
-                    "https://example.com/background.png",
+                    "CLUB_PROFILE/2026-02/uuid_profile.png",
+                    "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
@@ -192,8 +192,8 @@ class ManageClubUseCaseTest :
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
                 club.clubContact.phoneNumber shouldBe "010-9999-8888"
-                club.profileImageUrl shouldBe "https://example.com/profile.png"
-                club.backgroundImageUrl shouldBe "https://example.com/background.png"
+                club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-02/uuid_profile.png"
+                club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
             it("모든 필드가 null이면 기존 값이 유지된다") {
@@ -227,8 +227,8 @@ class ManageClubUseCaseTest :
                     null,
                     null,
                     null,
-                    "https://example.com/profile.png",
-                    "https://example.com/background.png",
+                    "CLUB_PROFILE/2026-02/uuid_profile.png",
+                    "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
@@ -236,8 +236,8 @@ class ManageClubUseCaseTest :
 
                 useCase.deleteProfileImage(1L, 10L)
 
-                club.profileImageUrl shouldBe null
-                club.backgroundImageUrl shouldBe "https://example.com/background.png"
+                club.profileImageStorageKey shouldBe null
+                club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
         }
 
@@ -253,8 +253,8 @@ class ManageClubUseCaseTest :
                     null,
                     null,
                     null,
-                    "https://example.com/profile.png",
-                    "https://example.com/background.png",
+                    "CLUB_PROFILE/2026-02/uuid_profile.png",
+                    "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
                 every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
@@ -262,8 +262,8 @@ class ManageClubUseCaseTest :
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
-                club.profileImageUrl shouldBe "https://example.com/profile.png"
-                club.backgroundImageUrl shouldBe null
+                club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-02/uuid_profile.png"
+                club.backgroundImageStorageKey shouldBe null
             }
         }
     })

@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.usecase.command
 
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.exception.EmailNotFoundException
 import com.weeth.domain.user.application.mapper.UserMapper
@@ -28,7 +29,8 @@ class SocialLoginUseCaseTest :
         val socialAuthPortRegistry = mockk<SocialAuthPortRegistry>()
         val socialAuthPort = mockk<SocialAuthPort>()
         val jwtManageUseCase = mockk<JwtManageUseCase>()
-        val userMapper = UserMapper()
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val userMapper = UserMapper(fileAccessUrlPort)
 
         val useCase =
             SocialLoginUseCase(

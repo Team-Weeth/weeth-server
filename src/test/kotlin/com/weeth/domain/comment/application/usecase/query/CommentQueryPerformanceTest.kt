@@ -163,13 +163,12 @@ class CommentQueryPerformanceTest(
                         filesPerComment = filesPerComment,
                     )
 
-                val fileMapper =
-                    FileMapper(
-                        object : FileAccessUrlPort {
-                            override fun resolve(storageKey: String): String = "https://test.local/$storageKey"
-                        },
-                    )
-                val commentMapper = CommentMapper()
+                val fileAccessUrlPort =
+                    object : FileAccessUrlPort {
+                        override fun resolve(storageKey: String): String = "https://test.local/$storageKey"
+                    }
+                val fileMapper = FileMapper(fileAccessUrlPort)
+                val commentMapper = CommentMapper(fileAccessUrlPort)
                 val legacyService = LegacyCommentQueryService(fileRepository, fileMapper, commentMapper)
                 val improvedService = GetCommentQueryService(fileRepository, fileMapper, commentMapper)
 

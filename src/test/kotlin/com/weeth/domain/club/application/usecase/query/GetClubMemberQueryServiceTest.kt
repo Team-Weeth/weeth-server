@@ -8,6 +8,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -21,7 +22,8 @@ class GetClubMemberQueryServiceTest :
         val clubMemberReader = mockk<ClubMemberReader>()
         val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
-        val clubMapper = ClubMapper()
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val clubMapper = ClubMapper(fileAccessUrlPort)
 
         val service =
             GetClubMemberQueryService(

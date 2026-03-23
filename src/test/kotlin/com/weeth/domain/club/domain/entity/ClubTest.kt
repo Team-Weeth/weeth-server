@@ -43,8 +43,8 @@ class ClubTest :
                 description = "업데이트된 소개",
                 contactEmail = null,
                 contactPhoneNumber = null,
-                profileImageUrl = null,
-                backgroundImageUrl = null,
+                profileImageStorageKey = null,
+                backgroundImageStorageKey = null,
             )
 
             club.name shouldBe "리츠2기"

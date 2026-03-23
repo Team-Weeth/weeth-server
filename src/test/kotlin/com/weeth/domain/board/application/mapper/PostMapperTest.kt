@@ -6,6 +6,7 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.domain.entity.User
 import io.kotest.core.spec.style.DescribeSpec
@@ -16,7 +17,8 @@ import java.time.LocalDateTime
 
 class PostMapperTest :
     DescribeSpec({
-        val mapper = PostMapper()
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val mapper = PostMapper(fileAccessUrlPort)
         val now = LocalDateTime.now()
         val user = mockk<User>()
         val post = mockk<Post>()
@@ -26,7 +28,7 @@ class PostMapperTest :
         every { user.name } returns "테스터"
 
         every { authorMember.memberRole } returns MemberRole.USER
-        every { authorMember.profileImageUrl } returns null
+        every { authorMember.profileImageStorageKey } returns null
 
         every { post.id } returns 1L
         every { post.title } returns "제목"

@@ -15,6 +15,7 @@ import com.weeth.domain.dashboard.application.mapper.DashboardMapper
 import com.weeth.domain.dashboard.domain.enums.ScheduleType
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.schedule.domain.repository.EventReader
 import com.weeth.domain.schedule.fixture.ScheduleTestFixture
@@ -44,7 +45,8 @@ class GetDashboardQueryServiceTest :
         val fileReader = mockk<FileReader>()
         val userReader = mockk<UserReader>()
         val fileMapper = mockk<FileMapper>()
-        val dashboardMapper = DashboardMapper(fileMapper)
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val dashboardMapper = DashboardMapper(fileMapper, fileAccessUrlPort)
 
         val queryService =
             GetDashboardQueryService(
