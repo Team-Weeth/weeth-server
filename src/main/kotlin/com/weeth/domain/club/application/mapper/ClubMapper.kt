@@ -4,6 +4,7 @@ import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
@@ -88,6 +89,16 @@ class ClubMapper(
         memberStatus = member.memberStatus,
         profileImageUrl = member.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
         bio = member.bio,
+    )
+
+    fun toMemberSummaryResponse(
+        member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+    ) = ClubMemberSummaryResponse(
+        userId = member.user.id,
+        name = member.user.name,
+        cardinals = toCardinalNumbers(cardinals),
+        role = member.memberRole,
     )
 
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }

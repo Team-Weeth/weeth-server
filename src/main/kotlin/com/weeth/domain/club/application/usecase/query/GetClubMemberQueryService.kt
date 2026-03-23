@@ -2,6 +2,7 @@ package com.weeth.domain.club.application.usecase.query
 
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
@@ -45,5 +46,15 @@ class GetClubMemberQueryService(
         val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
 
         return clubMapper.toMemberProfileResponse(member, cardinals)
+    }
+
+    fun findMySummary(
+        clubId: Long,
+        userId: Long,
+    ): ClubMemberSummaryResponse {
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
+
+        return clubMapper.toMemberSummaryResponse(member, cardinals)
     }
 }

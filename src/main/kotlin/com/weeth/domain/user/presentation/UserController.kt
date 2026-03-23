@@ -4,13 +4,11 @@ import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
-import com.weeth.domain.user.application.dto.response.UserSummaryResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.query.GetUserQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.dto.JwtDto
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -21,12 +19,10 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "USER", description = "사용자 API")
@@ -38,7 +34,6 @@ class UserController(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val agreeTermsUseCase: AgreeTermsUseCase,
-    private val getUserQueryService: GetUserQueryService,
 ) {
     @PostMapping("/social/kakao")
     @Operation(summary = "카카오 소셜 로그인(auth code flow)")
@@ -58,21 +53,6 @@ class UserController(
     @Operation(summary = "토큰 재발급")
     fun refreshToken(request: HttpServletRequest): CommonResponse<JwtDto> =
         CommonResponse.success(UserResponseCode.JWT_REFRESH_SUCCESS, authUserUseCase.refreshToken(request))
-
-    @GetMapping("/email")
-    @Operation(summary = "이메일 중복 확인")
-    fun checkEmail(
-        @RequestParam email: String,
-    ): CommonResponse<Boolean> =
-        CommonResponse.success(UserResponseCode.USER_EMAIL_CHECK_SUCCESS, !getUserQueryService.existsByEmail(email))
-
-    @Deprecated("WTH-205에서 club-scoped API로 대체 예정")
-    @GetMapping("/info")
-    @Operation(summary = "전역 내 정보 조회 API")
-    fun findMyInfo(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<UserSummaryResponse> =
-        CommonResponse.success(UserResponseCode.USER_FIND_BY_ID_SUCCESS, getUserQueryService.findMyInfo(userId))
 
     @PostMapping("/terms")
     @Operation(summary = "약관 동의")

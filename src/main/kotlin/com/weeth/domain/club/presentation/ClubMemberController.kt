@@ -4,11 +4,10 @@ import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
-import com.weeth.domain.user.application.dto.response.UserSummaryResponse
-import com.weeth.domain.user.application.usecase.query.GetUserQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -35,7 +34,6 @@ import org.springframework.web.bind.annotation.RestController
 class ClubMemberController(
     private val manageClubMemberUsecase: ManageClubMemberUsecase,
     private val getClubMemberQueryService: GetClubMemberQueryService,
-    private val getUserQueryService: GetUserQueryService,
 ) {
     @PostMapping("/{clubId}/join")
     @Operation(summary = "동아리 가입")
@@ -80,8 +78,8 @@ class ClubMemberController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @TsidParam
         @TsidPathVariable clubId: Long,
-    ): CommonResponse<UserSummaryResponse> {
-        val summary = getUserQueryService.findMyInfo(clubId, userId)
+    ): CommonResponse<ClubMemberSummaryResponse> {
+        val summary = getClubMemberQueryService.findMySummary(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.MEMBER_SUMMARY_FIND_SUCCESS, summary)
     }
