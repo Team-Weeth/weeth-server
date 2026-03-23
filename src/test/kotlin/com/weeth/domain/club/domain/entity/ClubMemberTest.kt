@@ -77,13 +77,13 @@ class ClubMemberTest :
             member.updateRole(MemberRole.ADMIN)
 
             member.memberRole shouldBe MemberRole.ADMIN
-            member.isAdmin() shouldBe true
+            member.isAdminOrLead() shouldBe true
         }
 
         "isAdmin — USER 역할일 때 false" {
             val member = ClubMember(club = club, user = user)
 
-            member.isAdmin() shouldBe false
+            member.isAdminOrLead() shouldBe false
         }
 
         "attend/absent — 출석 통계를 올바르게 계산한다" {

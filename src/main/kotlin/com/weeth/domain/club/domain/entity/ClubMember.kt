@@ -95,8 +95,6 @@ class ClubMember(
         this.memberRole = role
     }
 
-    fun isAdmin(): Boolean = memberRole == MemberRole.ADMIN
-
     fun isAdminOrLead(): Boolean = memberRole.isAdminOrLead()
 
     fun isLead(): Boolean = memberRole == MemberRole.LEAD
