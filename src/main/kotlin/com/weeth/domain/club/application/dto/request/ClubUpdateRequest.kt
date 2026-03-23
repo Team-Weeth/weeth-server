@@ -18,7 +18,7 @@ data class ClubUpdateRequest(
     @field:Schema(description = "연락 이메일 (null=변경 안 함)", example = "club@example.com")
     @field:Email
     val contactEmail: String? = null,
-    @field:Schema(description = "연락 전화번호 (null=변경 안 함)", example = "010-1234-5678")
+    @field:Schema(description = "연락 전화번호 (null=변경 안 함)", example = "01012345678")
     @field:Size(min = 1)
     val contactPhoneNumber: String? = null,
     @field:Schema(description = "주 연락처 (null=변경 안 함)", example = "PHONE")

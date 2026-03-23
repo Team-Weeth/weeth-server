@@ -79,7 +79,7 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 3,
-                            contactPhoneNumber = "010-0000-0000",
+                            contactPhoneNumber = "01000000000",
                             primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
@@ -104,7 +104,7 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 3,
-                            contactPhoneNumber = "010-0000-0000",
+                            contactPhoneNumber = "01000000000",
                             primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
@@ -124,7 +124,7 @@ class ManageClubUseCaseTest :
                             name = "테스트",
                             schoolName = "가천대",
                             currentCardinal = 1,
-                            contactPhoneNumber = "010-0000-0000",
+                            contactPhoneNumber = "01000000000",
                             primaryContact = PrimaryContact.PHONE,
                             contactEmail = "test@example.com",
                         ),
@@ -150,7 +150,7 @@ class ManageClubUseCaseTest :
                                 schoolName = "가천대학교",
                                 description = "소개",
                                 currentCardinal = 3,
-                                contactPhoneNumber = "010-0000-0000",
+                                contactPhoneNumber = "01000000000",
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                         )
@@ -175,7 +175,7 @@ class ManageClubUseCaseTest :
                         clubContact =
                             ClubContact.from(
                                 email = "club@example.com",
-                                phoneNumber = "010-1111-2222",
+                                phoneNumber = "01011112222",
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
@@ -198,7 +198,7 @@ class ManageClubUseCaseTest :
                     10L,
                     ClubUpdateRequest(
                         schoolName = "연세대학교",
-                        contactPhoneNumber = "010-9999-8888",
+                        contactPhoneNumber = "01099998888",
                     ),
                 )
 
@@ -206,7 +206,7 @@ class ManageClubUseCaseTest :
                 club.schoolName shouldBe "연세대학교"
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
-                club.clubContact.phoneNumber shouldBe "010-9999-8888"
+                club.clubContact.phoneNumber shouldBe "01099998888"
                 club.profileImageUrl shouldBe "https://example.com/profile.png"
                 club.backgroundImageUrl shouldBe "https://example.com/background.png"
             }
@@ -218,7 +218,7 @@ class ManageClubUseCaseTest :
                         clubContact =
                             ClubContact.from(
                                 email = "club@example.com",
-                                phoneNumber = "010-0000-0000",
+                                phoneNumber = "01000000000",
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
@@ -231,7 +231,7 @@ class ManageClubUseCaseTest :
                 club.schoolName shouldBe "가천대학교"
                 club.description shouldBe "기존 소개"
                 club.clubContact.email shouldBe "club@example.com"
-                club.clubContact.phoneNumber shouldBe "010-0000-0000"
+                club.clubContact.phoneNumber shouldBe "01000000000"
             }
         }
 
@@ -242,7 +242,7 @@ class ManageClubUseCaseTest :
                         clubContact =
                             ClubContact.from(
                                 email = "club@example.com",
-                                phoneNumber = "010-1111-2222",
+                                phoneNumber = "01011112222",
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
@@ -274,7 +274,7 @@ class ManageClubUseCaseTest :
                         clubContact =
                             ClubContact.from(
                                 email = "club@example.com",
-                                phoneNumber = "010-1111-2222",
+                                phoneNumber = "01011112222",
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )

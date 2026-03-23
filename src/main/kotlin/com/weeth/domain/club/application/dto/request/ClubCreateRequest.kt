@@ -22,7 +22,7 @@ data class ClubCreateRequest(
     @field:Schema(description = "연락 이메일", example = "club@example.com")
     @field:Email
     val contactEmail: String? = null,
-    @field:Schema(description = "연락 전화번호", example = "010-1234-5678")
+    @field:Schema(description = "연락 전화번호", example = "01012345678")
     @field:NotBlank
     val contactPhoneNumber: String,
     @field:Schema(description = "주 연락처", example = "PHONE")

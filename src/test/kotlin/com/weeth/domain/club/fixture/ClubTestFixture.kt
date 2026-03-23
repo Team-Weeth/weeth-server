@@ -18,7 +18,7 @@ object ClubTestFixture {
         clubContact: ClubContact =
             ClubContact.from(
                 email = "test@leets.com",
-                phoneNumber = "010-0000-0000",
+                phoneNumber = "01000000000",
                 primaryContact = PrimaryContact.PHONE,
             ),
     ): Club {
