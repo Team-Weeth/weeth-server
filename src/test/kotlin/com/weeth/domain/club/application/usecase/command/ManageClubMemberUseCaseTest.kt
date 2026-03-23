@@ -7,10 +7,12 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
+import com.weeth.domain.club.application.exception.CannotLeaveAsLeadException
 import com.weeth.domain.club.application.exception.CardinalAlreadySetException
 import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
@@ -358,6 +360,26 @@ class ManageClubMemberUseCaseTest :
 
                     verify(exactly = 0) { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) }
                 }
+            }
+        }
+
+        describe("leave") {
+            it("LEAD 멤버가 탈퇴를 시도하면 예외가 발생한다") {
+                val leadMember = ClubMemberTestFixture.createLeadMember()
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns leadMember
+
+                shouldThrow<CannotLeaveAsLeadException> {
+                    useCase.leave(1L, 10L)
+                }
+            }
+
+            it("일반 멤버가 탈퇴하면 LEFT 상태로 전환된다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
+
+                useCase.leave(1L, 10L)
+
+                member.memberStatus shouldBe MemberStatus.LEFT
             }
         }
 

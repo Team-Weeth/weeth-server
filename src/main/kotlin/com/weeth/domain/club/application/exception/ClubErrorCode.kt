@@ -44,4 +44,13 @@ enum class ClubErrorCode(
 
     @ExplainError("주 연락처를 이메일로 설정했으나 이메일이 입력되지 않았을 때 발생합니다.")
     EMAIL_REQUIRED_FOR_PRIMARY_CONTACT(21112, HttpStatus.BAD_REQUEST, "주 연락처를 이메일로 설정하려면 이메일을 입력해야 합니다."),
+
+    @ExplainError("LEAD가 아닌 멤버가 LEAD 이양을 시도할 때 발생합니다.")
+    NOT_LEAD(21113, HttpStatus.FORBIDDEN, "LEAD만 권한을 이양할 수 있습니다."),
+
+    @ExplainError("LEAD를 이양이 아닌 직접 역할 변경으로 설정하려 할 때 발생합니다.")
+    LEAD_TRANSFER_ONLY(21114, HttpStatus.BAD_REQUEST, "LEAD는 이양을 통해서만 변경할 수 있습니다."),
+
+    @ExplainError("자기 자신에게 LEAD 권한을 이양하려 할 때 발생합니다.")
+    LEAD_SELF_TRANSFER(21115, HttpStatus.BAD_REQUEST, "자기 자신에게 LEAD를 이양할 수 없습니다."),
 }

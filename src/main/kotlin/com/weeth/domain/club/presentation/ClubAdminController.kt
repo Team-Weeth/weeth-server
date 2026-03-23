@@ -142,6 +142,18 @@ class ClubAdminController(
         return CommonResponse.success(ClubResponseCode.MEMBER_ROLE_UPDATED_SUCCESS)
     }
 
+    @PatchMapping("/members/{targetClubMemberId}/lead")
+    @Operation(summary = "LEAD 권한 이양")
+    fun transferLead(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @PathVariable targetClubMemberId: Long,
+    ): CommonResponse<Unit> {
+        adminClubMemberUseCase.transferLead(clubId, userId, targetClubMemberId)
+        return CommonResponse.success(ClubResponseCode.LEAD_TRANSFERRED_SUCCESS)
+    }
+
     @PatchMapping("/members/apply-ob")
     @Operation(summary = "멤버 OB 기수 등록")
     fun applyOb(
