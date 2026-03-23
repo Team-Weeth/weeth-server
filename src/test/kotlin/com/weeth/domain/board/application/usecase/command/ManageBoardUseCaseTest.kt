@@ -10,7 +10,7 @@ import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -25,15 +25,15 @@ class ManageBoardUseCaseTest :
         val boardRepository = mockk<BoardRepository>()
         val boardMapper = BoardMapper()
         val clubReader = mockk<ClubReader>()
-        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
-        val useCase = ManageBoardUseCase(boardRepository, boardMapper, clubReader, clubMemberPolicy)
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
+        val useCase = ManageBoardUseCase(boardRepository, boardMapper, clubReader, clubPermissionPolicy)
 
         val club = ClubTestFixture.createClub()
         val clubId = club.id
         val userId = 10L
 
         beforeTest {
-            clearMocks(boardRepository, clubReader, clubMemberPolicy)
+            clearMocks(boardRepository, clubReader, clubPermissionPolicy)
             every { boardRepository.save(any()) } answers { firstArg() }
             every { clubReader.getClubById(clubId) } returns club
         }

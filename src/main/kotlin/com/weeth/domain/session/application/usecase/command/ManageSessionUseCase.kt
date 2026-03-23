@@ -7,7 +7,7 @@ import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.mapper.SessionMapper
@@ -29,7 +29,7 @@ class ManageSessionUseCase(
     private val sessionMapper: SessionMapper,
     private val clubReader: ClubReader,
     private val clubMemberReader: ClubMemberReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
     @Transactional
     fun create(
@@ -37,7 +37,7 @@ class ManageSessionUseCase(
         request: ScheduleSaveRequest,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
         cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw SessionNotFoundException()
@@ -57,7 +57,7 @@ class ManageSessionUseCase(
         request: ScheduleUpdateRequest,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         if (session.club.id != clubId) throw SessionNotFoundException()
         val user = userReader.getById(userId)
@@ -71,7 +71,7 @@ class ManageSessionUseCase(
         sessionId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val session = sessionRepository.findByIdWithLock(sessionId) ?: throw SessionNotFoundException()
         if (session.club.id != clubId) throw SessionNotFoundException()
         val attendances =

@@ -6,6 +6,7 @@ import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 class GetBoardQueryService(
     private val boardRepository: BoardRepository,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val boardMapper: BoardMapper,
 ) {
     fun findBoards(
@@ -33,7 +35,7 @@ class GetBoardQueryService(
         userId: Long,
         boardId: Long,
     ): BoardDetailResponse {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val board = boardRepository.findByIdAndClubId(boardId, clubId) ?: throw BoardNotFoundException()
 
         return boardMapper.toDetailResponseForAdmin(board)
@@ -43,7 +45,7 @@ class GetBoardQueryService(
         clubId: Long,
         userId: Long,
     ): List<BoardDetailResponse> {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
 
         return boardRepository
             .findAllByClubIdOrderByIdAsc(clubId)

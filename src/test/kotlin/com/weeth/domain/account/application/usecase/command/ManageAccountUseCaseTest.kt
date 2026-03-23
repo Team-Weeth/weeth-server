@@ -6,7 +6,7 @@ import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.repository.ClubReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -20,15 +20,15 @@ class ManageAccountUseCaseTest :
         val accountRepository = mockk<AccountRepository>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>(relaxed = true)
         val clubReader = mockk<ClubReader>(relaxed = true)
-        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
-        val useCase = ManageAccountUseCase(accountRepository, cardinalReader, clubReader, clubMemberPolicy)
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
+        val useCase = ManageAccountUseCase(accountRepository, cardinalReader, clubReader, clubPermissionPolicy)
 
         val clubId = 1L
         val userId = 100L
         val club = ClubTestFixture.createClub()
 
         beforeTest {
-            clearMocks(accountRepository, cardinalReader, clubReader, clubMemberPolicy)
+            clearMocks(accountRepository, cardinalReader, clubReader, clubPermissionPolicy)
             every { clubReader.getClubById(clubId) } returns club
         }
 
@@ -52,7 +52,7 @@ class ManageAccountUseCaseTest :
 
                     useCase.save(clubId, request, userId)
 
-                    verify(exactly = 1) { clubMemberPolicy.requireAdmin(clubId, userId) }
+                    verify(exactly = 1) { clubPermissionPolicy.requireAdmin(clubId, userId) }
                     verify(exactly = 1) { accountRepository.save(any()) }
                 }
             }

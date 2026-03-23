@@ -4,6 +4,7 @@ import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
@@ -17,6 +18,7 @@ class GetPenaltyQueryService(
     private val penaltyRepository: PenaltyRepository,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
     private val cardinalReader: CardinalReader,
     private val mapper: PenaltyMapper,
@@ -26,7 +28,7 @@ class GetPenaltyQueryService(
         userId: Long,
         cardinalNumber: Int?,
     ): List<PenaltyByCardinalResponse> {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val cardinals =
             if (cardinalNumber == null) {
                 cardinalReader.findAllByClubIdOrderByCardinalNumberAsc(clubId)

@@ -2,7 +2,7 @@ package com.weeth.domain.schedule.application.usecase.command
 
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
@@ -20,7 +20,7 @@ class ManageEventUseCase(
     private val cardinalReader: CardinalReader,
     private val eventMapper: EventMapper,
     private val clubReader: ClubReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
     @Transactional
     fun create(
@@ -28,7 +28,7 @@ class ManageEventUseCase(
         request: ScheduleSaveRequest,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
         // TODO: 전역 cardinal 조회 대신 clubId 기준 조회를 사용해야 다른 동아리 기수로 검증이 통과하지 않는다.
@@ -43,7 +43,7 @@ class ManageEventUseCase(
         request: ScheduleUpdateRequest,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val user = userReader.getById(userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
         if (event.club.id != clubId) throw EventNotFoundException()
@@ -56,7 +56,7 @@ class ManageEventUseCase(
         eventId: Long,
         userId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
         if (event.club.id != clubId) throw EventNotFoundException()
         eventRepository.delete(event)

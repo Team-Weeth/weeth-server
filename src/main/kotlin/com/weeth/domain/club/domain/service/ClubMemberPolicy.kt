@@ -1,19 +1,14 @@
 package com.weeth.domain.club.domain.service
 
-import com.weeth.domain.club.application.exception.ClubCreateLimitExceededException
-import com.weeth.domain.club.application.exception.ClubJoinLimitExceededException
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
-import com.weeth.domain.club.application.exception.NotClubAdminException
 import com.weeth.domain.club.domain.entity.ClubMember
-import com.weeth.domain.club.domain.enums.MemberRole
-import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import org.springframework.stereotype.Service
 
 /**
- * 동아리 멤버 관련 비즈니스 규칙 및 권한 검증
+ * 동아리 멤버 조회 및 상태 검증
  * TODO: 캐싱 도입
  */
 @Service
@@ -33,19 +28,6 @@ class ClubMemberPolicy(
                 ?: throw ClubMemberNotFoundException()
         if (!member.isActive()) throw MemberNotActiveException()
         return member
-    }
-
-    /**
-     * 사용자가 동아리 관리자인지 검증
-     * 활성 상태이고 + ADMIN 또는 LEAD 권한
-     */
-    fun requireAdmin(
-        clubId: Long,
-        userId: Long,
-    ) = getActiveMember(clubId, userId).also {
-        if (!it.isAdminOrLead()) {
-            throw NotClubAdminException()
-        }
     }
 
     fun getActiveMemberWithLock(
@@ -68,41 +50,6 @@ class ClubMemberPolicy(
                 ?: throw ClubMemberNotFoundException()
         if (member.club.id != clubId) throw ClubMemberNotInClubException()
         return member
-    }
-
-    /**
-     * 일반 멤버(USER)로 가입 가능한 동아리 수 제한 검증
-     */
-    fun validateJoinLimit(userId: Long) {
-        val activeUserCount =
-            clubMemberReader.countByUserIdAndMemberStatusAndMemberRole(
-                userId,
-                MemberStatus.ACTIVE,
-                MemberRole.USER,
-            )
-        if (activeUserCount >= MAX_USER_CLUBS) {
-            throw ClubJoinLimitExceededException()
-        }
-    }
-
-    /**
-     * 동아리장(LEAD)으로 생성 가능한 동아리 수 제한 검증
-     */
-    fun validateCreateLimit(userId: Long) {
-        val activeLeadCount =
-            clubMemberReader.countByUserIdAndMemberStatusAndMemberRole(
-                userId,
-                MemberStatus.ACTIVE,
-                MemberRole.LEAD,
-            )
-        if (activeLeadCount >= MAX_LEAD_CLUBS) {
-            throw ClubCreateLimitExceededException()
-        }
-    }
-
-    companion object {
-        private const val MAX_LEAD_CLUBS = 1
-        private const val MAX_USER_CLUBS = 1
     }
 
     fun getActiveMemberInClubWithLock(

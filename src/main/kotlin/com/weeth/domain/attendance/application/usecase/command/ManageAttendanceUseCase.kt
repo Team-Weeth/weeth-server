@@ -11,6 +11,7 @@ import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.application.exception.SessionNotInProgressException
 import com.weeth.domain.session.domain.enums.SessionStatus
@@ -23,6 +24,7 @@ import java.time.LocalDateTime
 @Service
 class ManageAttendanceUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
     private val qrAttendancePort: QrAttendancePort,
@@ -60,7 +62,7 @@ class ManageAttendanceUseCase(
         now: LocalDate,
         cardinal: Int,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val targetSession =
             sessionReader
                 .findAllByClubIdAndCardinalIn(clubId, listOf(cardinal))
@@ -94,7 +96,7 @@ class ManageAttendanceUseCase(
         userId: Long,
         attendanceUpdates: List<UpdateAttendanceStatusRequest>,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         attendanceUpdates.forEach { update ->
             val attendance =
                 attendanceRepository.findByIdWithClubMember(update.attendanceId)

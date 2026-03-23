@@ -16,6 +16,7 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
@@ -48,6 +49,7 @@ class ManageClubMemberUseCaseTest :
         val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
         val userReader = mockk<UserReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubJoinPolicy = mockk<ClubJoinPolicy>()
         val fileRepository = mockk<FileRepository>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
 
@@ -61,6 +63,7 @@ class ManageClubMemberUseCaseTest :
                 attendanceRepository = attendanceRepository,
                 userReader = userReader,
                 clubMemberPolicy = clubMemberPolicy,
+                clubJoinPolicy = clubJoinPolicy,
                 fileRepository = fileRepository,
                 fileAccessUrlPort = fileAccessUrlPort,
             )
@@ -75,6 +78,7 @@ class ManageClubMemberUseCaseTest :
                 attendanceRepository,
                 userReader,
                 clubMemberPolicy,
+                clubJoinPolicy,
                 fileRepository,
                 fileAccessUrlPort,
             )
@@ -388,7 +392,7 @@ class ManageClubMemberUseCaseTest :
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
                     every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
-                    every { clubMemberPolicy.validateJoinLimit(10L) } throws ClubJoinLimitExceededException()
+                    every { clubJoinPolicy.validateJoinLimit(10L) } throws ClubJoinLimitExceededException()
 
                     shouldThrow<ClubJoinLimitExceededException> {
                         useCase.join(
@@ -410,7 +414,7 @@ class ManageClubMemberUseCaseTest :
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
                     every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
-                    justRun { clubMemberPolicy.validateJoinLimit(10L) }
+                    justRun { clubJoinPolicy.validateJoinLimit(10L) }
 
                     useCase.join(
                         clubId = 1L,

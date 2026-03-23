@@ -10,7 +10,7 @@ import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.ReceiptRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
@@ -26,7 +26,7 @@ class ManageReceiptUseCase(
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val cardinalReader: CardinalReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val fileMapper: FileMapper,
 ) {
     @Transactional
@@ -35,7 +35,7 @@ class ManageReceiptUseCase(
         userId: Long,
         request: ReceiptSaveRequest,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw AccountNotFoundException()
         val account =
             accountRepository.findByClubIdAndCardinal(clubId, request.cardinal) ?: throw AccountNotFoundException()
@@ -57,7 +57,7 @@ class ManageReceiptUseCase(
         receiptId: Long,
         request: ReceiptUpdateRequest,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal) ?: throw AccountNotFoundException()
         val account =
             accountRepository.findByClubIdAndCardinal(clubId, request.cardinal) ?: throw AccountNotFoundException()
@@ -83,7 +83,7 @@ class ManageReceiptUseCase(
         userId: Long,
         receiptId: Long,
     ) {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val receipt = receiptRepository.findByIdOrNull(receiptId) ?: throw ReceiptNotFoundException()
 
         if (receipt.account.club.id != clubId) throw ReceiptAccountMismatchException()

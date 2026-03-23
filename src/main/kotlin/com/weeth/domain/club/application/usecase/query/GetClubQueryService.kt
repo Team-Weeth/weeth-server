@@ -6,7 +6,7 @@ import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 class GetClubQueryService(
     private val clubReader: ClubReader,
     private val clubMemberReader: ClubMemberReader,
-    private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMapper: ClubMapper,
 ) {
     fun findMyClubs(userId: Long): List<ClubInfoResponse> {
@@ -37,7 +37,7 @@ class GetClubQueryService(
         clubId: Long,
         userId: Long,
     ): ClubDetailResponse {
-        clubMemberPolicy.requireAdmin(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
 
         return clubMapper.toDetailResponse(club)

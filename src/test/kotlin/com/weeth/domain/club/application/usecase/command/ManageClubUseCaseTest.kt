@@ -11,7 +11,8 @@ import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
-import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubJoinPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.repository.UserReader
@@ -34,7 +35,8 @@ class ManageClubUseCaseTest :
         val cardinalRepository = mockk<CardinalRepository>()
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>()
         val userReader = mockk<UserReader>()
-        val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubJoinPolicy = mockk<ClubJoinPolicy>()
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val useCase =
             ManageClubUseCase(
                 clubRepository,
@@ -42,7 +44,8 @@ class ManageClubUseCaseTest :
                 cardinalRepository,
                 clubMemberCardinalRepository,
                 userReader,
-                clubMemberPolicy,
+                clubJoinPolicy,
+                clubPermissionPolicy,
             )
         val adminMember =
             com.weeth.domain.club.fixture.ClubMemberTestFixture
@@ -55,13 +58,14 @@ class ManageClubUseCaseTest :
                 cardinalRepository,
                 clubMemberCardinalRepository,
                 userReader,
-                clubMemberPolicy,
+                clubJoinPolicy,
+                clubPermissionPolicy,
             )
             every { clubRepository.save(any()) } answers { firstArg() }
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { cardinalRepository.saveAll(any<List<Cardinal>>()) } answers { firstArg() }
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
-            every { clubMemberPolicy.validateCreateLimit(any()) } just Runs
+            every { clubJoinPolicy.validateCreateLimit(any()) } just Runs
         }
 
         describe("create") {
@@ -140,7 +144,7 @@ class ManageClubUseCaseTest :
             context("이미 LEAD로 1개 동아리를 생성한 사용자가 생성 시도하는 경우") {
                 it("ClubCreateLimitExceededException이 발생하고, 이후 로직이 실행되지 않는다") {
                     every { userReader.getByIdWithLock(13L) } returns user
-                    every { clubMemberPolicy.validateCreateLimit(13L) } throws ClubCreateLimitExceededException()
+                    every { clubJoinPolicy.validateCreateLimit(13L) } throws ClubCreateLimitExceededException()
 
                     shouldThrow<ClubCreateLimitExceededException> {
                         useCase.create(
@@ -157,7 +161,7 @@ class ManageClubUseCaseTest :
                     }
 
                     verify(exactly = 1) { userReader.getByIdWithLock(13L) }
-                    verify(exactly = 1) { clubMemberPolicy.validateCreateLimit(13L) }
+                    verify(exactly = 1) { clubJoinPolicy.validateCreateLimit(13L) }
                     verify(exactly = 0) { clubRepository.save(any()) }
                     verify(exactly = 0) { clubMemberRepository.save(any()) }
                     verify(exactly = 0) { cardinalRepository.saveAll(any<List<Cardinal>>()) }
@@ -190,7 +194,7 @@ class ManageClubUseCaseTest :
                     "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.update(
@@ -222,7 +226,7 @@ class ManageClubUseCaseTest :
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.update(1L, 10L, ClubUpdateRequest())
@@ -257,7 +261,7 @@ class ManageClubUseCaseTest :
                     "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.deleteProfileImage(1L, 10L)
@@ -289,7 +293,7 @@ class ManageClubUseCaseTest :
                     "CLUB_BACKGROUND/2026-02/uuid_background.png",
                 )
 
-                every { clubMemberPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.deleteBackgroundImage(1L, 10L)
