@@ -19,6 +19,8 @@ data class BoardDetailResponse(
     val writePermission: MemberRole,
     @field:Schema(description = "비공개 게시판 여부")
     val isPrivate: Boolean,
+    @field:Schema(description = "표시 순서")
+    val displayOrder: Int,
     @field:Schema(description = "삭제 여부 (관리자 페이지에서만 값 존재)")
     val isDeleted: Boolean?,
 )

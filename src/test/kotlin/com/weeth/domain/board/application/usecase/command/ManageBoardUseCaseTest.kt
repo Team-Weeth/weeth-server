@@ -39,6 +39,7 @@ class ManageBoardUseCaseTest :
             clearMocks(boardRepository, clubReader, clubPermissionPolicy)
             every { boardRepository.save(any()) } answers { firstArg() }
             every { clubReader.getClubById(clubId) } returns club
+            every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
         }
 
         describe("create") {
@@ -59,6 +60,36 @@ class ManageBoardUseCaseTest :
                 result.commentEnabled shouldBe false
                 result.writePermission shouldBe MemberRole.ADMIN
                 result.isPrivate shouldBe true
+            }
+
+            it("기존 게시판이 없으면 displayOrder 0으로 생성한다") {
+                every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
+                val request = CreateBoardRequest(
+                    name = "첫 게시판",
+                    type = BoardType.GENERAL,
+                    commentEnabled = true,
+                    writePermission = MemberRole.USER,
+                    isPrivate = false,
+                )
+
+                val result = useCase.create(clubId, request, userId)
+
+                result.displayOrder shouldBe 0
+            }
+
+            it("기존 게시판이 있으면 마지막 순서 다음으로 생성한다") {
+                every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns 2
+                val request = CreateBoardRequest(
+                    name = "새 게시판",
+                    type = BoardType.GENERAL,
+                    commentEnabled = true,
+                    writePermission = MemberRole.USER,
+                    isPrivate = false,
+                )
+
+                val result = useCase.create(clubId, request, userId)
+
+                result.displayOrder shouldBe 3
             }
         }
 

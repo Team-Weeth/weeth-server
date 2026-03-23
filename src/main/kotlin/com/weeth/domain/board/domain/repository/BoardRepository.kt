@@ -2,6 +2,7 @@ package com.weeth.domain.board.domain.repository
 
 import com.weeth.domain.board.domain.entity.Board
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
 
 interface BoardRepository : JpaRepository<Board, Long> {
     fun findByIdAndIsDeletedFalse(id: Long): Board?
@@ -24,4 +25,7 @@ interface BoardRepository : JpaRepository<Board, Long> {
         clubId: Long,
         ids: List<Long>,
     ): List<Board>
+
+    @Query("SELECT COALESCE(MAX(b.displayOrder), -1) FROM Board b WHERE b.club.id = :clubId")
+    fun findMaxDisplayOrderByClubId(clubId: Long): Int
 }

@@ -36,6 +36,7 @@ class ManageBoardUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
 
+        val nextOrder = boardRepository.findMaxDisplayOrderByClubId(clubId) + 1
         val board =
             Board(
                 club = club,
@@ -47,7 +48,7 @@ class ManageBoardUseCase(
                         writePermission = request.writePermission,
                         isPrivate = request.isPrivate,
                     ),
-            )
+            ).apply { reorder(nextOrder) }
 
         val savedBoard = boardRepository.save(board)
         return boardMapper.toDetailResponse(savedBoard)

@@ -22,6 +22,7 @@ class BoardMapper {
             commentEnabled = board.config.commentEnabled,
             writePermission = board.config.writePermission,
             isPrivate = board.config.isPrivate,
+            displayOrder = board.displayOrder,
             isDeleted = null, // public api에서 삭제 여부는 보여주지 않음
         )
 
@@ -33,6 +34,7 @@ class BoardMapper {
             commentEnabled = board.config.commentEnabled,
             writePermission = board.config.writePermission,
             isPrivate = board.config.isPrivate,
+            displayOrder = board.displayOrder,
             isDeleted = board.isDeleted,
         )
 }
