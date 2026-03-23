@@ -17,9 +17,11 @@ data class ClubUpdateRequest(
     @field:Schema(description = "연락 전화번호 (null=변경 안 함)", example = "010-1234-5678")
     val contactPhoneNumber: String? = null,
     // TODO: FileSaveRequest로 전환 (ClubMember 프로필과 동일 패턴)
+    @field:Size(max = 500)
     @field:Schema(description = "프로필 사진 storageKey (null=변경 안 함)", example = "CLUB_PROFILE/2026-02/uuid_profile.png")
     val profileImageStorageKey: String? = null,
     // TODO: FileSaveRequest로 전환 (ClubMember 프로필과 동일 패턴)
+    @field:Size(max = 500)
     @field:Schema(
         description = "배경 사진 storageKey (null=변경 안 함)",
         example = "CLUB_BACKGROUND/2026-02/uuid_background.png",
