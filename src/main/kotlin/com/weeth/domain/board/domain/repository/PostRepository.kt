@@ -161,24 +161,6 @@ interface PostRepository :
         """
         SELECT p
         FROM Post p
-        WHERE p.board.club.id = :clubId
-          AND p.board.type <> :excludedType
-          AND p.isDeleted = false
-          AND p.board.isDeleted = false
-        ORDER BY p.createdAt DESC, p.id DESC
-        """,
-    )
-    override fun findRecentByClubIdExcludingBoardType(
-        @Param("clubId") clubId: Long,
-        @Param("excludedType") excludedType: BoardType,
-        pageable: Pageable,
-    ): Slice<Post>
-
-    @EntityGraph(attributePaths = ["user"])
-    @Query(
-        """
-        SELECT p
-        FROM Post p
         LEFT JOIN LastNoticeRead lr ON lr.user.id = :userId AND lr.board.id = p.board.id
         WHERE p.board.club.id = :clubId
           AND p.board.type = :boardType

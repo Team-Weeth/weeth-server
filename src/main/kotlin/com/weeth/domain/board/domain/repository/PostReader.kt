@@ -27,12 +27,6 @@ interface PostReader {
         pageable: Pageable,
     ): Slice<Post>
 
-    fun findRecentByClubIdExcludingBoardType(
-        clubId: Long,
-        excludedType: BoardType,
-        pageable: Pageable,
-    ): Slice<Post>
-
     fun findRecentByBoardIds(
         boardIds: List<Long>,
         pageable: Pageable,
