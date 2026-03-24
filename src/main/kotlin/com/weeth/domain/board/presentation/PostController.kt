@@ -145,14 +145,9 @@ class PostController(
         @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<PostLikeResponse> {
-        val result = togglePostLikeUseCase.execute(clubId, postId, userId)
-        val responseCode =
-            if (result.isLiked) {
-                BoardResponseCode.POST_LIKED_SUCCESS
-            } else {
-                BoardResponseCode.POST_UNLIKED_SUCCESS
-            }
-        return CommonResponse.success(responseCode, result)
-    }
+    ): CommonResponse<PostLikeResponse> =
+        CommonResponse.success(
+            BoardResponseCode.POST_LIKE_TOGGLE_SUCCESS,
+            togglePostLikeUseCase.execute(clubId, postId, userId),
+        )
 }
