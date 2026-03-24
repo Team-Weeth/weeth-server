@@ -126,10 +126,13 @@ class ManageBoardUseCase(
         val uniqueIds = request.boardIds.toSet()
         if (uniqueIds.size != request.boardIds.size) throw DuplicateBoardIdException()
 
-        val boards = boardRepository.findAllByClubIdAndIdIn(clubId, uniqueIds.toList())
-        if (boards.size != uniqueIds.size) throw BoardNotInClubException()
+        // 클럽의 모든 활성 게시판이 요청에 포함되어야 순서가 일관성 있게 유지됨
+        val allActiveBoards = boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+        if (allActiveBoards.size != uniqueIds.size) throw BoardNotInClubException()
 
-        val boardById = boards.associateBy { it.id }
+        val boardById = allActiveBoards.associateBy { it.id }
+        if (!boardById.keys.containsAll(uniqueIds)) throw BoardNotInClubException()
+
         request.boardIds.forEachIndexed { index, boardId ->
             boardById.getValue(boardId).reorder(index)
         }

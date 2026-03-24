@@ -176,8 +176,9 @@ class ManageBoardUseCaseTest :
                 val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
                 val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
                 val board3 = BoardTestFixture.create(id = 3L, club = club, name = "C", type = BoardType.GENERAL)
-                every { boardRepository.findAllByClubIdAndIdIn(clubId, listOf(2L, 3L, 1L)) } returns
-                    listOf(board1, board2, board3)
+                every {
+                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                } returns listOf(board1, board2, board3)
 
                 useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(2L, 3L, 1L)), userId)
 
@@ -186,10 +187,27 @@ class ManageBoardUseCaseTest :
                 board1.displayOrder shouldBe 2
             }
 
-            it("다른 클럽 게시판이 포함되면 예외를 던진다") {
+            it("클럽의 일부 게시판만 요청하면 예외를 던진다") {
                 val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
-                // 요청은 2개인데 DB에서 1개만 조회됨 → 다른 클럽 소속이거나 존재하지 않음
-                every { boardRepository.findAllByClubIdAndIdIn(clubId, listOf(1L, 99L)) } returns listOf(board1)
+                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
+                val board3 = BoardTestFixture.create(id = 3L, club = club, name = "C", type = BoardType.GENERAL)
+                // 클럽에 3개 게시판이 있는데 2개만 요청
+                every {
+                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                } returns listOf(board1, board2, board3)
+
+                shouldThrow<BoardNotInClubException> {
+                    useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 2L)), userId)
+                }
+            }
+
+            it("다른 클럽 게시판 ID가 포함되면 예외를 던진다") {
+                val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
+                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
+                // 클럽에 2개 게시판이 있는데 존재하지 않는 ID(99L) 요청
+                every {
+                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                } returns listOf(board1, board2)
 
                 shouldThrow<BoardNotInClubException> {
                     useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 99L)), userId)
@@ -201,7 +219,9 @@ class ManageBoardUseCaseTest :
                 shouldThrow<DuplicateBoardIdException> {
                     useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 1L, 2L)), userId)
                 }
-                verify(exactly = 0) { boardRepository.findAllByClubIdAndIdIn(any(), any()) }
+                verify(exactly = 0) {
+                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(any())
+                }
             }
         }
     })
