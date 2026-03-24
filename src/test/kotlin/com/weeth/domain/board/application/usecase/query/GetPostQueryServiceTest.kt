@@ -128,6 +128,8 @@ class GetPostQueryServiceTest :
                 val detail =
                     com.weeth.domain.board.application.dto.response.PostDetailResponse(
                         id = 1L,
+                        boardId = 1L,
+                        boardName = "일반 게시판",
                         author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = MemberRole.USER),
                         title = "제목",
                         content = "내용",
