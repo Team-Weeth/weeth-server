@@ -150,7 +150,8 @@ class ManageBoardUseCaseTest :
             it("변경할 이름이 같은 클럽의 다른 게시판 이름과 중복되면 예외를 던진다") {
                 val board = BoardTestFixture.create(id = 1L, club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
-                every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(clubId, "중복 이름", 1L) } returns true
+                every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(clubId, "중복 이름", 1L) } returns
+                    true
 
                 shouldThrow<DuplicateBoardNameException> {
                     useCase.update(clubId, 1L, UpdateBoardRequest(name = "중복 이름"), userId)

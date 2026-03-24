@@ -37,7 +37,13 @@ class ManageBoardUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
 
-        if (boardRepository.existsByClubIdAndNameAndIsDeletedFalse(clubId, request.name)) throw DuplicateBoardNameException()
+        if (boardRepository.existsByClubIdAndNameAndIsDeletedFalse(
+                clubId,
+                request.name,
+            )
+        ) {
+            throw DuplicateBoardNameException()
+        }
 
         val nextOrder = boardRepository.findMaxDisplayOrderByClubId(clubId) + 1
         val board =
@@ -70,7 +76,14 @@ class ManageBoardUseCase(
         if (board.club.id != clubId) throw BoardNotFoundException()
 
         request.name?.let {
-            if (boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(clubId, it, boardId)) throw DuplicateBoardNameException()
+            if (boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(
+                    clubId,
+                    it,
+                    boardId,
+                )
+            ) {
+                throw DuplicateBoardNameException()
+            }
             board.rename(it)
         }
 
