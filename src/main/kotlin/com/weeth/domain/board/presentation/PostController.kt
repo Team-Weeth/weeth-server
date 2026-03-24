@@ -3,10 +3,10 @@ package com.weeth.domain.board.presentation
 import com.weeth.domain.board.application.dto.request.CreatePostRequest
 import com.weeth.domain.board.application.dto.request.UpdatePostRequest
 import com.weeth.domain.board.application.dto.response.PostDetailResponse
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
-import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.usecase.command.ManagePostUseCase
 import com.weeth.domain.board.application.usecase.command.MarkNoticeReadUseCase
 import com.weeth.domain.board.application.usecase.command.TogglePostLikeUseCase
@@ -147,7 +147,12 @@ class PostController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostLikeResponse> {
         val result = togglePostLikeUseCase.execute(clubId, postId, userId)
-        val responseCode = if (result.isLiked) BoardResponseCode.POST_LIKED_SUCCESS else BoardResponseCode.POST_UNLIKED_SUCCESS
+        val responseCode =
+            if (result.isLiked) {
+                BoardResponseCode.POST_LIKED_SUCCESS
+            } else {
+                BoardResponseCode.POST_UNLIKED_SUCCESS
+            }
         return CommonResponse.success(responseCode, result)
     }
 }

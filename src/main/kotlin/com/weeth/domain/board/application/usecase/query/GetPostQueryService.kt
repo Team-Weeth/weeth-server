@@ -8,12 +8,12 @@ import com.weeth.domain.board.application.exception.PageNotFoundException
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
-import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.comment.domain.repository.CommentReader
 import com.weeth.domain.file.application.mapper.FileMapper
@@ -90,7 +90,13 @@ class GetPostQueryService(
         val now = LocalDateTime.now()
 
         return posts.map { post ->
-            postMapper.toListResponse(post, memberMap.getValue(post.user.id), fileExistsByPostId[post.id] == true, now, post.id in likedPostIds)
+            postMapper.toListResponse(
+                post,
+                memberMap.getValue(post.user.id),
+                fileExistsByPostId[post.id] == true,
+                now,
+                post.id in likedPostIds,
+            )
         }
     }
 
@@ -119,7 +125,13 @@ class GetPostQueryService(
         val now = LocalDateTime.now()
 
         return posts.map { post ->
-            postMapper.toListResponse(post, memberMap.getValue(post.user.id), fileExistsByPostId[post.id] == true, now, post.id in likedPostIds)
+            postMapper.toListResponse(
+                post,
+                memberMap.getValue(post.user.id),
+                fileExistsByPostId[post.id] == true,
+                now,
+                post.id in likedPostIds,
+            )
         }
     }
 
