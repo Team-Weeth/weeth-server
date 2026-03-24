@@ -6,6 +6,7 @@ import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
+import com.weeth.domain.board.application.exception.DuplicateBoardNameException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
@@ -40,6 +41,8 @@ class ManageBoardUseCaseTest :
             every { boardRepository.save(any()) } answers { firstArg() }
             every { clubReader.getClubById(clubId) } returns club
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
+            every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
+            every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(any(), any(), any()) } returns false
         }
 
         describe("create") {
@@ -93,6 +96,22 @@ class ManageBoardUseCaseTest :
 
                 result.displayOrder shouldBe 3
             }
+
+            it("같은 클럽에 동일한 이름의 게시판이 이미 있으면 예외를 던진다") {
+                every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(clubId, "중복 이름") } returns true
+                val request =
+                    CreateBoardRequest(
+                        name = "중복 이름",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
+
+                shouldThrow<DuplicateBoardNameException> {
+                    useCase.create(clubId, request, userId)
+                }
+            }
         }
 
         describe("update") {
@@ -125,6 +144,16 @@ class ManageBoardUseCaseTest :
 
                 shouldThrow<BoardNotFoundException> {
                     useCase.update(clubId, 999L, UpdateBoardRequest(name = "변경"), userId)
+                }
+            }
+
+            it("변경할 이름이 같은 클럽의 다른 게시판 이름과 중복되면 예외를 던진다") {
+                val board = BoardTestFixture.create(id = 1L, club = club, name = "기존", type = BoardType.GENERAL)
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
+                every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(clubId, "중복 이름", 1L) } returns true
+
+                shouldThrow<DuplicateBoardNameException> {
+                    useCase.update(clubId, 1L, UpdateBoardRequest(name = "중복 이름"), userId)
                 }
             }
         }
