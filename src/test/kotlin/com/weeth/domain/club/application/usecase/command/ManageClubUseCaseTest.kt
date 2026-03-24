@@ -1,5 +1,6 @@
 package com.weeth.domain.club.application.usecase.command
 
+import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
@@ -34,6 +35,7 @@ class ManageClubUseCaseTest :
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val cardinalRepository = mockk<CardinalRepository>()
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>()
+        val boardRepository = mockk<BoardRepository>()
         val userReader = mockk<UserReader>()
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
@@ -43,6 +45,7 @@ class ManageClubUseCaseTest :
                 clubMemberRepository,
                 cardinalRepository,
                 clubMemberCardinalRepository,
+                boardRepository,
                 userReader,
                 clubJoinPolicy,
                 clubPermissionPolicy,
@@ -57,6 +60,7 @@ class ManageClubUseCaseTest :
                 clubMemberRepository,
                 cardinalRepository,
                 clubMemberCardinalRepository,
+                boardRepository,
                 userReader,
                 clubJoinPolicy,
                 clubPermissionPolicy,
@@ -65,6 +69,7 @@ class ManageClubUseCaseTest :
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { cardinalRepository.saveAll(any<List<Cardinal>>()) } answers { firstArg() }
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
+            every { boardRepository.save(any()) } answers { firstArg() }
             every { clubJoinPolicy.validateCreateLimit(any()) } just Runs
         }
 
