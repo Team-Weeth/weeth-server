@@ -6,8 +6,10 @@ import com.weeth.domain.board.application.dto.response.PostDetailResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.usecase.command.ManagePostUseCase
 import com.weeth.domain.board.application.usecase.command.MarkNoticeReadUseCase
+import com.weeth.domain.board.application.usecase.command.TogglePostLikeUseCase
 import com.weeth.domain.board.application.usecase.query.GetPostQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -38,6 +40,7 @@ class PostController(
     private val managePostUseCase: ManagePostUseCase,
     private val getPostQueryService: GetPostQueryService,
     private val markNoticeReadUseCase: MarkNoticeReadUseCase,
+    private val togglePostLikeUseCase: TogglePostLikeUseCase,
 ) {
     @PostMapping("/{boardId}/posts")
     @Operation(summary = "게시글 작성")
@@ -135,5 +138,16 @@ class PostController(
         return CommonResponse.success(BoardResponseCode.BOARD_NOTICE_READ_SUCCESS)
     }
 
-    // todo: 좋아요 관련 API 추가
+    @PostMapping("/posts/{postId}/like")
+    @Operation(summary = "게시글 좋아요 토글", description = "좋아요가 없으면 추가, 있으면 취소합니다.")
+    fun toggleLike(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable postId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<PostLikeResponse> {
+        val result = togglePostLikeUseCase.execute(clubId, postId, userId)
+        val responseCode = if (result.isLiked) BoardResponseCode.POST_LIKED_SUCCESS else BoardResponseCode.POST_UNLIKED_SUCCESS
+        return CommonResponse.success(responseCode, result)
+    }
 }
