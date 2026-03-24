@@ -35,7 +35,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["user"])
+    @EntityGraph(attributePaths = ["user", "board"])
     @Query(
         """
         SELECT p
@@ -80,7 +80,7 @@ interface PostRepository :
         @Param("id") id: Long,
     ): Post?
 
-    @EntityGraph(attributePaths = ["user"])
+    @EntityGraph(attributePaths = ["user", "board"])
     @Query(
         """
         SELECT p
