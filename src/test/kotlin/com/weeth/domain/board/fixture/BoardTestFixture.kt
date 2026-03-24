@@ -16,12 +16,13 @@ object BoardTestFixture {
         type: BoardType = BoardType.GENERAL,
         config: BoardConfig = BoardConfig(),
     ): Board {
-        val board = Board(
-            club = club,
-            name = name,
-            type = type,
-            config = config
-        )
+        val board =
+            Board(
+                club = club,
+                name = name,
+                type = type,
+                config = config,
+            )
         if (id != 0L) ReflectionTestUtils.setField(board, "id", id)
         return board
     }
