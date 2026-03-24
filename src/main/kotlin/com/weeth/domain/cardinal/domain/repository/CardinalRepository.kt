@@ -51,13 +51,13 @@ interface CardinalRepository :
 
     override fun findAllByClubIdOrderByCardinalNumberAsc(clubId: Long): List<Cardinal>
 
-    fun findByClubIdAndStatus(
+    fun findFirstByClubIdAndStatusOrderByCardinalNumberDesc(
         clubId: Long,
         status: CardinalStatus,
     ): Cardinal?
 
     override fun findInProgressByClubId(clubId: Long): Cardinal? =
-        findByClubIdAndStatus(clubId, CardinalStatus.IN_PROGRESS)
+        findFirstByClubIdAndStatusOrderByCardinalNumberDesc(clubId, CardinalStatus.IN_PROGRESS)
 
     override fun getByCardinalNumber(cardinalNumber: Int): Cardinal =
         findByCardinalNumber(cardinalNumber).orElseThrow { CardinalNotFoundException() }
