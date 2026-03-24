@@ -35,12 +35,13 @@ class PostMapperTest :
         every { post.content } returns "내용"
         every { post.user } returns user
         every { post.commentCount } returns 2
+        every { post.likeCount } returns 0
         every { post.createdAt } returns now.minusHours(1)
         every { post.modifiedAt } returns now
 
         describe("toListResponse") {
             it("24시간 이내 생성된 게시글은 isNew=true") {
-                val response = mapper.toListResponse(post, authorMember, hasFile = true, now = now)
+                val response = mapper.toListResponse(post, authorMember, hasFile = true, now = now, isLiked = false)
 
                 response.id shouldBe 1L
                 response.hasFile shouldBe true
@@ -74,7 +75,7 @@ class PostMapperTest :
                         ),
                     )
 
-                val response = mapper.toDetailResponse(post, authorMember, comments, files)
+                val response = mapper.toDetailResponse(post, authorMember, comments, files, isLiked = false)
 
                 response.id shouldBe 1L
                 response.commentCount shouldBe 2

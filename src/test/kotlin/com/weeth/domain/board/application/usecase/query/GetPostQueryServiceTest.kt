@@ -7,6 +7,7 @@ import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
@@ -40,6 +41,7 @@ class GetPostQueryServiceTest :
     DescribeSpec({
         val postRepository = mockk<PostRepository>()
         val boardRepository = mockk<BoardRepository>()
+        val postLikeRepository = mockk<PostLikeRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val clubMemberReader = mockk<ClubMemberReader>()
         val commentReader = mockk<CommentReader>()
@@ -52,6 +54,7 @@ class GetPostQueryServiceTest :
             GetPostQueryService(
                 postRepository,
                 boardRepository,
+                postLikeRepository,
                 clubMemberPolicy,
                 clubMemberReader,
                 commentReader,
@@ -68,6 +71,7 @@ class GetPostQueryServiceTest :
             clearMocks(
                 postRepository,
                 boardRepository,
+                postLikeRepository,
                 clubMemberPolicy,
                 clubMemberReader,
                 commentReader,
@@ -133,6 +137,8 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 1,
+                        likeCount = 0,
+                        isLiked = false,
                         comments = comments,
                         fileUrls = fileResponses,
                     )
@@ -143,7 +149,8 @@ class GetPostQueryServiceTest :
                 every { clubMemberReader.findAllByClubIdAndUserIds(actualClubId, any()) } returns listOf(member)
                 every { getCommentQueryService.toCommentTreeResponses(any(), any()) } returns comments
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
-                every { postMapper.toDetailResponse(post, member, comments, fileResponses) } returns detail
+                every { postLikeRepository.existsByPostAndUserId(post, userId) } returns false
+                every { postMapper.toDetailResponse(post, member, comments, fileResponses, false) } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
                 val result = queryService.findPost(actualClubId, userId, 1L)
@@ -278,6 +285,8 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 0,
+                        likeCount = 0,
+                        isLiked = false,
                         hasFile = false,
                         isNew = false,
                     )
@@ -287,7 +296,8 @@ class GetPostQueryServiceTest :
                 every { postRepository.findAllActiveByBoardId(1L, any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
                 every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(member)
-                every { postMapper.toListResponse(any(), any(), any(), any()) } returns response
+                every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
+                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
 
                 val result = queryService.findPosts(clubId, userId, 1L, 0, 10)
 
