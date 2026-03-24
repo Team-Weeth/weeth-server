@@ -80,14 +80,15 @@ class ManageClubUseCase(
         clubRepository.save(club)
 
         // 공지사항 게시판 자동 생성 (관리자만 작성 가능, displayOrder=0)
-        boardRepository.save(
+        val noticeBoard =
             Board(
                 club = club,
                 name = "공지사항",
                 type = BoardType.NOTICE,
                 config = BoardConfig(writePermission = MemberRole.ADMIN),
-            ),
-        )
+            )
+        noticeBoard.reorder(0)
+        boardRepository.save(noticeBoard)
 
         val leadMember =
             ClubMember
