@@ -1,6 +1,7 @@
 package com.weeth.domain.dashboard.application.usecase.query
 
 import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.repository.ClubMemberReader
@@ -19,6 +20,7 @@ import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDate
@@ -27,6 +29,7 @@ import java.time.LocalDateTime
 @Service
 @Transactional(readOnly = true)
 class GetDashboardQueryService(
+    private val boardReader: BoardReader,
     private val clubReader: ClubReader,
     private val clubMemberReader: ClubMemberReader,
     private val clubMemberPolicy: ClubMemberPolicy,
@@ -69,14 +72,21 @@ class GetDashboardQueryService(
         pageNumber: Int,
         pageSize: Int,
     ): Slice<DashboardPostResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
 
-        val posts =
-            postReader.findRecentByClubIdExcludingBoardType(
-                clubId,
-                BoardType.NOTICE,
-                PageRequest.of(pageNumber, pageSize),
-            )
+        val accessibleBoardIds =
+            boardReader
+                .findAllActiveByClubId(clubId)
+                .filter { it.isAccessibleBy(member.memberRole) && it.type != BoardType.NOTICE }
+                .map { it.id }
+
+        val pageable = PageRequest.of(pageNumber, pageSize)
+
+        if (accessibleBoardIds.isEmpty()) {
+            return SliceImpl(emptyList(), pageable, false)
+        }
+
+        val posts = postReader.findRecentByBoardIds(accessibleBoardIds, pageable)
         val now = LocalDateTime.now()
         val postIds = posts.content.map { it.id }
         val filesByPostId = fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }

@@ -1,7 +1,9 @@
 package com.weeth.domain.dashboard.application.usecase.query
 
 import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardReader
 import com.weeth.domain.board.domain.repository.PostReader
+import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
@@ -36,6 +38,7 @@ import java.time.LocalDateTime
 
 class GetDashboardQueryServiceTest :
     DescribeSpec({
+        val boardReader = mockk<BoardReader>()
         val clubReader = mockk<ClubReader>()
         val clubMemberReader = mockk<ClubMemberReader>()
         val clubMemberPolicy = ClubMemberPolicy(clubMemberReader)
@@ -50,6 +53,7 @@ class GetDashboardQueryServiceTest :
 
         val queryService =
             GetDashboardQueryService(
+                boardReader = boardReader,
                 clubReader = clubReader,
                 clubMemberReader = clubMemberReader,
                 clubMemberPolicy = clubMemberPolicy,
@@ -69,6 +73,7 @@ class GetDashboardQueryServiceTest :
 
         beforeTest {
             clearMocks(
+                boardReader,
                 clubReader,
                 clubMemberReader,
                 eventReader,
@@ -163,17 +168,18 @@ class GetDashboardQueryServiceTest :
         }
 
         describe("getRecentPosts") {
+            val memberWithUser = ClubTestFixture.createClubMember(club = club, user = user)
+
             context("멤버인 경우") {
-                it("공지 제외한 최신 게시글을 반환한다") {
-                    val board = BoardTestFixture.create(type = BoardType.GENERAL)
+                it("공지 제외한 접근 가능한 게시판의 최신 게시글을 반환한다") {
+                    val board = BoardTestFixture.create(id = 10L, type = BoardType.GENERAL)
                     val post = PostTestFixture.create(board = board, user = user)
-                    val memberWithUser = ClubTestFixture.createClubMember(club = club, user = user)
                     val pageable = PageRequest.of(0, 10)
                     val slice = SliceImpl(listOf(post), pageable, false)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns memberWithUser
-                    every { postReader.findRecentByClubIdExcludingBoardType(clubId, BoardType.NOTICE, any()) } returns
-                        slice
+                    every { boardReader.findAllActiveByClubId(clubId) } returns listOf(board)
+                    every { postReader.findRecentByBoardIds(listOf(board.id), any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
                     every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(memberWithUser)
 
@@ -181,6 +187,44 @@ class GetDashboardQueryServiceTest :
 
                     result.content.size shouldBe 1
                     result.content[0].fileUrls.isEmpty() shouldBe true
+                }
+            }
+
+            context("비공개 게시판이 있는 경우") {
+                it("일반 멤버에게는 비공개 게시판 글이 포함되지 않는다") {
+                    val publicBoard = BoardTestFixture.create(id = 10L, type = BoardType.GENERAL)
+                    val privateBoard =
+                        BoardTestFixture.create(
+                            id = 11L,
+                            type = BoardType.GENERAL,
+                            config = BoardConfig(isPrivate = true),
+                        )
+                    val post = PostTestFixture.create(board = publicBoard, user = user)
+                    val pageable = PageRequest.of(0, 10)
+                    val slice = SliceImpl(listOf(post), pageable, false)
+
+                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns memberWithUser
+                    every { boardReader.findAllActiveByClubId(clubId) } returns listOf(publicBoard, privateBoard)
+                    // privateBoard는 isAccessibleBy 필터링으로 제외됨
+                    every { postReader.findRecentByBoardIds(listOf(publicBoard.id), any()) } returns slice
+                    every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
+                    every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(memberWithUser)
+
+                    val result = queryService.getRecentPosts(clubId, userId, 0, 10)
+
+                    result.content.size shouldBe 1
+                }
+            }
+
+            context("접근 가능한 게시판이 없는 경우") {
+                it("빈 Slice를 반환한다") {
+                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns memberWithUser
+                    every { boardReader.findAllActiveByClubId(clubId) } returns emptyList()
+
+                    val result = queryService.getRecentPosts(clubId, userId, 0, 10)
+
+                    result.content.isEmpty() shouldBe true
+                    result.hasNext() shouldBe false
                 }
             }
 

@@ -33,6 +33,11 @@ interface PostReader {
         pageable: Pageable,
     ): Slice<Post>
 
+    fun findRecentByBoardIds(
+        boardIds: List<Long>,
+        pageable: Pageable,
+    ): Slice<Post>
+
     fun findFirstUnreadNoticeSince(
         clubId: Long,
         userId: Long,

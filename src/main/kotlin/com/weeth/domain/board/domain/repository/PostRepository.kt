@@ -101,6 +101,11 @@ interface PostRepository :
 
     override fun findActiveById(postId: Long): Post? = findActivePostById(postId)
 
+    override fun findRecentByBoardIds(
+        boardIds: List<Long>,
+        pageable: Pageable,
+    ): Slice<Post> = findAllActiveByBoardIds(boardIds, pageable)
+
     @EntityGraph(attributePaths = ["user"])
     @Query(
         """

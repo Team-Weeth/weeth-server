@@ -4,7 +4,9 @@ import com.weeth.domain.board.domain.entity.Board
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
-interface BoardRepository : JpaRepository<Board, Long> {
+interface BoardRepository :
+    JpaRepository<Board, Long>,
+    BoardReader {
     fun findByIdAndIsDeletedFalse(id: Long): Board?
 
     fun findByIdAndClubId(
@@ -13,6 +15,9 @@ interface BoardRepository : JpaRepository<Board, Long> {
     ): Board?
 
     fun findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId: Long): List<Board>
+
+    override fun findAllActiveByClubId(clubId: Long): List<Board> =
+        findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
 
     fun findByIdAndClubIdAndIsDeletedFalse(
         boardId: Long,
