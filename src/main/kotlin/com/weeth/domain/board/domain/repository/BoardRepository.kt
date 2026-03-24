@@ -21,11 +21,6 @@ interface BoardRepository : JpaRepository<Board, Long> {
 
     fun findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId: Long): List<Board>
 
-    fun findAllByClubIdAndIdIn(
-        clubId: Long,
-        ids: List<Long>,
-    ): List<Board>
-
     @Query("SELECT COALESCE(MAX(b.displayOrder), -1) FROM Board b WHERE b.club.id = :clubId")
     fun findMaxDisplayOrderByClubId(clubId: Long): Int
 

@@ -87,7 +87,6 @@ class ManageClubUseCase(
                 type = BoardType.NOTICE,
                 config = BoardConfig(writePermission = MemberRole.ADMIN),
             )
-        noticeBoard.reorder(0)
         boardRepository.save(noticeBoard)
 
         val leadMember =
