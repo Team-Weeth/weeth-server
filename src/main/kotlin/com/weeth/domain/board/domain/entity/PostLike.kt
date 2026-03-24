@@ -34,4 +34,12 @@ class PostLike(
     @Column(nullable = false)
     var userId: Long = userId
         private set
+
+    @Column(nullable = false)
+    var isActive: Boolean = true
+        private set
+
+    fun toggle() {
+        isActive = !isActive
+    }
 }

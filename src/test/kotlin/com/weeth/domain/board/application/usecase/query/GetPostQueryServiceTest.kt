@@ -149,7 +149,7 @@ class GetPostQueryServiceTest :
                 every { clubMemberReader.findAllByClubIdAndUserIds(actualClubId, any()) } returns listOf(member)
                 every { getCommentQueryService.toCommentTreeResponses(any(), any()) } returns comments
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
-                every { postLikeRepository.existsByPostAndUserId(post, userId) } returns false
+                every { postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId) } returns false
                 every { postMapper.toDetailResponse(post, member, comments, fileResponses, false) } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 

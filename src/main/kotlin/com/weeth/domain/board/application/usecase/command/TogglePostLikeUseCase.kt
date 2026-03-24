@@ -39,9 +39,9 @@ class TogglePostLikeUseCase(
         val existingLike = postLikeRepository.findByPostAndUserId(post, userId)
 
         return if (existingLike != null) {
-            postLikeRepository.delete(existingLike)
-            post.decreaseLikeCount()
-            PostLikeResponse(isLiked = false, likeCount = post.likeCount)
+            existingLike.toggle()
+            if (existingLike.isActive) post.increaseLikeCount() else post.decreaseLikeCount()
+            PostLikeResponse(isLiked = existingLike.isActive, likeCount = post.likeCount)
         } else {
             postLikeRepository.save(PostLike(post = post, userId = userId))
             post.increaseLikeCount()

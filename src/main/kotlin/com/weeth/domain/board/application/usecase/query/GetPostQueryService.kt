@@ -64,7 +64,7 @@ class GetPostQueryService(
         val memberMap = buildMemberMap(clubId, allAuthorIds)
 
         val commentTree = getCommentQueryService.toCommentTreeResponses(comments, memberMap)
-        val isLiked = postLikeRepository.existsByPostAndUserId(post, userId)
+        val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId)
 
         return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files, isLiked)
     }

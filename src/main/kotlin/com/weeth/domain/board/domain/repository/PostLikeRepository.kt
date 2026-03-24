@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
 interface PostLikeRepository : JpaRepository<PostLike, Long> {
-    fun existsByPostAndUserId(
+    fun existsByPostAndUserIdAndIsActiveTrue(
         post: Post,
         userId: Long,
     ): Boolean
@@ -16,7 +16,15 @@ interface PostLikeRepository : JpaRepository<PostLike, Long> {
         userId: Long,
     ): PostLike?
 
-    @Query("SELECT pl.post.id FROM PostLike pl WHERE pl.post.id IN :postIds AND pl.userId = :userId")
+    @Query(
+        """
+        SELECT pl.post.id
+        FROM PostLike pl
+        WHERE pl.post.id IN :postIds
+          AND pl.userId = :userId
+          AND pl.isActive = true
+        """,
+    )
     fun findLikedPostIds(
         postIds: List<Long>,
         userId: Long,
