@@ -17,6 +17,10 @@ data class PostListResponse(
     val time: LocalDateTime,
     @field:Schema(description = "댓글 수")
     val commentCount: Int,
+    @field:Schema(description = "좋아요 수")
+    val likeCount: Int,
+    @field:Schema(description = "좋아요 여부")
+    val isLiked: Boolean,
     @field:Schema(description = "파일 첨부 여부")
     val hasFile: Boolean,
     @field:Schema(description = "신규 게시글 여부 (24시간 이내)")
