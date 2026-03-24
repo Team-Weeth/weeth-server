@@ -35,4 +35,7 @@ enum class BoardErrorCode(
 
     @ExplainError("순서 변경 요청에 중복된 게시판 ID가 포함되어 있을 때 발생합니다.")
     DUPLICATE_BOARD_ID(20408, HttpStatus.BAD_REQUEST, "중복된 게시판 ID가 포함되어 있습니다."),
+
+    @ExplainError("동일한 클럽 내에 같은 이름의 게시판이 이미 존재할 때 발생합니다.")
+    DUPLICATE_BOARD_NAME(20409, HttpStatus.CONFLICT, "이미 존재하는 게시판 이름입니다."),
 }
