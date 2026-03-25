@@ -47,4 +47,7 @@ enum class BoardErrorCode(
 
     @ExplainError("삭제된 게시판을 순서 변경 요청에 포함할 때 발생합니다.")
     DELETED_BOARD_NOT_REORDERABLE(20412, HttpStatus.BAD_REQUEST, "삭제된 게시판의 순서는 변경할 수 없습니다."),
+
+    @ExplainError("좋아요 처리 중 동시 요청이 많아 락 획득에 실패했을 때 발생합니다.")
+    POST_LIKE_LOCK_TIMEOUT(20413, HttpStatus.TOO_MANY_REQUESTS, "잠시 후 다시 시도해주세요."),
 }

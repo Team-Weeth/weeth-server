@@ -22,4 +22,5 @@ enum class BoardResponseCode(
     BOARD_NOTICE_READ_SUCCESS(10411, HttpStatus.OK, "공지를 읽음 처리했습니다."),
     POST_FIND_ALL_BY_CLUB_SUCCESS(10412, HttpStatus.OK, "전체 게시글 목록이 성공적으로 조회되었습니다."),
     BOARD_REORDERED_SUCCESS(10413, HttpStatus.OK, "게시판 순서가 성공적으로 변경되었습니다."),
+    POST_LIKE_TOGGLE_SUCCESS(10414, HttpStatus.OK, "게시글 좋아요가 처리되었습니다."),
 }

@@ -80,6 +80,8 @@ class Post(
 
     fun isOwnedBy(userId: Long): Boolean = user.id == userId
 
+    fun belongsToClub(clubId: Long): Boolean = board.club.id == clubId && !board.isDeleted
+
     fun update(
         newTitle: String?,
         newContent: String?,
