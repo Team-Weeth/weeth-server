@@ -14,6 +14,7 @@ import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
@@ -56,6 +57,7 @@ class ClubController(
 
     @GetMapping("/{clubId}")
     @Operation(summary = "동아리 공개 정보 조회 (이름, 소개, 프로필 사진) - 인증 불필요")
+    @SecurityRequirements
     fun getClubPublicInfo(
         @TsidParam
         @TsidPathVariable clubId: Long,

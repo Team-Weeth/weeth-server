@@ -19,7 +19,6 @@ import jakarta.persistence.ManyToOne
 class Penalty(
     clubMember: ClubMember,
     cardinal: Cardinal,
-    penaltyType: PenaltyType,
     penaltyDescription: String,
 ) : BaseEntity() {
     @Id
