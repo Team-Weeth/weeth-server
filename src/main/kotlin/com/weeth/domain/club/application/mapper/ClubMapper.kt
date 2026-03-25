@@ -22,11 +22,16 @@ class ClubMapper(
     fun toInfoResponse(
         club: Club,
         member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+        memberCount: Long,
     ) = ClubInfoResponse(
         id = TsidBase62Encoder.encode(club.id),
         name = club.name,
         schoolName = club.schoolName,
         description = club.description,
+        profileImageUrl = resolveClubImage(club.profileImageStorageKey),
+        memberCount = memberCount,
+        cardinals = toCardinalNumbers(cardinals),
         memberRole = member.memberRole,
         memberStatus = member.memberStatus,
     )
@@ -103,15 +108,35 @@ class ClubMapper(
         role = member.memberRole,
     )
 
-    fun toMembershipStatusResponse(members: List<ClubMember>): ClubMembershipStatusResponse {
+    fun toMembershipStatusResponse(
+        members: List<ClubMember>,
+        cardinalsByMemberId: Map<Long, List<ClubMemberCardinal>>,
+        memberCountByClubId: Map<Long, Long>,
+    ): ClubMembershipStatusResponse {
         val activeMember = members.firstOrNull { it.memberStatus == MemberStatus.ACTIVE }
         val waitingMember = members.firstOrNull { it.memberStatus == MemberStatus.WAITING }
 
         return ClubMembershipStatusResponse(
             hasActiveClub = activeMember != null,
             hasWaitingClub = waitingMember != null,
-            activeClub = activeMember?.let { toInfoResponse(it.club, it) },
-            waitingClub = waitingMember?.let { toInfoResponse(it.club, it) },
+            activeClub =
+                activeMember?.let {
+                    toInfoResponse(
+                        it.club,
+                        it,
+                        cardinalsByMemberId[it.id] ?: emptyList(),
+                        memberCountByClubId[it.club.id] ?: 0,
+                    )
+                },
+            waitingClub =
+                waitingMember?.let {
+                    toInfoResponse(
+                        it.club,
+                        it,
+                        cardinalsByMemberId[it.id] ?: emptyList(),
+                        memberCountByClubId[it.club.id] ?: 0,
+                    )
+                },
         )
     }
 

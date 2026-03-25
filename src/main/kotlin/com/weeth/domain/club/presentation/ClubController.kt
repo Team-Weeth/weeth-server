@@ -45,7 +45,7 @@ class ClubController(
     }
 
     @GetMapping
-    @Operation(summary = "내가 가입한 동아리 목록 조회 (MVP 미사용)", deprecated = true)
+    @Operation(summary = "내가 가입한 동아리 목록 조회")
     fun getMyClubs(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<List<ClubInfoResponse>> {
