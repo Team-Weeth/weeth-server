@@ -41,7 +41,7 @@ class PenaltyMapper {
             penaltyId = penalty.id,
             cardinal = penalty.cardinal.cardinalNumber,
             penaltyDescription = penalty.penaltyDescription,
-            time = penalty.modifiedAt,
+            time = penalty.createdAt,
         )
 
     fun toByCardinalResponse(
