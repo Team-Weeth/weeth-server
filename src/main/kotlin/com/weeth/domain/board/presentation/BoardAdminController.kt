@@ -86,7 +86,7 @@ class BoardAdminController(
             manageBoardUseCase.update(clubId, boardId, request, userId),
         )
 
-    @PutMapping("/order")
+    @PatchMapping("/order")
     @Operation(summary = "게시판 순서 변경", description = "boardIds 배열의 순서대로 게시판 표시 순서를 저장합니다.")
     fun reorderBoards(
         @TsidParam
