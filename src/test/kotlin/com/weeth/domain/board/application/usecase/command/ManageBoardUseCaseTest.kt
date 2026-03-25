@@ -7,6 +7,7 @@ import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
@@ -222,6 +223,33 @@ class ManageBoardUseCaseTest :
                 verify(exactly = 0) {
                     boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(any())
                 }
+            }
+
+            it("공지사항 ID를 요청에 포함하면 예외를 던진다") {
+                val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
+                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
+                every {
+                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                } returns listOf(noticeBoard, board2)
+
+                shouldThrow<FixedBoardNotReorderableException> {
+                    useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 2L)), userId)
+                }
+            }
+
+            it("공지사항은 순서 변경 대상에서 제외되므로 요청에 포함하지 않아야 한다") {
+                val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
+                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
+                val board3 = BoardTestFixture.create(id = 3L, club = club, name = "C", type = BoardType.GENERAL)
+                every {
+                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                } returns listOf(noticeBoard, board2, board3)
+
+                // 공지사항 제외하고 나머지 2개만 요청
+                useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(3L, 2L)), userId)
+
+                board3.displayOrder shouldBe 0
+                board2.displayOrder shouldBe 1
             }
         }
     })
