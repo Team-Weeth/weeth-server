@@ -17,20 +17,34 @@ import jakarta.persistence.ManyToOne
 
 @Entity
 class Penalty(
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "club_member_id")
-    val clubMember: ClubMember,
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cardinal_id")
-    val cardinal: Cardinal,
-    @Enumerated(EnumType.STRING)
-    val penaltyType: PenaltyType,
-    var penaltyDescription: String,
+    clubMember: ClubMember,
+    cardinal: Cardinal,
+    penaltyType: PenaltyType,
+    penaltyDescription: String,
+) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "penalty_id")
-    val id: Long = 0,
-) : BaseEntity() {
+    var id: Long = 0L
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "club_member_id")
+    var clubMember: ClubMember = clubMember
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cardinal_id")
+    var cardinal: Cardinal = cardinal
+        private set
+
+    @Enumerated(EnumType.STRING)
+    var penaltyType: PenaltyType = PenaltyType.PENALTY
+        private set
+
+    var penaltyDescription: String = penaltyDescription
+        private set
+
     fun update(penaltyDescription: String) {
         this.penaltyDescription = penaltyDescription
     }

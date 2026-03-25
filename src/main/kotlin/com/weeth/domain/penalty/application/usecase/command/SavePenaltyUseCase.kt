@@ -7,7 +7,6 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
-import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -34,11 +33,9 @@ class SavePenaltyUseCase(
         val penalty = mapper.toEntity(request, clubMember, cardinal)
         penaltyRepository.save(penalty)
 
-        if (penalty.penaltyType == PenaltyType.PENALTY) {
-            val lockedMember =
-                clubMemberRepository.findByIdWithLock(clubMember.id)
-                    ?: throw PenaltyNotFoundException()
-            lockedMember.incrementPenaltyCount()
-        }
+        val lockedMember =
+            clubMemberRepository.findByIdWithLock(clubMember.id)
+                ?: throw PenaltyNotFoundException()
+        lockedMember.incrementPenaltyCount()
     }
 }
