@@ -168,7 +168,7 @@ class ManageClubUseCaseTest :
                             profileImage =
                                 FileSaveRequest(
                                     fileName = "profile.png",
-                                    storageKey = "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440000_profile.png",
+                                    storageKey = "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440000_pf.png",
                                     fileSize = 1024,
                                     contentType = "image/png",
                                 ),
