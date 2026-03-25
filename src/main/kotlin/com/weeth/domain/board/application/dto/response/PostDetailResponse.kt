@@ -19,6 +19,8 @@ data class PostDetailResponse(
     val time: LocalDateTime,
     @field:Schema(description = "댓글 수")
     val commentCount: Int,
+    @field:Schema(description = "좋아요 정보")
+    val like: PostLikeResponse,
     @field:Schema(description = "댓글 목록")
     val comments: List<CommentResponse>,
     @field:Schema(description = "첨부 파일 목록")
