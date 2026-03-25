@@ -92,12 +92,20 @@ class GetPostQueryService(
         }
 
         val posts = postRepository.findAllActiveByBoardIds(accessibleBoardIds, pageable)
+        val postIds = posts.content.map { it.id }
         val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
-        val fileExistsByPostId = buildFileExistsMap(posts.content.map { it.id })
+        val fileExistsByPostId = buildFileExistsMap(postIds)
+        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
         val now = LocalDateTime.now()
 
         return posts.map { post ->
-            postMapper.toListResponse(post, memberMap.getValue(post.user.id), fileExistsByPostId[post.id] == true, now)
+            postMapper.toListResponse(
+                post,
+                memberMap.getValue(post.user.id),
+                fileExistsByPostId[post.id] == true,
+                now,
+                post.id in likedPostIds,
+            )
         }
     }
 

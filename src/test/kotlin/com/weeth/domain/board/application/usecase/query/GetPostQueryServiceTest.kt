@@ -293,7 +293,8 @@ class GetPostQueryServiceTest :
                 every { postRepository.findAllActiveByBoardIds(any(), any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
                 every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(member)
-                every { postMapper.toListResponse(any(), any(), any(), any()) } returns response
+                every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
+                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
 
                 val result = queryService.findAllPosts(clubId, userId, 0, 10)
 
