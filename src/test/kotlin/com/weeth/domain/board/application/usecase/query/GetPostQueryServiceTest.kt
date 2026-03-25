@@ -283,6 +283,7 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 0,
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
                         hasFile = false,
                         isNew = true,
                     )
