@@ -88,12 +88,17 @@ class User(
 
     fun isBannedOrLeft(): Boolean = status == Status.BANNED || status == Status.LEFT
 
-    fun isProfileCompleted(): Boolean =
-        name.isNotBlank() &&
-            studentId.isNotBlank() &&
-            telValue.isNotBlank() &&
-            school.isNotBlank() &&
-            department.isNotBlank()
+    fun isRegistered(): Boolean = status == Status.ACTIVE && termsAgreed && privacyAgreed
+
+    fun isProfileCompleted(): Boolean = missingProfileFields().isEmpty()
+
+    fun missingProfileFields(): List<String> =
+        buildList {
+            if (studentId.isBlank()) add("studentId")
+            if (telValue.isBlank()) add("tel")
+            if (school.isBlank()) add("school")
+            if (department.isBlank()) add("department")
+        }
 
     fun update(
         name: String,

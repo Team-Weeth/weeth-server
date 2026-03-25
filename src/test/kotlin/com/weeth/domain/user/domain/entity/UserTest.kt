@@ -5,6 +5,8 @@ import com.weeth.domain.user.domain.vo.Email
 import com.weeth.global.common.vo.PhoneNumber
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 
 class UserTest :
@@ -73,6 +75,39 @@ class UserTest :
                 )
 
             user.isProfileCompleted() shouldBe true
+        }
+
+        "missingProfileFields — 기본 생성 시 비어있는 필드 목록 반환" {
+            val user = User.create(name = "test", email = "test@test.com")
+
+            user.missingProfileFields() shouldContainExactlyInAnyOrder
+                listOf("studentId", "tel", "school", "department")
+        }
+
+        "missingProfileFields — 모든 필드 채워졌을 때 빈 리스트 반환" {
+            val user =
+                User.create(
+                    name = "test",
+                    email = "test@test.com",
+                    studentId = "20200001",
+                    tel = "01012345678",
+                    school = "가천대학교",
+                    department = "CS",
+                )
+
+            user.missingProfileFields().shouldBeEmpty()
+        }
+
+        "missingProfileFields — 일부 필드만 비어있을 때 해당 필드만 반환" {
+            val user =
+                User.create(
+                    name = "test",
+                    email = "test@test.com",
+                    studentId = "20200001",
+                    tel = "01012345678",
+                )
+
+            user.missingProfileFields() shouldContainExactlyInAnyOrder listOf("school", "department")
         }
 
         "isActive / isInactive 동작" {

@@ -23,6 +23,11 @@ weeth:
     refresh:
       expiration: 1440
       header: Refresh
+  cookie:
+    access-token-name: access_token
+    refresh-token-name: refresh_token
+    domain: ""
+    secure: false
 
 auth:
   providers:

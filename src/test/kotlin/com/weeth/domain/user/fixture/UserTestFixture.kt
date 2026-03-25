@@ -34,6 +34,15 @@ object UserTestFixture {
             status = Status.WAITING,
         ).applyId(id)
 
+    fun createRegisteredUser(id: Long = 0L): User =
+        User(
+            name = "등록완료",
+            email = Email.from("registered@test.com"),
+            status = Status.ACTIVE,
+        ).apply {
+            agreeTerms(termsAgreed = true, privacyAgreed = true)
+        }.applyId(id)
+
     fun createAdmin(id: Long = 0L): User =
         User(
             name = "적순",

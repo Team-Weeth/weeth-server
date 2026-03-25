@@ -7,6 +7,6 @@ data class SocialLoginResponse(
     val accessToken: String,
     @field:Schema(description = "리프레시 토큰")
     val refreshToken: String,
-    @field:Schema(description = "신규 회원 여부", example = "true")
-    val isNewUser: Boolean,
+    @field:Schema(description = "약관 동의 완료 여부 (true: 약관 동의 완료, false: 약관 동의 필요)", example = "true")
+    val registered: Boolean,
 )

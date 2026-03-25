@@ -23,4 +23,7 @@ enum class JwtErrorCode(
 
     @ExplainError("Apple 인증 과정에서 토큰 교환 또는 검증에 실패했을 때 발생합니다.")
     APPLE_AUTHENTICATION_FAILED(29004, HttpStatus.UNAUTHORIZED, "애플 로그인에 실패했습니다."),
+
+    @ExplainError("약관 동의가 완료되지 않은 사용자(TEMPORARY 토큰)가 서비스 API에 접근을 시도했을 때 발생합니다.")
+    REGISTRATION_INCOMPLETE(29005, HttpStatus.FORBIDDEN, "회원가입이 완료되지 않았습니다. 약관 동의를 진행해주세요."),
 }

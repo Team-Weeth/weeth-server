@@ -27,6 +27,12 @@ weeth:
     refresh:
       expiration: ${REFRESH_EXP}
       header: ${REFRESH_HEAD}
+  cookie:
+    access-token-name: ${ACCESS_HEAD}
+    refresh-token-name: ${REFRESH_HEAD}
+    domain: ${COOKIE_DOMAIN:}
+    same-site: ${COOKIE_SAME_SITE:Lax}
+    secure: false
 
 cloud:
   aws:

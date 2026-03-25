@@ -1,6 +1,7 @@
 package com.weeth.global.auth.jwt.domain.service
 
 import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
+import com.weeth.global.auth.jwt.domain.enums.TokenType
 import com.weeth.global.config.properties.JwtProperties
 import io.jsonwebtoken.Claims
 import io.jsonwebtoken.JwtException
@@ -31,6 +32,7 @@ class JwtTokenProvider(
     fun createAccessToken(
         id: Long,
         email: String,
+        tokenType: TokenType,
     ): String {
         val now = Date()
         return Jwts
@@ -38,6 +40,7 @@ class JwtTokenProvider(
             .subject(ACCESS_TOKEN_SUBJECT)
             .claim(ID_CLAIM, id)
             .claim(EMAIL_CLAIM, email)
+            .claim(TOKEN_TYPE_CLAIM, tokenType.name)
             .issuedAt(now)
             .expiration(Date(now.time + accessTokenExpirationPeriod))
             .signWith(secretKey)
@@ -82,5 +85,6 @@ class JwtTokenProvider(
         private const val REFRESH_TOKEN_SUBJECT = "RefreshToken"
         internal const val EMAIL_CLAIM = "email"
         internal const val ID_CLAIM = "id"
+        internal const val TOKEN_TYPE_CLAIM = "tokenType"
     }
 }

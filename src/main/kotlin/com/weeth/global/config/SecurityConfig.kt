@@ -42,11 +42,9 @@ class SecurityConfig(
             .authorizeHttpRequests { authorize ->
                 authorize
                     .requestMatchers(
-                        "/api/v4/users/email",
                         "/api/v4/users/social/kakao",
                         "/api/v4/users/social/apple",
                         "/api/v4/users/social/refresh",
-                        "/api/v1/users/email",
                     ).permitAll()
                     .requestMatchers("/health-check")
                     .permitAll()
@@ -54,14 +52,6 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v4/university/*")
                     .permitAll()
-                    .requestMatchers(
-                        "/admin",
-                        "/admin/login",
-                        "/admin/account",
-                        "/admin/meeting",
-                        "/admin/member",
-                        "/admin/penalty",
-                    ).permitAll()
                     .requestMatchers(
                         "/v3/api-docs",
                         "/v3/api-docs/**",
@@ -76,13 +66,10 @@ class SecurityConfig(
                         AuthorizationDecision(allowed)
                     }.requestMatchers("/actuator/health")
                     .permitAll()
-                    // 실제 관리자 권한 검증은 ClubMemberPolicy.requireAdmin()에서 수행
-                    .requestMatchers(
-                        "/api/v1/admin/**",
-                        "/api/v4/admin/**",
-                    ).authenticated()
+                    .requestMatchers("/api/v4/users/terms")
+                    .hasAnyRole("TEMPORARY", "USER")
                     .anyRequest()
-                    .authenticated()
+                    .hasRole("USER")
             }.exceptionHandling { exceptionHandling ->
                 exceptionHandling
                     .authenticationEntryPoint(customAuthenticationEntryPoint)
