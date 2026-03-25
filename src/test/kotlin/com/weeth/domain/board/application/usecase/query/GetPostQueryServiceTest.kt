@@ -1,5 +1,6 @@
 package com.weeth.domain.board.application.usecase.query
 
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.NoSearchResultException
 import com.weeth.domain.board.application.exception.PageNotFoundException
@@ -137,8 +138,7 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 1,
-                        likeCount = 0,
-                        isLiked = false,
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
                         comments = comments,
                         fileUrls = fileResponses,
                     )
@@ -285,8 +285,7 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 0,
-                        likeCount = 0,
-                        isLiked = false,
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
                         hasFile = false,
                         isNew = false,
                     )

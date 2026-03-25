@@ -37,8 +37,7 @@ class PostMapper(
         content = post.content,
         time = post.modifiedAt,
         commentCount = post.commentCount,
-        likeCount = post.likeCount,
-        isLiked = isLiked,
+        like = toLikeResponse(post, isLiked),
         comments = comments,
         fileUrls = files,
     )
@@ -56,8 +55,7 @@ class PostMapper(
         content = post.content,
         time = post.modifiedAt,
         commentCount = post.commentCount,
-        likeCount = post.likeCount,
-        isLiked = isLiked,
+        like = toLikeResponse(post, isLiked),
         hasFile = hasFile,
         isNew = post.createdAt.isAfter(now.minusHours(24)),
     )
