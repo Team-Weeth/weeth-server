@@ -185,4 +185,17 @@ interface PostRepository :
         boardType: BoardType,
         since: LocalDateTime,
     ): Post? = findUnreadNoticeSince(clubId, userId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
+
+    @Query(
+        """
+        SELECT new com.weeth.domain.board.domain.repository.BoardPostCount(p.board.id, COUNT(p))
+        FROM Post p
+        WHERE p.board.id IN :boardIds
+          AND p.isDeleted = false
+        GROUP BY p.board.id
+        """,
+    )
+    fun countActivePostsByBoardIds(
+        @Param("boardIds") boardIds: List<Long>,
+    ): List<BoardPostCount>
 }

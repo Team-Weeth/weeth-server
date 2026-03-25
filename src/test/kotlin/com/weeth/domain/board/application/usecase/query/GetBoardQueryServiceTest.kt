@@ -3,7 +3,9 @@ package com.weeth.domain.board.application.usecase.query
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardPostCount
 import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
@@ -15,20 +17,24 @@ import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 
 class GetBoardQueryServiceTest :
     DescribeSpec({
         val boardRepository = mockk<BoardRepository>()
+        val postRepository = mockk<PostRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val boardMapper = BoardMapper()
-        val queryService = GetBoardQueryService(boardRepository, clubMemberPolicy, clubPermissionPolicy, boardMapper)
+        val queryService =
+            GetBoardQueryService(boardRepository, postRepository, clubMemberPolicy, clubPermissionPolicy, boardMapper)
 
         val clubId = 1L
         val userId = 10L
 
         beforeTest {
-            clearMocks(boardRepository, clubMemberPolicy, clubPermissionPolicy)
+            clearMocks(boardRepository, postRepository, clubMemberPolicy, clubPermissionPolicy)
+            every { postRepository.countActivePostsByBoardIds(any()) } returns emptyList()
         }
 
         describe("findBoards") {
@@ -100,8 +106,9 @@ class GetBoardQueryServiceTest :
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
-                result shouldHaveSize 2
-                result.map { it.name } shouldBe listOf("일반", "삭제됨")
+                // 가상 전체 게시판 포함: 전체, 일반, 삭제됨
+                result shouldHaveSize 3
+                result.map { it.name } shouldBe listOf("전체", "일반", "삭제됨")
             }
 
             it("활성 게시판과 비공개 게시판도 모두 포함해 반환한다") {
@@ -116,8 +123,28 @@ class GetBoardQueryServiceTest :
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
-                result shouldHaveSize 2
-                result.map { it.name } shouldBe listOf("일반", "운영")
+                // NOTICE 타입인 운영 → noticeBoards 먼저, 가상 전체 다음, 나머지 순
+                result shouldHaveSize 3
+                result.map { it.name } shouldBe listOf("운영", "전체", "일반")
+            }
+
+            it("게시판별 활성 게시글 수를 포함해 반환한다") {
+                val board = BoardTestFixture.create(id = 1L, name = "일반", type = BoardType.GENERAL)
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns listOf(board)
+                every { postRepository.countActivePostsByBoardIds(listOf(board.id)) } returns
+                    listOf(BoardPostCount(boardId = board.id, postCount = 5L))
+
+                val result = queryService.findAllBoardsForAdmin(clubId, userId)
+
+                result.first().postCount shouldBe 5
+            }
+
+            it("게시판이 없으면 postRepository를 호출하지 않는다") {
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns emptyList()
+
+                queryService.findAllBoardsForAdmin(clubId, userId)
+
+                verify(exactly = 0) { postRepository.countActivePostsByBoardIds(any()) }
             }
         }
 
@@ -152,6 +179,17 @@ class GetBoardQueryServiceTest :
                 shouldThrow<BoardNotFoundException> {
                     queryService.findBoardDetailForAdmin(clubId, userId, 999L)
                 }
+            }
+
+            it("게시글 수가 postCount에 반영된다") {
+                val board = BoardTestFixture.create(id = 1L, name = "일반", type = BoardType.GENERAL)
+                every { boardRepository.findByIdAndClubId(board.id, clubId) } returns board
+                every { postRepository.countActivePostsByBoardIds(listOf(board.id)) } returns
+                    listOf(BoardPostCount(boardId = board.id, postCount = 3L))
+
+                val result = queryService.findBoardDetailForAdmin(clubId, userId, board.id)
+
+                result.postCount shouldBe 3
             }
         }
     })

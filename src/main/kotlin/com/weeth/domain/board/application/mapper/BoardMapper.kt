@@ -26,15 +26,18 @@ class BoardMapper {
             isDeleted = null, // public api에서 삭제 여부는 보여주지 않음
         )
 
-    fun toDetailResponseForAdmin(board: Board) =
-        BoardDetailResponse(
-            id = board.id,
-            name = board.name,
-            type = board.type,
-            commentEnabled = board.config.commentEnabled,
-            writePermission = board.config.writePermission,
-            isPrivate = board.config.isPrivate,
-            displayOrder = board.displayOrder,
-            isDeleted = board.isDeleted,
-        )
+    fun toDetailResponseForAdmin(
+        board: Board,
+        postCount: Int? = null,
+    ) = BoardDetailResponse(
+        id = board.id,
+        name = board.name,
+        type = board.type,
+        commentEnabled = board.config.commentEnabled,
+        writePermission = board.config.writePermission,
+        isPrivate = board.config.isPrivate,
+        displayOrder = board.displayOrder,
+        postCount = postCount,
+        isDeleted = board.isDeleted,
+    )
 }
