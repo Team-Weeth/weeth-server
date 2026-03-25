@@ -5,6 +5,7 @@ import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetReques
 import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
+import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
@@ -103,6 +104,18 @@ class ClubMemberController(
     ): CommonResponse<Unit> {
         manageClubMemberUsecase.deleteProfileImage(userId)
         return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_IMAGE_DELETED_SUCCESS)
+    }
+
+    @GetMapping("/{clubId}/members/me/profile-status")
+    @Operation(summary = "프로필 완성 상태 조회", description = "로그인 후 혹은 홈 접속시 최초 1회만 호출하고 상태를 저장해서 처리해주세요.")
+    fun getProfileStatus(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<ProfileStatusResponse> {
+        val status = getClubMemberQueryService.findProfileStatus(clubId, userId)
+
+        return CommonResponse.success(ClubResponseCode.PROFILE_STATUS_FIND_SUCCESS, status)
     }
 
     @PostMapping("/{clubId}/members/me/cardinals")

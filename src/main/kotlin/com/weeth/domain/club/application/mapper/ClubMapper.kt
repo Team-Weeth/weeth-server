@@ -7,11 +7,13 @@ import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
+import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 
@@ -139,6 +141,15 @@ class ClubMapper(
                 },
         )
     }
+
+    fun toProfileStatusResponse(
+        user: User,
+        cardinalAssigned: Boolean,
+    ) = ProfileStatusResponse(
+        profileCompleted = user.isProfileCompleted(),
+        cardinalAssigned = cardinalAssigned,
+        missingFields = user.missingProfileFields(),
+    )
 
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
 
