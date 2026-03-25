@@ -1,8 +1,11 @@
 package com.weeth.domain.board.application.usecase.command
 
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
 import com.weeth.domain.board.application.exception.PostNotFoundException
+import com.weeth.domain.board.application.mapper.PostMapper
+import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
@@ -27,7 +30,8 @@ class TogglePostLikeUseCaseTest :
         val postRepository = mockk<PostRepository>()
         val postLikeRepository = mockk<PostLikeRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
-        val useCase = TogglePostLikeUseCase(postRepository, postLikeRepository, clubMemberPolicy)
+        val postMapper = mockk<PostMapper>(relaxed = true)
+        val useCase = TogglePostLikeUseCase(postRepository, postLikeRepository, clubMemberPolicy, postMapper)
 
         val clubId = 1L
         val userId = 10L
@@ -38,9 +42,12 @@ class TogglePostLikeUseCaseTest :
         val member = ClubMemberTestFixture.createActiveMember(club = club)
 
         beforeTest {
-            clearMocks(postRepository, postLikeRepository, clubMemberPolicy)
+            clearMocks(postRepository, postLikeRepository, clubMemberPolicy, postMapper)
             every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
             every { postLikeRepository.save(any()) } answers { firstArg() }
+            every { postMapper.toLikeResponse(any(), any()) } answers {
+                PostLikeResponse(isLiked = secondArg(), likeCount = firstArg<Post>().likeCount)
+            }
         }
 
         describe("execute") {

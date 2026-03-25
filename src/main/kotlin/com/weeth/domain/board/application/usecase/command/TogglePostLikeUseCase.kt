@@ -4,6 +4,7 @@ import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
 import com.weeth.domain.board.application.exception.PostNotFoundException
+import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.entity.PostLike
 import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
@@ -17,6 +18,7 @@ class TogglePostLikeUseCase(
     private val postRepository: PostRepository,
     private val postLikeRepository: PostLikeRepository,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val postMapper: PostMapper,
 ) {
     @Transactional
     fun execute(
@@ -29,7 +31,7 @@ class TogglePostLikeUseCase(
         val post =
             try {
                 postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
-            } catch (e: PessimisticLockingFailureException) {
+            } catch (_: PessimisticLockingFailureException) {
                 throw PostLikeLockTimeoutException()
             }
 
@@ -41,11 +43,11 @@ class TogglePostLikeUseCase(
         return if (existingLike != null) {
             existingLike.toggle()
             if (existingLike.isActive) post.increaseLikeCount() else post.decreaseLikeCount()
-            PostLikeResponse(isLiked = existingLike.isActive, likeCount = post.likeCount)
+            postMapper.toLikeResponse(post, existingLike.isActive)
         } else {
             postLikeRepository.save(PostLike(post = post, userId = userId))
             post.increaseLikeCount()
-            PostLikeResponse(isLiked = true, likeCount = post.likeCount)
+            postMapper.toLikeResponse(post, isLiked = true)
         }
     }
 }

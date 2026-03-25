@@ -1,6 +1,7 @@
 package com.weeth.domain.board.application.mapper
 
 import com.weeth.domain.board.application.dto.response.PostDetailResponse
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.domain.entity.Post
@@ -17,6 +18,11 @@ class PostMapper(
     private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
     fun toSaveResponse(post: Post) = PostSaveResponse(id = post.id)
+
+    fun toLikeResponse(
+        post: Post,
+        isLiked: Boolean,
+    ) = PostLikeResponse(isLiked = isLiked, likeCount = post.likeCount)
 
     fun toDetailResponse(
         post: Post,
