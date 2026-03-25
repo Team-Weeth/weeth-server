@@ -2,6 +2,7 @@ package com.weeth.global.auth.jwt.application.service
 
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
+import com.weeth.global.config.properties.CookieProperties
 import com.weeth.global.config.properties.JwtProperties
 import io.jsonwebtoken.Claims
 import jakarta.servlet.http.HttpServletRequest
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service
 class JwtTokenExtractor(
     private val jwtProperties: JwtProperties,
     private val jwtTokenProvider: JwtTokenProvider,
+    private val cookieProperties: CookieProperties,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -21,11 +23,21 @@ class JwtTokenExtractor(
     )
 
     fun extractRefreshToken(request: HttpServletRequest): String =
+        extractRefreshTokenFromCookie(request)
+            ?: extractRefreshTokenFromHeader(request)
+            ?: throw TokenNotFoundException()
+
+    private fun extractRefreshTokenFromCookie(request: HttpServletRequest): String? =
+        request.cookies
+            ?.firstOrNull { it.name == cookieProperties.refreshTokenName }
+            ?.value
+            ?.takeIf { it.isNotBlank() }
+
+    private fun extractRefreshTokenFromHeader(request: HttpServletRequest): String? =
         request
             .getHeader(jwtProperties.refresh.header)
             ?.takeIf { it.startsWith(BEARER) }
             ?.removePrefix(BEARER)
-            ?: throw TokenNotFoundException()
 
     fun extractAccessToken(request: HttpServletRequest): String? =
         request
