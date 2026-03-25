@@ -11,11 +11,11 @@ class UserMapper(
 ) {
     fun toSocialLoginResponse(
         token: JwtDto,
-        isNewUser: Boolean,
+        registered: Boolean,
     ): SocialLoginResponse =
         SocialLoginResponse(
             accessToken = token.accessToken,
             refreshToken = token.refreshToken,
-            isNewUser = isNewUser,
+            registered = registered,
         )
 }

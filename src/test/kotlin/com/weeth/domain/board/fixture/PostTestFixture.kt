@@ -12,6 +12,7 @@ object PostTestFixture {
         user: User = UserTestFixture.createActiveUser1(1L),
         board: Board = BoardTestFixture.create(),
         cardinalNumber: Int? = null,
+        initialLikeCount: Int = 0,
     ): Post =
         Post(
             title = title,
@@ -19,5 +20,7 @@ object PostTestFixture {
             user = user,
             board = board,
             cardinalNumber = cardinalNumber,
-        )
+        ).also { post ->
+            repeat(initialLikeCount) { post.increaseLikeCount() }
+        }
 }

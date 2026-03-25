@@ -32,4 +32,22 @@ enum class BoardErrorCode(
 
     @ExplainError("경로의 clubId와 게시판의 소속 클럽이 일치하지 않을 때 발생합니다.")
     BOARD_NOT_IN_CLUB(20407, HttpStatus.FORBIDDEN, "해당 클럽에 속한 게시판이 아닙니다."),
+
+    @ExplainError("순서 변경 요청에 중복된 게시판 ID가 포함되어 있을 때 발생합니다.")
+    DUPLICATE_BOARD_ID(20408, HttpStatus.BAD_REQUEST, "중복된 게시판 ID가 포함되어 있습니다."),
+
+    @ExplainError("동일한 클럽 내에 같은 이름의 게시판이 이미 존재할 때 발생합니다.")
+    DUPLICATE_BOARD_NAME(20409, HttpStatus.CONFLICT, "이미 존재하는 게시판 이름입니다."),
+
+    @ExplainError("공지사항 등 고정 게시판을 순서 변경 요청에 포함할 때 발생합니다.")
+    FIXED_BOARD_NOT_REORDERABLE(20410, HttpStatus.BAD_REQUEST, "고정 게시판은 순서를 변경할 수 없습니다."),
+
+    @ExplainError("공지사항 등 고정 게시판의 이름 변경을 시도할 때 발생합니다.")
+    FIXED_BOARD_NOT_RENAMABLE(20411, HttpStatus.BAD_REQUEST, "고정 게시판의 이름은 변경할 수 없습니다."),
+
+    @ExplainError("삭제된 게시판을 순서 변경 요청에 포함할 때 발생합니다.")
+    DELETED_BOARD_NOT_REORDERABLE(20412, HttpStatus.BAD_REQUEST, "삭제된 게시판의 순서는 변경할 수 없습니다."),
+
+    @ExplainError("좋아요 처리 중 동시 요청이 많아 락 획득에 실패했을 때 발생합니다.")
+    POST_LIKE_LOCK_TIMEOUT(20413, HttpStatus.TOO_MANY_REQUESTS, "잠시 후 다시 시도해주세요."),
 }

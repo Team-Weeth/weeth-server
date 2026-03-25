@@ -8,12 +8,18 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
+import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -25,6 +31,7 @@ class GetClubMemberQueryServiceTest :
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val userReader = mockk<UserReader>()
         val clubMapper = ClubMapper(fileAccessUrlPort)
 
         val service =
@@ -34,7 +41,12 @@ class GetClubMemberQueryServiceTest :
                 clubMemberPolicy = clubMemberPolicy,
                 clubPermissionPolicy = clubPermissionPolicy,
                 clubMapper = clubMapper,
+                userReader = userReader,
             )
+
+        beforeTest {
+            clearMocks(clubMemberReader, clubMemberCardinalReader, clubMemberPolicy, clubPermissionPolicy, userReader)
+        }
 
         describe("findClubMembersForAdmin") {
             context("관리자가 멤버 목록을 조회하는 경우") {
@@ -73,6 +85,82 @@ class GetClubMemberQueryServiceTest :
                     response.cardinals shouldBe listOf(6, 7)
                     verify(exactly = 1) { clubPermissionPolicy.requireAdmin(1L, 99L) }
                     verify(exactly = 1) { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) }
+                }
+            }
+        }
+
+        describe("findProfileStatus") {
+            val club = ClubTestFixture.createClub()
+            val clubId = 1L
+            val userId = 1L
+
+            context("프로필이 완성되고 기수가 등록된 경우") {
+                it("profileCompleted=true, cardinalAssigned=true, missingFields 비어있음") {
+                    val user =
+                        User.create(
+                            name = "test",
+                            email = "test@test.com",
+                            studentId = "20200001",
+                            tel = "01012345678",
+                            school = "가천대학교",
+                            department = "CS",
+                        )
+                    val member = ClubMemberTestFixture.createActiveMember(club = club, user = user)
+                    val cardinal = Cardinal.create(club = club, cardinalNumber = 7)
+                    val memberCardinal = ClubMemberCardinal.create(member, cardinal)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                    every { userReader.getById(userId) } returns user
+                    every { clubMemberCardinalReader.findLatestCardinalByClubMember(member) } returns memberCardinal
+
+                    val result = service.findProfileStatus(clubId, userId)
+
+                    result.profileCompleted shouldBe true
+                    result.cardinalAssigned shouldBe true
+                    result.missingFields.shouldBeEmpty()
+                }
+            }
+
+            context("프로필이 미완성이고 기수가 미등록인 경우") {
+                it("profileCompleted=false, cardinalAssigned=false, missingFields에 비어있는 필드 반환") {
+                    val user = User.create(name = "test", email = "test@test.com")
+                    val member = ClubMemberTestFixture.createActiveMember(club = club, user = user)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                    every { userReader.getById(userId) } returns user
+                    every { clubMemberCardinalReader.findLatestCardinalByClubMember(member) } returns null
+
+                    val result = service.findProfileStatus(clubId, userId)
+
+                    result.profileCompleted shouldBe false
+                    result.cardinalAssigned shouldBe false
+                    result.missingFields shouldContainExactlyInAnyOrder
+                        listOf("studentId", "tel", "school", "department")
+                }
+            }
+
+            context("프로필은 완성이나 기수가 미등록인 경우") {
+                it("profileCompleted=true, cardinalAssigned=false") {
+                    val user =
+                        User.create(
+                            name = "test",
+                            email = "test@test.com",
+                            studentId = "20200001",
+                            tel = "01012345678",
+                            school = "가천대학교",
+                            department = "CS",
+                        )
+                    val member = ClubMemberTestFixture.createActiveMember(club = club, user = user)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                    every { userReader.getById(userId) } returns user
+                    every { clubMemberCardinalReader.findLatestCardinalByClubMember(member) } returns null
+
+                    val result = service.findProfileStatus(clubId, userId)
+
+                    result.profileCompleted shouldBe true
+                    result.cardinalAssigned shouldBe false
+                    result.missingFields.shouldBeEmpty()
                 }
             }
         }

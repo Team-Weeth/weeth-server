@@ -1,6 +1,7 @@
 package com.weeth.global.auth.jwt.filter
 
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
+import com.weeth.global.auth.jwt.domain.enums.TokenType
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.model.AuthenticatedUser
 import io.kotest.core.spec.style.DescribeSpec
@@ -32,7 +33,7 @@ class JwtAuthenticationProcessingFilterTest :
         }
 
         describe("doFilterInternal") {
-            it("유효한 토큰이면 SecurityContext에 인증을 저장한다") {
+            it("ACCESS 토큰이면 ROLE_USER 권한을 부여한다") {
                 val request = MockHttpServletRequest().apply { requestURI = "/api/v1/users" }
                 val response = MockHttpServletResponse()
                 val chain = MockFilterChain()
@@ -40,7 +41,7 @@ class JwtAuthenticationProcessingFilterTest :
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
                 every { jwtService.extractClaims("access-token") } returns
-                    JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com")
+                    JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", TokenType.ACCESS)
 
                 filter.doFilter(request, response, chain)
 
@@ -51,6 +52,24 @@ class JwtAuthenticationProcessingFilterTest :
                 principal.id shouldBe 1L
                 principal.email shouldBe "admin@weeth.com"
                 authentication.authorities.any { it.authority == "ROLE_USER" } shouldBe true
+            }
+
+            it("TEMPORARY 토큰이면 ROLE_TEMPORARY 권한을 부여한다") {
+                val request = MockHttpServletRequest().apply { requestURI = "/api/v4/users/terms" }
+                val response = MockHttpServletResponse()
+                val chain = MockFilterChain()
+
+                every { jwtService.extractAccessToken(request) } returns "temp-token"
+                every { jwtProvider.validate("temp-token") } just runs
+                every { jwtService.extractClaims("temp-token") } returns
+                    JwtTokenExtractor.TokenClaims(2L, "new@weeth.com", TokenType.TEMPORARY)
+
+                filter.doFilter(request, response, chain)
+
+                val authentication = SecurityContextHolder.getContext().authentication
+                (authentication == null) shouldBe false
+                authentication.authorities.any { it.authority == "ROLE_TEMPORARY" } shouldBe true
+                authentication.authorities.any { it.authority == "ROLE_USER" } shouldBe false
             }
 
             it("토큰이 없으면 인증을 저장하지 않는다") {

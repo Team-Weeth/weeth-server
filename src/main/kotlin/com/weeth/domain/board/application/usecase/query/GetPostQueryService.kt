@@ -8,6 +8,7 @@ import com.weeth.domain.board.application.exception.PageNotFoundException
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
@@ -20,6 +21,7 @@ import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -30,6 +32,7 @@ import java.time.LocalDateTime
 class GetPostQueryService(
     private val postRepository: PostRepository,
     private val boardRepository: BoardRepository,
+    private val postLikeRepository: PostLikeRepository,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubMemberReader: ClubMemberReader,
     private val commentReader: CommentReader,
@@ -62,8 +65,48 @@ class GetPostQueryService(
         val memberMap = buildMemberMap(clubId, allAuthorIds)
 
         val commentTree = getCommentQueryService.toCommentTreeResponses(comments, memberMap)
+        val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId)
 
-        return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files)
+        return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files, isLiked)
+    }
+
+    fun findAllPosts(
+        clubId: Long,
+        userId: Long,
+        pageNumber: Int,
+        pageSize: Int,
+    ): Slice<PostListResponse> {
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        validatePage(pageNumber, pageSize)
+
+        val accessibleBoardIds =
+            boardRepository
+                .findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                .filter { it.isAccessibleBy(member.memberRole) }
+                .map { it.id }
+
+        val pageable = PageRequest.of(pageNumber, pageSize)
+
+        if (accessibleBoardIds.isEmpty()) {
+            return SliceImpl(emptyList(), pageable, false)
+        }
+
+        val posts = postRepository.findAllActiveByBoardIds(accessibleBoardIds, pageable)
+        val postIds = posts.content.map { it.id }
+        val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
+        val fileExistsByPostId = buildFileExistsMap(postIds)
+        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
+        val now = LocalDateTime.now()
+
+        return posts.map { post ->
+            postMapper.toListResponse(
+                post,
+                memberMap.getValue(post.user.id),
+                fileExistsByPostId[post.id] == true,
+                now,
+                post.id in likedPostIds,
+            )
+        }
     }
 
     fun findPosts(
@@ -83,10 +126,17 @@ class GetPostQueryService(
         val postIds = posts.content.map { it.id }
         val fileExistsByPostId = buildFileExistsMap(postIds)
         val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
+        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
         val now = LocalDateTime.now()
 
         return posts.map { post ->
-            postMapper.toListResponse(post, memberMap.getValue(post.user.id), fileExistsByPostId[post.id] == true, now)
+            postMapper.toListResponse(
+                post,
+                memberMap.getValue(post.user.id),
+                fileExistsByPostId[post.id] == true,
+                now,
+                post.id in likedPostIds,
+            )
         }
     }
 
@@ -111,10 +161,17 @@ class GetPostQueryService(
         val postIds = posts.content.map { it.id }
         val fileExistsByPostId = buildFileExistsMap(postIds)
         val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
+        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
         val now = LocalDateTime.now()
 
         return posts.map { post ->
-            postMapper.toListResponse(post, memberMap.getValue(post.user.id), fileExistsByPostId[post.id] == true, now)
+            postMapper.toListResponse(
+                post,
+                memberMap.getValue(post.user.id),
+                fileExistsByPostId[post.id] == true,
+                now,
+                post.id in likedPostIds,
+            )
         }
     }
 

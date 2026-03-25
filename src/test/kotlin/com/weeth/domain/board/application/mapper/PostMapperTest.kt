@@ -1,5 +1,6 @@
 package com.weeth.domain.board.application.mapper
 
+import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
@@ -21,11 +22,15 @@ class PostMapperTest :
         val mapper = PostMapper(fileAccessUrlPort)
         val now = LocalDateTime.now()
         val user = mockk<User>()
+        val board = mockk<Board>()
         val post = mockk<Post>()
         val authorMember = mockk<ClubMember>()
 
         every { user.id } returns 1L
         every { user.name } returns "테스터"
+
+        every { board.id } returns 10L
+        every { board.name } returns "일반 게시판"
 
         every { authorMember.memberRole } returns MemberRole.USER
         every { authorMember.profileImageStorageKey } returns null
@@ -34,13 +39,15 @@ class PostMapperTest :
         every { post.title } returns "제목"
         every { post.content } returns "내용"
         every { post.user } returns user
+        every { post.board } returns board
         every { post.commentCount } returns 2
+        every { post.likeCount } returns 0
         every { post.createdAt } returns now.minusHours(1)
         every { post.modifiedAt } returns now
 
         describe("toListResponse") {
             it("24시간 이내 생성된 게시글은 isNew=true") {
-                val response = mapper.toListResponse(post, authorMember, hasFile = true, now = now)
+                val response = mapper.toListResponse(post, authorMember, hasFile = true, now = now, isLiked = false)
 
                 response.id shouldBe 1L
                 response.hasFile shouldBe true
@@ -74,7 +81,7 @@ class PostMapperTest :
                         ),
                     )
 
-                val response = mapper.toDetailResponse(post, authorMember, comments, files)
+                val response = mapper.toDetailResponse(post, authorMember, comments, files, isLiked = false)
 
                 response.id shouldBe 1L
                 response.commentCount shouldBe 2

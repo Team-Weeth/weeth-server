@@ -3,11 +3,13 @@ package com.weeth.domain.board.presentation
 import com.weeth.domain.board.application.dto.request.CreatePostRequest
 import com.weeth.domain.board.application.dto.request.UpdatePostRequest
 import com.weeth.domain.board.application.dto.response.PostDetailResponse
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.command.ManagePostUseCase
 import com.weeth.domain.board.application.usecase.command.MarkNoticeReadUseCase
+import com.weeth.domain.board.application.usecase.command.TogglePostLikeUseCase
 import com.weeth.domain.board.application.usecase.query.GetPostQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -38,6 +40,7 @@ class PostController(
     private val managePostUseCase: ManagePostUseCase,
     private val getPostQueryService: GetPostQueryService,
     private val markNoticeReadUseCase: MarkNoticeReadUseCase,
+    private val togglePostLikeUseCase: TogglePostLikeUseCase,
 ) {
     @PostMapping("/{boardId}/posts")
     @Operation(summary = "게시글 작성")
@@ -51,6 +54,20 @@ class PostController(
         CommonResponse.success(
             BoardResponseCode.POST_CREATED_SUCCESS,
             managePostUseCase.save(clubId, boardId, request, userId),
+        )
+
+    @GetMapping("/posts")
+    @Operation(summary = "전체 게시글 조회", description = "클럽 내 접근 가능한 모든 게시판의 게시글을 최신순으로 조회합니다.")
+    fun findAllPosts(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @RequestParam(defaultValue = "0") pageNumber: Int,
+        @RequestParam(defaultValue = "10") pageSize: Int,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Slice<PostListResponse>> =
+        CommonResponse.success(
+            BoardResponseCode.POST_FIND_ALL_BY_CLUB_SUCCESS,
+            getPostQueryService.findAllPosts(clubId, userId, pageNumber, pageSize),
         )
 
     @GetMapping("/{boardId}/posts")
@@ -135,5 +152,16 @@ class PostController(
         return CommonResponse.success(BoardResponseCode.BOARD_NOTICE_READ_SUCCESS)
     }
 
-    // todo: 좋아요 관련 API 추가
+    @PostMapping("/posts/{postId}/like")
+    @Operation(summary = "게시글 좋아요 토글", description = "좋아요가 없으면 추가, 있으면 취소합니다.")
+    fun toggleLike(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable postId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<PostLikeResponse> =
+        CommonResponse.success(
+            BoardResponseCode.POST_LIKE_TOGGLE_SUCCESS,
+            togglePostLikeUseCase.execute(clubId, postId, userId),
+        )
 }

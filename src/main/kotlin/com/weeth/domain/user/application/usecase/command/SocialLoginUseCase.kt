@@ -14,6 +14,7 @@ import com.weeth.domain.user.domain.repository.UserSocialAccountRepository
 import com.weeth.domain.user.domain.vo.SocialAuthResult
 import com.weeth.domain.user.infrastructure.SocialAuthPortRegistry
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
+import com.weeth.global.auth.jwt.domain.enums.TokenType
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -37,24 +38,24 @@ class SocialLoginUseCase(
         provider: SocialProvider,
         request: SocialLoginRequest,
     ): SocialLoginResponse {
-        val authResult = socialAuthPortRegistry.get(provider).authenticate(request.authCode)
-        val (user, isNewUser) = findOrCreateUser(authResult)
+        val user = findOrCreateUser(authResult = socialAuthPortRegistry.get(provider).authenticate(request.authCode))
 
         if (user.isBannedOrLeft()) throw UserInActiveException()
 
-        val token = jwtManageUseCase.create(user.id, user.emailValue)
+        val tokenType = if (user.isRegistered()) TokenType.ACCESS else TokenType.TEMPORARY
+        val token = jwtManageUseCase.create(user.id, user.emailValue, tokenType)
 
-        return userMapper.toSocialLoginResponse(token, isNewUser)
+        return userMapper.toSocialLoginResponse(token, user.isRegistered())
     }
 
     // TODO: 실제 서비스 출시 시 이메일 기반 기존 사용자 연동 및 유저 알림 기능 필요
-    private fun findOrCreateUser(authResult: SocialAuthResult): Pair<User, Boolean> {
+    private fun findOrCreateUser(authResult: SocialAuthResult): User {
         val existing =
             userSocialAccountRepository
                 .findByProviderAndProviderUserId(authResult.provider, authResult.providerUserId)
                 .orElse(null)
 
-        if (existing != null) return existing.user to false
+        if (existing != null) return existing.user
 
         val email =
             authResult.email.takeIf { authResult.emailVerified && it.isNotBlank() } ?: throw EmailNotFoundException()
@@ -64,7 +65,7 @@ class SocialLoginUseCase(
                 User.create(
                     name = authResult.name?.takeIf { it.isNotBlank() } ?: email.substringBefore("@"),
                     email = email,
-                    status = Status.ACTIVE, // 소셜 로그인으로 회원가입 한 경우 바로 가입 승인
+                    status = Status.WAITING, // 소셜 로그인으로 회원가입 한 경우 WAITING으로 초기화 -> 동의 완료시 ACTIVE
                 ),
             )
 
@@ -76,6 +77,6 @@ class SocialLoginUseCase(
             ),
         )
 
-        return user to true
+        return user
     }
 }

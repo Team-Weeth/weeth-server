@@ -29,12 +29,10 @@ class PostEntityTest :
             post.update(
                 newTitle = "변경",
                 newContent = "변경 내용",
-                newCardinalNumber = 7,
             )
 
             post.title shouldBe "변경"
             post.content shouldBe "변경 내용"
-            post.cardinalNumber shouldBe 7
         }
 
         "update는 content가 공백이면 예외를 던진다" {
@@ -44,7 +42,6 @@ class PostEntityTest :
                 post.update(
                     newTitle = "변경",
                     newContent = "   ",
-                    newCardinalNumber = null,
                 )
             }
         }
