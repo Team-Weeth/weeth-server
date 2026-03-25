@@ -76,13 +76,15 @@ class SecurityConfig(
                         AuthorizationDecision(allowed)
                     }.requestMatchers("/actuator/health")
                     .permitAll()
+                    .requestMatchers("/api/v4/users/terms")
+                    .hasAnyRole("TEMPORARY", "USER")
                     // 실제 관리자 권한 검증은 ClubMemberPolicy.requireAdmin()에서 수행
                     .requestMatchers(
                         "/api/v1/admin/**",
                         "/api/v4/admin/**",
-                    ).authenticated()
+                    ).hasRole("USER")
                     .anyRequest()
-                    .authenticated()
+                    .hasRole("USER")
             }.exceptionHandling { exceptionHandling ->
                 exceptionHandling
                     .authenticationEntryPoint(customAuthenticationEntryPoint)
