@@ -1,5 +1,7 @@
 package com.weeth.domain.session.application.usecase.query
 
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
@@ -18,6 +20,7 @@ import java.time.temporal.TemporalAdjusters
 @Transactional(readOnly = true)
 class GetSessionQueryService(
     private val sessionRepository: SessionRepository,
+    private val cardinalReader: CardinalReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val sessionMapper: SessionMapper,
@@ -43,6 +46,10 @@ class GetSessionQueryService(
         cardinal: Int?,
     ): SessionInfosResponse {
         clubPermissionPolicy.requireAdmin(clubId, userId)
+        if (cardinal != null) {
+            cardinalReader.findByClubIdAndCardinalNumber(clubId, cardinal)
+                ?: throw CardinalNotFoundException()
+        }
         val sessions =
             if (cardinal == null) {
                 sessionRepository.findAllByClubIdOrderByStartDesc(clubId)
