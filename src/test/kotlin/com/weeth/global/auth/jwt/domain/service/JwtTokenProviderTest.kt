@@ -1,6 +1,7 @@
 package com.weeth.global.auth.jwt.domain.service
 
 import com.weeth.global.auth.jwt.application.exception.InvalidTokenException
+import com.weeth.global.auth.jwt.domain.enums.TokenType
 import com.weeth.global.config.properties.JwtProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -18,12 +19,21 @@ class JwtTokenProviderTest :
         val jwtProvider = JwtTokenProvider(jwtProperties)
 
         "access token 생성 후 claims를 파싱할 수 있다" {
-            val token = jwtProvider.createAccessToken(1L, "test@weeth.com")
+            val token = jwtProvider.createAccessToken(1L, "test@weeth.com", TokenType.ACCESS)
 
             val claims = jwtProvider.parseClaims(token)
 
             claims.get("id", Number::class.java).toLong() shouldBe 1L
             claims.get("email", String::class.java) shouldBe "test@weeth.com"
+            claims.get("tokenType", String::class.java) shouldBe "ACCESS"
+        }
+
+        "TEMPORARY 토큰은 tokenType 클레임이 TEMPORARY이다" {
+            val token = jwtProvider.createAccessToken(1L, "test@weeth.com", TokenType.TEMPORARY)
+
+            val claims = jwtProvider.parseClaims(token)
+
+            claims.get("tokenType", String::class.java) shouldBe "TEMPORARY"
         }
 
         "유효하지 않은 토큰 검증 시 InvalidTokenException이 발생한다" {
