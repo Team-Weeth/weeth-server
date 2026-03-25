@@ -33,7 +33,7 @@ class TogglePostLikeUseCase(
                 throw PostLikeLockTimeoutException()
             }
 
-        if (post.board.club.id != clubId || post.board.isDeleted) throw PostNotFoundException()
+        if (!post.belongsToClub(clubId)) throw PostNotFoundException()
         if (!post.board.isAccessibleBy(member.memberRole)) throw CategoryAccessDeniedException()
 
         val existingLike = postLikeRepository.findByPostAndUserId(post, userId)
