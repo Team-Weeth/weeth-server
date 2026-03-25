@@ -12,6 +12,8 @@ import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.LeadSelfTransferException
 import com.weeth.domain.club.application.exception.LeadTransferOnlyException
 import com.weeth.domain.club.application.exception.NotLeadException
+import com.weeth.domain.club.application.exception.SelfBanNotAllowedException
+import com.weeth.domain.club.application.exception.SelfRoleChangeNotAllowedException
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
@@ -56,22 +58,37 @@ class AdminClubMemberUseCase(
         userId: Long,
         clubMemberId: Long,
     ) {
+        val adminMember = clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
+        if (adminMember.id == member.id) throw SelfBanNotAllowedException()
+        member.ban()
+    }
+
+    @Transactional
+    fun restore(
+        clubId: Long,
+        userId: Long,
+        clubMemberId: Long,
+    ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
-        member.ban()
+        member.restore()
     }
 
     @Transactional
     fun updateMemberRole(
         clubId: Long,
         userId: Long,
+        clubMemberId: Long,
         request: ClubMemberRoleUpdateRequest,
     ) {
-        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val adminMember = clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val member = clubMemberPolicy.getMemberInClub(clubId, request.clubMemberId)
+        val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
         if (request.memberRole == MemberRole.LEAD) throw LeadTransferOnlyException()
+        if (adminMember.id == member.id) throw SelfRoleChangeNotAllowedException()
         if (member.isLead()) throw LeadTransferOnlyException()
         member.updateRole(request.memberRole)
     }
@@ -124,7 +141,8 @@ class AdminClubMemberUseCase(
 
             if (clubMemberCardinalPolicy.notContains(member, nextCardinal)) {
                 if (clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, nextCardinal)) {
-                    member.resetAttendanceStats() // TODO: 페널티 카운트도 초기화
+                    member.resetAttendanceStats()
+                    member.resetPenaltyCount()
                     initializeAttendances(clubId, member, nextCardinal)
                 }
 

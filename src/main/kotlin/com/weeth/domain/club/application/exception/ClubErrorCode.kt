@@ -53,4 +53,10 @@ enum class ClubErrorCode(
 
     @ExplainError("자기 자신에게 LEAD 권한을 이양하려 할 때 발생합니다.")
     LEAD_SELF_TRANSFER(21115, HttpStatus.BAD_REQUEST, "자기 자신에게 LEAD를 이양할 수 없습니다."),
+
+    @ExplainError("관리자가 자기 자신을 추방하려 할 때 발생합니다.")
+    SELF_BAN_NOT_ALLOWED(21116, HttpStatus.BAD_REQUEST, "자기 자신은 추방할 수 없습니다."),
+
+    @ExplainError("관리자가 자기 자신의 권한을 변경하려 할 때 발생합니다.")
+    SELF_ROLE_CHANGE_NOT_ALLOWED(21117, HttpStatus.BAD_REQUEST, "자기 자신의 권한은 변경할 수 없습니다."),
 }
