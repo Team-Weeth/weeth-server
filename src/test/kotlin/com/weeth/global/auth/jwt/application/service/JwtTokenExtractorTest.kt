@@ -2,6 +2,7 @@ package com.weeth.global.auth.jwt.application.service
 
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
+import com.weeth.global.config.properties.CookieProperties
 import com.weeth.global.config.properties.JwtProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -10,6 +11,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
 
 class JwtTokenExtractorTest :
@@ -21,8 +23,9 @@ class JwtTokenExtractorTest :
                 refresh = JwtProperties.TokenProperties(expiration = 120_000L, header = "Refresh"),
             )
 
+        val cookieProperties = CookieProperties(accessTokenName = "access_token", refreshTokenName = "refresh_token")
         val jwtProvider = mockk<JwtTokenProvider>()
-        val jwtTokenExtractor = JwtTokenExtractor(jwtProperties, jwtProvider)
+        val jwtTokenExtractor = JwtTokenExtractor(jwtProperties, jwtProvider, cookieProperties)
 
         beforeTest {
             clearMocks(jwtProvider)
@@ -40,8 +43,38 @@ class JwtTokenExtractorTest :
         }
 
         describe("extractRefreshToken") {
-            it("헤더가 없으면 TokenNotFoundException이 발생한다") {
+            it("Cookie에서 refresh token을 우선 추출한다") {
                 val request = mockk<HttpServletRequest>()
+                every { request.cookies } returns arrayOf(Cookie("refresh_token", "cookie-refresh-token"))
+
+                val token = jwtTokenExtractor.extractRefreshToken(request)
+
+                token shouldBe "cookie-refresh-token"
+            }
+
+            it("Cookie가 없으면 Header에서 refresh token을 추출한다") {
+                val request = mockk<HttpServletRequest>()
+                every { request.cookies } returns null
+                every { request.getHeader("Refresh") } returns "Bearer header-refresh-token"
+
+                val token = jwtTokenExtractor.extractRefreshToken(request)
+
+                token shouldBe "header-refresh-token"
+            }
+
+            it("Cookie가 빈 값이면 Header에서 refresh token을 추출한다") {
+                val request = mockk<HttpServletRequest>()
+                every { request.cookies } returns arrayOf(Cookie("refresh_token", ""))
+                every { request.getHeader("Refresh") } returns "Bearer header-refresh-token"
+
+                val token = jwtTokenExtractor.extractRefreshToken(request)
+
+                token shouldBe "header-refresh-token"
+            }
+
+            it("Cookie와 Header 둘 다 없으면 TokenNotFoundException이 발생한다") {
+                val request = mockk<HttpServletRequest>()
+                every { request.cookies } returns null
                 every { request.getHeader("Refresh") } returns null
 
                 shouldThrow<TokenNotFoundException> {
