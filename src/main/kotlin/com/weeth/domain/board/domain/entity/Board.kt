@@ -29,6 +29,7 @@ class Board(
 ) : BaseEntity() {
     init {
         require(name.isNotBlank()) { "게시판 이름은 공백이 될 수 없습니다" }
+        require(type != BoardType.ALL) { "ALL은 가상 타입으로 게시판을 생성할 수 없습니다" }
     }
 
     @ManyToOne(fetch = FetchType.LAZY)

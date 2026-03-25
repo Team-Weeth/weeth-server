@@ -38,4 +38,7 @@ enum class BoardErrorCode(
 
     @ExplainError("동일한 클럽 내에 같은 이름의 게시판이 이미 존재할 때 발생합니다.")
     DUPLICATE_BOARD_NAME(20409, HttpStatus.CONFLICT, "이미 존재하는 게시판 이름입니다."),
+
+    @ExplainError("공지사항 등 고정 게시판을 순서 변경 요청에 포함할 때 발생합니다.")
+    FIXED_BOARD_NOT_REORDERABLE(20410, HttpStatus.BAD_REQUEST, "고정 게시판은 순서를 변경할 수 없습니다."),
 }

@@ -8,8 +8,10 @@ import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.entity.Board
+import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.repository.ClubReader
@@ -126,9 +128,14 @@ class ManageBoardUseCase(
         val uniqueIds = request.boardIds.toSet()
         if (uniqueIds.size != request.boardIds.size) throw DuplicateBoardIdException()
 
-        // 클럽의 모든 활성 게시판이 요청에 포함되어야 순서가 일관성 있게 유지됨
         val allActiveBoards = boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
-        val boardById = allActiveBoards.associateBy { it.id }
+        val (fixedBoards, reorderableBoards) = allActiveBoards.partition { it.type == BoardType.NOTICE }
+
+        // 고정 게시판 ID가 요청에 포함되면 명확한 에러 반환
+        val fixedIds = fixedBoards.mapTo(mutableSetOf()) { it.id }
+        if (uniqueIds.any { it in fixedIds }) throw FixedBoardNotReorderableException()
+
+        val boardById = reorderableBoards.associateBy { it.id }
         if (boardById.keys != uniqueIds) throw BoardNotInClubException()
 
         request.boardIds.forEachIndexed { index, boardId ->
