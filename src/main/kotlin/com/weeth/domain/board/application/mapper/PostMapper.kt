@@ -32,6 +32,8 @@ class PostMapper(
         isLiked: Boolean,
     ) = PostDetailResponse(
         id = post.id,
+        boardId = post.board.id,
+        boardName = post.board.name,
         author = UserInfo.of(post.user, authorMember.memberRole, resolveProfileImage(authorMember)),
         title = post.title,
         content = post.content,
@@ -51,6 +53,8 @@ class PostMapper(
     ) = PostListResponse(
         id = post.id,
         author = UserInfo.of(post.user, authorMember.memberRole, resolveProfileImage(authorMember)),
+        boardId = post.board.id,
+        boardName = post.board.name,
         title = post.title,
         content = post.content,
         time = post.modifiedAt,

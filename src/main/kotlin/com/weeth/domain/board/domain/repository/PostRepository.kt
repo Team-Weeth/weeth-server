@@ -19,7 +19,23 @@ import java.time.LocalDateTime
 interface PostRepository :
     JpaRepository<Post, Long>,
     PostReader {
-    @EntityGraph(attributePaths = ["user"])
+    @EntityGraph(attributePaths = ["user", "board"])
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.board.id IN :boardIds
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    fun findAllActiveByBoardIds(
+        @Param("boardIds") boardIds: List<Long>,
+        pageable: Pageable,
+    ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["user", "board"])
     @Query(
         """
         SELECT p
@@ -64,7 +80,7 @@ interface PostRepository :
         @Param("id") id: Long,
     ): Post?
 
-    @EntityGraph(attributePaths = ["user"])
+    @EntityGraph(attributePaths = ["user", "board"])
     @Query(
         """
         SELECT p
@@ -84,6 +100,11 @@ interface PostRepository :
     override fun getById(postId: Long): Post = findActivePostById(postId) ?: throw PostNotFoundException()
 
     override fun findActiveById(postId: Long): Post? = findActivePostById(postId)
+
+    override fun findRecentByBoardIds(
+        boardIds: List<Long>,
+        pageable: Pageable,
+    ): Slice<Post> = findAllActiveByBoardIds(boardIds, pageable)
 
     @EntityGraph(attributePaths = ["user"])
     @Query(
@@ -140,24 +161,6 @@ interface PostRepository :
         """
         SELECT p
         FROM Post p
-        WHERE p.board.club.id = :clubId
-          AND p.board.type <> :excludedType
-          AND p.isDeleted = false
-          AND p.board.isDeleted = false
-        ORDER BY p.createdAt DESC, p.id DESC
-        """,
-    )
-    override fun findRecentByClubIdExcludingBoardType(
-        @Param("clubId") clubId: Long,
-        @Param("excludedType") excludedType: BoardType,
-        pageable: Pageable,
-    ): Slice<Post>
-
-    @EntityGraph(attributePaths = ["user"])
-    @Query(
-        """
-        SELECT p
-        FROM Post p
         LEFT JOIN LastNoticeRead lr ON lr.user.id = :userId AND lr.board.id = p.board.id
         WHERE p.board.club.id = :clubId
           AND p.board.type = :boardType
@@ -182,4 +185,17 @@ interface PostRepository :
         boardType: BoardType,
         since: LocalDateTime,
     ): Post? = findUnreadNoticeSince(clubId, userId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
+
+    @Query(
+        """
+        SELECT new com.weeth.domain.board.domain.repository.BoardPostCount(p.board.id, COUNT(p))
+        FROM Post p
+        WHERE p.board.id IN :boardIds
+          AND p.isDeleted = false
+        GROUP BY p.board.id
+        """,
+    )
+    fun countActivePostsByBoardIds(
+        @Param("boardIds") boardIds: List<Long>,
+    ): List<BoardPostCount>
 }

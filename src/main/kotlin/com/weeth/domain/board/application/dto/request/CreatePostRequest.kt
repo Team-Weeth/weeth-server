@@ -15,8 +15,6 @@ data class CreatePostRequest(
     @field:Schema(description = "게시글 내용", example = "내용입니다.")
     @field:NotBlank
     val content: String,
-    @field:Schema(description = "기수", nullable = true)
-    val cardinalNumber: Int? = null,
     @field:Schema(description = "첨부 파일 목록", nullable = true)
     @field:Valid
     val files: List<@NotNull FileSaveRequest>? = null,

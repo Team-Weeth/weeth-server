@@ -12,6 +12,7 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
@@ -29,6 +30,7 @@ class ManagePostUseCase(
     private val boardRepository: BoardRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val cardinalReader: CardinalReader,
     private val fileRepository: FileRepository,
     private val fileReader: FileReader,
     private val fileMapper: FileMapper,
@@ -46,13 +48,14 @@ class ManagePostUseCase(
         val board = findBoardInClub(boardId, clubId)
         validateWritePermission(board, member)
 
+        val currentCardinalNumber = cardinalReader.findInProgressByClubId(clubId)?.cardinalNumber
         val post =
             Post.create(
                 title = request.title,
                 content = request.content,
                 user = user,
                 board = board,
-                cardinalNumber = request.cardinalNumber, // TODO: 백엔드에서 최신 기수 넣어주기
+                cardinalNumber = currentCardinalNumber,
             )
 
         val savedPost = postRepository.save(post)
@@ -77,7 +80,6 @@ class ManagePostUseCase(
         post.update(
             newTitle = request.title,
             newContent = request.content,
-            newCardinalNumber = request.cardinalNumber,
         )
 
         replacePostFiles(post, request.files)

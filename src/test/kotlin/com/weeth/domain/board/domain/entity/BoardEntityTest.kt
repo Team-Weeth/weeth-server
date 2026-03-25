@@ -4,6 +4,7 @@ import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -89,5 +90,29 @@ class BoardEntityTest :
 
             board.restore()
             board.isDeleted shouldBe false
+        }
+
+        "reorder는 displayOrder를 변경한다" {
+            val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+
+            board.reorder(3)
+
+            board.displayOrder shouldBe 3
+        }
+
+        "reorder는 음수 순서이면 예외를 던진다" {
+            val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+
+            shouldThrow<IllegalArgumentException> {
+                board.reorder(-1)
+            }
+        }
+
+        "ALL 타입으로 게시판을 생성하면 예외를 던진다" {
+            val club = ClubTestFixture.createClub()
+
+            shouldThrow<IllegalArgumentException> {
+                Board(club = club, name = "전체", type = BoardType.ALL)
+            }
         }
     })

@@ -1,5 +1,7 @@
 package com.weeth.domain.club.application.usecase.command
 
+import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
@@ -34,6 +36,7 @@ class ManageClubUseCaseTest :
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val cardinalRepository = mockk<CardinalRepository>()
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>()
+        val boardRepository = mockk<BoardRepository>()
         val userReader = mockk<UserReader>()
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
@@ -43,6 +46,7 @@ class ManageClubUseCaseTest :
                 clubMemberRepository,
                 cardinalRepository,
                 clubMemberCardinalRepository,
+                boardRepository,
                 userReader,
                 clubJoinPolicy,
                 clubPermissionPolicy,
@@ -57,6 +61,7 @@ class ManageClubUseCaseTest :
                 clubMemberRepository,
                 cardinalRepository,
                 clubMemberCardinalRepository,
+                boardRepository,
                 userReader,
                 clubJoinPolicy,
                 clubPermissionPolicy,
@@ -65,6 +70,7 @@ class ManageClubUseCaseTest :
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { cardinalRepository.saveAll(any<List<Cardinal>>()) } answers { firstArg() }
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
+            every { boardRepository.save(any()) } answers { firstArg() }
             every { clubJoinPolicy.validateCreateLimit(any()) } just Runs
         }
 
@@ -138,6 +144,31 @@ class ManageClubUseCaseTest :
                     cardinals.size shouldBe 1
                     cardinals[0].cardinalNumber shouldBe 1
                     cardinals[0].status shouldBe CardinalStatus.IN_PROGRESS
+                }
+            }
+
+            it("클럽 생성 시 공지사항 게시판이 displayOrder=0으로 자동 생성된다") {
+                every { userReader.getByIdWithLock(10L) } returns user
+
+                useCase.create(
+                    10L,
+                    ClubCreateRequest(
+                        name = "테스트",
+                        schoolName = "가천대",
+                        currentCardinal = 1,
+                        contactPhoneNumber = "01000000000",
+                        primaryContact = PrimaryContact.PHONE,
+                    ),
+                )
+
+                verify(exactly = 1) {
+                    boardRepository.save(
+                        match { board ->
+                            board.type == BoardType.NOTICE &&
+                                board.name == "공지사항" &&
+                                board.displayOrder == 0
+                        },
+                    )
                 }
             }
 

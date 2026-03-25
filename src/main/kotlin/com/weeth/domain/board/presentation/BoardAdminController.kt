@@ -1,6 +1,7 @@
 package com.weeth.domain.board.presentation
 
 import com.weeth.domain.board.application.dto.request.CreateBoardRequest
+import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -83,6 +85,18 @@ class BoardAdminController(
             BoardResponseCode.BOARD_UPDATED_SUCCESS,
             manageBoardUseCase.update(clubId, boardId, request, userId),
         )
+
+    @PutMapping("/order")
+    @Operation(summary = "게시판 순서 변경", description = "boardIds 배열의 순서대로 게시판 표시 순서를 저장합니다.")
+    fun reorderBoards(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @RequestBody @Valid request: ReorderBoardsRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void?> {
+        manageBoardUseCase.reorder(clubId, request, userId)
+        return CommonResponse.success(BoardResponseCode.BOARD_REORDERED_SUCCESS)
+    }
 
     @DeleteMapping("/{boardId}")
     @Operation(summary = "게시판 삭제")

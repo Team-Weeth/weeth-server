@@ -1,5 +1,9 @@
 package com.weeth.domain.club.application.usecase.command
 
+import com.weeth.domain.board.domain.entity.Board
+import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
@@ -32,6 +36,7 @@ class ManageClubUseCase(
     private val clubMemberRepository: ClubMemberRepository,
     private val cardinalRepository: CardinalRepository,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
+    private val boardRepository: BoardRepository,
     private val userReader: UserReader,
     private val clubJoinPolicy: ClubJoinPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
@@ -73,6 +78,16 @@ class ManageClubUseCase(
             )
 
         clubRepository.save(club)
+
+        // 공지사항 게시판 자동 생성 (관리자만 작성 가능, displayOrder=0)
+        val noticeBoard =
+            Board(
+                club = club,
+                name = "공지사항",
+                type = BoardType.NOTICE,
+                config = BoardConfig(writePermission = MemberRole.ADMIN),
+            )
+        boardRepository.save(noticeBoard)
 
         val leadMember =
             ClubMember

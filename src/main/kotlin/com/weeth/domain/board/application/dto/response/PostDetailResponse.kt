@@ -9,6 +9,10 @@ import java.time.LocalDateTime
 data class PostDetailResponse(
     @field:Schema(description = "게시글 ID")
     val id: Long,
+    @field:Schema(description = "게시판 ID")
+    val boardId: Long,
+    @field:Schema(description = "게시판 이름")
+    val boardName: String,
     @field:Schema(description = "작성자 정보")
     val author: UserInfo,
     @field:Schema(description = "제목")

@@ -56,6 +56,20 @@ class PostController(
             managePostUseCase.save(clubId, boardId, request, userId),
         )
 
+    @GetMapping("/posts")
+    @Operation(summary = "전체 게시글 조회", description = "클럽 내 접근 가능한 모든 게시판의 게시글을 최신순으로 조회합니다.")
+    fun findAllPosts(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @RequestParam(defaultValue = "0") pageNumber: Int,
+        @RequestParam(defaultValue = "10") pageSize: Int,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Slice<PostListResponse>> =
+        CommonResponse.success(
+            BoardResponseCode.POST_FIND_ALL_BY_CLUB_SUCCESS,
+            getPostQueryService.findAllPosts(clubId, userId, pageNumber, pageSize),
+        )
+
     @GetMapping("/{boardId}/posts")
     @Operation(summary = "게시글 목록 조회")
     fun findPosts(

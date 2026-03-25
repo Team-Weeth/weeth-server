@@ -21,6 +21,7 @@ import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
+import org.springframework.data.domain.SliceImpl
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -67,6 +68,45 @@ class GetPostQueryService(
         val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId)
 
         return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files, isLiked)
+    }
+
+    fun findAllPosts(
+        clubId: Long,
+        userId: Long,
+        pageNumber: Int,
+        pageSize: Int,
+    ): Slice<PostListResponse> {
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        validatePage(pageNumber, pageSize)
+
+        val accessibleBoardIds =
+            boardRepository
+                .findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                .filter { it.isAccessibleBy(member.memberRole) }
+                .map { it.id }
+
+        val pageable = PageRequest.of(pageNumber, pageSize)
+
+        if (accessibleBoardIds.isEmpty()) {
+            return SliceImpl(emptyList(), pageable, false)
+        }
+
+        val posts = postRepository.findAllActiveByBoardIds(accessibleBoardIds, pageable)
+        val postIds = posts.content.map { it.id }
+        val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
+        val fileExistsByPostId = buildFileExistsMap(postIds)
+        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
+        val now = LocalDateTime.now()
+
+        return posts.map { post ->
+            postMapper.toListResponse(
+                post,
+                memberMap.getValue(post.user.id),
+                fileExistsByPostId[post.id] == true,
+                now,
+                post.id in likedPostIds,
+            )
+        }
     }
 
     fun findPosts(
