@@ -41,4 +41,10 @@ enum class BoardErrorCode(
 
     @ExplainError("공지사항 등 고정 게시판을 순서 변경 요청에 포함할 때 발생합니다.")
     FIXED_BOARD_NOT_REORDERABLE(20410, HttpStatus.BAD_REQUEST, "고정 게시판은 순서를 변경할 수 없습니다."),
+
+    @ExplainError("공지사항 등 고정 게시판의 이름 변경을 시도할 때 발생합니다.")
+    FIXED_BOARD_NOT_RENAMABLE(20411, HttpStatus.BAD_REQUEST, "고정 게시판의 이름은 변경할 수 없습니다."),
+
+    @ExplainError("삭제된 게시판을 순서 변경 요청에 포함할 때 발생합니다.")
+    DELETED_BOARD_NOT_REORDERABLE(20412, HttpStatus.BAD_REQUEST, "삭제된 게시판의 순서는 변경할 수 없습니다."),
 }

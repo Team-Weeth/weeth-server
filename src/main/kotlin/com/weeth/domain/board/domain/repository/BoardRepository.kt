@@ -26,6 +26,9 @@ interface BoardRepository :
 
     fun findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId: Long): List<Board>
 
+    @Query("SELECT COALESCE(MAX(b.displayOrder), -1) FROM Board b WHERE b.club.id = :clubId AND b.isDeleted = false")
+    fun findMaxActiveDisplayOrderByClubId(clubId: Long): Int
+
     @Query("SELECT COALESCE(MAX(b.displayOrder), -1) FROM Board b WHERE b.club.id = :clubId")
     fun findMaxDisplayOrderByClubId(clubId: Long): Int
 

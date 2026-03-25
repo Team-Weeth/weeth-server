@@ -6,8 +6,10 @@ import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
+import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotRenamableException
 import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.entity.Board
@@ -47,7 +49,7 @@ class ManageBoardUseCase(
             throw DuplicateBoardNameException()
         }
 
-        val nextOrder = boardRepository.findMaxDisplayOrderByClubId(clubId) + 1
+        val nextOrder = boardRepository.findMaxActiveDisplayOrderByClubId(clubId) + 1
         val board =
             Board(
                 club = club,
@@ -78,6 +80,7 @@ class ManageBoardUseCase(
         if (board.club.id != clubId) throw BoardNotFoundException()
 
         request.name?.let {
+            if (board.type == BoardType.NOTICE) throw FixedBoardNotRenamableException()
             if (boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(
                     clubId,
                     it,
@@ -114,7 +117,9 @@ class ManageBoardUseCase(
         val board = findBoard(boardId)
 
         if (board.club.id != clubId) throw BoardNotFoundException()
+        val maxOrder = boardRepository.findMaxDisplayOrderByClubId(clubId)
         board.markDeleted()
+        board.reorder(maxOrder + 1)
     }
 
     @Transactional
@@ -128,18 +133,26 @@ class ManageBoardUseCase(
         val uniqueIds = request.boardIds.toSet()
         if (uniqueIds.size != request.boardIds.size) throw DuplicateBoardIdException()
 
-        val allActiveBoards = boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
-        val (fixedBoards, reorderableBoards) = allActiveBoards.partition { it.type == BoardType.NOTICE }
+        val allBoards = boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
+        val (activeBoards, deletedBoards) = allBoards.partition { !it.isDeleted }
+
+        // 삭제된 게시판 ID가 요청에 포함되면 명확한 에러 반환
+        val deletedIds = deletedBoards.mapTo(mutableSetOf()) { it.id }
+        if (uniqueIds.any { it in deletedIds }) throw DeletedBoardNotReorderableException()
+
+        val (fixedBoards, reorderableBoards) = activeBoards.partition { it.type == BoardType.NOTICE }
 
         // 고정 게시판 ID가 요청에 포함되면 명확한 에러 반환
         val fixedIds = fixedBoards.mapTo(mutableSetOf()) { it.id }
         if (uniqueIds.any { it in fixedIds }) throw FixedBoardNotReorderableException()
 
         val boardById = reorderableBoards.associateBy { it.id }
-        if (boardById.keys != uniqueIds) throw BoardNotInClubException()
+        if (uniqueIds.any { it !in boardById }) throw BoardNotInClubException()
 
+        // 요청된 게시판들의 현재 displayOrder 슬롯을 정렬 후 재배분 (부분 재정렬 시 충돌 방지)
+        val slots = request.boardIds.map { boardById.getValue(it).displayOrder }.sorted()
         request.boardIds.forEachIndexed { index, boardId ->
-            boardById.getValue(boardId).reorder(index)
+            boardById.getValue(boardId).reorder(slots[index])
         }
     }
 

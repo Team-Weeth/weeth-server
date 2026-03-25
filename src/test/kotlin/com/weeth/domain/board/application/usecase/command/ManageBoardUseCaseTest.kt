@@ -5,8 +5,10 @@ import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
+import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotRenamableException
 import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
@@ -41,6 +43,7 @@ class ManageBoardUseCaseTest :
             clearMocks(boardRepository, clubReader, clubPermissionPolicy)
             every { boardRepository.save(any()) } answers { firstArg() }
             every { clubReader.getClubById(clubId) } returns club
+            every { boardRepository.findMaxActiveDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(any(), any(), any()) } returns false
@@ -67,7 +70,7 @@ class ManageBoardUseCaseTest :
             }
 
             it("기존 게시판이 없으면 displayOrder 0으로 생성한다") {
-                every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
+                every { boardRepository.findMaxActiveDisplayOrderByClubId(clubId) } returns -1
                 val request =
                     CreateBoardRequest(
                         name = "첫 게시판",
@@ -83,7 +86,7 @@ class ManageBoardUseCaseTest :
             }
 
             it("기존 게시판이 있으면 마지막 순서 다음으로 생성한다") {
-                every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns 2
+                every { boardRepository.findMaxActiveDisplayOrderByClubId(clubId) } returns 2
                 val request =
                     CreateBoardRequest(
                         name = "새 게시판",
@@ -158,27 +161,59 @@ class ManageBoardUseCaseTest :
                     useCase.update(clubId, 1L, UpdateBoardRequest(name = "중복 이름"), userId)
                 }
             }
+
+            it("공지사항 게시판의 이름을 변경하면 예외를 던진다") {
+                val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns noticeBoard
+
+                shouldThrow<FixedBoardNotRenamableException> {
+                    useCase.update(clubId, 1L, UpdateBoardRequest(name = "새 이름"), userId)
+                }
+            }
         }
 
         describe("delete") {
-            it("게시판을 soft delete 처리한다") {
+            it("게시판을 soft delete 처리하고 displayOrder를 맨 아래로 이동한다") {
                 val board = BoardTestFixture.create(club = club, name = "일반", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
+                every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns 2
 
                 useCase.delete(clubId, 1L, userId)
 
                 board.isDeleted shouldBe true
+                board.displayOrder shouldBe 3
                 verify(exactly = 0) { boardRepository.delete(any()) }
             }
         }
 
         describe("reorder") {
             it("요청 순서대로 displayOrder를 저장한다") {
-                val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
-                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
-                val board3 = BoardTestFixture.create(id = 3L, club = club, name = "C", type = BoardType.GENERAL)
+                val board1 =
+                    BoardTestFixture
+                        .create(
+                            id = 1L,
+                            club = club,
+                            name = "A",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(0) }
+                val board2 =
+                    BoardTestFixture
+                        .create(
+                            id = 2L,
+                            club = club,
+                            name = "B",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(1) }
+                val board3 =
+                    BoardTestFixture
+                        .create(
+                            id = 3L,
+                            club = club,
+                            name = "C",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(2) }
                 every {
-                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                    boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
                 } returns listOf(board1, board2, board3)
 
                 useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(2L, 3L, 1L)), userId)
@@ -188,18 +223,41 @@ class ManageBoardUseCaseTest :
                 board1.displayOrder shouldBe 2
             }
 
-            it("클럽의 일부 게시판만 요청하면 예외를 던진다") {
-                val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
-                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
-                val board3 = BoardTestFixture.create(id = 3L, club = club, name = "C", type = BoardType.GENERAL)
-                // 클럽에 3개 게시판이 있는데 2개만 요청
+            it("클럽 게시판 일부만 요청해도 해당 게시판끼리 순서를 교환한다") {
+                val board1 =
+                    BoardTestFixture
+                        .create(
+                            id = 1L,
+                            club = club,
+                            name = "A",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(0) }
+                val board2 =
+                    BoardTestFixture
+                        .create(
+                            id = 2L,
+                            club = club,
+                            name = "B",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(1) }
+                val board3 =
+                    BoardTestFixture
+                        .create(
+                            id = 3L,
+                            club = club,
+                            name = "C",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(2) }
                 every {
-                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                    boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
                 } returns listOf(board1, board2, board3)
 
-                shouldThrow<BoardNotInClubException> {
-                    useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 2L)), userId)
-                }
+                // board1(0)과 board3(2)만 swap — board2는 변경 없음
+                useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(3L, 1L)), userId)
+
+                board3.displayOrder shouldBe 0
+                board1.displayOrder shouldBe 2
+                board2.displayOrder shouldBe 1
             }
 
             it("다른 클럽 게시판 ID가 포함되면 예외를 던진다") {
@@ -207,7 +265,7 @@ class ManageBoardUseCaseTest :
                 val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
                 // 클럽에 2개 게시판이 있는데 존재하지 않는 ID(99L) 요청
                 every {
-                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                    boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
                 } returns listOf(board1, board2)
 
                 shouldThrow<BoardNotInClubException> {
@@ -221,7 +279,7 @@ class ManageBoardUseCaseTest :
                     useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 1L, 2L)), userId)
                 }
                 verify(exactly = 0) {
-                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(any())
+                    boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(any())
                 }
             }
 
@@ -229,7 +287,7 @@ class ManageBoardUseCaseTest :
                 val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
                 val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
                 every {
-                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
+                    boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
                 } returns listOf(noticeBoard, board2)
 
                 shouldThrow<FixedBoardNotReorderableException> {
@@ -237,19 +295,63 @@ class ManageBoardUseCaseTest :
                 }
             }
 
-            it("공지사항은 순서 변경 대상에서 제외되므로 요청에 포함하지 않아야 한다") {
-                val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
-                val board2 = BoardTestFixture.create(id = 2L, club = club, name = "B", type = BoardType.GENERAL)
-                val board3 = BoardTestFixture.create(id = 3L, club = club, name = "C", type = BoardType.GENERAL)
+            it("삭제된 게시판 ID를 요청에 포함하면 예외를 던진다") {
+                val board1 = BoardTestFixture.create(id = 1L, club = club, name = "A", type = BoardType.GENERAL)
+                val deletedBoard =
+                    BoardTestFixture
+                        .create(
+                            id = 2L,
+                            club = club,
+                            name = "B",
+                            type = BoardType.GENERAL,
+                        ).also {
+                            it.markDeleted()
+                        }
                 every {
-                    boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
-                } returns listOf(noticeBoard, board2, board3)
+                    boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
+                } returns listOf(board1, deletedBoard)
 
-                // 공지사항 제외하고 나머지 2개만 요청
+                shouldThrow<DeletedBoardNotReorderableException> {
+                    useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(1L, 2L)), userId)
+                }
+            }
+
+            it("요청한 게시판끼리 슬롯을 교환하고 나머지는 그대로 유지한다") {
+                val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
+                val board2 =
+                    BoardTestFixture
+                        .create(
+                            id = 2L,
+                            club = club,
+                            name = "B",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(0) }
+                val board3 =
+                    BoardTestFixture
+                        .create(
+                            id = 3L,
+                            club = club,
+                            name = "C",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(1) }
+                val board4 =
+                    BoardTestFixture
+                        .create(
+                            id = 4L,
+                            club = club,
+                            name = "D",
+                            type = BoardType.GENERAL,
+                        ).also { it.reorder(2) }
+                every {
+                    boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
+                } returns listOf(noticeBoard, board2, board3, board4)
+
+                // board3(1)과 board2(0)를 swap — board4는 변경 없음
                 useCase.reorder(clubId, ReorderBoardsRequest(boardIds = listOf(3L, 2L)), userId)
 
                 board3.displayOrder shouldBe 0
                 board2.displayOrder shouldBe 1
+                board4.displayOrder shouldBe 2
             }
         }
     })
