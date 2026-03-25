@@ -31,7 +31,8 @@ interface UserRepository :
 
     fun existsByTel(tel: PhoneNumber): Boolean
 
-    fun existsByStudentIdAndIdIsNot(
+    fun existsBySchoolAndStudentIdAndIdIsNot(
+        school: String,
         studentId: String,
         id: Long,
     ): Boolean
