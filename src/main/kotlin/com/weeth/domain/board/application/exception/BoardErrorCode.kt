@@ -34,5 +34,5 @@ enum class BoardErrorCode(
     BOARD_NOT_IN_CLUB(20407, HttpStatus.FORBIDDEN, "해당 클럽에 속한 게시판이 아닙니다."),
 
     @ExplainError("좋아요 처리 중 동시 요청이 많아 락 획득에 실패했을 때 발생합니다.")
-    POST_LIKE_LOCK_TIMEOUT(20408, HttpStatus.CONFLICT, "잠시 후 다시 시도해주세요."),
+    POST_LIKE_LOCK_TIMEOUT(20408, HttpStatus.TOO_MANY_REQUESTS, "잠시 후 다시 시도해주세요."),
 }
