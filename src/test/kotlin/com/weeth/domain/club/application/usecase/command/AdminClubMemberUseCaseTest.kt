@@ -11,6 +11,8 @@ import com.weeth.domain.club.application.exception.LeadSelfTransferException
 import com.weeth.domain.club.application.exception.LeadTransferOnlyException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.application.exception.NotLeadException
+import com.weeth.domain.club.application.exception.SelfBanNotAllowedException
+import com.weeth.domain.club.application.exception.SelfRoleChangeNotAllowedException
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
@@ -98,13 +100,36 @@ class AdminClubMemberUseCaseTest :
 
         describe("ban") {
             it("같은 동아리 소속 멤버를 추방한다") {
-                val member = ClubMemberTestFixture.createActiveMember()
+                ReflectionTestUtils.setField(adminMember, "id", 10L)
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
 
                 useCase.ban(1L, 10L, 20L)
 
                 member.memberStatus shouldBe MemberStatus.BANNED
+            }
+
+            it("자기 자신은 추방할 수 없다") {
+                ReflectionTestUtils.setField(adminMember, "id", 10L)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getMemberInClub(1L, 10L) } returns adminMember
+
+                shouldThrow<SelfBanNotAllowedException> {
+                    useCase.ban(1L, 10L, 10L)
+                }
+            }
+        }
+
+        describe("restore") {
+            it("추방된 멤버를 복구한다") {
+                val member = ClubMemberTestFixture.createBannedMember(club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+
+                useCase.restore(1L, 10L, 20L)
+
+                member.memberStatus shouldBe MemberStatus.ACTIVE
             }
         }
 
@@ -117,7 +142,8 @@ class AdminClubMemberUseCaseTest :
                 useCase.updateMemberRole(
                     1L,
                     10L,
-                    ClubMemberRoleUpdateRequest(clubMemberId = 20L, memberRole = MemberRole.ADMIN),
+                    20L,
+                    ClubMemberRoleUpdateRequest(memberRole = MemberRole.ADMIN),
                 )
 
                 member.memberRole shouldBe MemberRole.ADMIN
@@ -132,7 +158,8 @@ class AdminClubMemberUseCaseTest :
                     useCase.updateMemberRole(
                         1L,
                         10L,
-                        ClubMemberRoleUpdateRequest(clubMemberId = 20L, memberRole = MemberRole.LEAD),
+                        20L,
+                        ClubMemberRoleUpdateRequest(memberRole = MemberRole.LEAD),
                     )
                 }
             }
@@ -146,7 +173,23 @@ class AdminClubMemberUseCaseTest :
                     useCase.updateMemberRole(
                         1L,
                         10L,
-                        ClubMemberRoleUpdateRequest(clubMemberId = 20L, memberRole = MemberRole.ADMIN),
+                        20L,
+                        ClubMemberRoleUpdateRequest(memberRole = MemberRole.ADMIN),
+                    )
+                }
+            }
+
+            it("자기 자신의 권한은 변경할 수 없다") {
+                ReflectionTestUtils.setField(adminMember, "id", 10L)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getMemberInClub(1L, 10L) } returns adminMember
+
+                shouldThrow<SelfRoleChangeNotAllowedException> {
+                    useCase.updateMemberRole(
+                        1L,
+                        10L,
+                        10L,
+                        ClubMemberRoleUpdateRequest(memberRole = MemberRole.USER),
                     )
                 }
             }

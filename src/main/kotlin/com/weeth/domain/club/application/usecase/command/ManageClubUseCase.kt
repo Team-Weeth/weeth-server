@@ -22,6 +22,11 @@ import com.weeth.domain.club.domain.service.ClubCodePolicy
 import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.domain.vo.ClubContact
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
+import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -40,12 +45,12 @@ class ManageClubUseCase(
     private val userReader: UserReader,
     private val clubJoinPolicy: ClubJoinPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
+    private val fileRepository: FileRepository,
 ) {
     /**
      * 새로운 동아리를 생성
      * 생성자는 자동으로 LEAD 권한 설정
      * 1기부터 currentCardinal기까지 Cardinal을 자동 생성하고, LEAD를 최신 기수에 배정
-     * TODO: CDN 도입을 위해 File로 저장하기.
      */
     @Transactional
     fun create(
@@ -73,11 +78,14 @@ class ManageClubUseCase(
                 schoolName = request.schoolName,
                 clubContact = clubContact,
                 description = request.description,
-                profileImageStorageKey = request.profileImageStorageKey,
-                backgroundImageStorageKey = request.backgroundImageStorageKey,
+                profileImageStorageKey = request.profileImage?.storageKey,
+                backgroundImageStorageKey = request.backgroundImage?.storageKey,
             )
 
         clubRepository.save(club)
+
+        saveFileIfPresent(request.profileImage, FileOwnerType.CLUB_PROFILE, club.id)
+        saveFileIfPresent(request.backgroundImage, FileOwnerType.CLUB_BACKGROUND, club.id)
 
         // 공지사항 게시판 자동 생성 (관리자만 작성 가능, displayOrder=0)
         val noticeBoard =
@@ -134,6 +142,16 @@ class ManageClubUseCase(
             }
         }
 
+        request.profileImage?.let { image ->
+            markExistingFilesDeleted(FileOwnerType.CLUB_PROFILE, clubId)
+            saveFile(image, FileOwnerType.CLUB_PROFILE, clubId)
+        }
+
+        request.backgroundImage?.let { image ->
+            markExistingFilesDeleted(FileOwnerType.CLUB_BACKGROUND, clubId)
+            saveFile(image, FileOwnerType.CLUB_BACKGROUND, clubId)
+        }
+
         club.update(
             name = request.name,
             schoolName = request.schoolName,
@@ -141,8 +159,8 @@ class ManageClubUseCase(
             contactEmail = request.contactEmail,
             contactPhoneNumber = request.contactPhoneNumber,
             primaryContact = request.primaryContact,
-            profileImageStorageKey = request.profileImageStorageKey,
-            backgroundImageStorageKey = request.backgroundImageStorageKey,
+            profileImageStorageKey = request.profileImage?.storageKey,
+            backgroundImageStorageKey = request.backgroundImage?.storageKey,
         )
     }
 
@@ -166,6 +184,7 @@ class ManageClubUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
+        markExistingFilesDeleted(FileOwnerType.CLUB_PROFILE, clubId)
         club.removeProfileImage()
     }
 
@@ -177,7 +196,42 @@ class ManageClubUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
+        markExistingFilesDeleted(FileOwnerType.CLUB_BACKGROUND, clubId)
         club.removeBackgroundImage()
+    }
+
+    private fun saveFileIfPresent(
+        request: FileSaveRequest?,
+        ownerType: FileOwnerType,
+        ownerId: Long,
+    ) {
+        request?.let { saveFile(it, ownerType, ownerId) }
+    }
+
+    private fun saveFile(
+        request: FileSaveRequest,
+        ownerType: FileOwnerType,
+        ownerId: Long,
+    ) {
+        val file =
+            File.createUploaded(
+                fileName = request.fileName,
+                storageKey = request.storageKey,
+                fileSize = request.fileSize,
+                contentType = request.contentType,
+                ownerType = ownerType,
+                ownerId = ownerId,
+            )
+        fileRepository.save(file)
+    }
+
+    private fun markExistingFilesDeleted(
+        ownerType: FileOwnerType,
+        ownerId: Long,
+    ) {
+        fileRepository
+            .findAllByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, FileStatus.UPLOADED)
+            .forEach { it.markDeleted() }
     }
 
     private fun validatePrimaryContactEmail(

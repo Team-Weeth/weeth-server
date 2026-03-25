@@ -44,6 +44,19 @@ object ClubMemberTestFixture {
             memberRole = MemberRole.ADMIN,
         )
 
+    fun createBannedMember(
+        id: Long = 0L,
+        club: Club = ClubTestFixture.createClub(),
+        user: User = UserTestFixture.createActiveUser1(),
+        memberRole: MemberRole = MemberRole.USER,
+    ): ClubMember =
+        ClubMember(
+            club = club,
+            user = user,
+            memberStatus = MemberStatus.BANNED,
+            memberRole = memberRole,
+        ).also { if (id != 0L) ReflectionTestUtils.setField(it, "id", id) }
+
     fun createLeadMember(
         club: Club = ClubTestFixture.createClub(),
         user: User = UserTestFixture.createActiveUser1(),

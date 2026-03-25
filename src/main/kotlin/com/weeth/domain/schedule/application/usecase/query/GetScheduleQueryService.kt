@@ -58,7 +58,7 @@ class GetScheduleQueryService(
         return (events + sessions).sortedBy { it.start }
     }
 
-    fun findYearly(
+    fun findYearly( // TODO: 기수가 1학기라는 보장이 없음. 기수 말고 날짜 기준으로 받아오기. (MVP 후)
         clubId: Long,
         userId: Long,
         year: Int,

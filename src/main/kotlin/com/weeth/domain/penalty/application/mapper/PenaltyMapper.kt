@@ -8,7 +8,6 @@ import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalRespon
 import com.weeth.domain.penalty.application.dto.response.PenaltyDetailResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.domain.entity.Penalty
-import com.weeth.domain.penalty.domain.enums.PenaltyType
 import org.springframework.stereotype.Component
 
 @Component
@@ -21,20 +20,7 @@ class PenaltyMapper {
         Penalty(
             clubMember = clubMember,
             cardinal = cardinal,
-            penaltyType = request.penaltyType,
             penaltyDescription = request.penaltyDescription ?: "",
-        )
-
-    fun toAutoPenalty(
-        penaltyDescription: String,
-        clubMember: ClubMember,
-        cardinal: Cardinal,
-    ): Penalty =
-        Penalty(
-            clubMember = clubMember,
-            cardinal = cardinal,
-            penaltyType = PenaltyType.AUTO_PENALTY,
-            penaltyDescription = penaltyDescription,
         )
 
     fun toResponse(
@@ -53,10 +39,9 @@ class PenaltyMapper {
     fun toDetailResponse(penalty: Penalty): PenaltyDetailResponse =
         PenaltyDetailResponse(
             penaltyId = penalty.id,
-            penaltyType = penalty.penaltyType,
             cardinal = penalty.cardinal.cardinalNumber,
             penaltyDescription = penalty.penaltyDescription,
-            time = penalty.modifiedAt,
+            time = penalty.createdAt,
         )
 
     fun toByCardinalResponse(

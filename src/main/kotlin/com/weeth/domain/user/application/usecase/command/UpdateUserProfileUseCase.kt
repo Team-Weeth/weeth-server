@@ -34,7 +34,7 @@ class UpdateUserProfileUseCase(
         request: UpdateUserProfileRequest,
         userId: Long,
     ) {
-        if (userRepository.existsByStudentIdAndIdIsNot(request.studentId, userId)) {
+        if (userRepository.existsBySchoolAndStudentIdAndIdIsNot(request.school, request.studentId, userId)) {
             throw StudentIdExistsException()
         }
         if (userRepository.existsByTelAndIdIsNotValue(request.tel, userId)) {

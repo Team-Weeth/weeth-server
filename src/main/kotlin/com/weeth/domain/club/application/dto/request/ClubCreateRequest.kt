@@ -1,7 +1,9 @@
 package com.weeth.domain.club.application.dto.request
 
 import com.weeth.domain.club.domain.enums.PrimaryContact
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
@@ -30,10 +32,10 @@ data class ClubCreateRequest(
     @field:Schema(description = "가장 최근 기수 번호", example = "7")
     @field:Positive
     val currentCardinal: Int,
-    // TODO: FileSaveRequest로 전환 (ClubMember 프로필과 동일 패턴)
-    @field:Schema(description = "프로필 사진 storageKey", example = "CLUB_PROFILE/2026-02/uuid_profile.png")
-    val profileImageStorageKey: String? = null,
-    // TODO: FileSaveRequest로 전환 (ClubMember 프로필과 동일 패턴)
-    @field:Schema(description = "배경 사진 storageKey", example = "CLUB_BACKGROUND/2026-02/uuid_background.png")
-    val backgroundImageStorageKey: String? = null,
+    @field:Schema(description = "프로필 사진")
+    @field:Valid
+    val profileImage: FileSaveRequest? = null,
+    @field:Schema(description = "배경 사진")
+    @field:Valid
+    val backgroundImage: FileSaveRequest? = null,
 )

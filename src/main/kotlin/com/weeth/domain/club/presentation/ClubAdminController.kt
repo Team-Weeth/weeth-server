@@ -106,7 +106,7 @@ class ClubAdminController(
     }
 
     @PatchMapping("/members/{clubMemberId}/accept")
-    @Operation(summary = "멤버 승인")
+    @Operation(summary = "멤버 승인", deprecated = true)
     fun acceptMember(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @TsidParam
@@ -129,6 +129,18 @@ class ClubAdminController(
         return CommonResponse.success(ClubResponseCode.MEMBER_BANNED_SUCCESS)
     }
 
+    @PatchMapping("/members/{clubMemberId}/restore")
+    @Operation(summary = "추방 멤버 복구")
+    fun restoreMember(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable clubMemberId: Long,
+    ): CommonResponse<Unit> {
+        adminClubMemberUseCase.restore(clubId, userId, clubMemberId)
+        return CommonResponse.success(ClubResponseCode.MEMBER_RESTORED_SUCCESS)
+    }
+
     @PatchMapping("/members/{clubMemberId}/role")
     @Operation(summary = "멤버 권한 변경")
     fun updateMemberRole(
@@ -138,7 +150,7 @@ class ClubAdminController(
         @PathVariable clubMemberId: Long,
         @Valid @RequestBody request: ClubMemberRoleUpdateRequest,
     ): CommonResponse<Unit> {
-        adminClubMemberUseCase.updateMemberRole(clubId, userId, request)
+        adminClubMemberUseCase.updateMemberRole(clubId, userId, clubMemberId, request)
         return CommonResponse.success(ClubResponseCode.MEMBER_ROLE_UPDATED_SUCCESS)
     }
 

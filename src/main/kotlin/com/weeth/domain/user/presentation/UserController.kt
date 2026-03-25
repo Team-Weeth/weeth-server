@@ -17,6 +17,7 @@ import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
@@ -41,6 +42,7 @@ class UserController(
 ) {
     @PostMapping("/social/kakao")
     @Operation(summary = "카카오 소셜 로그인(auth code flow)")
+    @SecurityRequirements
     fun socialLoginByKakao(
         @RequestBody @Valid request: SocialLoginRequest,
     ): ResponseEntity<CommonResponse<SocialLoginResponse>> {
@@ -54,6 +56,7 @@ class UserController(
 
     @PostMapping("/social/apple")
     @Operation(summary = "애플 소셜 로그인(auth code flow)")
+    @SecurityRequirements
     fun socialLoginByApple(
         @RequestBody @Valid request: SocialLoginRequest,
     ): ResponseEntity<CommonResponse<SocialLoginResponse>> {
@@ -67,6 +70,7 @@ class UserController(
 
     @PostMapping("/social/refresh")
     @Operation(summary = "토큰 재발급", description = "쿠키를 사용해 토큰을 재발급합니다.")
+    @SecurityRequirements
     fun refreshToken(request: HttpServletRequest): ResponseEntity<CommonResponse<JwtDto>> {
         val jwtDto = authUserUseCase.refreshToken(request)
         return buildTokenResponse(

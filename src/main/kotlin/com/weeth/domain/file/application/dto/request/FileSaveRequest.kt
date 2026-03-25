@@ -10,7 +10,7 @@ data class FileSaveRequest(
     val fileName: String,
     @field:Schema(
         description = "저장소 키. `Type/YY-MM/UUID_원본파일명` 형식",
-        example = "POST/2026-02/58400-e29b-44-a716-44665000_profile-image.png",
+        example = "POST/2026-02/2c0a4d45-ec94-4ec0-85e1-b489c2eaf9c3_profile-image.png",
     )
     @field:NotBlank
     val storageKey: String,

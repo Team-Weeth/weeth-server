@@ -74,12 +74,18 @@ class ClubMember(
     fun accept() {
         check(memberStatus == MemberStatus.WAITING) { "대기 상태인 멤버만 승인할 수 있습니다." }
         memberStatus = MemberStatus.ACTIVE
+        // TODO: BANNED 복구가 필요해지면 accept()에 섞지 말고 별도 unban/restore 정책과 API로 분리
     }
 
     fun ban() {
         check(memberStatus != MemberStatus.BANNED) { "이미 차단된 멤버입니다." }
         check(memberStatus != MemberStatus.LEFT) { "탈퇴한 멤버는 차단할 수 없습니다." }
         memberStatus = MemberStatus.BANNED
+    }
+
+    fun restore() {
+        check(memberStatus == MemberStatus.BANNED) { "차단된 멤버만 복구할 수 있습니다." }
+        memberStatus = MemberStatus.ACTIVE
     }
 
     fun leave() {
@@ -130,6 +136,10 @@ class ClubMember(
 
     fun incrementPenaltyCount() {
         penaltyCount++
+    }
+
+    fun resetPenaltyCount() {
+        penaltyCount = 0
     }
 
     fun updateProfileImageUrl(storageKey: String?) {

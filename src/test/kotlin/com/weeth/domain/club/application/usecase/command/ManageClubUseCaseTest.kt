@@ -17,6 +17,11 @@ import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.club.fixture.ClubTestFixture
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
+import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -40,6 +45,7 @@ class ManageClubUseCaseTest :
         val userReader = mockk<UserReader>()
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
+        val fileRepository = mockk<FileRepository>()
         val useCase =
             ManageClubUseCase(
                 clubRepository,
@@ -50,6 +56,7 @@ class ManageClubUseCaseTest :
                 userReader,
                 clubJoinPolicy,
                 clubPermissionPolicy,
+                fileRepository,
             )
         val adminMember =
             com.weeth.domain.club.fixture.ClubMemberTestFixture
@@ -65,6 +72,7 @@ class ManageClubUseCaseTest :
                 userReader,
                 clubJoinPolicy,
                 clubPermissionPolicy,
+                fileRepository,
             )
             every { clubRepository.save(any()) } answers { firstArg() }
             every { clubMemberRepository.save(any()) } answers { firstArg() }
@@ -72,6 +80,10 @@ class ManageClubUseCaseTest :
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
             every { boardRepository.save(any()) } answers { firstArg() }
             every { clubJoinPolicy.validateCreateLimit(any()) } just Runs
+            every { fileRepository.save(any<File>()) } answers { firstArg() }
+            every {
+                fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any())
+            } returns emptyList()
         }
 
         describe("create") {
@@ -172,6 +184,56 @@ class ManageClubUseCaseTest :
                 }
             }
 
+            context("이미지와 함께 동아리를 개설하는 경우") {
+                it("프로필/배경 이미지에 대한 File 레코드가 각각 생성된다") {
+                    every { userReader.getByIdWithLock(10L) } returns user
+
+                    useCase.create(
+                        10L,
+                        ClubCreateRequest(
+                            name = "테스트",
+                            schoolName = "가천대",
+                            currentCardinal = 1,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
+                            profileImage =
+                                FileSaveRequest(
+                                    fileName = "profile.png",
+                                    storageKey = "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440000_pf.png",
+                                    fileSize = 1024,
+                                    contentType = "image/png",
+                                ),
+                            backgroundImage =
+                                FileSaveRequest(
+                                    fileName = "bg.png",
+                                    storageKey = "CLUB_BACKGROUND/2026-03/550e8400-e29b-41d4-a716-446655440001_bg.png",
+                                    fileSize = 2048,
+                                    contentType = "image/png",
+                                ),
+                        ),
+                    )
+
+                    verify(exactly = 2) { fileRepository.save(any<File>()) }
+                }
+
+                it("이미지 없이 개설하면 File 레코드가 생성되지 않는다") {
+                    every { userReader.getByIdWithLock(10L) } returns user
+
+                    useCase.create(
+                        10L,
+                        ClubCreateRequest(
+                            name = "테스트",
+                            schoolName = "가천대",
+                            currentCardinal = 1,
+                            contactPhoneNumber = "01000000000",
+                            primaryContact = PrimaryContact.PHONE,
+                        ),
+                    )
+
+                    verify(exactly = 0) { fileRepository.save(any<File>()) }
+                }
+            }
+
             context("이미 LEAD로 1개 동아리를 생성한 사용자가 생성 시도하는 경우") {
                 it("ClubCreateLimitExceededException이 발생하고, 이후 로직이 실행되지 않는다") {
                     every { userReader.getByIdWithLock(13L) } returns user
@@ -246,6 +308,68 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
+            it("프로필 이미지를 변경하면 기존 File이 DELETED 처리되고 새 File이 생성된다") {
+                val existingFile = mockk<File>(relaxed = true)
+                val club =
+                    ClubTestFixture.createClub(
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
+                    )
+
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubRepository.getClubById(1L) } returns club
+                every {
+                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+                        FileOwnerType.CLUB_PROFILE,
+                        1L,
+                        FileStatus.UPLOADED,
+                    )
+                } returns listOf(existingFile)
+
+                useCase.update(
+                    1L,
+                    10L,
+                    ClubUpdateRequest(
+                        profileImage =
+                            FileSaveRequest(
+                                fileName = "new_profile.png",
+                                storageKey = "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440002_new.png",
+                                fileSize = 1024,
+                                contentType = "image/png",
+                            ),
+                    ),
+                )
+
+                verify(exactly = 1) { existingFile.markDeleted() }
+                verify(exactly = 1) { fileRepository.save(any<File>()) }
+                club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440002_new.png"
+            }
+
+            it("이미지 필드가 null이면 File 관련 작업이 실행되지 않는다") {
+                val club =
+                    ClubTestFixture.createClub(
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01000000000",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
+                    )
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubRepository.getClubById(1L) } returns club
+
+                useCase.update(1L, 10L, ClubUpdateRequest(name = "새 이름"))
+
+                verify(exactly = 0) {
+                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any())
+                }
+                verify(exactly = 0) { fileRepository.save(any<File>()) }
+            }
+
             it("모든 필드가 null이면 기존 값이 유지된다") {
                 val club =
                     ClubTestFixture.createClub(
@@ -300,6 +424,33 @@ class ManageClubUseCaseTest :
                 club.profileImageStorageKey shouldBe null
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
+
+            it("기존 File 레코드가 DELETED 처리된다") {
+                val existingFile = mockk<File>(relaxed = true)
+                val club =
+                    ClubTestFixture.createClub(
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
+                    )
+
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubRepository.getClubById(1L) } returns club
+                every {
+                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+                        FileOwnerType.CLUB_PROFILE,
+                        1L,
+                        FileStatus.UPLOADED,
+                    )
+                } returns listOf(existingFile)
+
+                useCase.deleteProfileImage(1L, 10L)
+
+                verify(exactly = 1) { existingFile.markDeleted() }
+            }
         }
 
         describe("deleteBackgroundImage") {
@@ -331,6 +482,33 @@ class ManageClubUseCaseTest :
 
                 club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-02/uuid_profile.png"
                 club.backgroundImageStorageKey shouldBe null
+            }
+
+            it("기존 File 레코드가 DELETED 처리된다") {
+                val existingFile = mockk<File>(relaxed = true)
+                val club =
+                    ClubTestFixture.createClub(
+                        clubContact =
+                            ClubContact.from(
+                                email = "club@example.com",
+                                phoneNumber = "01011112222",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
+                    )
+
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubRepository.getClubById(1L) } returns club
+                every {
+                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+                        FileOwnerType.CLUB_BACKGROUND,
+                        1L,
+                        FileStatus.UPLOADED,
+                    )
+                } returns listOf(existingFile)
+
+                useCase.deleteBackgroundImage(1L, 10L)
+
+                verify(exactly = 1) { existingFile.markDeleted() }
             }
         }
     })
