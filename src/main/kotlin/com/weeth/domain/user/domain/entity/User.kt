@@ -88,6 +88,8 @@ class User(
 
     fun isBannedOrLeft(): Boolean = status == Status.BANNED || status == Status.LEFT
 
+    fun isRegistered(): Boolean = status == Status.ACTIVE && termsAgreed && privacyAgreed
+
     fun isProfileCompleted(): Boolean =
         name.isNotBlank() &&
             studentId.isNotBlank() &&

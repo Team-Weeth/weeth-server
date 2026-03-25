@@ -81,9 +81,13 @@ class UserController(
     fun agreeTerms(
         @RequestBody @Valid request: AgreeTermsRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<Void?> {
-        agreeTermsUseCase.execute(userId, request)
-        return CommonResponse.success(UserResponseCode.USER_TERMS_AGREE_SUCCESS)
+    ): ResponseEntity<CommonResponse<JwtDto>> {
+        val jwtDto = agreeTermsUseCase.execute(userId, request)
+        return buildTokenResponse(
+            CommonResponse.success(UserResponseCode.USER_TERMS_AGREE_SUCCESS, jwtDto),
+            jwtDto.accessToken,
+            jwtDto.refreshToken,
+        )
     }
 
     @PatchMapping
