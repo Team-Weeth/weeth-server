@@ -58,12 +58,10 @@ class Club(
     var clubContact: ClubContact = clubContact
         private set
 
-    // TODO: FileSaveRequest + File 도메인 연동 필요 (ClubMember 프로필과 동일 패턴으로 전환)
     @Column(name = "profile_image_url", length = 500)
     var profileImageStorageKey: String? = profileImageStorageKey
         private set
 
-    // TODO: FileSaveRequest + File 도메인 연동 필요 (ClubMember 프로필과 동일 패턴으로 전환)
     @Column(name = "background_image_url", length = 500)
     var backgroundImageStorageKey: String? = backgroundImageStorageKey
         private set
