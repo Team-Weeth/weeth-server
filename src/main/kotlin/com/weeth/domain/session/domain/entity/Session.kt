@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 import kotlin.random.asKotlinRandom
 
 @Entity
-@Table(name = "meeting") // 테이블명 Session으로 수정
+@Table(name = "session")
 class Session(
     club: Club,
     title: String,
