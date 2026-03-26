@@ -1,6 +1,7 @@
 package com.weeth.domain.board.domain.repository
 
 import com.weeth.domain.board.domain.entity.Board
+import com.weeth.domain.board.domain.enums.BoardType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
@@ -31,6 +32,11 @@ interface BoardRepository :
 
     @Query("SELECT COALESCE(MAX(b.displayOrder), -1) FROM Board b WHERE b.club.id = :clubId")
     fun findMaxDisplayOrderByClubId(clubId: Long): Int
+
+    fun countByClubIdAndTypeNotAndIsDeletedFalse(
+        clubId: Long,
+        type: BoardType,
+    ): Int
 
     fun existsByClubIdAndNameAndIsDeletedFalse(
         clubId: Long,

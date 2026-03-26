@@ -3,6 +3,7 @@ package com.weeth.domain.board.application.usecase.command
 import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
+import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
@@ -48,6 +49,7 @@ class ManageBoardUseCaseTest :
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(any(), any(), any()) } returns false
+            every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(any(), any()) } returns 0
         }
 
         describe("create") {
@@ -100,6 +102,22 @@ class ManageBoardUseCaseTest :
                 val result = useCase.create(clubId, request, userId)
 
                 result.displayOrder shouldBe 3
+            }
+
+            it("게시판 수가 3개 이상이면 예외를 던진다") {
+                every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) } returns 3
+                val request =
+                    CreateBoardRequest(
+                        name = "초과 게시판",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
+
+                shouldThrow<BoardLimitExceededException> {
+                    useCase.create(clubId, request, userId)
+                }
             }
 
             it("같은 클럽에 동일한 이름의 게시판이 이미 있으면 예외를 던진다") {

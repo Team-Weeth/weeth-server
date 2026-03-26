@@ -4,6 +4,7 @@ import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
+import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
@@ -29,10 +30,6 @@ class ManageBoardUseCase(
     private val clubReader: ClubReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
-    /**
-     * 게시판 생성 API, 커스텀한 게시판 생성 가능
-     * TODO: MVP, 무료의 경우엔 개수 제한. 공지사항 제외
-     */
     @Transactional
     fun create(
         clubId: Long,
@@ -41,6 +38,10 @@ class ManageBoardUseCase(
     ): BoardDetailResponse {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
+
+        if (boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) >= MAX_BOARD_COUNT) {
+            throw BoardLimitExceededException()
+        }
 
         if (boardRepository.existsByClubIdAndNameAndIsDeletedFalse(
                 clubId,
@@ -160,4 +161,8 @@ class ManageBoardUseCase(
 
     private fun findBoard(boardId: Long): Board =
         boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
+
+    companion object {
+        private const val MAX_BOARD_COUNT = 3
+    }
 }

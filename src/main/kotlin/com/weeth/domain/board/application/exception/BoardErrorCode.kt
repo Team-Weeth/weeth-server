@@ -53,4 +53,7 @@ enum class BoardErrorCode(
 
     @ExplainError("공지사항 게시판은 필수 게시판으로 삭제할 수 없을 때 발생합니다.")
     FIXED_BOARD_NOT_DELETABLE(20414, HttpStatus.BAD_REQUEST, "공지사항 게시판은 삭제할 수 없습니다."),
+
+    @ExplainError("동아리 게시판 생성 가능 개수를 초과했을 때 발생합니다.")
+    BOARD_LIMIT_EXCEEDED(20415, HttpStatus.BAD_REQUEST, "게시판 생성 가능한 횟수를 초과했습니다."),
 }
