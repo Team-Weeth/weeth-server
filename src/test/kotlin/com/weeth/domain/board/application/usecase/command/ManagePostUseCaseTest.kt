@@ -18,8 +18,8 @@ import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
-import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
