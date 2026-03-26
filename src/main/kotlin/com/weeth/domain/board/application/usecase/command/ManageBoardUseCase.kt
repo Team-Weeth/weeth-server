@@ -47,6 +47,9 @@ class ManageBoardUseCase(
                 throw BoardCreateLockTimeoutException()
             }
 
+        // MVP에서는 공지사항 1개, 추후 주석처리
+        if (request.type == BoardType.NOTICE) throw BoardLimitExceededException()
+
         if (boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) >= MAX_BOARD_COUNT) {
             throw BoardLimitExceededException()
         }
