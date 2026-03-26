@@ -51,7 +51,7 @@ class ManageBoardUseCaseTest :
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(any(), any(), any()) } returns false
-            every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(any(), any()) } returns 0L
+            every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(any(), any()) } returns 0
         }
 
         describe("create") {
@@ -123,7 +123,7 @@ class ManageBoardUseCaseTest :
             }
 
             it("게시판 수가 3개 이상이면 예외를 던진다") {
-                every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) } returns 3L
+                every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) } returns 3
                 val request =
                     CreateBoardRequest(
                         name = "초과 게시판",

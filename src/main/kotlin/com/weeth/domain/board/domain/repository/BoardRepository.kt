@@ -36,7 +36,7 @@ interface BoardRepository :
     fun countByClubIdAndTypeNotAndIsDeletedFalse(
         clubId: Long,
         type: BoardType,
-    ): Long
+    ): Int
 
     fun existsByClubIdAndNameAndIsDeletedFalse(
         clubId: Long,
