@@ -8,6 +8,7 @@ import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotDeletableException
 import com.weeth.domain.board.application.exception.FixedBoardNotRenamableException
 import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
@@ -183,6 +184,15 @@ class ManageBoardUseCaseTest :
                 board.isDeleted shouldBe true
                 board.displayOrder shouldBe 3
                 verify(exactly = 0) { boardRepository.delete(any()) }
+            }
+
+            it("공지사항 게시판을 삭제하면 예외를 던진다") {
+                val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns noticeBoard
+
+                shouldThrow<FixedBoardNotDeletableException> {
+                    useCase.delete(clubId, 1L, userId)
+                }
             }
         }
 
