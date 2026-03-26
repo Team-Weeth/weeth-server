@@ -9,6 +9,7 @@ import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotDeletableException
 import com.weeth.domain.board.application.exception.FixedBoardNotRenamableException
 import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
@@ -117,6 +118,7 @@ class ManageBoardUseCase(
         val board = findBoard(boardId)
 
         if (board.club.id != clubId) throw BoardNotFoundException()
+        if (board.type == BoardType.NOTICE) throw FixedBoardNotDeletableException()
         val maxOrder = boardRepository.findMaxDisplayOrderByClubId(clubId)
         board.markDeleted()
         board.reorder(maxOrder + 1)

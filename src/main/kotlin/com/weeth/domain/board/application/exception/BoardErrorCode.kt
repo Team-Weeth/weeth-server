@@ -50,4 +50,7 @@ enum class BoardErrorCode(
 
     @ExplainError("좋아요 처리 중 동시 요청이 많아 락 획득에 실패했을 때 발생합니다.")
     POST_LIKE_LOCK_TIMEOUT(20413, HttpStatus.TOO_MANY_REQUESTS, "잠시 후 다시 시도해주세요."),
+
+    @ExplainError("공지사항 게시판은 필수 게시판으로 삭제할 수 없을 때 발생합니다.")
+    FIXED_BOARD_NOT_DELETABLE(20414, HttpStatus.BAD_REQUEST, "공지사항 게시판은 삭제할 수 없습니다."),
 }
