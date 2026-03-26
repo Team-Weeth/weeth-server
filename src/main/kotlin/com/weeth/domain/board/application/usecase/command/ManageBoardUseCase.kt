@@ -163,6 +163,6 @@ class ManageBoardUseCase(
         boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 
     companion object {
-        private const val MAX_BOARD_COUNT = 3
+        private const val MAX_BOARD_COUNT = 3L
     }
 }
