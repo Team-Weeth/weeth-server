@@ -56,4 +56,7 @@ enum class BoardErrorCode(
 
     @ExplainError("동아리 게시판 생성 가능 개수를 초과했을 때 발생합니다.")
     BOARD_LIMIT_EXCEEDED(20415, HttpStatus.BAD_REQUEST, "게시판 생성 가능한 횟수를 초과했습니다."),
+
+    @ExplainError("게시판 생성 중 동시 요청이 많아 락 획득에 실패했을 때 발생합니다.")
+    BOARD_CREATE_LOCK_TIMEOUT(20416, HttpStatus.TOO_MANY_REQUESTS, "잠시 후 다시 시도해주세요."),
 }

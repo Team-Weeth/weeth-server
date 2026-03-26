@@ -4,6 +4,7 @@ import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
+import com.weeth.domain.board.application.exception.BoardCreateLockTimeoutException
 import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
@@ -20,6 +21,7 @@ import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import org.springframework.dao.PessimisticLockingFailureException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -37,7 +39,13 @@ class ManageBoardUseCase(
         userId: Long,
     ): BoardDetailResponse {
         clubPermissionPolicy.requireAdmin(clubId, userId)
-        val club = clubReader.getClubById(clubId)
+
+        val club =
+            try {
+                clubReader.getClubByIdForUpdate(clubId)
+            } catch (_: PessimisticLockingFailureException) {
+                throw BoardCreateLockTimeoutException()
+            }
 
         if (boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) >= MAX_BOARD_COUNT) {
             throw BoardLimitExceededException()

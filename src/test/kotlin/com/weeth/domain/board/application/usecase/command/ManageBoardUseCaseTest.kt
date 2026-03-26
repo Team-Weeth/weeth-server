@@ -3,6 +3,7 @@ package com.weeth.domain.board.application.usecase.command
 import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
+import com.weeth.domain.board.application.exception.BoardCreateLockTimeoutException
 import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
@@ -28,6 +29,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.dao.PessimisticLockingFailureException
 
 class ManageBoardUseCaseTest :
     DescribeSpec({
@@ -44,7 +46,7 @@ class ManageBoardUseCaseTest :
         beforeTest {
             clearMocks(boardRepository, clubReader, clubPermissionPolicy)
             every { boardRepository.save(any()) } answers { firstArg() }
-            every { clubReader.getClubById(clubId) } returns club
+            every { clubReader.getClubByIdForUpdate(clubId) } returns club
             every { boardRepository.findMaxActiveDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
@@ -102,6 +104,22 @@ class ManageBoardUseCaseTest :
                 val result = useCase.create(clubId, request, userId)
 
                 result.displayOrder shouldBe 3
+            }
+
+            it("Club 락 획득 타임아웃 시 BoardCreateLockTimeoutException을 던진다") {
+                every { clubReader.getClubByIdForUpdate(clubId) } throws PessimisticLockingFailureException("")
+                val request =
+                    CreateBoardRequest(
+                        name = "새 게시판",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
+
+                shouldThrow<BoardCreateLockTimeoutException> {
+                    useCase.create(clubId, request, userId)
+                }
             }
 
             it("게시판 수가 3개 이상이면 예외를 던진다") {
