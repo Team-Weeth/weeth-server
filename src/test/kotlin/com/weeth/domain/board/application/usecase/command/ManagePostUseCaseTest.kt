@@ -15,12 +15,10 @@ import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
-import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
-import com.weeth.domain.club.domain.entity.ClubMember
-import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
+import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
@@ -178,11 +176,7 @@ class ManagePostUseCaseTest :
                         year = 2026,
                         semester = 1,
                     )
-                val clubMemberCardinal =
-                    ClubMemberCardinal(
-                        clubMember = mockk<ClubMember>(relaxed = true),
-                        cardinal = cardinal,
-                    )
+                val clubMemberCardinal = ClubMemberCardinalTestFixture.create(cardinal = cardinal)
                 val request = CreatePostRequest(title = "게시글", content = "내용")
 
                 every { userReader.getById(1L) } returns user
