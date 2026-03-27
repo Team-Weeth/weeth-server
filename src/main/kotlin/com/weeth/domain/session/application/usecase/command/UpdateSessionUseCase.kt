@@ -67,6 +67,11 @@ class UpdateSessionUseCase(
         )
     }
 
+    /**
+     * 반복 세션을 수정한다.
+     * 반복 수정을 하는 경우 세션/출석의 상태를 유지하기 위해 별도로 세션을 삭제/재생성 하지 않고, in-place로 갱신한다.
+     * 이 경우 반복 세션 중 특정 세션 이후의 시간을 미루는 경우 이전 날짜의 세션이 남아있을 수 있으나, 이는 사용자가 삭제할 수 있도록 유지한다.
+     */
     private fun updateRecurringSessions(
         session: Session,
         request: SessionUpdateRequest,
