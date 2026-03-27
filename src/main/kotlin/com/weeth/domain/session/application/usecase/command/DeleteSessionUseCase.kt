@@ -7,6 +7,7 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.application.exception.ClosedSessionIncludedException
 import com.weeth.domain.session.application.exception.SessionErrorCode
+import com.weeth.domain.session.application.exception.SessionGroupNotFoundException
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.entity.SessionGroup
@@ -59,15 +60,7 @@ class DeleteSessionUseCase(
                         session.start,
                     )
 
-                if (!force) {
-                    val closedCount = futureSessions.count { it.status == SessionStatus.CLOSED }
-                    if (closedCount > 0) {
-                        throw ClosedSessionIncludedException(
-                            SessionErrorCode.CLOSED_SESSION_INCLUDED_IN_DELETE,
-                            closedCount,
-                        )
-                    }
-                }
+                validateNoClosedSessions(futureSessions, force)
 
                 val attendances =
                     attendanceRepository.findAllBySessionInAndClubMemberMemberStatusWithLock(
@@ -82,6 +75,55 @@ class DeleteSessionUseCase(
                 updateOrDeleteGroup(group)
             }
         }
+    }
+
+    private fun validateNoClosedSessions(
+        futureSessions: List<Session>,
+        force: Boolean
+    ) {
+        if (!force) {
+            val closedCount = futureSessions.count { it.status == SessionStatus.CLOSED }
+            if (closedCount > 0) {
+                throw ClosedSessionIncludedException(
+                    SessionErrorCode.CLOSED_SESSION_INCLUDED_IN_DELETE,
+                    closedCount,
+                )
+            }
+        }
+    }
+
+    @Transactional
+    fun deleteGroup(
+        clubId: Long,
+        groupId: Long,
+        userId: Long,
+        force: Boolean = false,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val group =
+            sessionGroupRepository.findById(groupId).orElseThrow { SessionGroupNotFoundException() }
+        val sessions = sessionRepository.findAllBySessionGroupWithLock(group)
+
+        if (sessions.isEmpty()) {
+            sessionGroupRepository.delete(group)
+            return
+        }
+
+        if (sessions.first().club.id != clubId) throw SessionGroupNotFoundException()
+
+        validateNoClosedSessions(sessions, force)
+
+        val attendances =
+            attendanceRepository.findAllBySessionInAndClubMemberMemberStatusWithLock(
+                sessions,
+                MemberStatus.ACTIVE,
+            )
+
+        rollbackAttendances(attendances)
+        attendanceRepository.deleteAllBySessionIn(sessions)
+        sessionRepository.deleteAll(sessions)
+        sessionGroupRepository.delete(group)
     }
 
     private fun deleteSingleSession(session: Session) {
