@@ -77,6 +77,13 @@ interface SessionRepository :
         @Param("start") start: LocalDateTime,
     ): List<Session>
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT s FROM Session s WHERE s.sessionGroup = :group ORDER BY s.start ASC, s.id ASC")
+    fun findAllBySessionGroupWithLock(
+        @Param("group") group: SessionGroup,
+    ): List<Session>
+
     // 세션 그룹의 남은 세션 수 조회 (삭제 후 그룹 totalCount 갱신용)
     fun countBySessionGroup(group: SessionGroup): Long
 }
