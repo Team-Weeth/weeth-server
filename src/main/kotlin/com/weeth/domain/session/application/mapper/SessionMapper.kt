@@ -104,11 +104,11 @@ class SessionMapper(
     }
 
     fun toInfos(
-        thisWeek: Session?,
+        thisWeekSessions: List<Session>,
         groupedSessions: List<SessionGroupResponse>,
     ): SessionInfosResponse =
         SessionInfosResponse(
-            thisWeek = thisWeek?.let { toInfo(it) },
+            thisWeek = thisWeekSessions.map { toInfo(it) },
             sessions = groupedSessions,
         )
 
