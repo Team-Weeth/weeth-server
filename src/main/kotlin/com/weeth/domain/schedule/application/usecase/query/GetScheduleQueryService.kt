@@ -48,12 +48,12 @@ class GetScheduleQueryService(
         val events =
             eventRepository
                 .findByClubIdAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(clubId, end, start)
-                .map { scheduleMapper.toResponse(it, false) }
+                .map { scheduleMapper.toResponse(it) }
 
         val sessions =
             sessionReader
                 .findAllByClubIdAndStartBetween(clubId, start, end)
-                .map { scheduleMapper.toResponse(it, true) }
+                .map { scheduleMapper.toResponse(it) }
 
         return (events + sessions).sortedBy { it.start }
     }
@@ -70,12 +70,12 @@ class GetScheduleQueryService(
         val events =
             eventRepository
                 .findAllByClubIdAndCardinal(clubId, cardinal.cardinalNumber)
-                .map { scheduleMapper.toResponse(it, false) }
+                .map { scheduleMapper.toResponse(it) }
 
         val sessions =
             sessionReader
                 .findAllByClubIdAndCardinalIn(clubId, listOf(cardinal.cardinalNumber))
-                .map { scheduleMapper.toResponse(it, true) }
+                .map { scheduleMapper.toResponse(it) }
 
         return (events + sessions)
             .sortedBy { it.start }
