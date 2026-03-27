@@ -92,13 +92,13 @@ class CardinalUseCaseTest :
                     val newCardinalAfterSave = CardinalTestFixture.createCardinal(cardinalNumber = 7)
 
                     every { cardinalRepository.findByClubIdAndCardinalNumber(clubId, 7) } returns null
-                    every { cardinalRepository.findAllInProgressWithLock() } returns listOf(oldCardinal)
+                    every { cardinalRepository.findAllInProgressByClubIdWithLock(clubId) } returns listOf(oldCardinal)
                     every { cardinalMapper.toEntity(club, request) } returns newCardinalBeforeSave
                     every { cardinalRepository.save(newCardinalBeforeSave) } returns newCardinalAfterSave
 
                     manageCardinalUseCase.save(clubId, request, userId)
 
-                    verify { cardinalRepository.findAllInProgressWithLock() }
+                    verify { cardinalRepository.findAllInProgressByClubIdWithLock(clubId) }
                     verify { cardinalRepository.save(newCardinalBeforeSave) }
 
                     oldCardinal.status shouldBe CardinalStatus.DONE
@@ -112,7 +112,7 @@ class CardinalUseCaseTest :
                 val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 6)
                 val oldCardinal = CardinalTestFixture.createCardinalInProgress(cardinalNumber = 5)
                 every { cardinalRepository.findByIdAndClubId(1L, clubId) } returns cardinal
-                every { cardinalRepository.findAllInProgressWithLock() } returns listOf(oldCardinal)
+                every { cardinalRepository.findAllInProgressByClubIdWithLock(clubId) } returns listOf(oldCardinal)
 
                 manageCardinalUseCase.activate(clubId, 1L, userId)
 

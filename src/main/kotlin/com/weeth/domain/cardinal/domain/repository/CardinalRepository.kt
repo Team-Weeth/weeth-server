@@ -17,8 +17,8 @@ interface CardinalRepository :
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
-    @Query("SELECT c FROM Cardinal c WHERE c.status = 'IN_PROGRESS'")
-    fun findAllInProgressWithLock(): List<Cardinal>
+    @Query("SELECT c FROM Cardinal c WHERE c.club.id = :clubId AND c.status = 'IN_PROGRESS'")
+    fun findAllInProgressByClubIdWithLock(clubId: Long): List<Cardinal>
 
     fun findAllByOrderByCardinalNumberDesc(): List<Cardinal>
 
