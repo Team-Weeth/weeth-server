@@ -3,10 +3,13 @@ package com.weeth.domain.session.fixture
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.entity.SessionGroup
+import com.weeth.domain.session.domain.enums.RecurrenceType
 import com.weeth.domain.session.domain.enums.SessionStatus
 import org.springframework.test.util.ReflectionTestUtils
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 object SessionTestFixture {
     fun createSession(
@@ -20,6 +23,7 @@ object SessionTestFixture {
         status: SessionStatus = SessionStatus.OPEN,
         start: LocalDateTime = LocalDateTime.of(2026, 3, 1, 10, 0),
         end: LocalDateTime = LocalDateTime.of(2026, 3, 1, 12, 0),
+        sessionGroup: SessionGroup? = null,
     ): Session {
         val session =
             Session(
@@ -32,9 +36,34 @@ object SessionTestFixture {
                 status = status,
                 start = start,
                 end = end,
+                sessionGroup = sessionGroup,
             )
         if (id != 0L) ReflectionTestUtils.setField(session, "id", id)
         return session
+    }
+
+    fun createSessionGroup(
+        id: Long = 0L,
+        title: String = "반복 세션",
+        recurrenceType: RecurrenceType = RecurrenceType.WEEKLY,
+        recurrenceEndDate: LocalDate = LocalDate.of(2026, 6, 30),
+        cardinal: Int = 1,
+        startTime: LocalTime = LocalTime.of(10, 0),
+        endTime: LocalTime = LocalTime.of(12, 0),
+        totalCount: Int = 4,
+    ): SessionGroup {
+        val group =
+            SessionGroup(
+                title = title,
+                recurrenceType = recurrenceType,
+                recurrenceEndDate = recurrenceEndDate,
+                cardinal = cardinal,
+                startTime = startTime,
+                endTime = endTime,
+                totalCount = totalCount,
+            )
+        if (id != 0L) ReflectionTestUtils.setField(group, "id", id)
+        return group
     }
 
     fun createOneDaySession(

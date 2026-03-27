@@ -6,10 +6,10 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
-import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
 import com.weeth.domain.schedule.application.dto.response.SessionResponse
-import com.weeth.domain.schedule.application.mapper.SessionMapper
+import com.weeth.domain.session.application.dto.response.SessionInfosResponse
 import com.weeth.domain.session.application.exception.SessionNotFoundException
+import com.weeth.domain.session.application.mapper.SessionMapper
 import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.session.fixture.SessionTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -89,7 +89,8 @@ class GetSessionQueryServiceTest :
                 val response = mockk<SessionInfosResponse>()
 
                 every { sessionRepository.findAllByClubIdOrderByStartDesc(clubId) } returns sessions
-                every { sessionMapper.toInfos(any(), sessions) } returns response
+                every { sessionMapper.toSingleGroupResponse(any()) } returns mockk(relaxed = true)
+                every { sessionMapper.toInfos(any(), any()) } returns response
 
                 val result = queryService.findSessionInfos(clubId, userId, null)
 
@@ -104,7 +105,8 @@ class GetSessionQueryServiceTest :
 
                 every { cardinalReader.findByClubIdAndCardinalNumber(clubId, 3) } returns cardinal
                 every { sessionRepository.findAllByClubIdAndCardinalOrderByStartDesc(clubId, 3) } returns sessions
-                every { sessionMapper.toInfos(any(), sessions) } returns response
+                every { sessionMapper.toSingleGroupResponse(any()) } returns mockk(relaxed = true)
+                every { sessionMapper.toInfos(any(), any()) } returns response
 
                 val result = queryService.findSessionInfos(clubId, userId, 3)
 
