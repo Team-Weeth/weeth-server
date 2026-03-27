@@ -1,12 +1,12 @@
 package com.weeth.domain.session.application.mapper
 
 import com.weeth.domain.club.domain.entity.Club
-import com.weeth.domain.session.application.dto.response.SessionResponse
 import com.weeth.domain.schedule.domain.enums.Type
 import com.weeth.domain.session.application.dto.request.SessionCreateRequest
 import com.weeth.domain.session.application.dto.response.SessionGroupResponse
 import com.weeth.domain.session.application.dto.response.SessionInfoResponse
 import com.weeth.domain.session.application.dto.response.SessionInfosResponse
+import com.weeth.domain.session.application.dto.response.SessionResponse
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.entity.SessionGroup
 import com.weeth.domain.session.domain.enums.SessionGroupStatus
@@ -59,6 +59,8 @@ class SessionMapper(
             cardinal = session.cardinal,
             title = session.title,
             start = session.start,
+            end = session.end,
+            status = session.status,
         )
 
     fun toGroupResponse(
