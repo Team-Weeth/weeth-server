@@ -1,4 +1,4 @@
-package com.weeth.domain.schedule.application.dto.response
+package com.weeth.domain.session.application.dto.response
 
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
