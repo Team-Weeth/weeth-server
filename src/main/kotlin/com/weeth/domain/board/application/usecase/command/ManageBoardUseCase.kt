@@ -47,10 +47,10 @@ class ManageBoardUseCase(
                 throw BoardCreateLockTimeoutException()
             }
 
-        // MVP에서는 공지사항 1개, 추후 주석처리
+        // TODO: MVP 제약 — 공지사항은 클럽 생성 시 자동 제공되므로 직접 생성 불가. 다중 NOTICE 지원 시 제거
         if (request.type == BoardType.NOTICE) throw BoardLimitExceededException()
 
-        if (boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) >= MAX_BOARD_COUNT) {
+        if (boardRepository.countByClubIdAndIsDeletedFalse(clubId) >= MAX_BOARD_COUNT) {
             throw BoardLimitExceededException()
         }
 
@@ -174,6 +174,6 @@ class ManageBoardUseCase(
         boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
 
     companion object {
-        private const val MAX_BOARD_COUNT = 3
+        private const val MAX_BOARD_COUNT = 4
     }
 }

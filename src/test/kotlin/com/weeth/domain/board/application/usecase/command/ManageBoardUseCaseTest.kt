@@ -51,15 +51,15 @@ class ManageBoardUseCaseTest :
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(any(), any(), any()) } returns false
-            every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(any(), any()) } returns 0
+            every { boardRepository.countByClubIdAndIsDeletedFalse(any()) } returns 0
         }
 
         describe("create") {
             it("요청값으로 게시판과 설정을 생성한다") {
                 val request =
                     CreateBoardRequest(
-                        name = "운영공지",
-                        type = BoardType.NOTICE,
+                        name = "운영 게시판",
+                        type = BoardType.GENERAL,
                         commentEnabled = false,
                         writePermission = MemberRole.ADMIN,
                         isPrivate = true,
@@ -67,8 +67,8 @@ class ManageBoardUseCaseTest :
 
                 val result = useCase.create(clubId, request, userId)
 
-                result.name shouldBe "운영공지"
-                result.type shouldBe BoardType.NOTICE
+                result.name shouldBe "운영 게시판"
+                result.type shouldBe BoardType.GENERAL
                 result.commentEnabled shouldBe false
                 result.writePermission shouldBe MemberRole.ADMIN
                 result.isPrivate shouldBe true
@@ -122,8 +122,8 @@ class ManageBoardUseCaseTest :
                 }
             }
 
-            it("게시판 수가 3개 이상이면 예외를 던진다") {
-                every { boardRepository.countByClubIdAndTypeNotAndIsDeletedFalse(clubId, BoardType.NOTICE) } returns 3
+            it("총 게시판 수가 4개 이상이면 예외를 던진다") {
+                every { boardRepository.countByClubIdAndIsDeletedFalse(clubId) } returns 4
                 val request =
                     CreateBoardRequest(
                         name = "초과 게시판",
