@@ -45,7 +45,7 @@ class CardinalUseCaseTest :
 
         val clubId = 1L
         val userId = 99L
-        val club = ClubTestFixture.createClub()
+        val club = ClubTestFixture.createClub(id = clubId)
 
         beforeTest {
             clearMocks(
@@ -87,9 +87,9 @@ class CardinalUseCaseTest :
             context("새 기수가 진행중이라면") {
                 it("기존 기수는 DONE, 현재기수는 IN_PROGRESS가 된다") {
                     val request = CardinalSaveRequest(7, true)
-                    val oldCardinal = CardinalTestFixture.createCardinalInProgress(cardinalNumber = 6)
-                    val newCardinalBeforeSave = CardinalTestFixture.createCardinal(cardinalNumber = 7)
-                    val newCardinalAfterSave = CardinalTestFixture.createCardinal(cardinalNumber = 7)
+                    val oldCardinal = CardinalTestFixture.createCardinalInProgress(club = club, cardinalNumber = 6)
+                    val newCardinalBeforeSave = CardinalTestFixture.createCardinal(club = club, cardinalNumber = 7)
+                    val newCardinalAfterSave = CardinalTestFixture.createCardinal(club = club, cardinalNumber = 7)
 
                     every { cardinalRepository.findByClubIdAndCardinalNumber(clubId, 7) } returns null
                     every { cardinalRepository.findAllInProgressByClubIdWithLock(clubId) } returns listOf(oldCardinal)
@@ -109,8 +109,8 @@ class CardinalUseCaseTest :
 
         describe("activate") {
             it("해당 기수를 IN_PROGRESS로 지정하고 나머지는 DONE으로 변경한다") {
-                val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 6)
-                val oldCardinal = CardinalTestFixture.createCardinalInProgress(cardinalNumber = 5)
+                val cardinal = CardinalTestFixture.createCardinal(club = club, cardinalNumber = 6)
+                val oldCardinal = CardinalTestFixture.createCardinalInProgress(club = club, cardinalNumber = 5)
                 every { cardinalRepository.findByIdAndClubId(1L, clubId) } returns cardinal
                 every { cardinalRepository.findAllInProgressByClubIdWithLock(clubId) } returns listOf(oldCardinal)
 
