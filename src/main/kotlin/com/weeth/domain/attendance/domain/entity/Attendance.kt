@@ -20,7 +20,7 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 class Attendance(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
+    @JoinColumn(name = "session_id")
     val session: Session,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "club_member_id")
