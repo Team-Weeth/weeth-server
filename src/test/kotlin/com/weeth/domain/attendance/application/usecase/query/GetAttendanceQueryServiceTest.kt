@@ -74,8 +74,6 @@ class GetAttendanceQueryServiceTest :
                         id = 1L,
                         club = member.club,
                         cardinalNumber = 8,
-                        year = 2026,
-                        semester = 1,
                     )
                 val session1 =
                     SessionTestFixture.createSession(

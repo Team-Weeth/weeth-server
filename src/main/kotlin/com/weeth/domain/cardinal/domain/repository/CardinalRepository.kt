@@ -9,23 +9,11 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
-import java.util.Optional
 
 interface CardinalRepository :
     JpaRepository<Cardinal, Long>,
     CardinalReader {
-    fun findByCardinalNumber(cardinal: Int): Optional<Cardinal>
-
-    fun findByYearAndSemester(
-        year: Int,
-        semester: Int,
-    ): Optional<Cardinal>
-
-    fun findByClubIdAndYearAndSemester(
-        clubId: Long,
-        year: Int,
-        semester: Int,
-    ): Optional<Cardinal>
+    fun findByCardinalNumber(cardinal: Int): Cardinal?
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
@@ -60,18 +48,7 @@ interface CardinalRepository :
         findFirstByClubIdAndStatusOrderByCardinalNumberDesc(clubId, CardinalStatus.IN_PROGRESS)
 
     override fun getByCardinalNumber(cardinalNumber: Int): Cardinal =
-        findByCardinalNumber(cardinalNumber).orElseThrow { CardinalNotFoundException() }
-
-    override fun getByYearAndSemester(
-        year: Int,
-        semester: Int,
-    ): Cardinal = findByYearAndSemester(year, semester).orElseThrow { CardinalNotFoundException() }
-
-    override fun getByClubIdAndYearAndSemester(
-        clubId: Long,
-        year: Int,
-        semester: Int,
-    ): Cardinal = findByClubIdAndYearAndSemester(clubId, year, semester).orElseThrow { CardinalNotFoundException() }
+        findByCardinalNumber(cardinalNumber) ?: throw CardinalNotFoundException()
 
     override fun findByIdOrNull(cardinalId: Long): Cardinal? = findById(cardinalId).orElse(null)
 

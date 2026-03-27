@@ -50,8 +50,6 @@ class ManageCardinalUseCase(
         val cardinal =
             cardinalRepository.findByIdAndClubId(request.id, clubId) ?: throw CardinalNotFoundException()
 
-        cardinal.update(request.year, request.semester)
-
         if (request.inProgress) {
             cardinalStatusPolicy.activateExclusively(cardinal)
         }

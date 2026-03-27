@@ -47,7 +47,7 @@ class ManageAccountUseCaseTest :
                     val request = AccountSaveRequest("설명", 100_000, 40)
                     every { accountRepository.existsByClubIdAndCardinal(clubId, 40) } returns false
                     every { cardinalReader.findByClubIdAndCardinalNumber(clubId, 40) } returns
-                        CardinalTestFixture.createCardinal(cardinalNumber = 40, year = 2026, semester = 1)
+                        CardinalTestFixture.createCardinal(cardinalNumber = 40)
                     every { accountRepository.save(any()) } answers { firstArg() }
 
                     useCase.save(clubId, request, userId)

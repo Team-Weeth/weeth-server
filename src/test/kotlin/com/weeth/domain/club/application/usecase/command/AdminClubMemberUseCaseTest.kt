@@ -265,8 +265,6 @@ class AdminClubMemberUseCaseTest :
                         id = 1L,
                         club = adminMember.club,
                         cardinalNumber = 8,
-                        year = 2026,
-                        semester = 1,
                     )
                 val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
@@ -291,8 +289,6 @@ class AdminClubMemberUseCaseTest :
                         id = 1L,
                         club = adminMember.club,
                         cardinalNumber = 8,
-                        year = 2026,
-                        semester = 1,
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
@@ -315,8 +311,6 @@ class AdminClubMemberUseCaseTest :
                         id = 1L,
                         club = adminMember.club,
                         cardinalNumber = 8,
-                        year = 2026,
-                        semester = 1,
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
@@ -361,8 +355,6 @@ class AdminClubMemberUseCaseTest :
                         id = 1L,
                         club = adminMember.club,
                         cardinalNumber = 8,
-                        year = 2026,
-                        semester = 1,
                     )
                 repeat(2) { member.attend() }
                 repeat(1) { member.absent() }

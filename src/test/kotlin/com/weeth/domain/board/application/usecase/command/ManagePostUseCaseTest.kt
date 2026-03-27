@@ -172,8 +172,6 @@ class ManagePostUseCaseTest :
                 val cardinal =
                     CardinalTestFixture.createCardinalInProgress(
                         cardinalNumber = 6,
-                        year = 2026,
-                        semester = 1,
                     )
                 val request = CreatePostRequest(title = "게시글", content = "내용")
 

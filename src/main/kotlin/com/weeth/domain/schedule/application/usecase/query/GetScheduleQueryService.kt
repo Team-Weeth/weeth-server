@@ -1,6 +1,5 @@
 package com.weeth.domain.schedule.application.usecase.query
 
-import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
@@ -19,7 +18,6 @@ import java.time.LocalDateTime
 class GetScheduleQueryService(
     private val eventRepository: EventRepository,
     private val sessionReader: SessionReader,
-    private val cardinalReader: CardinalReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val scheduleMapper: ScheduleMapper,
     private val eventMapper: EventMapper,
@@ -58,23 +56,24 @@ class GetScheduleQueryService(
         return (events + sessions).sortedBy { it.start }
     }
 
-    fun findYearly( // TODO: 기수가 1학기라는 보장이 없음. 기수 말고 날짜 기준으로 받아오기. (MVP 후)
+    fun findYearly(
         clubId: Long,
         userId: Long,
         year: Int,
-        semester: Int,
     ): Map<Int, List<ScheduleResponse>> {
         clubMemberPolicy.getActiveMember(clubId, userId)
-        val cardinal = cardinalReader.getByClubIdAndYearAndSemester(clubId, year, semester)
+
+        val start = LocalDateTime.of(year, 1, 1, 0, 0)
+        val end = LocalDateTime.of(year, 12, 31, 23, 59, 59)
 
         val events =
             eventRepository
-                .findAllByClubIdAndCardinal(clubId, cardinal.cardinalNumber)
+                .findByClubIdAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(clubId, end, start)
                 .map { scheduleMapper.toResponse(it, false) }
 
         val sessions =
             sessionReader
-                .findAllByClubIdAndCardinalIn(clubId, listOf(cardinal.cardinalNumber))
+                .findAllByClubIdAndStartBetween(clubId, start, end)
                 .map { scheduleMapper.toResponse(it, true) }
 
         return (events + sessions)

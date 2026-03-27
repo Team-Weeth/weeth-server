@@ -10,15 +10,11 @@ object CardinalTestFixture {
         id: Long? = null,
         club: Club = ClubTestFixture.createClub(),
         cardinalNumber: Int,
-        year: Int,
-        semester: Int,
     ): Cardinal =
         Cardinal(
             club = club,
             id = id ?: 0L,
             cardinalNumber = cardinalNumber,
-            year = year,
-            semester = semester,
             status = CardinalStatus.DONE,
         )
 
@@ -26,15 +22,11 @@ object CardinalTestFixture {
         id: Long? = null,
         club: Club = ClubTestFixture.createClub(),
         cardinalNumber: Int,
-        year: Int,
-        semester: Int,
     ): Cardinal =
         Cardinal(
             club = club,
             id = id ?: 0L,
             cardinalNumber = cardinalNumber,
-            year = year,
-            semester = semester,
             status = CardinalStatus.IN_PROGRESS,
         )
 }
