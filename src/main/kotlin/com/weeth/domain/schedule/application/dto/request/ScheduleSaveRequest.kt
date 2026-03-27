@@ -19,14 +19,11 @@ data class ScheduleSaveRequest(
     @field:NotBlank
     val location: String,
     @field:Schema(description = "기수", example = "4")
-    @field:NotNull
     val cardinal: Int,
-    @field:Schema(description = "시작 시간", example = "2024-03-01T10:00:00")
-    @field:NotNull
+    @field:Schema(description = "시작 시간", example = "2026-03-25T10:00:00")
     @field:DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     val start: LocalDateTime,
-    @field:Schema(description = "종료 시간", example = "2024-03-01T12:00:00")
-    @field:NotNull
+    @field:Schema(description = "종료 시간", example = "2026-03-25T12:00:00")
     @field:DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     val end: LocalDateTime,
 )

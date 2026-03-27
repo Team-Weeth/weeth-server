@@ -1,5 +1,6 @@
 package com.weeth.domain.schedule.application.usecase.command
 
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
@@ -31,8 +32,8 @@ class ManageEventUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val club = clubReader.getClubById(clubId)
         val user = userReader.getById(userId)
-        // TODO: 전역 cardinal 조회 대신 clubId 기준 조회를 사용해야 다른 동아리 기수로 검증이 통과하지 않는다.
-        cardinalReader.getByCardinalNumber(request.cardinal)
+        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal)
+            ?: throw CardinalNotFoundException()
         eventRepository.save(eventMapper.toEntity(club, request, user))
     }
 
@@ -47,7 +48,14 @@ class ManageEventUseCase(
         val user = userReader.getById(userId)
         val event = eventRepository.findByIdOrNull(eventId) ?: throw EventNotFoundException()
         if (event.club.id != clubId) throw EventNotFoundException()
-        event.update(request.title, request.content, request.location, request.start, request.end, user)
+        event.update(
+            title = request.title ?: event.title,
+            content = request.content ?: event.content,
+            location = request.location ?: event.location,
+            start = request.start ?: event.start,
+            end = request.end ?: event.end,
+            user = user,
+        )
     }
 
     @Transactional
