@@ -4,11 +4,14 @@ import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
+import com.weeth.domain.board.application.exception.BoardCreateLockTimeoutException
+import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotDeletableException
 import com.weeth.domain.board.application.exception.FixedBoardNotRenamableException
 import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
@@ -18,6 +21,7 @@ import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import org.springframework.dao.PessimisticLockingFailureException
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -28,10 +32,6 @@ class ManageBoardUseCase(
     private val clubReader: ClubReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
-    /**
-     * 게시판 생성 API, 커스텀한 게시판 생성 가능
-     * TODO: MVP, 무료의 경우엔 개수 제한. 공지사항 제외
-     */
     @Transactional
     fun create(
         clubId: Long,
@@ -39,7 +39,20 @@ class ManageBoardUseCase(
         userId: Long,
     ): BoardDetailResponse {
         clubPermissionPolicy.requireAdmin(clubId, userId)
-        val club = clubReader.getClubById(clubId)
+
+        val club =
+            try {
+                clubReader.getClubByIdForUpdate(clubId)
+            } catch (_: PessimisticLockingFailureException) {
+                throw BoardCreateLockTimeoutException()
+            }
+
+        // TODO: MVP 제약 — 공지사항은 클럽 생성 시 자동 제공되므로 직접 생성 불가. 다중 NOTICE 지원 시 제거
+        if (request.type == BoardType.NOTICE) throw BoardLimitExceededException()
+
+        if (boardRepository.countByClubIdAndIsDeletedFalse(clubId) >= MAX_BOARD_COUNT) {
+            throw BoardLimitExceededException()
+        }
 
         if (boardRepository.existsByClubIdAndNameAndIsDeletedFalse(
                 clubId,
@@ -117,6 +130,7 @@ class ManageBoardUseCase(
         val board = findBoard(boardId)
 
         if (board.club.id != clubId) throw BoardNotFoundException()
+        if (board.type == BoardType.NOTICE) throw FixedBoardNotDeletableException()
         val maxOrder = boardRepository.findMaxDisplayOrderByClubId(clubId)
         board.markDeleted()
         board.reorder(maxOrder + 1)
@@ -158,4 +172,8 @@ class ManageBoardUseCase(
 
     private fun findBoard(boardId: Long): Board =
         boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
+
+    companion object {
+        private const val MAX_BOARD_COUNT = 4
+    }
 }
