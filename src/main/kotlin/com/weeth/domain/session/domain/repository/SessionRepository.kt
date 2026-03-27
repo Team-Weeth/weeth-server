@@ -26,11 +26,17 @@ interface SessionRepository :
         clubId: Long,
     ): Session?
 
-    fun findAllByClubIdOrderByStartDesc(clubId: Long): List<Session>
+    @Query("SELECT s FROM Session s LEFT JOIN FETCH s.sessionGroup WHERE s.club.id = :clubId ORDER BY s.start DESC")
+    fun findAllByClubIdOrderByStartDesc(
+        @Param("clubId") clubId: Long,
+    ): List<Session>
 
+    @Query(
+        "SELECT s FROM Session s LEFT JOIN FETCH s.sessionGroup WHERE s.club.id = :clubId AND s.cardinal = :cardinal ORDER BY s.start DESC",
+    )
     fun findAllByClubIdAndCardinalOrderByStartDesc(
-        clubId: Long,
-        cardinal: Int,
+        @Param("clubId") clubId: Long,
+        @Param("cardinal") cardinal: Int,
     ): List<Session>
 
     override fun findAllByCardinalOrderByStartAsc(cardinal: Int): List<Session>
