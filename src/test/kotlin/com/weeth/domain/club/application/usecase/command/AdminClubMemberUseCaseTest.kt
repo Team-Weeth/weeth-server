@@ -397,7 +397,9 @@ class AdminClubMemberUseCaseTest :
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(1L)))
 
-                verify(exactly = 1) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(
+                    exactly = 1,
+                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
             }
 
             it("기수를 추가할 때 세션이 없으면 출석 초기화를 하지 않는다") {
@@ -410,7 +412,9 @@ class AdminClubMemberUseCaseTest :
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(1L)))
 
-                verify(exactly = 0) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(
+                    exactly = 0,
+                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
             }
 
             it("출석 기록 없는 기수 삭제 시 force 없이도 바로 삭제된다") {
@@ -424,7 +428,8 @@ class AdminClubMemberUseCaseTest :
                 every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(2L)) } returns listOf(keepCardinal)
                 every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(link)
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
-                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns emptyList()
+                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
+                    emptyList()
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(2L)))
 
@@ -442,13 +447,21 @@ class AdminClubMemberUseCaseTest :
                 every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(2L)) } returns listOf(keepCardinal)
                 every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(link)
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
-                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns listOf(attendance)
+                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
+                    listOf(attendance)
 
                 shouldThrow<CardinalRemovalHasAttendanceException> {
-                    useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(2L), force = false))
+                    useCase.updateCardinals(
+                        1L,
+                        10L,
+                        20L,
+                        UpdateMemberCardinalRequest(cardinalIds = listOf(2L), force = false),
+                    )
                 }
 
-                verify(exactly = 0) { attendanceRepository.deleteAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(exactly = 0) {
+                    attendanceRepository.deleteAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>())
+                }
                 verify(exactly = 0) { clubMemberCardinalRepository.deleteAll(any()) }
             }
 
@@ -464,9 +477,15 @@ class AdminClubMemberUseCaseTest :
                 every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(2L)) } returns listOf(keepCardinal)
                 every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(link)
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
-                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns listOf(attendance)
+                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
+                    listOf(attendance)
 
-                useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(2L), force = true))
+                useCase.updateCardinals(
+                    1L,
+                    10L,
+                    20L,
+                    UpdateMemberCardinalRequest(cardinalIds = listOf(2L), force = true),
+                )
 
                 member.attendanceStats.attendanceCount shouldBe 0
                 verify(exactly = 1) { attendanceRepository.deleteAll(listOf(attendance)) }

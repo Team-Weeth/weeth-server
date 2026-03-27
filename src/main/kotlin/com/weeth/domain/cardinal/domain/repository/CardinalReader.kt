@@ -24,5 +24,8 @@ interface CardinalReader {
 
     fun findInProgressByClubId(clubId: Long): Cardinal?
 
-    fun findAllByClubIdAndIdIn(clubId: Long, ids: List<Long>): List<Cardinal>
+    fun findAllByClubIdAndIdIn(
+        clubId: Long,
+        ids: List<Long>,
+    ): List<Cardinal>
 }

@@ -199,8 +199,14 @@ class AdminClubMemberUseCase(
 
                 attendances.forEach { attendance ->
                     when (attendance.status) {
-                        AttendanceStatus.ATTEND -> member.removeAttend()
-                        AttendanceStatus.ABSENT -> member.removeAbsent()
+                        AttendanceStatus.ATTEND -> {
+                            member.removeAttend()
+                        }
+
+                        AttendanceStatus.ABSENT -> {
+                            member.removeAbsent()
+                        }
+
                         AttendanceStatus.PENDING -> {}
                     }
                 }
