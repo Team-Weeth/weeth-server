@@ -10,11 +10,11 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.schedule.application.mapper.SessionMapper
 import com.weeth.domain.session.application.dto.request.SessionCreateRequest
 import com.weeth.domain.session.application.exception.RecurrenceEndDateBeforeStartException
 import com.weeth.domain.session.application.exception.RecurrenceEndDateExceedsMaxException
 import com.weeth.domain.session.application.exception.RecurrenceEndDateRequiredException
+import com.weeth.domain.session.application.mapper.SessionMapper
 import com.weeth.domain.session.domain.repository.SessionGroupRepository
 import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.session.domain.service.RecurringSessionPolicy
