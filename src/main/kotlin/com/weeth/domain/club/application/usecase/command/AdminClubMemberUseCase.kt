@@ -1,12 +1,15 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
 import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
+import com.weeth.domain.club.application.exception.CardinalRemovalHasAttendanceException
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.LeadSelfTransferException
@@ -130,6 +133,7 @@ class AdminClubMemberUseCase(
                 }.associateBy { it.id }
 
         val cardinalByNumber = mutableMapOf<Int, Cardinal>()
+        val attendanceInitMap = linkedMapOf<ClubMember, MutableList<Cardinal>>()
 
         uniqueRequests.forEach { request ->
             val member = memberMap[request.clubMemberId] ?: throw ClubMemberNotFoundException()
@@ -143,11 +147,72 @@ class AdminClubMemberUseCase(
                 if (clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, nextCardinal)) {
                     member.resetAttendanceStats()
                     member.resetPenaltyCount()
-                    initializeAttendances(clubId, member, nextCardinal)
+                    attendanceInitMap.getOrPut(member) { mutableListOf() }.add(nextCardinal)
                 }
 
                 clubMemberCardinalRepository.save(ClubMemberCardinal.create(member, nextCardinal))
             }
+        }
+
+        attendanceInitMap.forEach { (member, cardinals) ->
+            initializeAttendances(clubId, member, cardinals)
+        }
+    }
+
+    @Transactional
+    fun updateCardinals(
+        clubId: Long,
+        userId: Long,
+        clubMemberId: Long,
+        request: UpdateMemberCardinalRequest,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val member =
+            clubMemberReader.findByIdWithLock(clubMemberId)
+                ?: throw ClubMemberNotFoundException()
+        if (member.club.id != clubId) throw ClubMemberNotInClubException()
+
+        val distinctIds = request.cardinalIds.distinct()
+        val newCardinals = cardinalReader.findAllByClubIdAndIdIn(clubId, distinctIds)
+        if (newCardinals.size != distinctIds.size) throw CardinalNotFoundException()
+
+        val currentMemberCardinals = clubMemberCardinalRepository.findAllByClubMembers(listOf(member))
+        val existingCardinalIds = currentMemberCardinals.map { it.cardinal.id }.toSet()
+        val newCardinalIds = newCardinals.map { it.id }.toSet()
+
+        val toRemove = currentMemberCardinals.filter { it.cardinal.id !in newCardinalIds }
+        if (toRemove.isNotEmpty()) {
+            val removedCardinalNumbers = toRemove.map { it.cardinal.cardinalNumber }
+            val sessions = sessionReader.findAllByClubIdAndCardinalIn(clubId, removedCardinalNumbers)
+            if (sessions.isNotEmpty()) {
+                val attendances = attendanceRepository.findAllByClubMemberAndSessionIn(member, sessions)
+
+                // force=true면 강제 삭제, 아니면 클라이언트에 확인 요청
+                val hasRecord =
+                    attendances.any {
+                        it.status == AttendanceStatus.ATTEND || it.status == AttendanceStatus.ABSENT
+                    }
+                if (!request.force && hasRecord) {
+                    throw CardinalRemovalHasAttendanceException()
+                }
+
+                attendances.forEach { attendance ->
+                    when (attendance.status) {
+                        AttendanceStatus.ATTEND -> member.removeAttend()
+                        AttendanceStatus.ABSENT -> member.removeAbsent()
+                        AttendanceStatus.PENDING -> {}
+                    }
+                }
+                attendanceRepository.deleteAll(attendances)
+            }
+            clubMemberCardinalRepository.deleteAll(toRemove)
+        }
+
+        val toAdd = newCardinals.filter { it.id !in existingCardinalIds }
+        if (toAdd.isNotEmpty()) {
+            clubMemberCardinalRepository.saveAll(toAdd.map { ClubMemberCardinal.create(member, it) })
+            initializeAttendances(clubId, member, toAdd)
         }
     }
 
@@ -155,12 +220,11 @@ class AdminClubMemberUseCase(
     private fun initializeAttendances(
         clubId: Long,
         member: ClubMember,
-        cardinal: Cardinal,
+        cardinals: List<Cardinal>,
     ) {
-        val sessions = sessionReader.findAllByClubIdAndCardinalIn(clubId, listOf(cardinal.cardinalNumber))
+        val sessions = sessionReader.findAllByClubIdAndCardinalIn(clubId, cardinals.map { it.cardinalNumber })
         if (sessions.isEmpty()) return
 
-        val attendances = sessions.map { Attendance.create(session = it, clubMember = member) }
-        attendanceRepository.saveAll(attendances)
+        attendanceRepository.saveAll(sessions.map { Attendance.create(session = it, clubMember = member) })
     }
 }

@@ -3,6 +3,7 @@ package com.weeth.domain.club.presentation
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
@@ -164,6 +165,20 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         adminClubMemberUseCase.transferLead(clubId, userId, targetClubMemberId)
         return CommonResponse.success(ClubResponseCode.LEAD_TRANSFERRED_SUCCESS)
+    }
+
+    @PatchMapping("/members/{clubMemberId}/cardinals")
+    @Operation(summary = "멤버 기수 수정")
+    @ApiErrorCodeExample(ClubErrorCode::class)
+    fun updateMemberCardinals(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable clubMemberId: Long,
+        @Valid @RequestBody request: UpdateMemberCardinalRequest,
+    ): CommonResponse<Unit> {
+        adminClubMemberUseCase.updateCardinals(clubId, userId, clubMemberId, request)
+        return CommonResponse.success(ClubResponseCode.MEMBER_CARDINAL_UPDATED_SUCCESS)
     }
 
     @PatchMapping("/members/apply-ob")

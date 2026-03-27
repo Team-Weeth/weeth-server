@@ -59,4 +59,7 @@ enum class ClubErrorCode(
 
     @ExplainError("관리자가 자기 자신의 권한을 변경하려 할 때 발생합니다.")
     SELF_ROLE_CHANGE_NOT_ALLOWED(21117, HttpStatus.BAD_REQUEST, "자기 자신의 권한은 변경할 수 없습니다."),
+
+    @ExplainError("삭제하려는 기수에 출석/결석 기록이 존재할 때 발생합니다. force=true로 재요청하면 출석 기록을 포함해 삭제됩니다.")
+    CARDINAL_REMOVAL_HAS_ATTENDANCE(21118, HttpStatus.UNPROCESSABLE_ENTITY, "출석 기록이 있는 기수가 포함되어 있습니다. 삭제하려면 force=true로 재요청하세요."),
 }

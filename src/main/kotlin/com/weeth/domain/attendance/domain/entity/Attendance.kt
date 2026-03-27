@@ -14,10 +14,17 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.OnDelete
 import org.hibernate.annotations.OnDeleteAction
 
 @Entity
+@Table(
+    uniqueConstraints = [
+        UniqueConstraint(name = "uk_attendance_session_member", columnNames = ["meeting_id", "club_member_id"]),
+    ],
+)
 class Attendance(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")

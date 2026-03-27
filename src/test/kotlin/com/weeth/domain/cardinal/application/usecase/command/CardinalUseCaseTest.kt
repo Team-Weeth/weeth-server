@@ -80,7 +80,7 @@ class CardinalUseCaseTest :
 
                     verify { cardinalRepository.findByClubIdAndCardinalNumber(clubId, 7) }
                     verify { cardinalRepository.save(toSave) }
-                    verify(exactly = 0) { cardinalRepository.findAllInProgressWithLock() }
+                    verify(exactly = 0) { cardinalRepository.findAllInProgressByClubIdWithLock(clubId) }
                 }
             }
 

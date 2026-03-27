@@ -53,4 +53,6 @@ interface CardinalRepository :
     override fun findByIdOrNull(cardinalId: Long): Cardinal? = findById(cardinalId).orElse(null)
 
     override fun findAllByCardinalNumberDesc(): List<Cardinal> = findAllByOrderByCardinalNumberDesc()
+
+    override fun findAllByClubIdAndIdIn(clubId: Long, ids: List<Long>): List<Cardinal>
 }
