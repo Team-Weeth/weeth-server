@@ -2,6 +2,7 @@ package com.weeth.domain.session.domain.repository
 
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.entity.SessionGroup
 import com.weeth.domain.session.domain.enums.SessionStatus
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
@@ -64,4 +65,18 @@ interface SessionRepository :
         clubId: Long,
         cardinals: List<Int>,
     ): List<Session>
+
+    // 기준 시작시각 이후 세션 조회
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        "SELECT s FROM Session s WHERE s.sessionGroup = :group AND s.start >= :start ORDER BY s.start ASC, s.id ASC",
+    )
+    fun findAllBySessionGroupAndStartGreaterThanEqualWithLock(
+        @Param("group") group: SessionGroup,
+        @Param("start") start: LocalDateTime,
+    ): List<Session>
+
+    // 세션 그룹의 남은 세션 수 조회 (삭제 후 그룹 totalCount 갱신용)
+    fun countBySessionGroup(group: SessionGroup): Long
 }
