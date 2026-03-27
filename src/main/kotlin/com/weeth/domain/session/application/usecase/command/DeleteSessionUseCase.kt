@@ -79,7 +79,7 @@ class DeleteSessionUseCase(
 
     private fun validateNoClosedSessions(
         futureSessions: List<Session>,
-        force: Boolean
+        force: Boolean,
     ) {
         if (!force) {
             val closedCount = futureSessions.count { it.status == SessionStatus.CLOSED }
