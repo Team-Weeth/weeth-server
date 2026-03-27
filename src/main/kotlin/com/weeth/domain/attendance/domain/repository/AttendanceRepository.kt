@@ -101,7 +101,23 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         @Param("sessions") sessions: List<Session>,
     ): List<Attendance>
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session IN :sessions AND cm.memberStatus = :status",
+    )
+    fun findAllBySessionInAndClubMemberMemberStatusWithLock(
+        @Param("sessions") sessions: List<Session>,
+        @Param("status") status: MemberStatus,
+    ): List<Attendance>
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Attendance a WHERE a.session = :session")
     fun deleteAllBySession(session: Session)
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Attendance a WHERE a.session IN :sessions")
+    fun deleteAllBySessionIn(
+        @Param("sessions") sessions: List<Session>,
+    )
 }
