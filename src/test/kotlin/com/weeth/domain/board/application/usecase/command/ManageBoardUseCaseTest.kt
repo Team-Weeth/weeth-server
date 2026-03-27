@@ -3,11 +3,14 @@ package com.weeth.domain.board.application.usecase.command
 import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
+import com.weeth.domain.board.application.exception.BoardCreateLockTimeoutException
+import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
+import com.weeth.domain.board.application.exception.FixedBoardNotDeletableException
 import com.weeth.domain.board.application.exception.FixedBoardNotRenamableException
 import com.weeth.domain.board.application.exception.FixedBoardNotReorderableException
 import com.weeth.domain.board.application.mapper.BoardMapper
@@ -26,6 +29,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.dao.PessimisticLockingFailureException
 
 class ManageBoardUseCaseTest :
     DescribeSpec({
@@ -42,19 +46,20 @@ class ManageBoardUseCaseTest :
         beforeTest {
             clearMocks(boardRepository, clubReader, clubPermissionPolicy)
             every { boardRepository.save(any()) } answers { firstArg() }
-            every { clubReader.getClubById(clubId) } returns club
+            every { clubReader.getClubByIdForUpdate(clubId) } returns club
             every { boardRepository.findMaxActiveDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(any(), any(), any()) } returns false
+            every { boardRepository.countByClubIdAndIsDeletedFalse(any()) } returns 0
         }
 
         describe("create") {
             it("요청값으로 게시판과 설정을 생성한다") {
                 val request =
                     CreateBoardRequest(
-                        name = "운영공지",
-                        type = BoardType.NOTICE,
+                        name = "운영 게시판",
+                        type = BoardType.GENERAL,
                         commentEnabled = false,
                         writePermission = MemberRole.ADMIN,
                         isPrivate = true,
@@ -62,8 +67,8 @@ class ManageBoardUseCaseTest :
 
                 val result = useCase.create(clubId, request, userId)
 
-                result.name shouldBe "운영공지"
-                result.type shouldBe BoardType.NOTICE
+                result.name shouldBe "운영 게시판"
+                result.type shouldBe BoardType.GENERAL
                 result.commentEnabled shouldBe false
                 result.writePermission shouldBe MemberRole.ADMIN
                 result.isPrivate shouldBe true
@@ -99,6 +104,38 @@ class ManageBoardUseCaseTest :
                 val result = useCase.create(clubId, request, userId)
 
                 result.displayOrder shouldBe 3
+            }
+
+            it("Club 락 획득 타임아웃 시 BoardCreateLockTimeoutException을 던진다") {
+                every { clubReader.getClubByIdForUpdate(clubId) } throws PessimisticLockingFailureException("")
+                val request =
+                    CreateBoardRequest(
+                        name = "새 게시판",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
+
+                shouldThrow<BoardCreateLockTimeoutException> {
+                    useCase.create(clubId, request, userId)
+                }
+            }
+
+            it("총 게시판 수가 4개 이상이면 예외를 던진다") {
+                every { boardRepository.countByClubIdAndIsDeletedFalse(clubId) } returns 4
+                val request =
+                    CreateBoardRequest(
+                        name = "초과 게시판",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
+
+                shouldThrow<BoardLimitExceededException> {
+                    useCase.create(clubId, request, userId)
+                }
             }
 
             it("같은 클럽에 동일한 이름의 게시판이 이미 있으면 예외를 던진다") {
@@ -183,6 +220,15 @@ class ManageBoardUseCaseTest :
                 board.isDeleted shouldBe true
                 board.displayOrder shouldBe 3
                 verify(exactly = 0) { boardRepository.delete(any()) }
+            }
+
+            it("공지사항 게시판을 삭제하면 예외를 던진다") {
+                val noticeBoard = BoardTestFixture.create(id = 1L, club = club, name = "공지사항", type = BoardType.NOTICE)
+                every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns noticeBoard
+
+                shouldThrow<FixedBoardNotDeletableException> {
+                    useCase.delete(clubId, 1L, userId)
+                }
             }
         }
 

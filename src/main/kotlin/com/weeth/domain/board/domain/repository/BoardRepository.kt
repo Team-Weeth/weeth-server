@@ -32,6 +32,8 @@ interface BoardRepository :
     @Query("SELECT COALESCE(MAX(b.displayOrder), -1) FROM Board b WHERE b.club.id = :clubId")
     fun findMaxDisplayOrderByClubId(clubId: Long): Int
 
+    fun countByClubIdAndIsDeletedFalse(clubId: Long): Int
+
     fun existsByClubIdAndNameAndIsDeletedFalse(
         clubId: Long,
         name: String,
