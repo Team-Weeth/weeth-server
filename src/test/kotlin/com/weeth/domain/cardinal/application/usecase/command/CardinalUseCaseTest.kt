@@ -1,7 +1,6 @@
 package com.weeth.domain.cardinal.application.usecase.command
 
 import com.weeth.domain.cardinal.application.dto.request.CardinalSaveRequest
-import com.weeth.domain.cardinal.application.dto.request.CardinalUpdateRequest
 import com.weeth.domain.cardinal.application.dto.response.CardinalResponse
 import com.weeth.domain.cardinal.application.mapper.CardinalMapper
 import com.weeth.domain.cardinal.application.usecase.query.GetCardinalQueryService
@@ -108,14 +107,16 @@ class CardinalUseCaseTest :
             }
         }
 
-        describe("update") {
-            it("inProgress 상태를 변경한다") {
+        describe("activate") {
+            it("해당 기수를 IN_PROGRESS로 지정하고 나머지는 DONE으로 변경한다") {
                 val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 6)
+                val oldCardinal = CardinalTestFixture.createCardinalInProgress(cardinalNumber = 5)
                 every { cardinalRepository.findByIdAndClubId(1L, clubId) } returns cardinal
-                every { cardinalRepository.findAllInProgressWithLock() } returns emptyList()
+                every { cardinalRepository.findAllInProgressWithLock() } returns listOf(oldCardinal)
 
-                manageCardinalUseCase.update(clubId, CardinalUpdateRequest(1L, true), userId)
+                manageCardinalUseCase.activate(clubId, 1L, userId)
 
+                oldCardinal.status shouldBe CardinalStatus.DONE
                 cardinal.status shouldBe CardinalStatus.IN_PROGRESS
             }
         }

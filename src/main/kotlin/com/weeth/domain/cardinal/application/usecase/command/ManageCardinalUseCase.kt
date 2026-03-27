@@ -1,7 +1,6 @@
 package com.weeth.domain.cardinal.application.usecase.command
 
 import com.weeth.domain.cardinal.application.dto.request.CardinalSaveRequest
-import com.weeth.domain.cardinal.application.dto.request.CardinalUpdateRequest
 import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.application.exception.DuplicateCardinalException
 import com.weeth.domain.cardinal.application.mapper.CardinalMapper
@@ -41,17 +40,15 @@ class ManageCardinalUseCase(
     }
 
     @Transactional
-    fun update(
+    fun activate(
         clubId: Long,
-        request: CardinalUpdateRequest,
+        cardinalId: Long,
         userId: Long,
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val cardinal =
-            cardinalRepository.findByIdAndClubId(request.id, clubId) ?: throw CardinalNotFoundException()
+            cardinalRepository.findByIdAndClubId(cardinalId, clubId) ?: throw CardinalNotFoundException()
 
-        if (request.inProgress) {
-            cardinalStatusPolicy.activateExclusively(cardinal)
-        }
+        cardinalStatusPolicy.activateExclusively(cardinal)
     }
 }
