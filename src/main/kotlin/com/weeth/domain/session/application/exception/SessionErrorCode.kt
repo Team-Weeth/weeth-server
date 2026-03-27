@@ -40,4 +40,7 @@ enum class SessionErrorCode(
 
     @ExplainError("반복 종료일이 시작일 기준 1년을 초과할 때 발생합니다.")
     RECURRENCE_END_DATE_EXCEEDS_MAX(20307, HttpStatus.BAD_REQUEST, "반복 종료일은 시작일 기준 최대 1년까지 설정할 수 있습니다."),
+
+    @ExplainError("종료 시간이 시작 시간보다 앞설 때 발생합니다. start만 변경할 경우 end도 함께 전달해야 합니다.")
+    END_BEFORE_START(20308, HttpStatus.BAD_REQUEST, "종료 시간은 시작 시간 이후여야 합니다."),
 }
