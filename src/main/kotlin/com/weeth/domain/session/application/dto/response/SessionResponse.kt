@@ -1,4 +1,4 @@
-package com.weeth.domain.schedule.application.dto.response
+package com.weeth.domain.session.application.dto.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.weeth.domain.schedule.domain.enums.Type

@@ -1,6 +1,6 @@
 package com.weeth.domain.session.presentation
 
-import com.weeth.domain.schedule.application.dto.response.SessionResponse
+import com.weeth.domain.session.application.dto.response.SessionResponse
 import com.weeth.domain.session.application.exception.SessionErrorCode
 import com.weeth.domain.session.application.usecase.query.GetSessionQueryService
 import com.weeth.global.auth.annotation.CurrentUser
