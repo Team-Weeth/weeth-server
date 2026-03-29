@@ -51,7 +51,7 @@ class DeleteSessionUseCase(
             UpdateScope.THIS_ONLY -> {
                 deleteSingleSession(session)
                 val lockedGroup = sessionGroupRepository.findByIdWithLock(group.id) ?: return
-                updateOrDeleteGroup(lockedGroup)
+                deleteGroupIfEmpty(lockedGroup)
             }
 
             UpdateScope.THIS_AND_FUTURE -> {
@@ -74,7 +74,7 @@ class DeleteSessionUseCase(
                 sessionRepository.deleteAll(futureSessions)
 
                 val lockedGroup = sessionGroupRepository.findByIdWithLock(group.id) ?: return
-                updateOrDeleteGroup(lockedGroup)
+                deleteGroupIfEmpty(lockedGroup)
             }
         }
     }
@@ -147,13 +147,10 @@ class DeleteSessionUseCase(
         }
     }
 
-    private fun updateOrDeleteGroup(group: SessionGroup) {
+    private fun deleteGroupIfEmpty(group: SessionGroup) {
         val remainingCount = sessionRepository.countBySessionGroup(group)
-
         if (remainingCount == 0L) {
             sessionGroupRepository.delete(group)
-        } else {
-            group.updateTotalCount(remainingCount.toInt())
         }
     }
 }

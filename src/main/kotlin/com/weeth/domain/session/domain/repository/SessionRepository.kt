@@ -90,6 +90,6 @@ interface SessionRepository :
         @Param("group") group: SessionGroup,
     ): List<Session>
 
-    // 세션 그룹의 남은 세션 수 조회 (삭제 후 그룹 totalCount 갱신용)
+    // 세션 그룹의 남은 세션 수 조회 (삭제 후 빈 그룹 정리용)
     fun countBySessionGroup(group: SessionGroup): Long
 }

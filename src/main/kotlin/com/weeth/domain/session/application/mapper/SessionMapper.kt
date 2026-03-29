@@ -133,7 +133,6 @@ class SessionMapper(
     fun toSessionGroup(
         request: SessionCreateRequest,
         recurrenceEndDate: LocalDate,
-        totalCount: Int,
     ): SessionGroup =
         SessionGroup(
             title = request.title,
@@ -142,7 +141,6 @@ class SessionMapper(
             cardinal = request.cardinal,
             startTime = request.start.toLocalTime(),
             endTime = request.end.toLocalTime(),
-            totalCount = totalCount,
         )
 
     fun toEntities(

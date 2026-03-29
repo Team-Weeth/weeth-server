@@ -22,7 +22,6 @@ class SessionGroup(
     cardinal: Int,
     startTime: LocalTime,
     endTime: LocalTime,
-    totalCount: Int,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,12 +49,4 @@ class SessionGroup(
     // 반복 기준 종료 시각
     var endTime: LocalTime = endTime
         private set
-
-    // 생성된 전체 세션 수
-    var totalCount: Int = totalCount
-        private set
-
-    fun updateTotalCount(count: Int) {
-        this.totalCount = count
-    }
 }

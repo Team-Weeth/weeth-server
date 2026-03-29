@@ -98,7 +98,7 @@ class CreateSessionUseCase(
             throw RecurrenceEndDateBeforeStartException()
         }
 
-        val group = sessionMapper.toSessionGroup(request, endDate, schedules.size)
+        val group = sessionMapper.toSessionGroup(request, endDate)
         sessionGroupRepository.save(group)
 
         val sessions = sessionMapper.toEntities(club, request, user, group, schedules)

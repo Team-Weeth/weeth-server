@@ -50,7 +50,6 @@ object SessionTestFixture {
         cardinal: Int = 1,
         startTime: LocalTime = LocalTime.of(10, 0),
         endTime: LocalTime = LocalTime.of(12, 0),
-        totalCount: Int = 4,
     ): SessionGroup {
         val group =
             SessionGroup(
@@ -60,7 +59,6 @@ object SessionTestFixture {
                 cardinal = cardinal,
                 startTime = startTime,
                 endTime = endTime,
-                totalCount = totalCount,
             )
         if (id != 0L) ReflectionTestUtils.setField(group, "id", id)
         return group

@@ -91,22 +91,24 @@ class DeleteSessionUseCaseTest :
             }
 
             context("반복 세션 THIS_ONLY 삭제") {
-                it("해당 세션만 삭제하고 그룹 totalCount를 갱신한다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 4)
+                it("해당 세션만 삭제하고 그룹은 유지한다") {
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val session = SessionTestFixture.createSession(id = 1L, club = club, sessionGroup = group)
                     every { sessionRepository.findByIdWithLock(1L) } returns session
+                    every { sessionGroupRepository.findByIdWithLock(1L) } returns group
                     every { sessionRepository.countBySessionGroup(group) } returns 3L
 
                     useCase.delete(clubId, 1L, userId, scope = UpdateScope.THIS_ONLY)
 
                     verify(exactly = 1) { sessionRepository.delete(session) }
-                    group.totalCount shouldBe 3
+                    verify(exactly = 0) { sessionGroupRepository.delete(any()) }
                 }
 
                 it("마지막 세션 삭제 시 그룹도 함께 삭제한다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 1)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val session = SessionTestFixture.createSession(id = 1L, club = club, sessionGroup = group)
                     every { sessionRepository.findByIdWithLock(1L) } returns session
+                    every { sessionGroupRepository.findByIdWithLock(1L) } returns group
                     every { sessionRepository.countBySessionGroup(group) } returns 0L
 
                     useCase.delete(clubId, 1L, userId, scope = UpdateScope.THIS_ONLY)
@@ -117,7 +119,7 @@ class DeleteSessionUseCaseTest :
 
             context("반복 세션 THIS_AND_FUTURE 삭제") {
                 it("해당 세션부터 이후 모든 세션을 삭제한다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 4)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val session1 =
                         SessionTestFixture.createSession(
                             id = 1L,
@@ -140,6 +142,7 @@ class DeleteSessionUseCaseTest :
                     every {
                         sessionRepository.findAllBySessionGroupAndStartGreaterThanEqualWithLock(group, session1.start)
                     } returns futureSessions
+                    every { sessionGroupRepository.findByIdWithLock(1L) } returns group
                     every { sessionRepository.countBySessionGroup(group) } returns 2L
 
                     useCase.delete(clubId, 1L, userId, scope = UpdateScope.THIS_AND_FUTURE)
@@ -149,7 +152,7 @@ class DeleteSessionUseCaseTest :
                 }
 
                 it("CLOSED 세션 포함 시 force=false이면 예외를 던진다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 4)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val openSession =
                         SessionTestFixture.createSession(
                             id = 1L,
@@ -182,7 +185,7 @@ class DeleteSessionUseCaseTest :
                 }
 
                 it("CLOSED 세션 포함 시 force=true이면 정상 삭제된다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 4)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val openSession =
                         SessionTestFixture.createSession(
                             id = 1L,
@@ -208,6 +211,7 @@ class DeleteSessionUseCaseTest :
                             openSession.start,
                         )
                     } returns listOf(openSession, closedSession)
+                    every { sessionGroupRepository.findByIdWithLock(1L) } returns group
                     every { sessionRepository.countBySessionGroup(group) } returns 2L
 
                     shouldNotThrowAny {
@@ -218,7 +222,7 @@ class DeleteSessionUseCaseTest :
                 }
 
                 it("모든 세션을 삭제하면 그룹도 함께 삭제된다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 2)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val session1 =
                         SessionTestFixture.createSession(
                             id = 1L,
@@ -240,6 +244,7 @@ class DeleteSessionUseCaseTest :
                     every {
                         sessionRepository.findAllBySessionGroupAndStartGreaterThanEqualWithLock(group, session1.start)
                     } returns listOf(session1, session2)
+                    every { sessionGroupRepository.findByIdWithLock(1L) } returns group
                     every { sessionRepository.countBySessionGroup(group) } returns 0L
 
                     useCase.delete(clubId, 1L, userId, scope = UpdateScope.THIS_AND_FUTURE)
@@ -263,7 +268,7 @@ class DeleteSessionUseCaseTest :
             context("다른 클럽의 세션 그룹") {
                 it("예외를 던진다") {
                     val otherClub = ClubTestFixture.createClub(id = 999L)
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 2)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val session = SessionTestFixture.createSession(id = 1L, club = otherClub, sessionGroup = group)
 
                     every { sessionGroupRepository.findById(1L) } returns Optional.of(group)
@@ -277,7 +282,7 @@ class DeleteSessionUseCaseTest :
 
             context("그룹 전체 삭제") {
                 it("모든 세션과 출석을 삭제하고 그룹을 삭제한다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 2)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val session1 =
                         SessionTestFixture.createSession(
                             id = 1L,
@@ -309,7 +314,7 @@ class DeleteSessionUseCaseTest :
 
             context("CLOSED 세션 포함") {
                 it("force=false이면 예외를 던진다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 2)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val closedSession =
                         SessionTestFixture.createSession(
                             id = 1L,
@@ -329,7 +334,7 @@ class DeleteSessionUseCaseTest :
                 }
 
                 it("force=true이면 정상 삭제된다") {
-                    val group = SessionTestFixture.createSessionGroup(id = 1L, totalCount = 1)
+                    val group = SessionTestFixture.createSessionGroup(id = 1L)
                     val closedSession =
                         SessionTestFixture.createSession(
                             id = 1L,
