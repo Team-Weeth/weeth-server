@@ -447,11 +447,13 @@ class AdminClubMemberUseCaseTest :
                 // 현재: 8기, 9기 보유 → 요청: 9기만 유지 → 8기 삭제
                 val keepCardinal = CardinalTestFixture.createCardinal(id = 2L, club = club, cardinalNumber = 9)
                 val removeCardinal = CardinalTestFixture.createCardinal(id = 1L, club = club, cardinalNumber = 8)
-                val link = ClubMemberCardinal.create(member, removeCardinal)
+                val keepLink = ClubMemberCardinal.create(member, keepCardinal)
+                val removeLink = ClubMemberCardinal.create(member, removeCardinal)
                 val session = SessionTestFixture.createSession(club = club, cardinal = 8)
                 stubMemberLock(member)
                 every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(2L)) } returns listOf(keepCardinal)
-                every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(link)
+                every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns
+                    listOf(keepLink, removeLink)
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
                 every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
                     emptyList()
@@ -459,19 +461,22 @@ class AdminClubMemberUseCaseTest :
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(2L)))
 
-                verify(exactly = 1) { clubMemberCardinalRepository.deleteAll(listOf(link)) }
+                verify(exactly = 1) { clubMemberCardinalRepository.deleteAll(listOf(removeLink)) }
             }
 
             it("출석/결석 기록이 있는 기수 삭제 시 force=false면 예외가 발생한다") {
                 val member = createMember()
+                // 현재: 8기, 9기 보유 → 요청: 9기만 유지 → 8기 삭제
                 val keepCardinal = CardinalTestFixture.createCardinal(id = 2L, club = club, cardinalNumber = 9)
                 val removeCardinal = CardinalTestFixture.createCardinal(id = 1L, club = club, cardinalNumber = 8)
-                val link = ClubMemberCardinal.create(member, removeCardinal)
+                val keepLink = ClubMemberCardinal.create(member, keepCardinal)
+                val removeLink = ClubMemberCardinal.create(member, removeCardinal)
                 val session = SessionTestFixture.createSession(club = club, cardinal = 8)
                 val attendance = AttendanceTestFixture.createAttendance(session, member).also { it.attend() }
                 stubMemberLock(member)
                 every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(2L)) } returns listOf(keepCardinal)
-                every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(link)
+                every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns
+                    listOf(keepLink, removeLink)
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
                 every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
                     listOf(attendance)
