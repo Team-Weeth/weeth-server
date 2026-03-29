@@ -50,7 +50,8 @@ class DeleteSessionUseCase(
         when (scope) {
             UpdateScope.THIS_ONLY -> {
                 deleteSingleSession(session)
-                updateOrDeleteGroup(group)
+                val lockedGroup = sessionGroupRepository.findByIdWithLock(group.id) ?: return
+                updateOrDeleteGroup(lockedGroup)
             }
 
             UpdateScope.THIS_AND_FUTURE -> {
@@ -72,7 +73,8 @@ class DeleteSessionUseCase(
                 attendanceRepository.deleteAllBySessionIn(futureSessions)
                 sessionRepository.deleteAll(futureSessions)
 
-                updateOrDeleteGroup(group)
+                val lockedGroup = sessionGroupRepository.findByIdWithLock(group.id) ?: return
+                updateOrDeleteGroup(lockedGroup)
             }
         }
     }
