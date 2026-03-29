@@ -104,4 +104,17 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Attendance a WHERE a.session = :session")
     fun deleteAllBySession(session: Session)
+
+    @Query("SELECT a FROM Attendance a JOIN a.session s WHERE a.clubMember = :clubMember AND s.club.id = :clubId")
+    fun findAllByClubMemberAndClubId(
+        @Param("clubMember") clubMember: ClubMember,
+        @Param("clubId") clubId: Long,
+    ): List<Attendance>
+
+    // NOTE: session, clubMember는 lazy 로딩 — attendance.status 접근 전용. 연관 필드 접근 시 JOIN FETCH 추가 필요
+    @Query("SELECT a FROM Attendance a WHERE a.clubMember = :clubMember AND a.session IN :sessions")
+    fun findAllByClubMemberAndSessionIn(
+        @Param("clubMember") clubMember: ClubMember,
+        @Param("sessions") sessions: List<Session>,
+    ): List<Attendance>
 }

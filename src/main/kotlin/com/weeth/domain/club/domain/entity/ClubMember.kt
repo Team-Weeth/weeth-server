@@ -134,12 +134,24 @@ class ClubMember(
         attendanceStats.reset()
     }
 
+    fun recalculateAttendanceStats(
+        attendCount: Int,
+        absentCount: Int,
+    ) {
+        attendanceStats.recalculate(attendCount, absentCount)
+    }
+
     fun incrementPenaltyCount() {
         penaltyCount++
     }
 
     fun resetPenaltyCount() {
         penaltyCount = 0
+    }
+
+    fun recalculatePenaltyCount(count: Int) {
+        require(count >= 0) { "패널티 수는 0 이상이어야 합니다." }
+        penaltyCount = count
     }
 
     fun updateProfileImageUrl(storageKey: String?) {

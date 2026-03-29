@@ -8,7 +8,7 @@ import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 object ClubMemberCardinalTestFixture {
     fun create(
         clubMember: ClubMember = ClubMemberTestFixture.createActiveMember(),
-        cardinal: Cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 1, year = 2026, semester = 1),
+        cardinal: Cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 1),
     ): ClubMemberCardinal =
         ClubMemberCardinal(
             clubMember = clubMember,

@@ -15,16 +15,12 @@ class CardinalMapper {
         Cardinal.create(
             club = club,
             cardinalNumber = request.cardinalNumber,
-            year = request.year,
-            semester = request.semester,
         )
 
     fun toResponse(cardinal: Cardinal): CardinalResponse =
         CardinalResponse(
             cardinal.id,
             cardinal.cardinalNumber,
-            cardinal.year,
-            cardinal.semester,
             cardinal.status,
             cardinal.createdAt,
             cardinal.modifiedAt,

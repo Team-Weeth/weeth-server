@@ -32,8 +32,6 @@ class ClubMemberCardinalPolicyTest :
                         CardinalTestFixture.createCardinal(
                             club = club,
                             cardinalNumber = 5,
-                            year = 2026,
-                            semester = 1,
                         )
                     val memberCardinal = ClubMemberCardinal.create(clubMember = member, cardinal = cardinal)
 
@@ -62,8 +60,6 @@ class ClubMemberCardinalPolicyTest :
                     id = 10L,
                     club = club,
                     cardinalNumber = 3,
-                    year = 2025,
-                    semester = 1,
                 )
 
             context("멤버가 해당 기수에 속하지 않는 경우") {
@@ -94,8 +90,6 @@ class ClubMemberCardinalPolicyTest :
                         CardinalTestFixture.createCardinal(
                             club = club,
                             cardinalNumber = 1,
-                            year = 2024,
-                            semester = 1,
                         )
 
                     every { clubMemberCardinalReader.findLatestCardinalByClubMember(member) } returns null
@@ -110,15 +104,11 @@ class ClubMemberCardinalPolicyTest :
                         CardinalTestFixture.createCardinal(
                             club = club,
                             cardinalNumber = 3,
-                            year = 2025,
-                            semester = 1,
                         )
                     val newCardinal =
                         CardinalTestFixture.createCardinal(
                             club = club,
                             cardinalNumber = 4,
-                            year = 2025,
-                            semester = 2,
                         )
                     val latestMemberCardinal =
                         ClubMemberCardinal.create(clubMember = member, cardinal = latestCardinal)
@@ -137,8 +127,6 @@ class ClubMemberCardinalPolicyTest :
                         CardinalTestFixture.createCardinal(
                             club = club,
                             cardinalNumber = 3,
-                            year = 2025,
-                            semester = 1,
                         )
                     val memberCardinal = ClubMemberCardinal.create(clubMember = member, cardinal = cardinal)
 
@@ -156,15 +144,11 @@ class ClubMemberCardinalPolicyTest :
                         CardinalTestFixture.createCardinal(
                             club = club,
                             cardinalNumber = 5,
-                            year = 2026,
-                            semester = 1,
                         )
                     val oldCardinal =
                         CardinalTestFixture.createCardinal(
                             club = club,
                             cardinalNumber = 2,
-                            year = 2024,
-                            semester = 2,
                         )
                     val latestMemberCardinal =
                         ClubMemberCardinal.create(clubMember = member, cardinal = latestCardinal)

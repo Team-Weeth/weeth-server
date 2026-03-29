@@ -27,6 +27,15 @@ class ClubAttendanceStats(
         attendanceRate = 0
     }
 
+    fun recalculate(
+        attendCount: Int,
+        absentCount: Int,
+    ) {
+        attendanceCount = attendCount
+        absenceCount = absentCount
+        recalculateRate()
+    }
+
     fun attend() {
         attendanceCount++
         recalculateRate()

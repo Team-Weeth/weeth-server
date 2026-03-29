@@ -1,7 +1,6 @@
 package com.weeth.domain.cardinal.presentation
 
 import com.weeth.domain.cardinal.application.dto.request.CardinalSaveRequest
-import com.weeth.domain.cardinal.application.dto.request.CardinalUpdateRequest
 import com.weeth.domain.cardinal.application.exception.CardinalErrorCode
 import com.weeth.domain.cardinal.application.usecase.command.ManageCardinalUseCase
 import com.weeth.global.auth.annotation.CurrentUser
@@ -15,6 +14,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -27,15 +27,15 @@ import org.springframework.web.bind.annotation.RestController
 class CardinalAdminController(
     private val manageCardinalUseCase: ManageCardinalUseCase,
 ) {
-    @PatchMapping
-    @Operation(summary = "기수 정보 수정 API")
-    fun update(
+    @PatchMapping("/{cardinalId}")
+    @Operation(summary = "현재 진행 기수 지정 API")
+    fun activate(
         @TsidParam
         @TsidPathVariable clubId: Long,
-        @RequestBody @Valid request: CardinalUpdateRequest,
+        @PathVariable cardinalId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
-        manageCardinalUseCase.update(clubId, request, userId)
+        manageCardinalUseCase.activate(clubId, cardinalId, userId)
         return CommonResponse.success(CardinalResponseCode.CARDINAL_UPDATE_SUCCESS)
     }
 

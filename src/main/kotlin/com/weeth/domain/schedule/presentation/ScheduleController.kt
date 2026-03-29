@@ -43,10 +43,9 @@ class ScheduleController(
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestParam year: Int,
-        @RequestParam semester: Int,
     ): CommonResponse<Map<Int, List<ScheduleResponse>>> =
         CommonResponse.success(
             ScheduleResponseCode.SCHEDULE_YEARLY_FIND_SUCCESS,
-            getScheduleQueryService.findYearly(clubId, userId, year, semester),
+            getScheduleQueryService.findYearly(clubId, userId, year),
         )
 }

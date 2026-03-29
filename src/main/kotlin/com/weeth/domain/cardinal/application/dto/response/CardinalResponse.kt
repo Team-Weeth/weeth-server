@@ -9,10 +9,6 @@ data class CardinalResponse(
     val id: Long,
     @field:Schema(description = "기수 번호", example = "7")
     val cardinalNumber: Int,
-    @field:Schema(description = "년도", example = "2025", nullable = true)
-    val year: Int?,
-    @field:Schema(description = "학기", example = "1", nullable = true)
-    val semester: Int?,
     @field:Schema(description = "기수 상태", example = "IN_PROGRESS")
     val status: CardinalStatus,
     @field:Schema(description = "생성 시각")
