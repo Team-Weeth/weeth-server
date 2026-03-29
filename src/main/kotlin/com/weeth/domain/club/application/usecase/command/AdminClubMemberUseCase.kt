@@ -199,10 +199,19 @@ class AdminClubMemberUseCase(
 
                 attendanceRepository.deleteAll(attendances)
 
-                val remaining = attendanceRepository.findAllByClubMemberAndClubId(member, clubId)
-                val attendCount = remaining.count { it.status == AttendanceStatus.ATTEND }
-                val absentCount = remaining.count { it.status == AttendanceStatus.ABSENT }
-                member.recalculateAttendanceStats(attendCount, absentCount)
+                val latestCardinal = newCardinals.maxByOrNull { it.cardinalNumber }
+                if (latestCardinal != null) {
+                    val remaining =
+                        attendanceRepository.findAllByClubMemberIdAndCardinal(
+                            member.id,
+                            latestCardinal.cardinalNumber,
+                        )
+                    val attendCount = remaining.count { it.status == AttendanceStatus.ATTEND }
+                    val absentCount = remaining.count { it.status == AttendanceStatus.ABSENT }
+                    member.recalculateAttendanceStats(attendCount, absentCount)
+                } else {
+                    member.recalculateAttendanceStats(0, 0)
+                }
             }
             clubMemberCardinalRepository.deleteAll(toRemove)
         }

@@ -430,7 +430,7 @@ class AdminClubMemberUseCaseTest :
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
                 every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
                     emptyList()
-                every { attendanceRepository.findAllByClubMemberAndClubId(member, 1L) } returns emptyList()
+                every { attendanceRepository.findAllByClubMemberIdAndCardinal(20L, 9) } returns emptyList()
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(2L)))
 
@@ -482,7 +482,7 @@ class AdminClubMemberUseCaseTest :
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(9)) } returns listOf(session9)
                 every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session9)) } returns
                     listOf(removeAttendance)
-                every { attendanceRepository.findAllByClubMemberAndClubId(member, 1L) } returns
+                every { attendanceRepository.findAllByClubMemberIdAndCardinal(20L, 8) } returns
                     listOf(remainingAttendance)
 
                 useCase.updateCardinals(
