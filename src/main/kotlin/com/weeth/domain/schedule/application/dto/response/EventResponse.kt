@@ -10,9 +10,9 @@ data class EventResponse(
     @field:Schema(description = "일정 제목", example = "MT")
     val title: String,
     @field:Schema(description = "일정 내용")
-    val content: String,
+    val content: String?,
     @field:Schema(description = "장소", example = "가평")
-    val location: String,
+    val location: String?,
     @field:Schema(description = "작성자 이름", example = "이지훈")
     val name: String?,
     @field:Schema(description = "기수", example = "4")

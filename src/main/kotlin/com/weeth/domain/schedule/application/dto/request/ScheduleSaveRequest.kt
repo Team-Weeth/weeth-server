@@ -12,12 +12,10 @@ data class ScheduleSaveRequest(
     @field:NotBlank
     val title: String,
     @field:Schema(description = "일정 내용", example = "1박 2일 MT입니다.")
-    @field:NotBlank
     @field:Size(max = 500)
-    val content: String,
+    val content: String? = null,
     @field:Schema(description = "장소", example = "가평")
-    @field:NotBlank
-    val location: String,
+    val location: String? = null,
     @field:Schema(description = "기수", example = "4")
     val cardinal: Int,
     @field:Schema(description = "시작 시간", example = "2026-03-25T10:00:00")
