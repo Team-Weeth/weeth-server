@@ -15,12 +15,21 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.security.SecureRandom
 import java.time.LocalDateTime
 import kotlin.random.asKotlinRandom
 
 @Entity
-@Table(name = "session")
+@Table(
+    name = "session",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_session_group_start",
+            columnNames = ["session_group_id", "start"],
+        ),
+    ],
+)
 class Session(
     club: Club,
     title: String,
