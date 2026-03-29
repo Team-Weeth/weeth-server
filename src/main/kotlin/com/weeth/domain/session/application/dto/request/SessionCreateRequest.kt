@@ -24,6 +24,6 @@ data class SessionCreateRequest(
     val end: LocalDateTime,
     @field:Schema(description = "반복 설정 (null=비반복, DAILY/WEEKLY/MONTHLY)")
     val recurrenceType: RecurrenceType?,
-    @field:Schema(description = "반복 종료일 (반복 설정 시 필수, 시작일 기준 최대 1년)", example = "2026-06-31")
+    @field:Schema(description = "반복 종료일 (반복 설정 시 필수, 시작일 기준 최대 1년)", example = "2026-06-30")
     val recurrenceEndDate: LocalDate?,
 )
