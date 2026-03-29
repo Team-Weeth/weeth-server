@@ -25,6 +25,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.penalty.domain.repository.PenaltyReader
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -41,6 +42,7 @@ class AdminClubMemberUseCase(
     private val clubMemberReader: ClubMemberReader,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
+    private val penaltyReader: PenaltyReader,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
 ) {
     @Transactional
@@ -203,6 +205,7 @@ class AdminClubMemberUseCase(
             val latestCardinal = newCardinals.maxByOrNull { it.cardinalNumber }
             if (latestCardinal == null) {
                 member.recalculateAttendanceStats(0, 0)
+                member.recalculatePenaltyCount(0)
             } else if (latestCardinal.id in existingCardinalIds) {
                 // 기존 기수가 최신 — 해당 기수 출석 기준으로 재계산
                 val remaining =
@@ -214,6 +217,8 @@ class AdminClubMemberUseCase(
                     remaining.count { it.status == AttendanceStatus.ATTEND },
                     remaining.count { it.status == AttendanceStatus.ABSENT },
                 )
+                val penaltyCount = penaltyReader.countByClubMemberIdAndCardinalId(member.id, latestCardinal.id)
+                member.recalculatePenaltyCount(penaltyCount)
                 // else: 최신 기수가 toAdd 소속 → toAdd 블록에서 reset 처리
             }
 

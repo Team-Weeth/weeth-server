@@ -9,13 +9,21 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
 
-interface PenaltyRepository : JpaRepository<Penalty, Long> {
+interface PenaltyRepository :
+    JpaRepository<Penalty, Long>,
+    PenaltyReader {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query("SELECT p FROM Penalty p WHERE p.id = :penaltyId")
     fun findByIdWithLock(
         @Param("penaltyId") penaltyId: Long,
     ): Penalty?
+
+    @Query("SELECT COUNT(p) FROM Penalty p WHERE p.clubMember.id = :clubMemberId AND p.cardinal.id = :cardinalId")
+    override fun countByClubMemberIdAndCardinalId(
+        @Param("clubMemberId") clubMemberId: Long,
+        @Param("cardinalId") cardinalId: Long,
+    ): Int
 
     @Query(
         "SELECT p FROM Penalty p JOIN FETCH p.clubMember cm JOIN FETCH cm.user JOIN FETCH p.cardinal WHERE cm.id = :clubMemberId AND p.cardinal.id = :cardinalId ORDER BY p.id DESC",

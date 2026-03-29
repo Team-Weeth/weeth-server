@@ -149,6 +149,11 @@ class ClubMember(
         penaltyCount = 0
     }
 
+    fun recalculatePenaltyCount(count: Int) {
+        require(count >= 0) { "패널티 수는 0 이상이어야 합니다." }
+        penaltyCount = count
+    }
+
     fun updateProfileImageUrl(storageKey: String?) {
         val trimmed = storageKey?.trim()?.takeIf { it.isNotBlank() }
         require((trimmed?.length ?: 0) <= 500) { "프로필 이미지 storageKey는 500자 이하여야 합니다." }
