@@ -198,26 +198,35 @@ class AdminClubMemberUseCase(
                 }
 
                 attendanceRepository.deleteAll(attendances)
-
-                val latestCardinal = newCardinals.maxByOrNull { it.cardinalNumber }
-                if (latestCardinal != null) {
-                    val remaining =
-                        attendanceRepository.findAllByClubMemberIdAndCardinal(
-                            member.id,
-                            latestCardinal.cardinalNumber,
-                        )
-                    val attendCount = remaining.count { it.status == AttendanceStatus.ATTEND }
-                    val absentCount = remaining.count { it.status == AttendanceStatus.ABSENT }
-                    member.recalculateAttendanceStats(attendCount, absentCount)
-                } else {
-                    member.recalculateAttendanceStats(0, 0)
-                }
             }
+
+            val latestCardinal = newCardinals.maxByOrNull { it.cardinalNumber }
+            if (latestCardinal == null) {
+                member.recalculateAttendanceStats(0, 0)
+            } else if (latestCardinal.id in existingCardinalIds) {
+                // 기존 기수가 최신 — 해당 기수 출석 기준으로 재계산
+                val remaining =
+                    attendanceRepository.findAllByClubMemberIdAndCardinal(
+                        member.id,
+                        latestCardinal.cardinalNumber,
+                    )
+                member.recalculateAttendanceStats(
+                    remaining.count { it.status == AttendanceStatus.ATTEND },
+                    remaining.count { it.status == AttendanceStatus.ABSENT },
+                )
+                // else: 최신 기수가 toAdd 소속 → toAdd 블록에서 reset 처리
+            }
+
             clubMemberCardinalRepository.deleteAll(toRemove)
         }
 
         val toAdd = newCardinals.filter { it.id !in existingCardinalIds }
         if (toAdd.isNotEmpty()) {
+            val maxAdded = toAdd.maxBy { it.cardinalNumber }
+            if (clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, maxAdded)) {
+                member.resetAttendanceStats()
+                member.resetPenaltyCount()
+            }
             clubMemberCardinalRepository.saveAll(toAdd.map { ClubMemberCardinal.create(member, it) })
             initializeAttendances(clubId, member, toAdd)
         }
