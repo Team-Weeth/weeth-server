@@ -91,10 +91,12 @@ class UpdateSessionUseCase(
             }
         }
 
+        val effectiveTitle = request.title ?: session.title
+
         futureSessions.forEach { s ->
             val (start, end) = recurringSessionPolicy.adjustTime(s.start, effectiveStart, effectiveEnd)
             s.updateInfo(
-                title = request.title ?: s.title,
+                title = effectiveTitle,
                 content = request.content ?: s.content,
                 location = request.location ?: s.location,
                 start = start,
@@ -102,5 +104,11 @@ class UpdateSessionUseCase(
                 user = user,
             )
         }
+
+        group.updateMetadata(
+            title = effectiveTitle,
+            startTime = effectiveStart.toLocalTime(),
+            endTime = effectiveEnd.toLocalTime(),
+        )
     }
 }

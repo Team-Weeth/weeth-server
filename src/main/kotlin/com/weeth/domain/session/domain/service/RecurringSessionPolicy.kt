@@ -65,7 +65,12 @@ class RecurringSessionPolicy {
         startTime: LocalTime,
         baseDate: LocalDate,
     ): String {
-        val timeStr = startTime.format(DateTimeFormatter.ofPattern("H시"))
+        val timeStr =
+            if (startTime.minute == 0) {
+                startTime.format(DateTimeFormatter.ofPattern("H시"))
+            } else {
+                startTime.format(DateTimeFormatter.ofPattern("H시 m분"))
+            }
         return when (recurrenceType) {
             RecurrenceType.DAILY -> {
                 "매일 $timeStr"

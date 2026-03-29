@@ -49,4 +49,14 @@ class SessionGroup(
     // 반복 기준 종료 시각
     var endTime: LocalTime = endTime
         private set
+
+    fun updateMetadata(
+        title: String,
+        startTime: LocalTime,
+        endTime: LocalTime,
+    ) {
+        this.title = title
+        this.startTime = startTime
+        this.endTime = endTime
+    }
 }
