@@ -430,6 +430,7 @@ class AdminClubMemberUseCaseTest :
                 every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
                 every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
                     emptyList()
+                every { attendanceRepository.findAllByClubMemberAndClubId(member, 1L) } returns emptyList()
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(2L)))
 
@@ -465,30 +466,35 @@ class AdminClubMemberUseCaseTest :
                 verify(exactly = 0) { clubMemberCardinalRepository.deleteAll(any()) }
             }
 
-            it("출석/결석 기록이 있는 기수 삭제 시 force=true면 통계 롤백 후 삭제된다") {
+            it("출석/결석 기록이 있는 기수 삭제 시 force=true면 남은 출석 기록 기준으로 통계가 재계산된다") {
                 val member = createMember()
-                member.attend() // 기존 출석 1회 반영
-                val keepCardinal = CardinalTestFixture.createCardinal(id = 2L, club = club, cardinalNumber = 9)
-                val removeCardinal = CardinalTestFixture.createCardinal(id = 1L, club = club, cardinalNumber = 8)
+                // 현재: 8기, 9기 보유 → 요청: 8기만 유지 → 9기 삭제
+                val keepCardinal = CardinalTestFixture.createCardinal(id = 1L, club = club, cardinalNumber = 8)
+                val removeCardinal = CardinalTestFixture.createCardinal(id = 2L, club = club, cardinalNumber = 9)
                 val link = ClubMemberCardinal.create(member, removeCardinal)
-                val session = SessionTestFixture.createSession(club = club, cardinal = 8)
-                val attendance = AttendanceTestFixture.createAttendance(session, member).also { it.attend() }
+                val session8 = SessionTestFixture.createSession(club = club, cardinal = 8)
+                val session9 = SessionTestFixture.createSession(club = club, cardinal = 9)
+                val removeAttendance = AttendanceTestFixture.createAttendance(session9, member).also { it.attend() }
+                val remainingAttendance = AttendanceTestFixture.createAttendance(session8, member).also { it.attend() }
                 stubMemberLock(member)
-                every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(2L)) } returns listOf(keepCardinal)
+                every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(1L)) } returns listOf(keepCardinal)
                 every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(link)
-                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
-                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session)) } returns
-                    listOf(attendance)
+                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(9)) } returns listOf(session9)
+                every { attendanceRepository.findAllByClubMemberAndSessionIn(member, listOf(session9)) } returns
+                    listOf(removeAttendance)
+                every { attendanceRepository.findAllByClubMemberAndClubId(member, 1L) } returns
+                    listOf(remainingAttendance)
 
                 useCase.updateCardinals(
                     1L,
                     10L,
                     20L,
-                    UpdateMemberCardinalRequest(cardinalIds = listOf(2L), force = true),
+                    UpdateMemberCardinalRequest(cardinalIds = listOf(1L), force = true),
                 )
 
-                member.attendanceStats.attendanceCount shouldBe 0
-                verify(exactly = 1) { attendanceRepository.deleteAll(listOf(attendance)) }
+                // 9기 제거 후 남은 출석(8기 1건) 기준으로 통계 재계산
+                member.attendanceStats.attendanceCount shouldBe 1
+                verify(exactly = 1) { attendanceRepository.deleteAll(listOf(removeAttendance)) }
                 verify(exactly = 1) { clubMemberCardinalRepository.deleteAll(listOf(link)) }
             }
 

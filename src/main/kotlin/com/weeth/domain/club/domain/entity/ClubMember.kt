@@ -134,6 +134,13 @@ class ClubMember(
         attendanceStats.reset()
     }
 
+    fun recalculateAttendanceStats(
+        attendCount: Int,
+        absentCount: Int,
+    ) {
+        attendanceStats.recalculate(attendCount, absentCount)
+    }
+
     fun incrementPenaltyCount() {
         penaltyCount++
     }

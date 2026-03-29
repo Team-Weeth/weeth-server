@@ -197,20 +197,12 @@ class AdminClubMemberUseCase(
                     throw CardinalRemovalHasAttendanceException()
                 }
 
-                attendances.forEach { attendance ->
-                    when (attendance.status) {
-                        AttendanceStatus.ATTEND -> {
-                            member.removeAttend()
-                        }
-
-                        AttendanceStatus.ABSENT -> {
-                            member.removeAbsent()
-                        }
-
-                        AttendanceStatus.PENDING -> {}
-                    }
-                }
                 attendanceRepository.deleteAll(attendances)
+
+                val remaining = attendanceRepository.findAllByClubMemberAndClubId(member, clubId)
+                val attendCount = remaining.count { it.status == AttendanceStatus.ATTEND }
+                val absentCount = remaining.count { it.status == AttendanceStatus.ABSENT }
+                member.recalculateAttendanceStats(attendCount, absentCount)
             }
             clubMemberCardinalRepository.deleteAll(toRemove)
         }
