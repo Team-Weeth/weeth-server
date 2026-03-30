@@ -5,7 +5,6 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.optional.shouldBePresent
 import io.kotest.matchers.shouldBe
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
@@ -25,15 +24,11 @@ class CardinalRepositoryTest(
                 CardinalTestFixture.createCardinal(
                     club = club,
                     cardinalNumber = 7,
-                    year = 2025,
-                    semester = 1,
                 )
             cardinalRepository.save(cardinal)
 
             val result = cardinalRepository.findByCardinalNumber(7)
 
-            result.shouldBePresent {
-                it.year shouldBe 2025
-            }
+            result shouldBe cardinal
         }
     })

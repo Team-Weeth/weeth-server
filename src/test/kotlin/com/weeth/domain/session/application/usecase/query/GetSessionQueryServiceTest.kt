@@ -99,7 +99,7 @@ class GetSessionQueryServiceTest :
             }
 
             it("cardinal이 지정되면 해당 기수의 세션만 반환한다") {
-                val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 3, year = 2026, semester = 1)
+                val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 3)
                 val sessions = listOf(SessionTestFixture.createSession(cardinal = 3))
                 val response = mockk<SessionInfosResponse>()
 

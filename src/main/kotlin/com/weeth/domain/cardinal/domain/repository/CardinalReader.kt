@@ -6,17 +6,6 @@ import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 interface CardinalReader {
     fun getByCardinalNumber(cardinalNumber: Int): Cardinal
 
-    fun getByYearAndSemester(
-        year: Int,
-        semester: Int,
-    ): Cardinal
-
-    fun getByClubIdAndYearAndSemester(
-        clubId: Long,
-        year: Int,
-        semester: Int,
-    ): Cardinal
-
     fun findByIdOrNull(cardinalId: Long): Cardinal?
 
     fun findAllByCardinalNumberDesc(): List<Cardinal>
@@ -34,4 +23,9 @@ interface CardinalReader {
     fun findAllByClubIdOrderByCardinalNumberAsc(clubId: Long): List<Cardinal>
 
     fun findInProgressByClubId(clubId: Long): Cardinal?
+
+    fun findAllByClubIdAndIdIn(
+        clubId: Long,
+        ids: List<Long>,
+    ): List<Cardinal>
 }

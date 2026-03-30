@@ -66,7 +66,7 @@ class ManageReceiptUseCaseTest :
             cardinalNumber: Int,
         ) {
             every { cardinalReader.findByClubIdAndCardinalNumber(clubId, cardinalNumber) } returns
-                CardinalTestFixture.createCardinal(cardinalNumber = cardinalNumber, year = 2026, semester = 1)
+                CardinalTestFixture.createCardinal(cardinalNumber = cardinalNumber)
         }
 
         describe("save") {

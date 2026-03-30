@@ -12,8 +12,8 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
-import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
@@ -30,7 +30,7 @@ class ManagePostUseCase(
     private val boardRepository: BoardRepository,
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
-    private val cardinalReader: CardinalReader,
+    private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val fileRepository: FileRepository,
     private val fileReader: FileReader,
     private val fileMapper: FileMapper,
@@ -48,7 +48,11 @@ class ManagePostUseCase(
         val board = findBoardInClub(boardId, clubId)
         validateWritePermission(board, member)
 
-        val currentCardinalNumber = cardinalReader.findInProgressByClubId(clubId)?.cardinalNumber
+        val currentCardinalNumber =
+            clubMemberCardinalReader
+                .findLatestCardinalByClubMember(member)
+                ?.cardinal
+                ?.cardinalNumber
         val post =
             Post.create(
                 title = request.title,

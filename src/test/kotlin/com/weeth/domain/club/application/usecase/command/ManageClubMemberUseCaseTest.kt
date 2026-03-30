@@ -221,16 +221,12 @@ class ManageClubMemberUseCaseTest :
                             id = 1L,
                             club = club,
                             cardinalNumber = 30,
-                            year = 2024,
-                            semester = 1,
                         )
                     val cardinal31 =
                         CardinalTestFixture.createCardinal(
                             id = 2L,
                             club = club,
                             cardinalNumber = 31,
-                            year = 2024,
-                            semester = 2,
                         )
                     val session30 = SessionTestFixture.createSession(club = club, cardinal = 30)
                     val session31 = SessionTestFixture.createSession(club = club, cardinal = 31)
@@ -273,8 +269,6 @@ class ManageClubMemberUseCaseTest :
                             id = 1L,
                             club = club,
                             cardinalNumber = 30,
-                            year = 2024,
-                            semester = 1,
                         )
 
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
@@ -311,8 +305,6 @@ class ManageClubMemberUseCaseTest :
                             id = 1L,
                             club = club,
                             cardinalNumber = 30,
-                            year = 2024,
-                            semester = 1,
                         )
 
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member

@@ -10,20 +10,12 @@ class CardinalTest :
         val club = ClubTestFixture.createClub()
 
         "inProgress/done 상태 전환" {
-            val cardinal = Cardinal(club = club, cardinalNumber = 10, year = 2026, semester = 1)
+            val cardinal = Cardinal(club = club, cardinalNumber = 10)
 
             cardinal.inProgress()
             cardinal.status shouldBe CardinalStatus.IN_PROGRESS
 
             cardinal.done()
             cardinal.status shouldBe CardinalStatus.DONE
-        }
-
-        "update는 year/semester를 변경한다" {
-            val cardinal = Cardinal(club = club, cardinalNumber = 9, year = 2025, semester = 2)
-            cardinal.update(2026, 1)
-
-            cardinal.year shouldBe 2026
-            cardinal.semester shouldBe 1
         }
     })
