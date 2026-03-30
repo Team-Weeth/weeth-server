@@ -22,7 +22,7 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_attendance_session_member", columnNames = ["meeting_id", "club_member_id"]),
+        UniqueConstraint(name = "uk_attendance_session_member", columnNames = ["session_id", "club_member_id"]),
     ],
 )
 class Attendance(
