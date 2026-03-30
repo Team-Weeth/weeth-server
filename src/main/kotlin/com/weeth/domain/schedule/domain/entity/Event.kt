@@ -18,8 +18,8 @@ class Event(
     club: Club,
     var title: String,
     @Column(length = 500)
-    var content: String,
-    var location: String,
+    var content: String? = null,
+    var location: String? = null,
     var cardinal: Int,
     var start: LocalDateTime,
     var end: LocalDateTime,
@@ -38,8 +38,8 @@ class Event(
 
     fun update(
         title: String,
-        content: String,
-        location: String,
+        content: String?,
+        location: String?,
         start: LocalDateTime,
         end: LocalDateTime,
         user: User?,
@@ -58,8 +58,8 @@ class Event(
         fun create(
             club: Club,
             title: String,
-            content: String,
-            location: String,
+            content: String?,
+            location: String?,
             cardinal: Int,
             start: LocalDateTime,
             end: LocalDateTime,

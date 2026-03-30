@@ -4,10 +4,11 @@ import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.schedule.application.dto.response.SessionInfosResponse
-import com.weeth.domain.schedule.application.dto.response.SessionResponse
-import com.weeth.domain.schedule.application.mapper.SessionMapper
+import com.weeth.domain.session.application.dto.response.SessionGroupResponse
+import com.weeth.domain.session.application.dto.response.SessionInfosResponse
+import com.weeth.domain.session.application.dto.response.SessionResponse
 import com.weeth.domain.session.application.exception.SessionNotFoundException
+import com.weeth.domain.session.application.mapper.SessionMapper
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.repository.SessionRepository
 import org.springframework.stereotype.Service
@@ -58,15 +59,37 @@ class GetSessionQueryService(
             }
 
         val thisWeek = findThisWeek(sessions)
-        return sessionMapper.toInfos(thisWeek, sessions)
+        val groupedResponses = buildGroupResponses(sessions)
+
+        return sessionMapper.toInfos(thisWeek, groupedResponses)
     }
 
-    private fun findThisWeek(sessions: List<Session>): Session? {
+    private fun buildGroupResponses(sessions: List<Session>): List<SessionGroupResponse> {
+        // 반복 세션은 그룹별로 묶고, 비반복 세션은 개별로 처리
+        val groupResponses =
+            sessions
+                .filter { it.isRecurring }
+                .groupBy { checkNotNull(it.sessionGroup).id }
+                .map { (_, groupSessions) ->
+                    val group = checkNotNull(groupSessions.first().sessionGroup)
+                    sessionMapper.toGroupResponse(group, groupSessions)
+                }
+
+        val singleResponses =
+            sessions
+                .filter { !it.isRecurring }
+                .map { sessionMapper.toSingleGroupResponse(it) }
+
+        // 시작일 기준 내림차순 정렬
+        return (groupResponses + singleResponses).sortedByDescending { it.startDate }
+    }
+
+    private fun findThisWeek(sessions: List<Session>): List<Session> {
         val today = LocalDate.now()
         val startOfWeek = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val endOfWeek = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
 
-        return sessions.firstOrNull { s ->
+        return sessions.filter { s ->
             val d = s.start.toLocalDate()
             !d.isBefore(startOfWeek) && !d.isAfter(endOfWeek)
         }

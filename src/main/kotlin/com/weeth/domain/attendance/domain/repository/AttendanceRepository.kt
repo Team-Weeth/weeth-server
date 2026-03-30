@@ -35,7 +35,7 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(
-        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session = :session AND cm.memberStatus = :status",
+        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session = :session AND cm.memberStatus = :status ORDER BY a.id ASC",
     )
     fun findAllBySessionAndClubMemberMemberStatusWithLock(
         @Param("session") session: Session,
@@ -101,9 +101,25 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         @Param("sessions") sessions: List<Session>,
     ): List<Attendance>
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session IN :sessions AND cm.memberStatus = :status ORDER BY a.id ASC",
+    )
+    fun findAllBySessionInAndClubMemberMemberStatusWithLock(
+        @Param("sessions") sessions: List<Session>,
+        @Param("status") status: MemberStatus,
+    ): List<Attendance>
+
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("DELETE FROM Attendance a WHERE a.session = :session")
     fun deleteAllBySession(session: Session)
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Attendance a WHERE a.session IN :sessions")
+    fun deleteAllBySessionIn(
+        @Param("sessions") sessions: List<Session>,
+    )
 
     @Query("SELECT a FROM Attendance a JOIN a.session s WHERE a.clubMember = :clubMember AND s.club.id = :clubId")
     fun findAllByClubMemberAndClubId(

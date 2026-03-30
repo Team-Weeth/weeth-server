@@ -15,12 +15,21 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.security.SecureRandom
 import java.time.LocalDateTime
 import kotlin.random.asKotlinRandom
 
 @Entity
-@Table(name = "session")
+@Table(
+    name = "session",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_session_group_start",
+            columnNames = ["session_group_id", "start"],
+        ),
+    ],
+)
 class Session(
     club: Club,
     title: String,
@@ -32,6 +41,7 @@ class Session(
     code: Int,
     status: SessionStatus = SessionStatus.OPEN,
     user: User? = null,
+    sessionGroup: SessionGroup? = null,
 ) : BaseEntity() {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "club_id", nullable = false)
@@ -73,6 +83,14 @@ class Session(
     @JoinColumn(name = "user_id")
     var user: User? = user
         private set
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "session_group_id")
+    var sessionGroup: SessionGroup? = sessionGroup
+        private set
+
+    val isRecurring: Boolean
+        get() = sessionGroup != null
 
     fun close() {
         check(status == SessionStatus.OPEN) { "이미 종료된 세션입니다" }
@@ -119,6 +137,7 @@ class Session(
             start: LocalDateTime,
             end: LocalDateTime,
             user: User?,
+            sessionGroup: SessionGroup? = null,
         ): Session {
             require(title.isNotBlank()) { "제목은 필수입니다" }
             require(!end.isBefore(start)) { "종료 시간은 시작 시간 이후여야 합니다" }
@@ -132,6 +151,7 @@ class Session(
                 end = end,
                 code = generateCode(),
                 user = user,
+                sessionGroup = sessionGroup,
             )
         }
 

@@ -22,12 +22,12 @@ import org.hibernate.annotations.OnDeleteAction
 @Entity
 @Table(
     uniqueConstraints = [
-        UniqueConstraint(name = "uk_attendance_session_member", columnNames = ["meeting_id", "club_member_id"]),
+        UniqueConstraint(name = "uk_attendance_session_member", columnNames = ["session_id", "club_member_id"]),
     ],
 )
 class Attendance(
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
+    @JoinColumn(name = "session_id")
     val session: Session,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "club_member_id")

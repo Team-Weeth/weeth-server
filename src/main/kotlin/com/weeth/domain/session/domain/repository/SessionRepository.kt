@@ -2,6 +2,7 @@ package com.weeth.domain.session.domain.repository
 
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.entity.SessionGroup
 import com.weeth.domain.session.domain.enums.SessionStatus
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
@@ -25,11 +26,17 @@ interface SessionRepository :
         clubId: Long,
     ): Session?
 
-    fun findAllByClubIdOrderByStartDesc(clubId: Long): List<Session>
+    @Query("SELECT s FROM Session s LEFT JOIN FETCH s.sessionGroup WHERE s.club.id = :clubId ORDER BY s.start DESC")
+    fun findAllByClubIdOrderByStartDesc(
+        @Param("clubId") clubId: Long,
+    ): List<Session>
 
+    @Query(
+        "SELECT s FROM Session s LEFT JOIN FETCH s.sessionGroup WHERE s.club.id = :clubId AND s.cardinal = :cardinal ORDER BY s.start DESC",
+    )
     fun findAllByClubIdAndCardinalOrderByStartDesc(
-        clubId: Long,
-        cardinal: Int,
+        @Param("clubId") clubId: Long,
+        @Param("cardinal") cardinal: Int,
     ): List<Session>
 
     override fun findAllByCardinalOrderByStartAsc(cardinal: Int): List<Session>
@@ -64,4 +71,25 @@ interface SessionRepository :
         clubId: Long,
         cardinals: List<Int>,
     ): List<Session>
+
+    // 기준 시작시각 이후 세션 조회
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        "SELECT s FROM Session s WHERE s.sessionGroup = :group AND s.start >= :start ORDER BY s.start ASC, s.id ASC",
+    )
+    fun findAllBySessionGroupAndStartGreaterThanEqualWithLock(
+        @Param("group") group: SessionGroup,
+        @Param("start") start: LocalDateTime,
+    ): List<Session>
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query("SELECT s FROM Session s WHERE s.sessionGroup = :group ORDER BY s.start ASC, s.id ASC")
+    fun findAllBySessionGroupWithLock(
+        @Param("group") group: SessionGroup,
+    ): List<Session>
+
+    // 세션 그룹의 남은 세션 수 조회 (삭제 후 빈 그룹 정리용)
+    fun countBySessionGroup(group: SessionGroup): Long
 }

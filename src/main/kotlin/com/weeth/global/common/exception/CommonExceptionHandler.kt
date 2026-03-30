@@ -14,11 +14,16 @@ class CommonExceptionHandler {
     private val log = LoggerFactory.getLogger(javaClass)
 
     @ExceptionHandler(BaseException::class)
-    fun handle(ex: BaseException): ResponseEntity<CommonResponse<Void?>> {
+    fun handle(ex: BaseException): ResponseEntity<CommonResponse<*>> {
         log.warn("예외 처리(BaseException)", ex)
         log.warn(LOG_FORMAT, ex::class.simpleName, ex.statusCode, ex.message)
 
-        val response = CommonResponse.error(ex.errorCode)
+        val response =
+            if (ex.data != null) {
+                CommonResponse.error(ex.errorCode, ex.data)
+            } else {
+                CommonResponse.error(ex.errorCode)
+            }
 
         return ResponseEntity
             .status(ex.statusCode)
