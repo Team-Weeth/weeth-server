@@ -70,7 +70,7 @@ class CreateSessionUseCaseTest :
         val userId = 10L
         val club = ClubTestFixture.createClub(id = clubId)
         val user = UserTestFixture.createActiveUser1()
-        val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 1, year = 2026, semester = 1, club = club)
+        val cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 1, club = club)
 
         beforeTest {
             clearMocks(
