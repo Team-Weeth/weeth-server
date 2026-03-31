@@ -45,6 +45,7 @@ class SecurityConfig(
                         "/api/v4/users/social/kakao",
                         "/api/v4/users/social/apple",
                         "/api/v4/users/social/refresh",
+                        "/api/v4/users/inquiries",
                     ).permitAll()
                     .requestMatchers("/health-check")
                     .permitAll()

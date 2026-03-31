@@ -1,12 +1,14 @@
 package com.weeth.domain.user.presentation
 
 import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
+import com.weeth.domain.user.application.dto.request.CreateInquiryRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
+import com.weeth.domain.user.application.usecase.command.CreateInquiryUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
 import com.weeth.global.auth.annotation.CurrentUser
@@ -38,6 +40,7 @@ class UserController(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val agreeTermsUseCase: AgreeTermsUseCase,
+    private val createInquiryUseCase: CreateInquiryUseCase,
     private val tokenCookieProvider: TokenCookieProvider,
 ) {
     @PostMapping("/social/kakao")
@@ -102,6 +105,16 @@ class UserController(
     ): CommonResponse<Void> {
         updateUserProfileUseCase.updateProfile(request, userId)
         return CommonResponse.success(UserResponseCode.USER_UPDATE_SUCCESS)
+    }
+
+    @PostMapping("/inquiries")
+    @Operation(summary = "문의하기")
+    @SecurityRequirements
+    fun createInquiry(
+        @RequestBody @Valid request: CreateInquiryRequest,
+    ): CommonResponse<Void> {
+        createInquiryUseCase.execute(request)
+        return CommonResponse.success(UserResponseCode.INQUIRY_SEND_SUCCESS)
     }
 
     private fun <T> buildTokenResponse(
