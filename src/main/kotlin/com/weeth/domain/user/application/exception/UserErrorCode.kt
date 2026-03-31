@@ -46,8 +46,8 @@ enum class UserErrorCode(
     INVALID_USER_ORDER(20911, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
 
     @ExplainError("Notion API 호출에 실패했을 때 발생합니다.")
-    NOTION_API_ERROR(30900, HttpStatus.INTERNAL_SERVER_ERROR, "Notion API 호출에 실패했습니다."),
+    NOTION_API_ERROR(20912, HttpStatus.INTERNAL_SERVER_ERROR, "Notion API 호출에 실패했습니다."),
 
     @ExplainError("Slack API 호출에 실패했을 때 발생합니다.")
-    SLACK_API_ERROR(30901, HttpStatus.INTERNAL_SERVER_ERROR, "Slack 알림 전송에 실패했습니다."),
+    SLACK_API_ERROR(20913, HttpStatus.INTERNAL_SERVER_ERROR, "Slack 알림 전송에 실패했습니다."),
 }
