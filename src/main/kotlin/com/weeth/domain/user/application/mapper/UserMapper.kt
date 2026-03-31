@@ -10,10 +10,12 @@ class UserMapper(
     private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
     fun toSocialLoginResponse(
+        userName: String,
         token: JwtDto,
         registered: Boolean,
     ): SocialLoginResponse =
         SocialLoginResponse(
+            name = userName,
             accessToken = token.accessToken,
             refreshToken = token.refreshToken,
             registered = registered,
