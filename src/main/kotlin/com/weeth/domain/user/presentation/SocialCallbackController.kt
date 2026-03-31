@@ -17,22 +17,10 @@ import org.springframework.web.util.UriComponentsBuilder
 
 /**
  * Apple Sign in with Apple의 form_post 콜백을 처리하는 컨트롤러.
- *
- * Apple 인가 요청 예시:
- * https://appleid.apple.com/auth/authorize
- * ?response_type=code id_token
- * &response_mode=form_post
- * &client_id=com.weeth.web
- * &redirect_uri={서버 콜백 URL}
- * &scope=name email
- *
- * Apple이 redirect_uri로 POST (application/x-www-form-urlencoded) 요청을 보내며,
- * id_token을 직접 검증(code 교환 불필요)하고 user JSON에서 이름을 추출한 뒤
- * 프론트엔드로 리다이렉트한다.
  */
 @Hidden
 @RestController
-class AppleCallbackController(
+class SocialCallbackController(
     private val socialLoginUseCase: SocialLoginUseCase,
     private val objectMapper: ObjectMapper,
     private val tokenCookieProvider: TokenCookieProvider,
