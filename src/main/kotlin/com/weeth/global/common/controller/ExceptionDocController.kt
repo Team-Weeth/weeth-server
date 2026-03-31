@@ -56,7 +56,6 @@ class ExceptionDocController {
     fun userErrorCodes() {
     }
 
-    // todo: SAS 관련 예외도 추가
     @GetMapping("/auth")
     @Operation(summary = "인증/인가 에러 코드 목록")
     @ApiErrorCodeExample(JwtErrorCode::class)

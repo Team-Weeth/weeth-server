@@ -32,7 +32,7 @@ class ReceiptAdminController(
     private val manageReceiptUseCase: ManageReceiptUseCase,
 ) {
     @PostMapping
-    @Operation(summary = "회비 사용 내역 기입")
+    @Operation(summary = "회비 사용 내역 기입", hidden = true)
     fun save(
         @TsidParam
         @TsidPathVariable clubId: Long,
@@ -44,7 +44,7 @@ class ReceiptAdminController(
     }
 
     @DeleteMapping("/{receiptId}")
-    @Operation(summary = "회비 사용 내역 취소")
+    @Operation(summary = "회비 사용 내역 취소", hidden = true)
     fun delete(
         @TsidParam
         @TsidPathVariable clubId: Long,
@@ -56,7 +56,7 @@ class ReceiptAdminController(
     }
 
     @PatchMapping("/{receiptId}")
-    @Operation(summary = "회비 사용 내역 수정")
+    @Operation(summary = "회비 사용 내역 수정", hidden = true)
     fun update(
         @TsidParam
         @TsidPathVariable clubId: Long,

@@ -41,7 +41,7 @@ class AttendanceController(
     }
 
     @GetMapping
-    @Operation(summary = "출석 메인페이지")
+    @Operation(summary = "내 출석 요약 조회")
     fun find(
         @TsidParam
         @TsidPathVariable clubId: Long,
@@ -53,7 +53,7 @@ class AttendanceController(
         )
 
     @GetMapping("/detail")
-    @Operation(summary = "출석 내역 상세조회")
+    @Operation(summary = "내 출석 상세 내역 조회")
     fun findAll(
         @TsidParam
         @TsidPathVariable clubId: Long,

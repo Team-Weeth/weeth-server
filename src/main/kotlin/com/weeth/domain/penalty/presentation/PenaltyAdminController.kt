@@ -37,7 +37,7 @@ class PenaltyAdminController(
     private val getPenaltyQueryService: GetPenaltyQueryService,
 ) {
     @PostMapping
-    @Operation(summary = "패널티 부여")
+    @Operation(summary = "패널티 부여", hidden = true)
     fun assignPenalty(
         @TsidParam
         @TsidPathVariable clubId: Long,
@@ -49,7 +49,7 @@ class PenaltyAdminController(
     }
 
     @PatchMapping
-    @Operation(summary = "패널티 수정")
+    @Operation(summary = "패널티 수정", hidden = true)
     fun update(
         @TsidParam
         @TsidPathVariable clubId: Long,
@@ -61,7 +61,7 @@ class PenaltyAdminController(
     }
 
     @GetMapping
-    @Operation(summary = "전체 패널티 조회")
+    @Operation(summary = "전체 패널티 조회", hidden = true)
     fun findAll(
         @TsidParam
         @TsidPathVariable clubId: Long,
@@ -74,7 +74,7 @@ class PenaltyAdminController(
         )
 
     @DeleteMapping
-    @Operation(summary = "패널티 삭제")
+    @Operation(summary = "패널티 삭제", hidden = true)
     fun delete(
         @TsidParam
         @TsidPathVariable clubId: Long,

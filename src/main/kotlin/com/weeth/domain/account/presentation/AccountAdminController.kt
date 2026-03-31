@@ -26,7 +26,7 @@ class AccountAdminController(
     private val manageAccountUseCase: ManageAccountUseCase,
 ) {
     @PostMapping
-    @Operation(summary = "회비 총 금액 기입")
+    @Operation(summary = "회비 총 금액 기입", hidden = true)
     fun save(
         @TsidParam
         @TsidPathVariable clubId: Long,
