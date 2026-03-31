@@ -49,3 +49,11 @@ app:
 career-net:
   key: ${CAREER_NET_API_KEY}
   base-url: https://www.career.go.kr/cnet/openapi/getOpenApi
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL}
+
+notion:
+  token: ${NOTION_TOKEN}
+  version: ${NOTION_VERSION}
+  inquiry-database-id: ${NOTION_INQUIRY_DATABASE_ID}
