@@ -34,18 +34,44 @@ class SocialLoginUseCase(
     fun socialLoginByApple(request: SocialLoginRequest): SocialLoginResponse =
         socialLogin(SocialProvider.APPLE, request)
 
+    /**
+     * Apple form_post 콜백 전용 로그인.
+     * id_token을 직접 검증하여 code 교환 과정을 생략하고,
+     * Apple이 최초 인가 시에만 전달하는 user JSON의 이름을 반영한다.
+     *
+     * TODO: 탈퇴 기능 구현 시 Apple 계정 연결 해제(revoke)를 위해
+     *  콜백의 code를 Apple 토큰 엔드포인트에 교환하여 refresh token을 받고 DB에 저장해야 한다.
+     *  (Apple Revoke Tokens API: POST https://appleid.apple.com/auth/revoke)
+     */
+    @Transactional
+    fun socialLoginByAppleCallback(
+        idToken: String,
+        userName: String?,
+    ): SocialLoginResponse {
+        val authResult = socialAuthPortRegistry.get(SocialProvider.APPLE).authenticateWithIdToken(idToken)
+        val effectiveResult =
+            if (!userName.isNullOrBlank() && authResult.name.isNullOrBlank()) {
+                authResult.copy(name = userName)
+            } else {
+                authResult
+            }
+        return processLogin(effectiveResult)
+    }
+
     private fun socialLogin(
         provider: SocialProvider,
         request: SocialLoginRequest,
-    ): SocialLoginResponse {
-        val user = findOrCreateUser(authResult = socialAuthPortRegistry.get(provider).authenticate(request.authCode))
+    ): SocialLoginResponse = processLogin(socialAuthPortRegistry.get(provider).authenticate(request.authCode))
+
+    private fun processLogin(authResult: SocialAuthResult): SocialLoginResponse {
+        val user = findOrCreateUser(authResult)
 
         if (user.isBannedOrLeft()) throw UserInActiveException()
 
         val tokenType = if (user.isRegistered()) TokenType.ACCESS else TokenType.TEMPORARY
         val token = jwtManageUseCase.create(user.id, user.emailValue, tokenType)
 
-        return userMapper.toSocialLoginResponse(token, user.isRegistered())
+        return userMapper.toSocialLoginResponse(user.name, token, user.isRegistered())
     }
 
     // TODO: 실제 서비스 출시 시 이메일 기반 기존 사용자 연동 및 유저 알림 기능 필요

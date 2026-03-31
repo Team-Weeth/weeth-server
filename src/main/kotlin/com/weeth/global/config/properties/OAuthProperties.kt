@@ -40,5 +40,7 @@ data class OAuthProperties(
         val keysUri: String,
         @field:NotBlank
         val privateKeyPath: String,
+        @field:NotBlank
+        val frontendRedirectUri: String,
     )
 }

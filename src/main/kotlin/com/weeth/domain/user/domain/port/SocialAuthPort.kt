@@ -7,4 +7,7 @@ interface SocialAuthPort {
     fun provider(): SocialProvider
 
     fun authenticate(authCode: String): SocialAuthResult
+
+    fun authenticateWithIdToken(idToken: String): SocialAuthResult =
+        throw UnsupportedOperationException("${provider()}은(는) ID token 직접 인증을 지원하지 않습니다")
 }
