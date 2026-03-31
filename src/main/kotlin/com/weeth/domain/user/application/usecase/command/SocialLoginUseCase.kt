@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.usecase.command
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
 import com.weeth.domain.user.application.exception.EmailNotFoundException
@@ -15,6 +16,7 @@ import com.weeth.domain.user.domain.vo.SocialAuthResult
 import com.weeth.domain.user.infrastructure.SocialAuthPortRegistry
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
 import com.weeth.global.auth.jwt.domain.enums.TokenType
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,7 +27,10 @@ class SocialLoginUseCase(
     private val socialAuthPortRegistry: SocialAuthPortRegistry,
     private val jwtManageUseCase: JwtManageUseCase,
     private val userMapper: UserMapper,
+    private val objectMapper: ObjectMapper,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @Transactional
     fun socialLoginByKakao(request: SocialLoginRequest): SocialLoginResponse =
         socialLogin(SocialProvider.KAKAO, request)
@@ -46,9 +51,10 @@ class SocialLoginUseCase(
     @Transactional
     fun socialLoginByAppleCallback(
         idToken: String,
-        userName: String?,
+        userJson: String?,
     ): SocialLoginResponse {
         val authResult = socialAuthPortRegistry.get(SocialProvider.APPLE).authenticateWithIdToken(idToken)
+        val userName = parseAppleUserName(userJson)
         val effectiveResult =
             if (!userName.isNullOrBlank() && authResult.name.isNullOrBlank()) {
                 authResult.copy(name = userName)
@@ -104,5 +110,19 @@ class SocialLoginUseCase(
         )
 
         return user
+    }
+
+    private fun parseAppleUserName(userJson: String?): String? {
+        if (userJson.isNullOrBlank()) return null
+        return try {
+            val node = objectMapper.readTree(userJson)
+            val nameNode = node["name"] ?: return null
+            val firstName = nameNode["firstName"]?.asText()?.trim() ?: ""
+            val lastName = nameNode["lastName"]?.asText()?.trim() ?: ""
+            "$lastName$firstName".trim().takeIf { it.isNotBlank() }
+        } catch (e: Exception) {
+            log.warn("Apple user JSON 파싱 실패: {}", e.message)
+            null
+        }
     }
 }

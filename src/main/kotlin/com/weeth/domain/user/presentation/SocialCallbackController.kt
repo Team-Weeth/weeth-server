@@ -1,6 +1,5 @@
 package com.weeth.domain.user.presentation
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
 import com.weeth.global.config.properties.OAuthProperties
@@ -22,7 +21,6 @@ import org.springframework.web.util.UriComponentsBuilder
 @RestController
 class SocialCallbackController(
     private val socialLoginUseCase: SocialLoginUseCase,
-    private val objectMapper: ObjectMapper,
     private val tokenCookieProvider: TokenCookieProvider,
     oAuthProperties: OAuthProperties,
 ) {
@@ -39,7 +37,6 @@ class SocialCallbackController(
         @RequestParam("error", required = false) error: String?,
     ): ResponseEntity<Void> {
         if (error != null || idToken.isNullOrBlank()) {
-            log.warn("Apple 콜백 오류: error={}", error)
             return redirect(
                 UriComponentsBuilder
                     .fromUriString(frontendRedirectUri)
@@ -49,8 +46,7 @@ class SocialCallbackController(
         }
 
         return try {
-            val userName = parseAppleUserName(userJson)
-            val response = socialLoginUseCase.socialLoginByAppleCallback(idToken, userName)
+            val response = socialLoginUseCase.socialLoginByAppleCallback(idToken, userJson)
 
             val redirectUri =
                 UriComponentsBuilder
@@ -85,18 +81,4 @@ class SocialCallbackController(
             .status(HttpStatus.FOUND)
             .header(HttpHeaders.LOCATION, uri)
             .build()
-
-    private fun parseAppleUserName(userJson: String?): String? {
-        if (userJson.isNullOrBlank()) return null
-        return try {
-            val node = objectMapper.readTree(userJson)
-            val nameNode = node["name"] ?: return null
-            val firstName = nameNode["firstName"]?.asText()?.trim() ?: ""
-            val lastName = nameNode["lastName"]?.asText()?.trim() ?: ""
-            "$lastName$firstName".trim().takeIf { it.isNotBlank() }
-        } catch (e: Exception) {
-            log.warn("Apple user JSON 파싱 실패: {}", e.message)
-            null
-        }
-    }
 }
