@@ -1,8 +1,9 @@
 package com.weeth.domain.user.infrastructure
 
-import com.weeth.domain.user.application.exception.SlackApiException
 import com.weeth.domain.user.domain.port.InquiryNotifyPort
 import com.weeth.global.config.properties.SlackProperties
+import org.slf4j.LoggerFactory
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 
@@ -12,7 +13,9 @@ class SlackInquiryNotifyAdapter(
     restClientBuilder: RestClient.Builder,
 ) : InquiryNotifyPort {
     private val restClient = restClientBuilder.build()
+    private val log = LoggerFactory.getLogger(javaClass)
 
+    @Async
     override fun notify(
         email: String,
         message: String,
@@ -27,6 +30,6 @@ class SlackInquiryNotifyAdapter(
                 .body(mapOf("text" to text))
                 .retrieve()
                 .toBodilessEntity()
-        }.getOrElse { e -> throw SlackApiException(e) }
+        }.onFailure { e -> log.warn("Slack 알림 전송 실패: {}", e.message) }
     }
 }

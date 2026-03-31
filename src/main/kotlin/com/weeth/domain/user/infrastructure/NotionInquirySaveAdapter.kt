@@ -1,9 +1,10 @@
 package com.weeth.domain.user.infrastructure
 
-import com.weeth.domain.user.application.exception.NotionApiException
 import com.weeth.domain.user.domain.port.InquirySavePort
 import com.weeth.global.config.properties.NotionProperties
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpHeaders
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
 import java.time.LocalDate
@@ -14,7 +15,9 @@ class NotionInquirySaveAdapter(
     restClientBuilder: RestClient.Builder,
 ) : InquirySavePort {
     private val restClient = restClientBuilder.baseUrl("https://api.notion.com").build()
+    private val log = LoggerFactory.getLogger(javaClass)
 
+    @Async
     override fun save(
         email: String,
         message: String,
@@ -53,6 +56,6 @@ class NotionInquirySaveAdapter(
                 .body(body)
                 .retrieve()
                 .toBodilessEntity()
-        }.getOrElse { e -> throw NotionApiException(e) }
+        }.onFailure { e -> log.warn("Notion 저장 실패: {}", e.message) }
     }
 }
