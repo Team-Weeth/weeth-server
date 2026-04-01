@@ -87,8 +87,7 @@ class SecurityConfig(
                     listOf(
                         "http://localhost:*",
                         "http://127.0.0.1:*",
-                        "https://13.124.170.169.nip.io",
-                        "https://develop.d2o3vlabneheuu.amplifyapp.com",
+                        "https://*.v4.weeth.kr",
                         "https://appleid.apple.com",
                     )
                 allowedMethods = listOf("GET", "POST", "PATCH", "DELETE", "OPTIONS")
