@@ -48,8 +48,13 @@ done
 
 echo "reverse_proxy weeth-prod-app-${NEW_COLOR}:8080" > ./caddy/upstream.conf
 
-# Caddy가 실행 중이면 reload, 아니면 시작
-if docker compose ps caddy --format '{{.State}}' 2>/dev/null | grep -q running; then
+# 현재 Caddy 컨테이너의 DOMAIN과 비교하여 변경 시에만 재생성
+CURRENT_DOMAIN=$(docker inspect weeth-prod-caddy --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^DOMAIN=' | cut -d= -f2-)
+
+if [ "$CURRENT_DOMAIN" != "$DOMAIN" ]; then
+  echo "[deploy] domain changed, recreating caddy"
+  docker compose up -d --force-recreate caddy
+elif docker compose ps caddy --format '{{.State}}' 2>/dev/null | grep -q running; then
   docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
 else
   docker compose up -d caddy
