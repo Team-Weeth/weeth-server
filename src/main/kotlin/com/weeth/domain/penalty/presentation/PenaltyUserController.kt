@@ -23,7 +23,7 @@ class PenaltyUserController(
     private val getPenaltyQueryService: GetPenaltyQueryService,
 ) {
     @GetMapping
-    @Operation(summary = "본인 패널티 조회")
+    @Operation(summary = "본인 패널티 조회", hidden = true)
     fun findAllPenalties(
         @TsidParam
         @TsidPathVariable clubId: Long,

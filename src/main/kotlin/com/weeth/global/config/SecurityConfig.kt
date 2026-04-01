@@ -44,6 +44,7 @@ class SecurityConfig(
                     .requestMatchers(
                         "/api/v4/users/social/kakao",
                         "/api/v4/users/social/apple",
+                        "/api/v4/users/social/apple/callback",
                         "/api/v4/users/social/refresh",
                         "/api/v4/users/inquiries",
                     ).permitAll()
@@ -88,6 +89,7 @@ class SecurityConfig(
                         "http://127.0.0.1:*",
                         "https://13.124.170.169.nip.io",
                         "https://develop.d2o3vlabneheuu.amplifyapp.com",
+                        "https://appleid.apple.com",
                     )
                 allowedMethods = listOf("GET", "POST", "PATCH", "DELETE", "OPTIONS")
                 allowedHeaders = listOf("*")

@@ -182,7 +182,7 @@ class ClubAdminController(
     }
 
     @PatchMapping("/members/apply-ob")
-    @Operation(summary = "멤버 OB 기수 등록")
+    @Operation(summary = "멤버 OB 기수 등록", deprecated = true)
     fun applyOb(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @TsidParam

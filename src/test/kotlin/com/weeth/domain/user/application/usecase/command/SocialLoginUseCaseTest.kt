@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.usecase.command
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.exception.EmailNotFoundException
@@ -7,7 +8,6 @@ import com.weeth.domain.user.application.mapper.UserMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserSocialAccount
 import com.weeth.domain.user.domain.enums.SocialProvider
-import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.port.SocialAuthPort
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.domain.repository.UserSocialAccountRepository
@@ -35,6 +35,7 @@ class SocialLoginUseCaseTest :
         val jwtManageUseCase = mockk<JwtManageUseCase>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userMapper = UserMapper(fileAccessUrlPort)
+        val objectMapper = mockk<ObjectMapper>()
 
         val useCase =
             SocialLoginUseCase(
@@ -43,6 +44,7 @@ class SocialLoginUseCaseTest :
                 socialAuthPortRegistry = socialAuthPortRegistry,
                 jwtManageUseCase = jwtManageUseCase,
                 userMapper = userMapper,
+                objectMapper,
             )
 
         beforeTest {

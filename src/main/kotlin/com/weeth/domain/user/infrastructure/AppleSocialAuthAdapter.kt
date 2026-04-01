@@ -4,6 +4,7 @@ import com.weeth.domain.user.domain.enums.SocialProvider
 import com.weeth.domain.user.domain.port.SocialAuthPort
 import com.weeth.domain.user.domain.vo.SocialAuthResult
 import com.weeth.global.auth.apple.AppleAuthService
+import com.weeth.global.auth.apple.dto.AppleUserInfo
 import org.springframework.stereotype.Component
 
 @Component
@@ -15,15 +16,20 @@ class AppleSocialAuthAdapter(
     override fun authenticate(authCode: String): SocialAuthResult {
         val appleToken = appleAuthService.getAppleToken(authCode)
         val userInfo = appleAuthService.verifyAndDecodeIdToken(appleToken.idToken)
-        val email = userInfo.email?.trim()?.lowercase() ?: ""
-        val providerName = userInfo.name?.trim()?.takeIf { it.isNotBlank() }
+        return toSocialAuthResult(userInfo)
+    }
 
-        return SocialAuthResult(
+    override fun authenticateWithIdToken(idToken: String): SocialAuthResult {
+        val userInfo = appleAuthService.verifyAndDecodeIdToken(idToken)
+        return toSocialAuthResult(userInfo)
+    }
+
+    private fun toSocialAuthResult(userInfo: AppleUserInfo): SocialAuthResult =
+        SocialAuthResult(
             provider = SocialProvider.APPLE,
             providerUserId = userInfo.appleId,
-            email = email,
+            email = userInfo.email?.trim()?.lowercase() ?: "",
             emailVerified = userInfo.emailVerified,
-            name = providerName,
+            name = userInfo.name?.trim()?.takeIf { it.isNotBlank() },
         )
-    }
 }

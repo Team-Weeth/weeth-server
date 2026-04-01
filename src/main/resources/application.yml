@@ -28,6 +28,7 @@ auth:
       token_uri: https://appleid.apple.com/auth/token
       keys_uri: https://appleid.apple.com/auth/keys
       private_key_path: ${APPLE_PRIVATE_KEY_PATH}
+      frontend_redirect_uri: ${APPLE_FRONTEND_REDIRECT_URI}
 
 management:
   endpoints:

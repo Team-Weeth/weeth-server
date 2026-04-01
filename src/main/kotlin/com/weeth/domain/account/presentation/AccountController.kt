@@ -25,7 +25,7 @@ class AccountController(
     private val getAccountQueryService: GetAccountQueryService,
 ) {
     @GetMapping("/{cardinal}")
-    @Operation(summary = "회비 내역 조회")
+    @Operation(summary = "회비 내역 조회", hidden = true)
     fun find(
         @TsidParam
         @TsidPathVariable clubId: Long,
