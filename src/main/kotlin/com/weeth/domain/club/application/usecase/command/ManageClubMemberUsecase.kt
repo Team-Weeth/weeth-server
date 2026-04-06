@@ -93,12 +93,15 @@ class ManageClubMemberUsecase(
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         request.profileImage?.let { profileImage ->
-            fileRepository
-                .findAllByOwnerTypeAndOwnerIdAndStatus(
+            val existingFiles =
+                fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
                     FileOwnerType.CLUB_MEMBER_PROFILE,
                     userId,
                     FileStatus.UPLOADED,
-                ).forEach { it.markDeleted() }
+                )
+            if (existingFiles.isNotEmpty()) {
+                fileRepository.deleteAll(existingFiles)
+            }
 
             val file =
                 File.createUploaded(
@@ -122,12 +125,15 @@ class ManageClubMemberUsecase(
         val members = clubMemberRepository.findActiveByUserId(userId)
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
-        fileRepository
-            .findAllByOwnerTypeAndOwnerIdAndStatus(
+        val existingFiles =
+            fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
                 FileOwnerType.CLUB_MEMBER_PROFILE,
                 userId,
                 FileStatus.UPLOADED,
-            ).forEach { it.markDeleted() }
+            )
+        if (existingFiles.isNotEmpty()) {
+            fileRepository.deleteAll(existingFiles)
+        }
 
         members.forEach { it.removeProfileImage() }
     }

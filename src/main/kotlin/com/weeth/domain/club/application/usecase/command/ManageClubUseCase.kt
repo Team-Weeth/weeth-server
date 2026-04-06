@@ -143,12 +143,12 @@ class ManageClubUseCase(
         }
 
         request.profileImage?.let { image ->
-            markExistingFilesDeleted(FileOwnerType.CLUB_PROFILE, clubId)
+            deleteExistingFiles(FileOwnerType.CLUB_PROFILE, clubId)
             saveFile(image, FileOwnerType.CLUB_PROFILE, clubId)
         }
 
         request.backgroundImage?.let { image ->
-            markExistingFilesDeleted(FileOwnerType.CLUB_BACKGROUND, clubId)
+            deleteExistingFiles(FileOwnerType.CLUB_BACKGROUND, clubId)
             saveFile(image, FileOwnerType.CLUB_BACKGROUND, clubId)
         }
 
@@ -184,7 +184,7 @@ class ManageClubUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
-        markExistingFilesDeleted(FileOwnerType.CLUB_PROFILE, clubId)
+        deleteExistingFiles(FileOwnerType.CLUB_PROFILE, clubId)
         club.removeProfileImage()
     }
 
@@ -196,7 +196,7 @@ class ManageClubUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val club = clubRepository.getClubById(clubId)
-        markExistingFilesDeleted(FileOwnerType.CLUB_BACKGROUND, clubId)
+        deleteExistingFiles(FileOwnerType.CLUB_BACKGROUND, clubId)
         club.removeBackgroundImage()
     }
 
@@ -225,13 +225,15 @@ class ManageClubUseCase(
         fileRepository.save(file)
     }
 
-    private fun markExistingFilesDeleted(
+    private fun deleteExistingFiles(
         ownerType: FileOwnerType,
         ownerId: Long,
     ) {
-        fileRepository
-            .findAllByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, FileStatus.UPLOADED)
-            .forEach { it.markDeleted() }
+        val files = fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, FileStatus.UPLOADED)
+
+        if (files.isNotEmpty()) {
+            fileRepository.deleteAll(files)
+        }
     }
 
     private fun validatePrimaryContactEmail(

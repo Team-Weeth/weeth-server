@@ -100,7 +100,7 @@ class ManageCommentUseCase(
             return
         }
 
-        markCommentFilesDeleted(comment.id)
+        deleteCommentFiles(comment.id)
         saveCommentFiles(comment, files)
     }
 
@@ -129,13 +129,15 @@ class ManageCommentUseCase(
     }
 
     private fun deleteCommentFiles(comment: Comment) {
-        markCommentFilesDeleted(comment.id)
+        deleteCommentFiles(comment.id)
     }
 
-    private fun markCommentFilesDeleted(commentId: Long) {
-        fileReader
-            .findAll(FileOwnerType.COMMENT, commentId)
-            .forEach { it.markDeleted() }
+    private fun deleteCommentFiles(commentId: Long) {
+        val files = fileReader.findAll(FileOwnerType.COMMENT, commentId)
+
+        if (files.isNotEmpty()) {
+            fileRepository.deleteAll(files)
+        }
     }
 
     private fun ensureOwner(
