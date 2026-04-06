@@ -49,7 +49,7 @@ class PostMapper(
     fun toListResponse(
         post: Post,
         authorMember: ClubMember,
-        hasFile: Boolean,
+        files: List<FileResponse>,
         now: LocalDateTime,
         isLiked: Boolean,
     ) = PostListResponse(
@@ -62,7 +62,7 @@ class PostMapper(
         time = post.modifiedAt,
         commentCount = post.commentCount,
         like = toLikeResponse(post, isLiked),
-        hasFile = hasFile,
+        fileUrls = files,
         isNew = post.createdAt.isAfter(now.minusHours(24)),
     )
 

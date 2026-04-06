@@ -1,5 +1,6 @@
 package com.weeth.domain.board.application.dto.response
 
+import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.user.application.dto.response.UserInfo
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
@@ -23,8 +24,8 @@ data class PostListResponse(
     val commentCount: Int,
     @field:Schema(description = "좋아요 정보")
     val like: PostLikeResponse,
-    @field:Schema(description = "파일 첨부 여부")
-    val hasFile: Boolean,
+    @field:Schema(description = "첨부 파일 목록")
+    val fileUrls: List<FileResponse>,
     @field:Schema(description = "신규 게시글 여부 (24시간 이내)")
     val isNew: Boolean,
 )

@@ -7,6 +7,7 @@ import com.weeth.domain.board.application.exception.NoSearchResultException
 import com.weeth.domain.board.application.exception.PageNotFoundException
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
+import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
@@ -17,6 +18,7 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
 import com.weeth.domain.comment.domain.repository.CommentReader
 import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import org.springframework.data.domain.PageRequest
@@ -93,21 +95,7 @@ class GetPostQueryService(
         }
 
         val posts = postRepository.findAllActiveByBoardIds(accessibleBoardIds, pageable)
-        val postIds = posts.content.map { it.id }
-        val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
-        val fileExistsByPostId = buildFileExistsMap(postIds)
-        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
-        val now = LocalDateTime.now()
-
-        return posts.map { post ->
-            postMapper.toListResponse(
-                post,
-                memberMap.getValue(post.user.id),
-                fileExistsByPostId[post.id] == true,
-                now,
-                post.id in likedPostIds,
-            )
-        }
+        return toPostListResponses(posts, clubId, userId)
     }
 
     fun findPosts(
@@ -123,22 +111,7 @@ class GetPostQueryService(
 
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
-
-        val postIds = posts.content.map { it.id }
-        val fileExistsByPostId = buildFileExistsMap(postIds)
-        val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
-        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
-        val now = LocalDateTime.now()
-
-        return posts.map { post ->
-            postMapper.toListResponse(
-                post,
-                memberMap.getValue(post.user.id),
-                fileExistsByPostId[post.id] == true,
-                now,
-                post.id in likedPostIds,
-            )
-        }
+        return toPostListResponses(posts, clubId, userId)
     }
 
     fun searchPosts(
@@ -159,9 +132,17 @@ class GetPostQueryService(
             throw NoSearchResultException()
         }
 
+        return toPostListResponses(posts, clubId, userId)
+    }
+
+    private fun toPostListResponses(
+        posts: Slice<Post>,
+        clubId: Long,
+        userId: Long,
+    ): Slice<PostListResponse> {
         val postIds = posts.content.map { it.id }
-        val fileExistsByPostId = buildFileExistsMap(postIds)
         val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
+        val filesByPostId = buildFileMap(postIds)
         val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
         val now = LocalDateTime.now()
 
@@ -169,7 +150,7 @@ class GetPostQueryService(
             postMapper.toListResponse(
                 post,
                 memberMap.getValue(post.user.id),
-                fileExistsByPostId[post.id] == true,
+                filesByPostId[post.id]?.map(fileMapper::toFileResponse) ?: emptyList(),
                 now,
                 post.id in likedPostIds,
             )
@@ -196,12 +177,9 @@ class GetPostQueryService(
         }
     }
 
-    private fun buildFileExistsMap(postIds: List<Long>): Map<Long, Boolean> {
-        if (postIds.isEmpty()) {
-            return emptyMap()
-        }
-        val filesGrouped = fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }
-        return postIds.associateWith { filesGrouped.containsKey(it) }
+    private fun buildFileMap(postIds: List<Long>): Map<Long, List<File>> {
+        if (postIds.isEmpty()) return emptyMap()
+        return fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }
     }
 
     private fun validateBoardVisibility( // todo: 볼 권한이 없는 경우 권한 관련 예외를 던져주는게 나을지 UX 상의 후 결정
