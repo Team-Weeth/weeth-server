@@ -1,8 +1,10 @@
 package com.weeth.domain.user.application.usecase.command
 
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
+import com.weeth.domain.user.application.exception.ProfileRequiredFieldsMissingException
 import com.weeth.domain.user.application.exception.StudentIdExistsException
 import com.weeth.domain.user.application.exception.TelExistsException
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.domain.vo.Email
 import com.weeth.global.common.vo.PhoneNumber
@@ -18,8 +20,11 @@ class UpdateUserProfileUseCase(
         request: UpdateUserProfileRequest,
         userId: Long,
     ) {
-        validate(request, userId)
         val user = userRepository.getById(userId)
+        if (!user.isProfileCompleted()) {
+            validateRequiredFields(request)
+        }
+        validateDuplicate(request, userId)
         user.update(
             name = request.name,
             email = request.email?.let { Email.from(it) },
@@ -30,7 +35,19 @@ class UpdateUserProfileUseCase(
         )
     }
 
-    private fun validate(
+    private fun validateRequiredFields(request: UpdateUserProfileRequest) {
+        if (request.name == null ||
+            request.email == null ||
+            request.studentId == null ||
+            request.tel == null ||
+            request.school == null ||
+            request.department == null
+        ) {
+            throw ProfileRequiredFieldsMissingException()
+        }
+    }
+
+    private fun validateDuplicate(
         request: UpdateUserProfileRequest,
         userId: Long,
     ) {

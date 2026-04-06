@@ -44,4 +44,7 @@ enum class UserErrorCode(
 
     @ExplainError("사용자 순서 지정 시 잘못된 값이 입력되었을 때 발생합니다.")
     INVALID_USER_ORDER(20911, HttpStatus.BAD_REQUEST, "잘못된 사용자 순서입니다."),
+
+    @ExplainError("프로필 초기 설정 시 필수 필드가 누락되었을 때 발생합니다.")
+    PROFILE_REQUIRED_FIELDS_MISSING(20912, HttpStatus.BAD_REQUEST, "프로필 초기 설정 시 모든 필수 항목을 입력해야 합니다."),
 }
