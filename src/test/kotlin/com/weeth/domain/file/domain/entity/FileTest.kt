@@ -117,22 +117,4 @@ class FileTest :
                 }
             }
         }
-
-        describe("markDeleted") {
-            it("파일 상태를 DELETED로 변경한다") {
-                val file =
-                    File.createUploaded(
-                        fileName = "doc.pdf",
-                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_doc.pdf",
-                        fileSize = 100,
-                        contentType = "application/pdf",
-                        ownerType = FileOwnerType.POST,
-                        ownerId = 2L,
-                    )
-
-                file.markDeleted()
-
-                file.status shouldBe FileStatus.DELETED
-            }
-        }
     })

@@ -308,7 +308,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
-            it("프로필 이미지를 변경하면 기존 File이 DELETED 처리되고 새 File이 생성된다") {
+            it("프로필 이미지를 변경하면 기존 File이 삭제되고 새 File이 생성된다") {
                 val existingFile = mockk<File>(relaxed = true)
                 val club =
                     ClubTestFixture.createClub(
@@ -329,6 +329,7 @@ class ManageClubUseCaseTest :
                         FileStatus.UPLOADED,
                     )
                 } returns listOf(existingFile)
+                every { fileRepository.deleteAll(any<List<File>>()) } just Runs
 
                 useCase.update(
                     1L,
@@ -344,7 +345,7 @@ class ManageClubUseCaseTest :
                     ),
                 )
 
-                verify(exactly = 1) { existingFile.markDeleted() }
+                verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
                 verify(exactly = 1) { fileRepository.save(any<File>()) }
                 club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440002_new.png"
             }
@@ -425,7 +426,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
-            it("기존 File 레코드가 DELETED 처리된다") {
+            it("기존 File 레코드가 삭제된다") {
                 val existingFile = mockk<File>(relaxed = true)
                 val club =
                     ClubTestFixture.createClub(
@@ -446,10 +447,11 @@ class ManageClubUseCaseTest :
                         FileStatus.UPLOADED,
                     )
                 } returns listOf(existingFile)
+                every { fileRepository.deleteAll(any<List<File>>()) } just Runs
 
                 useCase.deleteProfileImage(1L, 10L)
 
-                verify(exactly = 1) { existingFile.markDeleted() }
+                verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
             }
         }
 
@@ -484,7 +486,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe null
             }
 
-            it("기존 File 레코드가 DELETED 처리된다") {
+            it("기존 File 레코드가 삭제된다") {
                 val existingFile = mockk<File>(relaxed = true)
                 val club =
                     ClubTestFixture.createClub(
@@ -505,10 +507,11 @@ class ManageClubUseCaseTest :
                         FileStatus.UPLOADED,
                     )
                 } returns listOf(existingFile)
+                every { fileRepository.deleteAll(any<List<File>>()) } just Runs
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
-                verify(exactly = 1) { existingFile.markDeleted() }
+                verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
             }
         }
     })

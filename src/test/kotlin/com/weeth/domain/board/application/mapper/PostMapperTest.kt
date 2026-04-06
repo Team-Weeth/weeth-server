@@ -47,10 +47,17 @@ class PostMapperTest :
 
         describe("toListResponse") {
             it("24시간 이내 생성된 게시글은 isNew=true") {
-                val response = mapper.toListResponse(post, authorMember, hasFile = true, now = now, isLiked = false)
+                val response =
+                    mapper.toListResponse(
+                        post,
+                        authorMember,
+                        files = emptyList(),
+                        now = now,
+                        isLiked = false,
+                    )
 
                 response.id shouldBe 1L
-                response.hasFile shouldBe true
+                response.fileUrls shouldBe emptyList()
                 response.isNew shouldBe true
             }
         }
@@ -81,7 +88,7 @@ class PostMapperTest :
                         ),
                     )
 
-                val response = mapper.toDetailResponse(post, authorMember, comments, files, isLiked = false)
+                val response = mapper.toDetailResponse(post, authorMember, comments, files, isLiked = false, now = now)
 
                 response.id shouldBe 1L
                 response.commentCount shouldBe 2

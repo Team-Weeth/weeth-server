@@ -97,7 +97,7 @@ class ManageClubMemberUseCaseTest :
                 )
 
             context("프로필 사진만 변경할 때") {
-                it("모든 활성 ClubMember의 기존 파일을 soft delete하고 새 파일로 URL을 업데이트한다") {
+                it("모든 활성 ClubMember의 기존 파일을 삭제하고 새 파일로 URL을 업데이트한다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
                     val existingFile =
@@ -115,11 +115,13 @@ class ManageClubMemberUseCaseTest :
                             FileStatus.UPLOADED,
                         )
                     } returns listOf(existingFile)
+                    every { fileRepository.deleteAll(any<List<com.weeth.domain.file.domain.entity.File>>()) } returns
+                        Unit
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(profileImage = profileImageRequest))
 
-                    existingFile.status shouldBe FileStatus.DELETED
                     member1.profileImageStorageKey shouldBe profileImageRequest.storageKey
                     member2.profileImageStorageKey shouldBe profileImageRequest.storageKey
+                    verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
                     verify(exactly = 1) { fileRepository.save(any()) }
                 }
             }
@@ -169,7 +171,7 @@ class ManageClubMemberUseCaseTest :
             val userId = 10L
 
             context("활성 멤버가 프로필 사진을 삭제할 때") {
-                it("모든 활성 ClubMember의 파일을 soft delete하고 URL을 null로 만든다") {
+                it("모든 활성 ClubMember의 파일을 삭제하고 URL을 null로 만든다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
                     member1.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
@@ -190,10 +192,12 @@ class ManageClubMemberUseCaseTest :
                             FileStatus.UPLOADED,
                         )
                     } returns listOf(existingFile)
+                    every { fileRepository.deleteAll(any<List<com.weeth.domain.file.domain.entity.File>>()) } returns
+                        Unit
 
                     useCase.deleteProfileImage(userId)
 
-                    existingFile.status shouldBe FileStatus.DELETED
+                    verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
                     member1.profileImageStorageKey shouldBe null
                     member2.profileImageStorageKey shouldBe null
                 }

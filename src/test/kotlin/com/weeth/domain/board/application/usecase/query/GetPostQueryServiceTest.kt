@@ -143,6 +143,7 @@ class GetPostQueryServiceTest :
                         like = PostLikeResponse(isLiked = false, likeCount = 0),
                         comments = comments,
                         fileUrls = fileResponses,
+                        isNew = false,
                     )
 
                 every { clubMemberPolicy.getActiveMember(actualClubId, userId) } returns member
@@ -152,7 +153,8 @@ class GetPostQueryServiceTest :
                 every { getCommentQueryService.toCommentTreeResponses(any(), any()) } returns comments
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
                 every { postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId) } returns false
-                every { postMapper.toDetailResponse(post, member, comments, fileResponses, false) } returns detail
+                every { postMapper.toDetailResponse(post, member, comments, fileResponses, false, any()) } returns
+                    detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
                 val result = queryService.findPost(actualClubId, userId, 1L)
@@ -284,7 +286,7 @@ class GetPostQueryServiceTest :
                         time = LocalDateTime.now(),
                         commentCount = 0,
                         like = PostLikeResponse(isLiked = false, likeCount = 0),
-                        hasFile = false,
+                        fileUrls = emptyList(),
                         isNew = true,
                     )
 
@@ -342,7 +344,7 @@ class GetPostQueryServiceTest :
                         time = LocalDateTime.now(),
                         commentCount = 0,
                         like = PostLikeResponse(isLiked = false, likeCount = 0),
-                        hasFile = false,
+                        fileUrls = emptyList(),
                         isNew = false,
                     )
 

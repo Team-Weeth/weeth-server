@@ -143,7 +143,7 @@ class ManageCommentUseCaseTest :
                 useCase.updatePostComment(dto, postId = 10L, commentId = 202L, userId = 1L)
 
                 comment.content shouldBe "new content"
-                oldFile.status.name shouldBe "DELETED"
+                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldFile)) }
                 verify { fileRepository.saveAll(listOf(newFile)) }
             }
         }
