@@ -22,9 +22,9 @@ class UpdateUserProfileUseCase(
         val user = userRepository.getById(userId)
         user.update(
             name = request.name,
-            email = Email.from(request.email),
+            email = request.email?.let { Email.from(it) },
             studentId = request.studentId,
-            tel = PhoneNumber.from(request.tel),
+            tel = request.tel?.let { PhoneNumber.from(it) },
             school = request.school,
             department = request.department,
         )
@@ -34,10 +34,15 @@ class UpdateUserProfileUseCase(
         request: UpdateUserProfileRequest,
         userId: Long,
     ) {
-        if (userRepository.existsBySchoolAndStudentIdAndIdIsNot(request.school, request.studentId, userId)) {
+        val school = request.school
+        val studentId = request.studentId
+        if (school != null && studentId != null &&
+            userRepository.existsBySchoolAndStudentIdAndIdIsNot(school, studentId, userId)
+        ) {
             throw StudentIdExistsException()
         }
-        if (userRepository.existsByTelAndIdIsNotValue(request.tel, userId)) {
+        val tel = request.tel
+        if (tel != null && userRepository.existsByTelAndIdIsNotValue(tel, userId)) {
             throw TelExistsException()
         }
     }
