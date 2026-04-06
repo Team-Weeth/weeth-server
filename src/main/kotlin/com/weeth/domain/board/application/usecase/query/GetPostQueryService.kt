@@ -66,8 +66,9 @@ class GetPostQueryService(
 
         val commentTree = getCommentQueryService.toCommentTreeResponses(comments, memberMap)
         val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId)
+        val now = LocalDateTime.now()
 
-        return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files, isLiked)
+        return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files, isLiked, now)
     }
 
     fun findAllPosts(
