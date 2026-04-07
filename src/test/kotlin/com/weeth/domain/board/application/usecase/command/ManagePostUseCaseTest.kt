@@ -356,8 +356,7 @@ class ManagePostUseCaseTest :
 
         describe("owner validation") {
             it("작성자가 아니면 수정 시 예외를 던진다") {
-                val owner = UserTestFixture.createActiveUser1(1L)
-                val ownerMember = ClubMemberTestFixture.createActiveMember(user = owner)
+                val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = ownerMember, board = board)

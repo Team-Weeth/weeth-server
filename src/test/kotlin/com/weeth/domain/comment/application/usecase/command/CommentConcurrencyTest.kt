@@ -125,8 +125,8 @@ class CommentConcurrencyTest(
             val users = createUsers(threadCount, runId)
             val post = createPost("동시성 테스트 게시글-$runId", users.first(), runId)
             // 나머지 사용자들도 같은 클럽의 ClubMember로 등록 (ACTIVE 상태로 저장)
-            users.drop(1).forEach { user ->
-                val member = ClubMember.create(club = post.board.club, user = user).also { it.accept() }
+            users.drop(1).forEach { commenter ->
+                val member = ClubMember.create(club = post.board.club, user = commenter).also { it.accept() }
                 clubMemberRepository.save(member)
             }
             val executor = Executors.newFixedThreadPool(threadCount)
@@ -310,6 +310,7 @@ class AtomicCommentCountCommand(
             try {
                 transactionTemplate.executeWithoutResult {
                     val post = entityManager.getReference(Post::class.java, postId)
+                    // 벤치마크 전용: commentCount 동시성 측정이 목적이므로 userId 대신 post 작성자의 ClubMember를 재사용
                     val clubMember = post.clubMember
                     val parent =
                         dto.parentCommentId?.let { parentId ->

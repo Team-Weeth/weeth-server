@@ -96,8 +96,8 @@ class CommentQueryPerformanceTest(
         ): SetupResult {
             val user = createUser()
             val board = createBoard()
-            val clubMember: ClubMember = clubMemberRepository.save(ClubMember.create(club = board.club, user = user))
-            clubMember.accept()
+            val clubMember = ClubMember.create(club = board.club, user = user).also { it.accept() }
+            clubMemberRepository.save(clubMember)
             val post = createPost(clubMember, board)
 
             val commentIds = mutableListOf<Long>()
@@ -151,12 +151,11 @@ class CommentQueryPerformanceTest(
                 childrenPerRoot: Int,
                 filesPerComment: Int,
             ) {
-                val (commentIds) =
-                    setupData(
-                        rootCount = rootCount,
-                        childrenPerRoot = childrenPerRoot,
-                        filesPerComment = filesPerComment,
-                    )
+                setupData(
+                    rootCount = rootCount,
+                    childrenPerRoot = childrenPerRoot,
+                    filesPerComment = filesPerComment,
+                )
 
                 val fileAccessUrlPort =
                     object : FileAccessUrlPort {

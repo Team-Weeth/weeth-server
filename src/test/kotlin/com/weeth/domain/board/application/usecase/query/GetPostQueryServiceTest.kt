@@ -307,7 +307,7 @@ class GetPostQueryServiceTest :
             it("목록 조회 시 mapper를 통해 응답으로 변환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
-                val member = ClubMemberTestFixture.createActiveMember(user = user)
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
                 val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
                 val pageable = PageRequest.of(0, 10)
                 val postSlice = SliceImpl(listOf(post), pageable, false)
