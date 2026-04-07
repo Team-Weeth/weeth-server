@@ -7,6 +7,8 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.comment.application.dto.request.CommentSaveRequest
@@ -46,6 +48,7 @@ class CommentConcurrencyTest(
     private val userRepository: UserRepository,
     private val commentRepository: CommentRepository,
     private val clubRepository: ClubRepository,
+    private val clubMemberRepository: ClubMemberRepository,
     private val entityManager: EntityManager,
     private val atomicCommentCountCommand: AtomicCommentCountCommand,
 ) : DescribeSpec({
@@ -102,11 +105,13 @@ class CommentConcurrencyTest(
                         type = BoardType.GENERAL,
                     ),
                 )
+            val clubMember = ClubMember.create(club = club, user = user).also { it.accept() }
+            clubMemberRepository.save(clubMember)
             return postRepository.save(
                 Post(
                     title = title,
                     content = "내용",
-                    user = user,
+                    clubMember = clubMember,
                     board = board,
                 ),
             )
@@ -119,6 +124,11 @@ class CommentConcurrencyTest(
             val runId = UUID.randomUUID().toString().take(8)
             val users = createUsers(threadCount, runId)
             val post = createPost("동시성 테스트 게시글-$runId", users.first(), runId)
+            // 나머지 사용자들도 같은 클럽의 ClubMember로 등록 (ACTIVE 상태로 저장)
+            users.drop(1).forEach { user ->
+                val member = ClubMember.create(club = post.board.club, user = user).also { it.accept() }
+                clubMemberRepository.save(member)
+            }
             val executor = Executors.newFixedThreadPool(threadCount)
             val latch = CountDownLatch(threadCount)
             val successCount = AtomicInteger(0)
@@ -206,6 +216,7 @@ class CommentConcurrencyTest(
             commentRepository.deleteAllInBatch()
             postRepository.deleteAllInBatch()
             boardRepository.deleteAllInBatch()
+            clubMemberRepository.deleteAllInBatch()
             clubRepository.deleteAllInBatch()
             userRepository.deleteAllInBatch()
         }
@@ -298,8 +309,8 @@ class AtomicCommentCountCommand(
         repeat(maxRetries) { attempt ->
             try {
                 transactionTemplate.executeWithoutResult {
-                    val user = entityManager.getReference(User::class.java, userId)
                     val post = entityManager.getReference(Post::class.java, postId)
+                    val clubMember = post.clubMember
                     val parent =
                         dto.parentCommentId?.let { parentId ->
                             commentRepository.findByIdAndPostId(parentId, postId)
@@ -310,7 +321,7 @@ class AtomicCommentCountCommand(
                         Comment.createForPost(
                             content = dto.content,
                             post = post,
-                            user = user,
+                            clubMember = clubMember,
                             parent = parent,
                         ),
                     )

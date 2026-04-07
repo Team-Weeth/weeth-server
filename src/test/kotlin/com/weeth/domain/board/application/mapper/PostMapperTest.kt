@@ -34,11 +34,12 @@ class PostMapperTest :
 
         every { authorMember.memberRole } returns MemberRole.USER
         every { authorMember.profileImageStorageKey } returns null
+        every { authorMember.user } returns user
 
         every { post.id } returns 1L
         every { post.title } returns "제목"
         every { post.content } returns "내용"
-        every { post.user } returns user
+        every { post.clubMember } returns authorMember
         every { post.board } returns board
         every { post.commentCount } returns 2
         every { post.likeCount } returns 0
@@ -47,7 +48,7 @@ class PostMapperTest :
 
         describe("toListResponse") {
             it("24시간 이내 생성된 게시글은 isNew=true") {
-                val response = mapper.toListResponse(post, authorMember, hasFile = true, now = now, isLiked = false)
+                val response = mapper.toListResponse(post, hasFile = true, now = now, isLiked = false)
 
                 response.id shouldBe 1L
                 response.hasFile shouldBe true
@@ -81,7 +82,7 @@ class PostMapperTest :
                         ),
                     )
 
-                val response = mapper.toDetailResponse(post, authorMember, comments, files, isLiked = false)
+                val response = mapper.toDetailResponse(post, comments, files, isLiked = false)
 
                 response.id shouldBe 1L
                 response.commentCount shouldBe 2
