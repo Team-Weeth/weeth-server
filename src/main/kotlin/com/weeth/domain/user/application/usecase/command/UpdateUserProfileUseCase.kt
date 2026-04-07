@@ -24,7 +24,7 @@ class UpdateUserProfileUseCase(
         if (!user.isProfileCompleted()) {
             validateRequiredFields(request)
         }
-        validateDuplicate(request, userId)
+        validateDuplicate(request, userId, user)
         user.update(
             name = request.name,
             email = request.email?.let { Email.from(it) },
@@ -50,15 +50,16 @@ class UpdateUserProfileUseCase(
     private fun validateDuplicate(
         request: UpdateUserProfileRequest,
         userId: Long,
+        user: User,
     ) {
-        val school = request.school
-        val studentId = request.studentId
+        val school = request.school ?: user.school
+        val studentId = request.studentId ?: user.studentId
         if (school != null && studentId != null &&
             userRepository.existsBySchoolAndStudentIdAndIdIsNot(school, studentId, userId)
         ) {
             throw StudentIdExistsException()
         }
-        val tel = request.tel
+        val tel = request.tel ?: user.telValue
         if (tel != null && userRepository.existsByTelAndIdIsNotValue(tel, userId)) {
             throw TelExistsException()
         }
