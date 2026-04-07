@@ -1,8 +1,8 @@
 package com.weeth.domain.comment.domain.entity
 
 import com.weeth.domain.board.domain.entity.Post
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.comment.domain.vo.CommentContent
-import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -31,8 +31,8 @@ class Comment(
     @JoinColumn(name = "post_id")
     val post: Post,
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    val user: User,
+    @JoinColumn(name = "club_member_id")
+    val clubMember: ClubMember,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     val parent: Comment? = null,
@@ -50,7 +50,7 @@ class Comment(
         content = CommentContent.from(newContent).value
     }
 
-    fun isOwnedBy(userId: Long): Boolean = user.id == userId
+    fun isOwnedBy(userId: Long): Boolean = clubMember.user.id == userId
 
     companion object {
         private const val DELETED_CONTENT = "삭제된 댓글입니다."
@@ -58,7 +58,7 @@ class Comment(
         fun createForPost(
             content: String,
             post: Post,
-            user: User,
+            clubMember: ClubMember,
             parent: Comment?,
         ): Comment {
             require(parent == null || parent.post.id == post.id) {
@@ -67,7 +67,7 @@ class Comment(
             return Comment(
                 content = CommentContent.from(content).value,
                 post = post,
-                user = user,
+                clubMember = clubMember,
                 parent = parent,
             )
         }

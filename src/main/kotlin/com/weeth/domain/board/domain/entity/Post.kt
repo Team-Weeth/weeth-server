@@ -1,6 +1,6 @@
 package com.weeth.domain.board.domain.entity
 
-import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -17,7 +17,7 @@ import jakarta.persistence.Table
 class Post(
     title: String,
     content: String,
-    user: User,
+    clubMember: ClubMember,
     board: Board,
     cardinalNumber: Int? = null,
 ) : BaseEntity() {
@@ -35,8 +35,8 @@ class Post(
         private set
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "user_id", nullable = false)
-    var user: User = user
+    @JoinColumn(name = "club_member_id", nullable = false)
+    var clubMember: ClubMember = clubMember
         private set
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -78,7 +78,7 @@ class Post(
         likeCount--
     }
 
-    fun isOwnedBy(userId: Long): Boolean = user.id == userId
+    fun isOwnedBy(userId: Long): Boolean = clubMember.user.id == userId
 
     fun belongsToClub(clubId: Long): Boolean = board.club.id == clubId && !board.isDeleted
 
@@ -108,7 +108,7 @@ class Post(
         fun create(
             title: String,
             content: String,
-            user: User,
+            clubMember: ClubMember,
             board: Board,
             cardinalNumber: Int? = null,
         ): Post {
@@ -117,7 +117,7 @@ class Post(
             return Post(
                 title = title,
                 content = content,
-                user = user,
+                clubMember = clubMember,
                 board = board,
                 cardinalNumber = cardinalNumber,
             )

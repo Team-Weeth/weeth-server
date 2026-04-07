@@ -3,7 +3,6 @@ package com.weeth.domain.dashboard.application.usecase.query
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardReader
 import com.weeth.domain.board.domain.repository.PostReader
-import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -90,13 +89,10 @@ class GetDashboardQueryService(
         val now = LocalDateTime.now()
         val postIds = posts.content.map { it.id }
         val filesByPostId = fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }
-        val authorIds = posts.content.map { it.user.id }.distinct()
-        val memberMap = buildMemberMap(clubId, authorIds)
 
         return posts.map { post ->
             dashboardMapper.toPostResponse(
                 post = post,
-                authorMember = memberMap.getValue(post.user.id),
                 files = filesByPostId[post.id] ?: emptyList(),
                 now = now,
             )
@@ -129,14 +125,6 @@ class GetDashboardQueryService(
         val sessions = sessionReader.findAllByClubIdAndStartBetween(clubId, monthStart, monthEnd)
 
         return dashboardMapper.toScheduleResponses(events, sessions)
-    }
-
-    private fun buildMemberMap(
-        clubId: Long,
-        userIds: List<Long>,
-    ): Map<Long, ClubMember> {
-        if (userIds.isEmpty()) return emptyMap()
-        return clubMemberReader.findAllByClubIdAndUserIds(clubId, userIds).associateBy { it.user.id }
     }
 
     fun getUnreadNotice(

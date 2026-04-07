@@ -174,7 +174,7 @@ class GetDashboardQueryServiceTest :
             context("멤버인 경우") {
                 it("공지 제외한 접근 가능한 게시판의 최신 게시글을 반환한다") {
                     val board = BoardTestFixture.create(id = 10L, type = BoardType.GENERAL)
-                    val post = PostTestFixture.create(board = board, user = user)
+                    val post = PostTestFixture.create(board = board, clubMember = memberWithUser)
                     val pageable = PageRequest.of(0, 10)
                     val slice = SliceImpl(listOf(post), pageable, false)
 
@@ -182,7 +182,6 @@ class GetDashboardQueryServiceTest :
                     every { boardReader.findAllActiveByClubId(clubId) } returns listOf(board)
                     every { postReader.findRecentByBoardIds(listOf(board.id), any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
-                    every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(memberWithUser)
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
@@ -201,7 +200,7 @@ class GetDashboardQueryServiceTest :
 
                 it("일반 멤버에게는 비공개 게시판 글이 포함되지 않는다") {
                     val publicBoard = BoardTestFixture.create(id = 10L, type = BoardType.GENERAL)
-                    val post = PostTestFixture.create(board = publicBoard, user = user)
+                    val post = PostTestFixture.create(board = publicBoard, clubMember = memberWithUser)
                     val pageable = PageRequest.of(0, 10)
                     val slice = SliceImpl(listOf(post), pageable, false)
 
@@ -209,7 +208,6 @@ class GetDashboardQueryServiceTest :
                     every { boardReader.findAllActiveByClubId(clubId) } returns listOf(publicBoard, privateBoard)
                     every { postReader.findRecentByBoardIds(listOf(publicBoard.id), any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
-                    every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(memberWithUser)
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
@@ -223,7 +221,7 @@ class GetDashboardQueryServiceTest :
                             user = user,
                             memberRole = MemberRole.ADMIN,
                         )
-                    val post = PostTestFixture.create(board = privateBoard, user = user)
+                    val post = PostTestFixture.create(board = privateBoard, clubMember = adminMember)
                     val pageable = PageRequest.of(0, 10)
                     val slice = SliceImpl(listOf(post), pageable, false)
 
@@ -231,7 +229,6 @@ class GetDashboardQueryServiceTest :
                     every { boardReader.findAllActiveByClubId(clubId) } returns listOf(privateBoard)
                     every { postReader.findRecentByBoardIds(listOf(privateBoard.id), any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
-                    every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(adminMember)
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
