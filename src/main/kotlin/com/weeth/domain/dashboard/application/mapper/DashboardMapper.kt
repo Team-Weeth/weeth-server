@@ -99,12 +99,11 @@ class DashboardMapper(
 
     fun toPostResponse(
         post: Post,
-        authorMember: ClubMember,
         files: List<File>,
         now: LocalDateTime,
     ) = DashboardPostResponse(
         id = post.id,
-        author = UserInfo.of(post.user, authorMember.memberRole, resolveProfileImage(authorMember)),
+        author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
         title = post.title,
         content = post.content,
         time = post.createdAt,
