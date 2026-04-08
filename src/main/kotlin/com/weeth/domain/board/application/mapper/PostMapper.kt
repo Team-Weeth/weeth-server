@@ -47,8 +47,6 @@ class PostMapper(
 
     fun toListResponse(
         post: Post,
-        hasFile: Boolean,
-        authorMember: ClubMember,
         files: List<FileResponse>,
         now: LocalDateTime,
         isLiked: Boolean,

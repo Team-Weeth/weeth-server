@@ -58,13 +58,11 @@ class GetPostQueryService(
 
         val files = fileReader.findAll(FileOwnerType.POST, post.id).map(fileMapper::toFileResponse)
         val comments = commentReader.findAllByPostId(post.id)
-
         val commentTree = getCommentQueryService.toCommentTreeResponses(comments)
         val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId)
         val now = LocalDateTime.now()
 
-        return postMapper.toDetailResponse(post, commentTree, files, isLiked)
-        return postMapper.toDetailResponse(post, memberMap.getValue(post.user.id), commentTree, files, isLiked, now)
+        return postMapper.toDetailResponse(post, commentTree, files, isLiked, now)
     }
 
     fun findAllPosts(
@@ -89,20 +87,8 @@ class GetPostQueryService(
         }
 
         val posts = postRepository.findAllActiveByBoardIds(accessibleBoardIds, pageable)
-        val postIds = posts.content.map { it.id }
-        val fileExistsByPostId = buildFileExistsMap(postIds)
-        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
-        val now = LocalDateTime.now()
 
-        return posts.map { post ->
-            postMapper.toListResponse(
-                post,
-                fileExistsByPostId[post.id] == true,
-                now,
-                post.id in likedPostIds,
-            )
-        }
-        return toPostListResponses(posts, clubId, userId)
+        return toPostListResponses(posts, userId)
     }
 
     fun findPosts(
@@ -119,20 +105,7 @@ class GetPostQueryService(
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
 
-        val postIds = posts.content.map { it.id }
-        val fileExistsByPostId = buildFileExistsMap(postIds)
-        val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
-        val now = LocalDateTime.now()
-
-        return posts.map { post ->
-            postMapper.toListResponse(
-                post,
-                fileExistsByPostId[post.id] == true,
-                now,
-                post.id in likedPostIds,
-            )
-        }
-        return toPostListResponses(posts, clubId, userId)
+        return toPostListResponses(posts, userId)
     }
 
     fun searchPosts(
@@ -153,17 +126,14 @@ class GetPostQueryService(
             throw NoSearchResultException()
         }
 
-        return toPostListResponses(posts, clubId, userId)
+        return toPostListResponses(posts, userId)
     }
 
     private fun toPostListResponses(
         posts: Slice<Post>,
-        clubId: Long,
         userId: Long,
     ): Slice<PostListResponse> {
         val postIds = posts.content.map { it.id }
-        val fileExistsByPostId = buildFileExistsMap(postIds)
-        val memberMap = buildMemberMap(clubId, posts.content.map { it.user.id }.distinct())
         val filesByPostId = buildFileMap(postIds)
         val likedPostIds = postLikeRepository.findLikedPostIds(postIds, userId)
         val now = LocalDateTime.now()
@@ -171,8 +141,6 @@ class GetPostQueryService(
         return posts.map { post ->
             postMapper.toListResponse(
                 post,
-                fileExistsByPostId[post.id] == true,
-                memberMap.getValue(post.user.id),
                 filesByPostId[post.id]?.map(fileMapper::toFileResponse) ?: emptyList(),
                 now,
                 post.id in likedPostIds,
