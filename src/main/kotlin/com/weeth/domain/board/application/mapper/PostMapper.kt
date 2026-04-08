@@ -26,7 +26,6 @@ class PostMapper(
 
     fun toDetailResponse(
         post: Post,
-        authorMember: ClubMember,
         comments: List<CommentResponse>,
         files: List<FileResponse>,
         isLiked: Boolean,
@@ -35,7 +34,7 @@ class PostMapper(
         id = post.id,
         boardId = post.board.id,
         boardName = post.board.name,
-        author = UserInfo.of(post.user, authorMember.memberRole, resolveProfileImage(authorMember)),
+        author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
@@ -48,13 +47,14 @@ class PostMapper(
 
     fun toListResponse(
         post: Post,
+        hasFile: Boolean,
         authorMember: ClubMember,
         files: List<FileResponse>,
         now: LocalDateTime,
         isLiked: Boolean,
     ) = PostListResponse(
         id = post.id,
-        author = UserInfo.of(post.user, authorMember.memberRole, resolveProfileImage(authorMember)),
+        author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
         boardId = post.board.id,
         boardName = post.board.name,
         title = post.title,

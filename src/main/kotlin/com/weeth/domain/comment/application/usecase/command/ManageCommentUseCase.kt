@@ -3,6 +3,7 @@ package com.weeth.domain.comment.application.usecase.command
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.comment.application.dto.request.CommentSaveRequest
 import com.weeth.domain.comment.application.dto.request.CommentUpdateRequest
 import com.weeth.domain.comment.application.exception.CommentAlreadyDeletedException
@@ -15,7 +16,6 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 class ManageCommentUseCase(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository, // 타 도메인 이므로 Reader 사용 검토
-    private val userReader: UserReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val fileMapper: FileMapper,
@@ -34,8 +34,9 @@ class ManageCommentUseCase(
         postId: Long,
         userId: Long,
     ) {
-        val user = userReader.getById(userId)
         val post = findPostWithLock(postId)
+        val clubId = post.board.club.id
+        val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
         val parent =
             dto.parentCommentId?.let { parentId ->
                 commentRepository.findByIdAndPostId(parentId, postId) ?: throw CommentNotFoundException()
@@ -45,7 +46,7 @@ class ManageCommentUseCase(
             Comment.createForPost(
                 content = dto.content,
                 post = post,
-                user = user,
+                clubMember = clubMember,
                 parent = parent,
             )
         val savedComment = commentRepository.save(comment)

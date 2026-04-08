@@ -20,7 +20,6 @@ import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -28,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional
 class ManagePostUseCase(
     private val postRepository: PostRepository,
     private val boardRepository: BoardRepository,
-    private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val fileRepository: FileRepository,
@@ -44,7 +42,6 @@ class ManagePostUseCase(
         userId: Long,
     ): PostSaveResponse {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
-        val user = userReader.getById(userId)
         val board = findBoardInClub(boardId, clubId)
         validateWritePermission(board, member)
 
@@ -57,7 +54,7 @@ class ManagePostUseCase(
             Post.create(
                 title = request.title,
                 content = request.content,
-                user = user,
+                clubMember = member,
                 board = board,
                 cardinalNumber = currentCardinalNumber,
             )
@@ -75,7 +72,6 @@ class ManagePostUseCase(
         userId: Long,
     ): PostSaveResponse {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
-        val user = userReader.getById(userId)
         val post = findPost(postId)
         if (post.board.club.id != clubId) throw PostNotFoundException()
         validateOwner(post, userId)
@@ -97,7 +93,6 @@ class ManagePostUseCase(
         userId: Long,
     ) {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
-        val user = userReader.getById(userId)
         val post = findPost(postId)
         if (post.board.club.id != clubId) throw PostNotFoundException()
         validateOwner(post, userId)

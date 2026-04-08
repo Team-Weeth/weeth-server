@@ -13,7 +13,6 @@ import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.club.domain.enums.MemberRole
-import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.comment.application.dto.response.CommentResponse
@@ -44,7 +43,6 @@ class GetPostQueryServiceTest :
         val boardRepository = mockk<BoardRepository>()
         val postLikeRepository = mockk<PostLikeRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
-        val clubMemberReader = mockk<ClubMemberReader>()
         val commentReader = mockk<CommentReader>()
         val getCommentQueryService = mockk<GetCommentQueryService>()
         val fileReader = mockk<FileReader>()
@@ -57,7 +55,6 @@ class GetPostQueryServiceTest :
                 boardRepository,
                 postLikeRepository,
                 clubMemberPolicy,
-                clubMemberReader,
                 commentReader,
                 getCommentQueryService,
                 fileReader,
@@ -74,7 +71,6 @@ class GetPostQueryServiceTest :
                 boardRepository,
                 postLikeRepository,
                 clubMemberPolicy,
-                clubMemberReader,
                 commentReader,
                 getCommentQueryService,
                 fileReader,
@@ -99,13 +95,7 @@ class GetPostQueryServiceTest :
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val actualClubId = board.club.id
                 val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
-                val post =
-                    PostTestFixture.create(
-                        title = "제목",
-                        content = "내용",
-                        user = user,
-                        board = board,
-                    )
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
                 val comments = listOf(mockk<CommentResponse>())
                 val fileResponses =
                     listOf(
@@ -149,12 +139,10 @@ class GetPostQueryServiceTest :
                 every { clubMemberPolicy.getActiveMember(actualClubId, userId) } returns member
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
                 every { commentReader.findAllByPostId(any<Long>()) } returns emptyList()
-                every { clubMemberReader.findAllByClubIdAndUserIds(actualClubId, any()) } returns listOf(member)
-                every { getCommentQueryService.toCommentTreeResponses(any(), any()) } returns comments
+                every { getCommentQueryService.toCommentTreeResponses(any()) } returns comments
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
                 every { postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId) } returns false
-                every { postMapper.toDetailResponse(post, member, comments, fileResponses, false, any()) } returns
-                    detail
+                every { postMapper.toDetailResponse(post, comments, fileResponses, false, any()) } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
                 val result = queryService.findPost(actualClubId, userId, 1L)
@@ -174,7 +162,7 @@ class GetPostQueryServiceTest :
                     PostTestFixture.create(
                         title = "제목",
                         content = "내용",
-                        user = user,
+                        clubMember = member,
                         board = privateBoard,
                     )
 
@@ -190,17 +178,15 @@ class GetPostQueryServiceTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val deletedBoard =
                     BoardTestFixture
-                        .create(
-                            name = "삭제",
-                            type = BoardType.GENERAL,
-                        ).also { it.markDeleted() }
+                        .create(name = "삭제", type = BoardType.GENERAL)
+                        .also { it.markDeleted() }
                 val actualClubId = deletedBoard.club.id
                 val member = ClubMemberTestFixture.createActiveMember(club = deletedBoard.club, user = user)
                 val post =
                     PostTestFixture.create(
                         title = "제목",
                         content = "내용",
-                        user = user,
+                        clubMember = member,
                         board = deletedBoard,
                     )
 
@@ -272,7 +258,7 @@ class GetPostQueryServiceTest :
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
-                val post = PostTestFixture.create(title = "제목", content = "내용", user = user, board = board)
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
                 val pageable = PageRequest.of(0, 10)
                 val postSlice = SliceImpl(listOf(post), pageable, false)
                 val response =
@@ -295,9 +281,8 @@ class GetPostQueryServiceTest :
                     listOf(board)
                 every { postRepository.findAllActiveByBoardIds(any(), any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
-                every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(member)
                 every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
-                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
+                every { postMapper.toListResponse(any(), any(), any(), any()) } returns response
 
                 val result = queryService.findAllPosts(clubId, userId, 0, 10)
 
@@ -323,14 +308,8 @@ class GetPostQueryServiceTest :
             it("목록 조회 시 mapper를 통해 응답으로 변환한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
-                val member = ClubMemberTestFixture.createActiveMember(user = user)
-                val post =
-                    PostTestFixture.create(
-                        title = "제목",
-                        content = "내용",
-                        user = user,
-                        board = board,
-                    )
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
                 val pageable = PageRequest.of(0, 10)
                 val postSlice = SliceImpl(listOf(post), pageable, false)
                 val response =
@@ -352,9 +331,8 @@ class GetPostQueryServiceTest :
                 every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(1L, clubId) } returns board
                 every { postRepository.findAllActiveByBoardId(1L, any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
-                every { clubMemberReader.findAllByClubIdAndUserIds(clubId, any()) } returns listOf(member)
                 every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
-                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
+                every { postMapper.toListResponse(any(), any(), any(), any()) } returns response
 
                 val result = queryService.findPosts(clubId, userId, 1L, 0, 10)
 
