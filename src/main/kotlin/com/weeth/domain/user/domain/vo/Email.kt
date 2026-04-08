@@ -6,9 +6,7 @@ data class Email private constructor(
     companion object {
         fun from(raw: String): Email {
             val normalized = raw.trim().lowercase()
-            if (normalized.isBlank()) {
-                return Email("")
-            }
+            require(normalized.isNotBlank()) { "이메일은 공백일 수 없습니다." }
             require(EMAIL_REGEX.matches(normalized)) { "Invalid email format." }
             return Email(normalized)
         }

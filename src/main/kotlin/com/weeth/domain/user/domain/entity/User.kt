@@ -113,10 +113,19 @@ class User(
             this.name = it.trim()
         }
         email?.let { this.email = it }
-        studentId?.let { this.studentId = it }
+        studentId?.let {
+            require(it.isNotBlank()) { "학번은 공백일 수 없습니다." }
+            this.studentId = it
+        }
         tel?.let { this.tel = it }
-        school?.let { this.school = it }
-        department?.let { this.department = it }
+        school?.let {
+            require(it.isNotBlank()) { "학교는 공백일 수 없습니다." }
+            this.school = it
+        }
+        department?.let {
+            require(it.isNotBlank()) { "학과는 공백일 수 없습니다." }
+            this.department = it
+        }
     }
 
     fun agreeTerms(
