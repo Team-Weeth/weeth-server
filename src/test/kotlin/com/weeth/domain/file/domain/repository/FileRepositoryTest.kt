@@ -14,6 +14,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.test.util.ReflectionTestUtils
 import java.util.UUID
 
 @DataJpaTest
@@ -102,7 +103,7 @@ private fun createTestFile(
             ownerId = ownerId,
         ).also {
             if (status == FileStatus.DELETED) {
-                it.markDeleted()
+                ReflectionTestUtils.setField(it, "status", FileStatus.DELETED)
             }
         }
 

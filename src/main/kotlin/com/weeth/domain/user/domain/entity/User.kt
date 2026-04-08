@@ -21,10 +21,10 @@ import jakarta.persistence.Table
 class User(
     name: String,
     email: Email,
-    studentId: String = "",
-    tel: PhoneNumber = PhoneNumber.from(""),
-    school: String = "",
-    department: String = "",
+    studentId: String? = null,
+    tel: PhoneNumber? = null,
+    school: String? = null,
+    department: String? = null,
     status: Status = Status.WAITING,
 ) : BaseEntity() {
     @Id
@@ -42,21 +42,21 @@ class User(
     var email: Email = email
         private set
 
-    @Column(nullable = false, length = 20)
-    var studentId: String = studentId
+    @Column(nullable = true, length = 20)
+    var studentId: String? = studentId
         private set
 
     @Convert(converter = PhoneNumberConverter::class)
-    @Column(name = "tel", nullable = false, length = 20)
-    var tel: PhoneNumber = tel
+    @Column(name = "tel", nullable = true, length = 20)
+    var tel: PhoneNumber? = tel
         private set
 
-    @Column(nullable = false, length = 50)
-    var school: String = school
+    @Column(nullable = true, length = 50)
+    var school: String? = school
         private set
 
-    @Column(nullable = false, length = 100)
-    var department: String = department
+    @Column(nullable = true, length = 100)
+    var department: String? = department
         private set
 
     @Enumerated(EnumType.STRING)
@@ -75,8 +75,8 @@ class User(
     val emailValue: String
         get() = email.value
 
-    val telValue: String
-        get() = tel.value
+    val telValue: String?
+        get() = tel?.value
 
     fun leave() {
         status = Status.LEFT
@@ -94,27 +94,38 @@ class User(
 
     fun missingProfileFields(): List<String> =
         buildList {
-            if (studentId.isBlank()) add("studentId")
-            if (telValue.isBlank()) add("tel")
-            if (school.isBlank()) add("school")
-            if (department.isBlank()) add("department")
+            if (studentId.isNullOrBlank()) add("studentId")
+            if (telValue.isNullOrBlank()) add("tel")
+            if (school.isNullOrBlank()) add("school")
+            if (department.isNullOrBlank()) add("department")
         }
 
     fun update(
-        name: String,
-        email: Email,
-        studentId: String,
-        tel: PhoneNumber,
-        school: String,
-        department: String,
+        name: String? = null,
+        email: Email? = null,
+        studentId: String? = null,
+        tel: PhoneNumber? = null,
+        school: String? = null,
+        department: String? = null,
     ) {
-        require(name.isNotBlank()) { "이름은 공백일 수 없습니다." }
-        this.name = name.trim()
-        this.email = email
-        this.studentId = studentId
-        this.tel = tel
-        this.school = school
-        this.department = department
+        name?.let {
+            require(it.isNotBlank()) { "이름은 공백일 수 없습니다." }
+            this.name = it.trim()
+        }
+        email?.let { this.email = it }
+        studentId?.let {
+            require(it.isNotBlank()) { "학번은 공백일 수 없습니다." }
+            this.studentId = it
+        }
+        tel?.let { this.tel = it }
+        school?.let {
+            require(it.isNotBlank()) { "학교는 공백일 수 없습니다." }
+            this.school = it
+        }
+        department?.let {
+            require(it.isNotBlank()) { "학과는 공백일 수 없습니다." }
+            this.department = it
+        }
     }
 
     fun agreeTerms(
@@ -138,17 +149,17 @@ class User(
         fun create(
             name: String,
             email: String,
-            studentId: String = "",
-            tel: String = "",
-            school: String = "",
-            department: String = "",
+            studentId: String? = null,
+            tel: String? = null,
+            school: String? = null,
+            department: String? = null,
             status: Status = Status.WAITING,
         ): User =
             User(
                 name = name,
                 email = Email.from(email),
                 studentId = studentId,
-                tel = PhoneNumber.from(tel),
+                tel = tel?.let { PhoneNumber.from(it) },
                 school = school,
                 department = department,
                 status = status,

@@ -98,7 +98,7 @@ class ManagePostUseCase(
         validateOwner(post, userId)
         validateWritePermission(post.board, member)
 
-        markPostFilesDeleted(post.id)
+        deletePostFiles(post.id)
         post.markDeleted()
     }
 
@@ -135,7 +135,7 @@ class ManagePostUseCase(
         if (files == null) {
             return
         }
-        markPostFilesDeleted(post.id)
+        deletePostFiles(post.id)
         savePostFiles(post, files)
     }
 
@@ -149,7 +149,11 @@ class ManagePostUseCase(
         }
     }
 
-    private fun markPostFilesDeleted(postId: Long) {
-        fileReader.findAll(FileOwnerType.POST, postId).forEach { it.markDeleted() }
+    private fun deletePostFiles(postId: Long) {
+        val files = fileReader.findAll(FileOwnerType.POST, postId)
+
+        if (files.isNotEmpty()) {
+            fileRepository.deleteAll(files)
+        }
     }
 }

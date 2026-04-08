@@ -7,22 +7,22 @@ import jakarta.validation.constraints.Size
 
 data class UpdateUserProfileRequest(
     @field:Schema(description = "이름", example = "홍길동")
-    @field:NotBlank
-    val name: String,
+    @field:Size(min = 1, max = 20)
+    val name: String? = null,
     @field:Schema(description = "이메일", example = "hong@example.com")
+    @field:Size(min = 1)
     @field:Email
-    @field:NotBlank
-    val email: String,
+    val email: String? = null,
     @field:Schema(description = "학번", example = "20201234")
-    @field:NotBlank
-    val studentId: String,
+    @field:Size(min = 1)
+    val studentId: String? = null,
     @field:Schema(description = "전화번호", example = "01012345678")
-    @field:NotBlank
-    val tel: String,
+    @field:Size(min = 1)
+    val tel: String? = null,
     @field:Schema(description = "학교", example = "가천대학교")
-    @field:NotBlank
-    val school: String,
+    @field:Size(min = 1)
+    val school: String? = null,
     @field:Schema(description = "학과", example = "컴퓨터공학과")
-    @field:NotBlank
-    val department: String,
+    @field:Size(min = 1)
+    val department: String? = null,
 )

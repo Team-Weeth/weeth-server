@@ -199,7 +199,8 @@ class ManagePostUseCaseTest :
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
 
-            it("files가 있으면 기존 파일을 soft delete 후 교체한다") {
+            it("files가 있으면 기존 파일을 삭제 후 교체한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
@@ -223,14 +224,15 @@ class ManagePostUseCaseTest :
 
                 every { postRepository.findActivePostById(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
+                every { fileRepository.deleteAll(any<List<File>>()) } just runs
                 every { fileMapper.toFileList(request.files, FileOwnerType.POST, any<Long>()) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
 
                 useCase.update(clubId, 1L, request, 1L)
 
-                oldFile.status.name shouldBe "DELETED"
                 post.title shouldBe "수정"
                 post.content shouldBe "수정"
+                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldFile)) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
 
@@ -310,7 +312,8 @@ class ManagePostUseCaseTest :
         }
 
         describe("delete") {
-            it("삭제 시 첨부 파일과 게시글을 soft delete한다") {
+            it("삭제 시 첨부 파일을 삭제하고 게시글을 soft delete한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
@@ -319,11 +322,12 @@ class ManagePostUseCaseTest :
 
                 every { postRepository.findActivePostById(1L) } returns post
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
+                every { fileRepository.deleteAll(any<List<File>>()) } just runs
 
                 useCase.delete(clubId, 1L, 1L)
 
-                oldFile.status.name shouldBe "DELETED"
                 post.isDeleted shouldBe true
+                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldFile)) }
                 verify(exactly = 0) { postRepository.delete(any()) }
             }
 

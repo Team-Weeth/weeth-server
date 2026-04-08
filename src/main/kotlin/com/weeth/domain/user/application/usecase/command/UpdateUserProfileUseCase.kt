@@ -1,8 +1,10 @@
 package com.weeth.domain.user.application.usecase.command
 
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
+import com.weeth.domain.user.application.exception.ProfileRequiredFieldsMissingException
 import com.weeth.domain.user.application.exception.StudentIdExistsException
 import com.weeth.domain.user.application.exception.TelExistsException
+import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.domain.vo.Email
 import com.weeth.global.common.vo.PhoneNumber
@@ -18,26 +20,47 @@ class UpdateUserProfileUseCase(
         request: UpdateUserProfileRequest,
         userId: Long,
     ) {
-        validate(request, userId)
         val user = userRepository.getById(userId)
+        if (!user.isProfileCompleted()) {
+            validateRequiredFields(request)
+        }
+        validateDuplicate(request, userId, user)
         user.update(
             name = request.name,
-            email = Email.from(request.email),
+            email = request.email?.let { Email.from(it) },
             studentId = request.studentId,
-            tel = PhoneNumber.from(request.tel),
+            tel = request.tel?.let { PhoneNumber.from(it) },
             school = request.school,
             department = request.department,
         )
     }
 
-    private fun validate(
+    private fun validateRequiredFields(request: UpdateUserProfileRequest) {
+        if (request.name == null ||
+            request.email == null ||
+            request.studentId == null ||
+            request.tel == null ||
+            request.school == null ||
+            request.department == null
+        ) {
+            throw ProfileRequiredFieldsMissingException()
+        }
+    }
+
+    private fun validateDuplicate(
         request: UpdateUserProfileRequest,
         userId: Long,
+        user: User,
     ) {
-        if (userRepository.existsBySchoolAndStudentIdAndIdIsNot(request.school, request.studentId, userId)) {
+        val school = request.school ?: user.school
+        val studentId = request.studentId ?: user.studentId
+        if (school != null && studentId != null &&
+            userRepository.existsBySchoolAndStudentIdAndIdIsNot(school, studentId, userId)
+        ) {
             throw StudentIdExistsException()
         }
-        if (userRepository.existsByTelAndIdIsNotValue(request.tel, userId)) {
+        val tel = request.tel ?: user.telValue
+        if (tel != null && userRepository.existsByTelAndIdIsNotValue(tel, userId)) {
             throw TelExistsException()
         }
     }

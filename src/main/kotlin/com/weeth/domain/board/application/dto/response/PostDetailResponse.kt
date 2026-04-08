@@ -29,4 +29,6 @@ data class PostDetailResponse(
     val comments: List<CommentResponse>,
     @field:Schema(description = "첨부 파일 목록")
     val fileUrls: List<FileResponse>,
+    @field:Schema(description = "신규 게시글 여부 (24시간 이내)")
+    val isNew: Boolean,
 )

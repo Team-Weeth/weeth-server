@@ -40,14 +40,11 @@ class File(
     val ownerId: Long,
     @Column(nullable = false, length = 100)
     val contentType: FileContentType,
+    // TODO: 하드 딜리트로 전환 완료되어 더 이상 사용되지 않음. DB 마이그레이션 후 status 컬럼 및 FileStatus enum 제거 예정
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: FileStatus = FileStatus.UPLOADED,
 ) : BaseEntity() {
-    fun markDeleted() {
-        status = FileStatus.DELETED
-    }
-
     companion object {
         fun createUploaded(
             fileName: String,
