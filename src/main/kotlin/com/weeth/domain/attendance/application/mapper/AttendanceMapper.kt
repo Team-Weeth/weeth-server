@@ -16,13 +16,12 @@ class AttendanceMapper {
     fun toSummaryResponse(
         clubMember: ClubMember,
         attendance: Attendance?,
-        isAdmin: Boolean = false,
     ): AttendanceSummaryResponse =
         AttendanceSummaryResponse(
             attendanceRate = clubMember.attendanceStats.attendanceRate,
             title = attendance?.session?.title,
             status = attendance?.status,
-            code = if (isAdmin) attendance?.session?.code else null,
+            sessionId = attendance?.session?.id,
             start = attendance?.session?.start,
             end = attendance?.session?.end,
             location = attendance?.session?.location,
