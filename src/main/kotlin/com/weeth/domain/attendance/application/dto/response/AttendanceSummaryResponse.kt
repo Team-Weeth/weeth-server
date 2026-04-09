@@ -11,8 +11,8 @@ data class AttendanceSummaryResponse(
     val title: String?,
     @field:Schema(description = "출석 상태", example = "ATTEND")
     val status: AttendanceStatus?,
-    @field:Schema(description = "어드민인 경우 출석 코드 노출", example = "123456")
-    val code: Int?,
+    @field:Schema(description = "정기모임 id", example = "1")
+    val sessionId: Long?,
     @field:Schema(description = "정기모임 시작 시간")
     val start: LocalDateTime?,
     @field:Schema(description = "정기모임 종료 시간")

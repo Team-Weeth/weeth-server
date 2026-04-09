@@ -63,7 +63,6 @@ class AttendanceMapperTest :
                 val main = mapper.toSummaryResponse(member, attendance)
 
                 main.shouldNotBeNull()
-                main.code.shouldBeNull()
                 main.title shouldBe session.title
                 main.status shouldBe attendance.status
             }
@@ -76,10 +75,9 @@ class AttendanceMapperTest :
                 val member = ClubMemberTestFixture.createAdminMember(club = session.club, user = adminUser)
                 val attendance = createAttendance(session, member)
 
-                val main = mapper.toSummaryResponse(member, attendance, isAdmin = true)
+                val main = mapper.toSummaryResponse(member, attendance)
 
                 main.shouldNotBeNull()
-                main.code shouldBe expectedCode
                 main.title shouldBe session.title
                 main.start shouldBe session.start
                 main.end shouldBe session.end
