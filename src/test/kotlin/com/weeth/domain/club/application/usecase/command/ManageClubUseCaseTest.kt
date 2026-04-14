@@ -7,7 +7,10 @@ import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.dto.response.ClubCreateResponse
 import com.weeth.domain.club.application.exception.ClubCreateLimitExceededException
+import com.weeth.domain.club.application.exception.DuplicateClubException
+import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
@@ -46,6 +49,7 @@ class ManageClubUseCaseTest :
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val fileRepository = mockk<FileRepository>()
+        val clubMapper = mockk<ClubMapper>()
         val useCase =
             ManageClubUseCase(
                 clubRepository,
@@ -57,6 +61,7 @@ class ManageClubUseCaseTest :
                 clubJoinPolicy,
                 clubPermissionPolicy,
                 fileRepository,
+                clubMapper,
             )
         val adminMember =
             com.weeth.domain.club.fixture.ClubMemberTestFixture
@@ -73,6 +78,7 @@ class ManageClubUseCaseTest :
                 clubJoinPolicy,
                 clubPermissionPolicy,
                 fileRepository,
+                clubMapper,
             )
             every { clubRepository.save(any()) } answers { firstArg() }
             every { clubMemberRepository.save(any()) } answers { firstArg() }
@@ -80,6 +86,8 @@ class ManageClubUseCaseTest :
             every { clubMemberCardinalRepository.save(any()) } answers { firstArg() }
             every { boardRepository.save(any()) } answers { firstArg() }
             every { clubJoinPolicy.validateCreateLimit(any()) } just Runs
+            every { clubRepository.existsBySchoolNameAndName(any(), any()) } returns false
+            every { clubMapper.toCreateResponse(any()) } returns ClubCreateResponse(clubId = "testId", clubName = "테스트")
             every { fileRepository.save(any<File>()) } answers { firstArg() }
             every {
                 fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any())
@@ -231,6 +239,29 @@ class ManageClubUseCaseTest :
                     )
 
                     verify(exactly = 0) { fileRepository.save(any<File>()) }
+                }
+            }
+
+            context("동일 학교에 같은 이름의 동아리가 이미 존재하는 경우") {
+                it("DuplicateClubException이 발생하고, 이후 로직이 실행되지 않는다") {
+                    every { userReader.getByIdWithLock(10L) } returns user
+                    every { clubRepository.existsBySchoolNameAndName("가천대", "테스트") } returns true
+
+                    shouldThrow<DuplicateClubException> {
+                        useCase.create(
+                            10L,
+                            ClubCreateRequest(
+                                name = "테스트",
+                                schoolName = "가천대",
+                                currentCardinal = 1,
+                                contactPhoneNumber = "01000000000",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
+                        )
+                    }
+
+                    verify(exactly = 0) { clubRepository.save(any()) }
+                    verify(exactly = 0) { clubMemberRepository.save(any()) }
                 }
             }
 
