@@ -9,7 +9,10 @@ import com.weeth.domain.cardinal.domain.enums.CardinalStatus
 import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.dto.response.ClubCreateResponse
+import com.weeth.domain.club.application.exception.DuplicateClubException
 import com.weeth.domain.club.application.exception.EmailRequiredForPrimaryContactException
+import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
@@ -46,6 +49,7 @@ class ManageClubUseCase(
     private val clubJoinPolicy: ClubJoinPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val fileRepository: FileRepository,
+    private val clubMapper: ClubMapper,
 ) {
     /**
      * 새로운 동아리를 생성
@@ -56,12 +60,13 @@ class ManageClubUseCase(
     fun create(
         userId: Long,
         request: ClubCreateRequest,
-    ) {
+    ): ClubCreateResponse {
+        validatePrimaryContactEmail(request.primaryContact, request.contactEmail)
+        checkDuplicateClubName(request.schoolName, request.name)
+
         val user =
             userReader.getByIdWithLock(userId)
-
         clubJoinPolicy.validateCreateLimit(userId)
-        validatePrimaryContactEmail(request.primaryContact, request.contactEmail)
 
         val code = ClubCodePolicy.generateCode()
         val clubContact =
@@ -123,6 +128,8 @@ class ManageClubUseCase(
 
         // LEAD 멤버를 최신 기수에 배정
         clubMemberCardinalRepository.save(ClubMemberCardinal.create(leadMember, cardinals.last()))
+
+        return clubMapper.toCreateResponse(club)
     }
 
     @Transactional
@@ -242,6 +249,15 @@ class ManageClubUseCase(
     ) {
         if (primaryContact == PrimaryContact.EMAIL && contactEmail == null) {
             throw EmailRequiredForPrimaryContactException()
+        }
+    }
+
+    private fun checkDuplicateClubName(
+        schoolName: String,
+        clubName: String,
+    ) {
+        if (clubRepository.existsBySchoolNameAndName(schoolName, clubName)) {
+            throw DuplicateClubException()
         }
     }
 }

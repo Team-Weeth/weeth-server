@@ -1,6 +1,7 @@
 package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubCreateRequest
+import com.weeth.domain.club.application.dto.response.ClubCreateResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
@@ -39,10 +40,10 @@ class ClubController(
     fun create(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @Valid @RequestBody request: ClubCreateRequest,
-    ): CommonResponse<Unit> {
-        manageClubUseCase.create(userId, request)
+    ): CommonResponse<ClubCreateResponse> {
+        val response = manageClubUseCase.create(userId, request)
 
-        return CommonResponse.success(ClubResponseCode.CLUB_CREATED_SUCCESS)
+        return CommonResponse.success(ClubResponseCode.CLUB_CREATED_SUCCESS, response)
     }
 
     @GetMapping
