@@ -66,4 +66,7 @@ enum class ClubErrorCode(
         HttpStatus.UNPROCESSABLE_ENTITY,
         "출석 기록이 있는 기수가 포함되어 있습니다. 삭제하려면 force=true로 재요청하세요.",
     ),
+
+    @ExplainError("생성하려는 동아리가 이미 있는 경우 발생합니다. 동아리 중복은 동일한 학교 안에 동일한 이름의 동아리가 있는지 검증합니다.")
+    DUPLICATE_CLUB(21119, HttpStatus.CONFLICT, "이미 존재하는 동아리입니다."),
 }

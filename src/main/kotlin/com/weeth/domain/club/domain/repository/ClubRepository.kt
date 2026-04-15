@@ -22,6 +22,11 @@ interface ClubRepository :
     @Query("SELECT c FROM Club c WHERE c.id = :clubId")
     fun findByIdWithLock(clubId: Long): Club?
 
+    fun existsBySchoolNameAndName(
+        schoolName: String,
+        name: String,
+    ): Boolean
+
     override fun getClubById(clubId: Long): Club = findById(clubId).orElseThrow { ClubNotFoundException() }
 
     override fun getClubByIdForUpdate(clubId: Long): Club = findByIdWithLock(clubId) ?: throw ClubNotFoundException()

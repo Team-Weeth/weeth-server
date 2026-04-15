@@ -1,5 +1,6 @@
 package com.weeth.domain.club.application.mapper
 
+import com.weeth.domain.club.application.dto.response.ClubCreateResponse
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
@@ -150,6 +151,12 @@ class ClubMapper(
         cardinalAssigned = cardinalAssigned,
         missingFields = user.missingProfileFields(),
     )
+
+    fun toCreateResponse(club: Club) =
+        ClubCreateResponse(
+            clubId = TsidBase62Encoder.encode(club.id),
+            clubName = club.name,
+        )
 
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
 
