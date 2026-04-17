@@ -3,6 +3,7 @@ package com.weeth.domain.attendance.application.usecase.command
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
+import com.weeth.domain.attendance.domain.port.SsePort
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.repository.SessionReader
@@ -24,10 +25,12 @@ class GenerateQrTokenUseCaseTest :
         val qrAttendancePort = mockk<QrAttendancePort>()
         val attendanceMapper = mockk<AttendanceMapper>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
+        val ssePort = mockk<SsePort>(relaxed = true)
 
-        val useCase = GenerateQrTokenUseCase(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy)
+        val useCase =
+            GenerateQrTokenUseCase(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort)
 
-        beforeTest { clearMocks(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy) }
+        beforeTest { clearMocks(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort) }
 
         describe("execute") {
             val sessionId = 1L
