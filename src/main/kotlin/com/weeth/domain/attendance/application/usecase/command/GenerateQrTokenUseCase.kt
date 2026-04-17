@@ -1,12 +1,13 @@
 package com.weeth.domain.attendance.application.usecase.command
 
+import com.weeth.domain.attendance.application.dto.response.AttendanceOpenEvent
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
+import com.weeth.domain.attendance.domain.port.SsePort
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @Service
@@ -15,6 +16,7 @@ class GenerateQrTokenUseCase(
     private val qrAttendancePort: QrAttendancePort,
     private val attendanceMapper: AttendanceMapper,
     private val clubPermissionPolicy: ClubPermissionPolicy,
+    private val ssePort: SsePort,
 ) {
     fun execute(
         sessionId: Long,
@@ -28,6 +30,12 @@ class GenerateQrTokenUseCase(
         val expiredAt = LocalDateTime.now().plusSeconds(QrAttendancePort.TTL_SECONDS)
         qrAttendancePort.store(sessionId, session.code)
 
-        return attendanceMapper.toQrTokenResponse(session, expiredAt)
+        val response = attendanceMapper.toQrTokenResponse(session, expiredAt)
+        ssePort.broadcast(clubId, EVENT_QR_OPEN, AttendanceOpenEvent(expiredAt))
+        return response
+    }
+
+    companion object {
+        const val EVENT_QR_OPEN = "qr-open"
     }
 }
