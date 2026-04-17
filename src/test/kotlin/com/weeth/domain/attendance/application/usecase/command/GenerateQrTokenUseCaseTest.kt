@@ -55,6 +55,7 @@ class GenerateQrTokenUseCaseTest :
                     result shouldBe expectedResponse
                     verify(exactly = 1) { clubPermissionPolicy.requireAdmin(10L, 20L) }
                     verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
+                    verify(exactly = 1) { ssePort.broadcast(10L, GenerateQrTokenUseCase.EVENT_QR_OPEN, any()) }
                 }
             }
 
@@ -65,6 +66,7 @@ class GenerateQrTokenUseCaseTest :
                     shouldThrow<SessionNotFoundException> { useCase.execute(sessionId, 10L, 20L) }
 
                     verify(exactly = 0) { qrAttendancePort.store(any(), any()) }
+                    verify(exactly = 0) { ssePort.broadcast(any(), any(), any()) }
                 }
             }
         }
