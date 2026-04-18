@@ -9,6 +9,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 class SseEmitterStoreTest :
@@ -93,12 +94,15 @@ class SseEmitterStoreTest :
 
             repeat(threadCount) { i ->
                 executor.submit {
-                    store.add(clubId, userId + i, mockk(relaxed = true))
-                    latch.countDown()
+                    try {
+                        store.add(clubId, userId + i, mockk(relaxed = true))
+                    } finally {
+                        latch.countDown()
+                    }
                 }
             }
 
-            latch.await()
+            latch.await(10, TimeUnit.SECONDS) shouldBe true
             executor.shutdown()
 
             store.getAllByClub(clubId) shouldHaveSize threadCount
@@ -115,23 +119,29 @@ class SseEmitterStoreTest :
 
             repeat(threadCount) {
                 executor.submit {
-                    val emitter = mockk<SseEmitter>(relaxed = true)
-                    store.add(clubId, userId, emitter)
-                    addedEmitters.add(emitter)
-                    latch.countDown()
+                    try {
+                        val emitter = mockk<SseEmitter>(relaxed = true)
+                        store.add(clubId, userId, emitter)
+                        addedEmitters.add(emitter)
+                    } finally {
+                        latch.countDown()
+                    }
                 }
                 executor.submit {
-                    val idx = removeIndex.getAndIncrement()
-                    val target = addedEmitters.getOrNull(idx)
-                    if (target != null) {
-                        store.remove(clubId, userId, target)
-                        removedEmitters.add(target)
+                    try {
+                        val idx = removeIndex.getAndIncrement()
+                        val target = addedEmitters.getOrNull(idx)
+                        if (target != null) {
+                            store.remove(clubId, userId, target)
+                            removedEmitters.add(target)
+                        }
+                    } finally {
+                        latch.countDown()
                     }
-                    latch.countDown()
                 }
             }
 
-            latch.await()
+            latch.await(10, TimeUnit.SECONDS) shouldBe true
             executor.shutdown()
 
             val inStore = store.getAllByClub(clubId).map { it.second }.toSet()
