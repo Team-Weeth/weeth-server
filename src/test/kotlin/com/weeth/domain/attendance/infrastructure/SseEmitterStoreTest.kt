@@ -6,11 +6,9 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicInteger
 
 class SseEmitterStoreTest :
     StringSpec({
@@ -102,8 +100,12 @@ class SseEmitterStoreTest :
                 }
             }
 
-            latch.await(10, TimeUnit.SECONDS) shouldBe true
-            executor.shutdown()
+            try {
+                latch.await(10, TimeUnit.SECONDS) shouldBe true
+            } finally {
+                executor.shutdown()
+                executor.awaitTermination(5, TimeUnit.SECONDS)
+            }
 
             store.getAllByClub(clubId) shouldHaveSize threadCount
         }
@@ -111,42 +113,43 @@ class SseEmitterStoreTest :
         "동시에 add와 remove를 호출해도 store 상태가 일관성을 유지한다" {
             val store = SseEmitterStore()
             val threadCount = 50
-            val latch = CountDownLatch(threadCount * 2)
             val executor = Executors.newFixedThreadPool(threadCount * 2)
-            val addedEmitters = CopyOnWriteArrayList<SseEmitter>()
-            val removedEmitters = CopyOnWriteArrayList<SseEmitter>()
-            val removeIndex = AtomicInteger(0)
 
-            repeat(threadCount) {
+            // 제거할 emitter를 사전에 store에 등록해 remove가 항상 유효한 대상을 갖도록 보장
+            val toRemove = List(threadCount) { mockk<SseEmitter>(relaxed = true) }
+            toRemove.forEach { store.add(clubId, userId, it) }
+
+            val toAdd = List(threadCount) { mockk<SseEmitter>(relaxed = true) }
+            val latch = CountDownLatch(threadCount * 2)
+
+            repeat(threadCount) { i ->
                 executor.submit {
                     try {
-                        val emitter = mockk<SseEmitter>(relaxed = true)
-                        store.add(clubId, userId, emitter)
-                        addedEmitters.add(emitter)
+                        store.add(clubId, userId, toAdd[i])
                     } finally {
                         latch.countDown()
                     }
                 }
                 executor.submit {
                     try {
-                        val idx = removeIndex.getAndIncrement()
-                        val target = addedEmitters.getOrNull(idx)
-                        if (target != null) {
-                            store.remove(clubId, userId, target)
-                            removedEmitters.add(target)
-                        }
+                        store.remove(clubId, userId, toRemove[i])
                     } finally {
                         latch.countDown()
                     }
                 }
             }
 
-            latch.await(10, TimeUnit.SECONDS) shouldBe true
-            executor.shutdown()
+            try {
+                latch.await(10, TimeUnit.SECONDS) shouldBe true
+            } finally {
+                executor.shutdown()
+                executor.awaitTermination(5, TimeUnit.SECONDS)
+            }
 
+            // O(1) 조회를 위해 Set으로 변환
             val inStore = store.getAllByClub(clubId).map { it.second }.toSet()
 
-            inStore.all { it in addedEmitters } shouldBe true
-            removedEmitters.none { it in inStore } shouldBe true
+            toAdd.all { it in inStore } shouldBe true
+            toRemove.none { it in inStore } shouldBe true
         }
     })
