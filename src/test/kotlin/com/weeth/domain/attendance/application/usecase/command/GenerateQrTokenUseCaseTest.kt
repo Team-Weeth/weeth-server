@@ -1,9 +1,10 @@
 package com.weeth.domain.attendance.application.usecase.command
 
+import com.weeth.domain.attendance.application.dto.response.AttendanceOpenEvent
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
-import com.weeth.domain.attendance.domain.port.SsePort
+import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.repository.SessionReader
@@ -25,7 +26,7 @@ class GenerateQrTokenUseCaseTest :
         val qrAttendancePort = mockk<QrAttendancePort>()
         val attendanceMapper = mockk<AttendanceMapper>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
-        val ssePort = mockk<SsePort>(relaxed = true)
+        val ssePort = mockk<SseBroadcastPort>(relaxed = true)
 
         val useCase =
             GenerateQrTokenUseCase(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort)
@@ -55,7 +56,9 @@ class GenerateQrTokenUseCaseTest :
                     result shouldBe expectedResponse
                     verify(exactly = 1) { clubPermissionPolicy.requireAdmin(10L, 20L) }
                     verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
-                    verify(exactly = 1) { ssePort.broadcast(10L, GenerateQrTokenUseCase.EVENT_QR_OPEN, any()) }
+                    verify(exactly = 1) {
+                        ssePort.broadcast(10L, GenerateQrTokenUseCase.EVENT_QR_OPEN, any<AttendanceOpenEvent>())
+                    }
                 }
             }
 
