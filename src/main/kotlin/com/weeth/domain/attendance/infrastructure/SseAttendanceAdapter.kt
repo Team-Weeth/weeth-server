@@ -1,7 +1,8 @@
 package com.weeth.domain.attendance.infrastructure
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.weeth.domain.attendance.domain.port.SsePort
+import com.weeth.domain.attendance.domain.port.SseBroadcastPort
+import com.weeth.domain.attendance.domain.port.SseSubscribePort
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
@@ -9,10 +10,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 class SseAttendanceAdapter(
     private val store: SseEmitterStore,
     private val objectMapper: ObjectMapper,
-) : SsePort {
+) : SseBroadcastPort,
+    SseSubscribePort {
     companion object {
         private const val TIMEOUT = 30 * 60 * 1000L
-        const val EVENT_CONNECT = "connect"
+        private const val EVENT_CONNECT = "connect"
     }
 
     override fun subscribe(
@@ -20,15 +22,16 @@ class SseAttendanceAdapter(
         userId: Long,
     ): SseEmitter {
         val emitter = SseEmitter(TIMEOUT)
+        val cleanup = { store.remove(clubId, userId, emitter) }
 
         store.add(clubId, userId, emitter)
-        emitter.onCompletion { store.remove(clubId, userId, emitter) }
-        emitter.onTimeout { store.remove(clubId, userId, emitter) }
-        emitter.onError { store.remove(clubId, userId, emitter) }
+        emitter.onCompletion(cleanup)
+        emitter.onTimeout(cleanup)
+        emitter.onError { cleanup() }
 
         runCatching {
             emitter.send(SseEmitter.event().name(EVENT_CONNECT).data("connected"))
-        }.onFailure { store.remove(clubId, userId, emitter) }
+        }.onFailure { cleanup() }
 
         return emitter
     }
@@ -41,9 +44,10 @@ class SseAttendanceAdapter(
         val payload = runCatching { objectMapper.writeValueAsString(data) }.getOrElse { return }
 
         store.getAllByClub(clubId).forEach { (userId, emitter) ->
+            val cleanup = { store.remove(clubId, userId, emitter) }
             runCatching {
                 emitter.send(SseEmitter.event().name(eventName).data(payload))
-            }.onFailure { store.remove(clubId, userId, emitter) }
+            }.onFailure { cleanup() }
         }
     }
 }

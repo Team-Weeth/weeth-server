@@ -5,8 +5,8 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResp
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
 import com.weeth.domain.attendance.application.usecase.command.ManageAttendanceUseCase
+import com.weeth.domain.attendance.application.usecase.command.SubscribeAttendanceSseUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
-import com.weeth.domain.attendance.domain.port.SsePort
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -31,7 +31,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 class AttendanceController(
     private val manageAttendanceUseCase: ManageAttendanceUseCase,
     private val getAttendanceQueryService: GetAttendanceQueryService,
-    private val ssePort: SsePort,
+    private val subscribeAttendanceSseUseCase: SubscribeAttendanceSseUseCase,
 ) {
     @PostMapping("/sessions/{sessionId}/check-in")
     @Operation(summary = "출석체크")
@@ -82,5 +82,5 @@ class AttendanceController(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): SseEmitter = ssePort.subscribe(clubId, userId)
+    ): SseEmitter = subscribeAttendanceSseUseCase.execute(clubId, userId)
 }

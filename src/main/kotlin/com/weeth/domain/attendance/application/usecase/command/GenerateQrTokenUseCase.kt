@@ -4,7 +4,7 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceOpenEvent
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
-import com.weeth.domain.attendance.domain.port.SsePort
+import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
@@ -16,7 +16,7 @@ class GenerateQrTokenUseCase(
     private val qrAttendancePort: QrAttendancePort,
     private val attendanceMapper: AttendanceMapper,
     private val clubPermissionPolicy: ClubPermissionPolicy,
-    private val ssePort: SsePort,
+    private val ssePort: SseBroadcastPort,
 ) {
     fun execute(
         sessionId: Long,
@@ -36,6 +36,6 @@ class GenerateQrTokenUseCase(
     }
 
     companion object {
-        const val EVENT_QR_OPEN = "qr-open"
+        internal const val EVENT_QR_OPEN = "qr-open"
     }
 }
