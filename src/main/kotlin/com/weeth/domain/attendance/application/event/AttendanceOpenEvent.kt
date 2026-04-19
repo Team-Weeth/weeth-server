@@ -1,4 +1,4 @@
-package com.weeth.domain.attendance.application.dto.response
+package com.weeth.domain.attendance.application.event
 
 import java.time.LocalDateTime
 
