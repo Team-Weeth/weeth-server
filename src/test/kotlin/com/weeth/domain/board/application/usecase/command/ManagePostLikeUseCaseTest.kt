@@ -40,6 +40,15 @@ class ManagePostLikeUseCaseTest :
         val club = ClubTestFixture.createClub(id = clubId)
         val board = BoardTestFixture.create(club = club)
         val member = ClubMemberTestFixture.createActiveMember(club = club)
+        val otherPost =
+            PostTestFixture.create(
+                board = BoardTestFixture.create(club = ClubTestFixture.createClub(id = 99L)),
+            )
+        val privatePost =
+            PostTestFixture.create(
+                board = BoardTestFixture.create(club = club, config = BoardConfig(isPrivate = true)),
+            )
+        val userMember = ClubMemberTestFixture.createActiveMember(club = club, memberRole = MemberRole.USER)
 
         beforeTest {
             clearMocks(postRepository, postLikeRepository, clubMemberPolicy, postMapper)
@@ -70,10 +79,6 @@ class ManagePostLikeUseCaseTest :
 
             context("다른 클럽의 게시글일 때") {
                 it("PostNotFoundException을 던진다") {
-                    val otherPost =
-                        PostTestFixture.create(
-                            board = BoardTestFixture.create(club = ClubTestFixture.createClub(id = 99L)),
-                        )
                     every { postRepository.findByIdWithLock(postId) } returns otherPost
 
                     shouldThrow<PostNotFoundException> { useCase.like(clubId, postId, userId) }
@@ -82,11 +87,6 @@ class ManagePostLikeUseCaseTest :
 
             context("접근 권한이 없는 비공개 게시판일 때") {
                 it("CategoryAccessDeniedException을 던진다") {
-                    val privatePost =
-                        PostTestFixture.create(
-                            board = BoardTestFixture.create(club = club, config = BoardConfig(isPrivate = true)),
-                        )
-                    val userMember = ClubMemberTestFixture.createActiveMember(club = club, memberRole = MemberRole.USER)
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns userMember
                     every { postRepository.findByIdWithLock(postId) } returns privatePost
 
@@ -159,10 +159,6 @@ class ManagePostLikeUseCaseTest :
 
             context("다른 클럽의 게시글일 때") {
                 it("PostNotFoundException을 던진다") {
-                    val otherPost =
-                        PostTestFixture.create(
-                            board = BoardTestFixture.create(club = ClubTestFixture.createClub(id = 99L)),
-                        )
                     every { postRepository.findByIdWithLock(postId) } returns otherPost
 
                     shouldThrow<PostNotFoundException> { useCase.unlike(clubId, postId, userId) }
@@ -171,11 +167,6 @@ class ManagePostLikeUseCaseTest :
 
             context("접근 권한이 없는 비공개 게시판일 때") {
                 it("CategoryAccessDeniedException을 던진다") {
-                    val privatePost =
-                        PostTestFixture.create(
-                            board = BoardTestFixture.create(club = club, config = BoardConfig(isPrivate = true)),
-                        )
-                    val userMember = ClubMemberTestFixture.createActiveMember(club = club, memberRole = MemberRole.USER)
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns userMember
                     every { postRepository.findByIdWithLock(postId) } returns privatePost
 

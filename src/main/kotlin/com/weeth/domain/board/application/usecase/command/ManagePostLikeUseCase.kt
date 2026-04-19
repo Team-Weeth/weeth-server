@@ -5,6 +5,7 @@ import com.weeth.domain.board.application.exception.CategoryAccessDeniedExceptio
 import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
 import com.weeth.domain.board.application.exception.PostNotFoundException
 import com.weeth.domain.board.application.mapper.PostMapper
+import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.entity.PostLike
 import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
@@ -26,18 +27,8 @@ class ManagePostLikeUseCase(
         postId: Long,
         userId: Long,
     ): PostLikeResponse {
-        val member = clubMemberPolicy.getActiveMember(clubId, userId)
-        val post =
-            try {
-                postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
-            } catch (_: PessimisticLockingFailureException) {
-                throw PostLikeLockTimeoutException()
-            }
+        val (post, existingLike) = getValidatedPostWithLike(clubId, postId, userId)
 
-        if (!post.belongsToClub(clubId)) throw PostNotFoundException()
-        if (!post.board.isAccessibleBy(member.memberRole)) throw CategoryAccessDeniedException()
-
-        val existingLike = postLikeRepository.findByPostAndUserId(post, userId)
         when {
             existingLike == null -> {
                 postLikeRepository.save(PostLike(post = post, userId = userId))
@@ -59,6 +50,21 @@ class ManagePostLikeUseCase(
         postId: Long,
         userId: Long,
     ): PostLikeResponse {
+        val (post, existingLike) = getValidatedPostWithLike(clubId, postId, userId)
+
+        if (existingLike?.isActive == true) {
+            existingLike.deactivate()
+            post.decreaseLikeCount()
+        }
+
+        return postMapper.toLikeResponse(post, isLiked = false)
+    }
+
+    private fun getValidatedPostWithLike(
+        clubId: Long,
+        postId: Long,
+        userId: Long,
+    ): Pair<Post, PostLike?> {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val post =
             try {
@@ -70,12 +76,6 @@ class ManagePostLikeUseCase(
         if (!post.belongsToClub(clubId)) throw PostNotFoundException()
         if (!post.board.isAccessibleBy(member.memberRole)) throw CategoryAccessDeniedException()
 
-        val existingLike = postLikeRepository.findByPostAndUserId(post, userId)
-        if (existingLike != null && existingLike.isActive) {
-            existingLike.deactivate()
-            post.decreaseLikeCount()
-        }
-
-        return postMapper.toLikeResponse(post, isLiked = false)
+        return post to postLikeRepository.findByPostAndUserId(post, userId)
     }
 }
