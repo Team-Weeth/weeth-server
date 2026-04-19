@@ -1,7 +1,7 @@
 package com.weeth.domain.attendance.application.usecase.command
 
-import com.weeth.domain.attendance.application.dto.response.AttendanceOpenEvent
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
+import com.weeth.domain.attendance.application.event.AttendanceOpenEvent
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
