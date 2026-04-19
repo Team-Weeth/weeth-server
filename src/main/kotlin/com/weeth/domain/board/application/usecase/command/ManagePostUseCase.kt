@@ -154,6 +154,7 @@ class ManagePostUseCase(
 
         if (files.isNotEmpty()) {
             fileRepository.deleteAll(files)
+            fileRepository.flush()
         }
     }
 }

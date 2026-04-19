@@ -91,6 +91,7 @@ class ManagePostUseCaseTest :
             every { fileReader.findAll(any(), any<Long>(), any()) } returns emptyList()
             every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(1L)
             every { fileRepository.delete(any()) } just runs
+            every { fileRepository.flush() } just runs
             every { clubMemberCardinalReader.findLatestCardinalByClubMember(any()) } returns null
         }
 
