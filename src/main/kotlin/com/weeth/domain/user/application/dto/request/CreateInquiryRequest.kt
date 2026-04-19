@@ -12,7 +12,6 @@ data class CreateInquiryRequest(
     @field:Size(max = 255)
     val email: String,
     @field:Schema(description = "문의 내용", example = "서비스에 대해 문의드립니다.")
-    @field:NotBlank
     @field:Size(max = 1000)
-    val message: String,
+    val message: String?,
 )

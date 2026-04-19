@@ -18,9 +18,9 @@ class SlackInquiryNotifyAdapter(
     @Async
     override fun notify(
         email: String,
-        message: String,
+        message: String?,
     ) {
-        val text = "*[랜딩 문의하기]*\n*이메일:* $email\n*문의 내용:*\n```$message```"
+        val text = "*[랜딩 문의하기]*\n*이메일:* $email\n*문의 내용:*\n```${message ?: ""}```"
 
         runCatching {
             restClient

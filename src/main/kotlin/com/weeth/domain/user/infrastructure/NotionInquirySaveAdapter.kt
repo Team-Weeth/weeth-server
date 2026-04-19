@@ -20,7 +20,7 @@ class NotionInquirySaveAdapter(
     @Async
     override fun save(
         email: String,
-        message: String,
+        message: String?,
     ) {
         val body =
             mapOf(
@@ -33,7 +33,7 @@ class NotionInquirySaveAdapter(
                     mapOf(
                         "문의내용" to
                             mapOf(
-                                "title" to listOf(mapOf("text" to mapOf("content" to message))),
+                                "title" to listOf(mapOf("text" to mapOf("content" to (message ?: "")))),
                             ),
                         "이메일" to
                             mapOf(
