@@ -39,7 +39,11 @@ class PostLike(
     var isActive: Boolean = true
         private set
 
-    fun toggle() {
-        isActive = !isActive
+    fun activate() {
+        isActive = true
+    }
+
+    fun deactivate() {
+        isActive = false
     }
 }
