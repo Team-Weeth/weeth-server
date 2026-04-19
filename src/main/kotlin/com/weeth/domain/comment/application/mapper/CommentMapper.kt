@@ -25,7 +25,7 @@ class CommentMapper(
                     comment.clubMember.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
                 ),
             content = comment.content,
-            time = comment.modifiedAt,
+            time = comment.createdAt,
             fileUrls = fileUrls,
             children = children,
         )
