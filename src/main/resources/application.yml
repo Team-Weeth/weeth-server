@@ -1,4 +1,11 @@
+server:
+  tomcat:
+    mbeanregistry: # Tomcat Threads 확인을 위한 설정
+      enabled: true
+
 spring:
+  application:
+    name: weeth-server
   profiles:
     active: local
   jpa:
