@@ -12,5 +12,5 @@ object PostLikeTestFixture {
     fun createInactive(
         post: Post = PostTestFixture.create(),
         userId: Long = 1L,
-    ): PostLike = PostLike(post = post, userId = userId).also { it.toggle() }
+    ): PostLike = PostLike(post = post, userId = userId).also { it.deactivate() }
 }

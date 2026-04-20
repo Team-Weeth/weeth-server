@@ -12,20 +12,19 @@ class PostLikeEntityTest :
             like.isActive shouldBe true
         }
 
-        "toggle은 isActive를 true에서 false로 반전시킨다" {
-            val like = PostLikeTestFixture.createActive()
+        "activate는 isActive를 true로 설정한다" {
+            val like = PostLikeTestFixture.createInactive()
 
-            like.toggle()
-
-            like.isActive shouldBe false
-        }
-
-        "toggle을 두 번 호출하면 isActive가 다시 true가 된다" {
-            val like = PostLikeTestFixture.createActive()
-
-            like.toggle()
-            like.toggle()
+            like.activate()
 
             like.isActive shouldBe true
+        }
+
+        "deactivate는 isActive를 false로 설정한다" {
+            val like = PostLikeTestFixture.createActive()
+
+            like.deactivate()
+
+            like.isActive shouldBe false
         }
     })

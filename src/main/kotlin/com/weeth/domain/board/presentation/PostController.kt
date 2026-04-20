@@ -7,9 +7,9 @@ import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
+import com.weeth.domain.board.application.usecase.command.ManagePostLikeUseCase
 import com.weeth.domain.board.application.usecase.command.ManagePostUseCase
 import com.weeth.domain.board.application.usecase.command.MarkNoticeReadUseCase
-import com.weeth.domain.board.application.usecase.command.TogglePostLikeUseCase
 import com.weeth.domain.board.application.usecase.query.GetPostQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -40,7 +40,7 @@ class PostController(
     private val managePostUseCase: ManagePostUseCase,
     private val getPostQueryService: GetPostQueryService,
     private val markNoticeReadUseCase: MarkNoticeReadUseCase,
-    private val togglePostLikeUseCase: TogglePostLikeUseCase,
+    private val managePostLikeUseCase: ManagePostLikeUseCase,
 ) {
     @PostMapping("/{boardId}/posts")
     @Operation(summary = "게시글 작성")
@@ -153,15 +153,28 @@ class PostController(
     }
 
     @PostMapping("/posts/{postId}/like")
-    @Operation(summary = "게시글 좋아요 토글", description = "좋아요가 없으면 추가, 있으면 취소합니다.")
-    fun toggleLike(
+    @Operation(summary = "게시글 좋아요")
+    fun like(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostLikeResponse> =
         CommonResponse.success(
-            BoardResponseCode.POST_LIKE_TOGGLE_SUCCESS,
-            togglePostLikeUseCase.execute(clubId, postId, userId),
+            BoardResponseCode.POST_LIKE_SUCCESS,
+            managePostLikeUseCase.like(clubId, postId, userId),
+        )
+
+    @DeleteMapping("/posts/{postId}/like")
+    @Operation(summary = "게시글 좋아요 취소")
+    fun unlike(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable postId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<PostLikeResponse> =
+        CommonResponse.success(
+            BoardResponseCode.POST_UNLIKE_SUCCESS,
+            managePostLikeUseCase.unlike(clubId, postId, userId),
         )
 }
