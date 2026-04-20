@@ -2,6 +2,7 @@ package com.weeth.domain.dashboard.application.usecase.query
 
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardReader
+import com.weeth.domain.board.domain.repository.PostLikeReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
@@ -29,6 +30,7 @@ import java.time.LocalDateTime
 @Transactional(readOnly = true)
 class GetDashboardQueryService(
     private val boardReader: BoardReader,
+    private val postLikeReader: PostLikeReader,
     private val clubReader: ClubReader,
     private val clubMemberReader: ClubMemberReader,
     private val clubMemberPolicy: ClubMemberPolicy,
@@ -88,13 +90,18 @@ class GetDashboardQueryService(
         val posts = postReader.findRecentByBoardIds(accessibleBoardIds, pageable)
         val now = LocalDateTime.now()
         val postIds = posts.content.map { it.id }
+
+        if (postIds.isEmpty()) return SliceImpl(emptyList(), pageable, false)
+
         val filesByPostId = fileReader.findAll(FileOwnerType.POST, postIds).groupBy { it.ownerId }
+        val likedPostIds = postLikeReader.findLikedPostIds(postIds, userId)
 
         return posts.map { post ->
             dashboardMapper.toPostResponse(
                 post = post,
                 files = filesByPostId[post.id] ?: emptyList(),
                 now = now,
+                isLiked = post.id in likedPostIds,
             )
         }
     }

@@ -1,5 +1,6 @@
 package com.weeth.domain.dashboard.application.mapper
 
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
@@ -101,6 +102,7 @@ class DashboardMapper(
         post: Post,
         files: List<File>,
         now: LocalDateTime,
+        isLiked: Boolean,
     ) = DashboardPostResponse(
         id = post.id,
         author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
@@ -108,7 +110,7 @@ class DashboardMapper(
         content = post.content,
         time = post.createdAt,
         commentCount = post.commentCount,
-        likeCount = post.likeCount,
+        like = PostLikeResponse(isLiked = isLiked, likeCount = post.likeCount),
         fileUrls = files.map(fileMapper::toFileResponse),
         isNew = post.createdAt.isAfter(now.minusHours(24)),
     )
