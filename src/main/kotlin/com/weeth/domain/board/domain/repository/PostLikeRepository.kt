@@ -5,7 +5,9 @@ import com.weeth.domain.board.domain.entity.PostLike
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 
-interface PostLikeRepository : JpaRepository<PostLike, Long> {
+interface PostLikeRepository :
+    JpaRepository<PostLike, Long>,
+    PostLikeReader {
     fun existsByPostAndUserIdAndIsActiveTrue(
         post: Post,
         userId: Long,
@@ -25,7 +27,7 @@ interface PostLikeRepository : JpaRepository<PostLike, Long> {
           AND pl.isActive = true
         """,
     )
-    fun findLikedPostIds(
+    override fun findLikedPostIds(
         postIds: List<Long>,
         userId: Long,
     ): Set<Long>

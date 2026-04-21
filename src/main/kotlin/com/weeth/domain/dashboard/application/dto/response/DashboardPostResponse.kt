@@ -1,5 +1,6 @@
 package com.weeth.domain.dashboard.application.dto.response
 
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.user.application.dto.response.UserInfo
 import io.swagger.v3.oas.annotations.media.Schema
@@ -18,8 +19,8 @@ data class DashboardPostResponse(
     val time: LocalDateTime,
     @field:Schema(description = "댓글 수", example = "5")
     val commentCount: Int,
-    @field:Schema(description = "좋아요 수", example = "3")
-    val likeCount: Int,
+    @field:Schema(description = "좋아요 정보")
+    val like: PostLikeResponse,
     @field:Schema(description = "첨부 파일 목록")
     val fileUrls: List<FileResponse>,
     @field:Schema(description = "24시간 내 새 게시글 여부", example = "true")

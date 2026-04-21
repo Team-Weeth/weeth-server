@@ -2,6 +2,7 @@ package com.weeth.domain.dashboard.application.usecase.query
 
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardReader
+import com.weeth.domain.board.domain.repository.PostLikeReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
@@ -40,6 +41,7 @@ import java.time.LocalDateTime
 class GetDashboardQueryServiceTest :
     DescribeSpec({
         val boardReader = mockk<BoardReader>()
+        val postLikeReader = mockk<PostLikeReader>()
         val clubReader = mockk<ClubReader>()
         val clubMemberReader = mockk<ClubMemberReader>()
         val clubMemberPolicy = ClubMemberPolicy(clubMemberReader)
@@ -55,6 +57,7 @@ class GetDashboardQueryServiceTest :
         val queryService =
             GetDashboardQueryService(
                 boardReader = boardReader,
+                postLikeReader = postLikeReader,
                 clubReader = clubReader,
                 clubMemberReader = clubMemberReader,
                 clubMemberPolicy = clubMemberPolicy,
@@ -75,6 +78,7 @@ class GetDashboardQueryServiceTest :
         beforeTest {
             clearMocks(
                 boardReader,
+                postLikeReader,
                 clubReader,
                 clubMemberReader,
                 eventReader,
@@ -182,11 +186,13 @@ class GetDashboardQueryServiceTest :
                     every { boardReader.findAllActiveByClubId(clubId) } returns listOf(board)
                     every { postReader.findRecentByBoardIds(listOf(board.id), any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
+                    every { postLikeReader.findLikedPostIds(listOf(post.id), userId) } returns emptySet()
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
                     result.content.size shouldBe 1
                     result.content[0].fileUrls.isEmpty() shouldBe true
+                    result.content[0].like.isLiked shouldBe false
                 }
             }
 
@@ -208,6 +214,7 @@ class GetDashboardQueryServiceTest :
                     every { boardReader.findAllActiveByClubId(clubId) } returns listOf(publicBoard, privateBoard)
                     every { postReader.findRecentByBoardIds(listOf(publicBoard.id), any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
+                    every { postLikeReader.findLikedPostIds(listOf(post.id), userId) } returns emptySet()
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
@@ -229,6 +236,7 @@ class GetDashboardQueryServiceTest :
                     every { boardReader.findAllActiveByClubId(clubId) } returns listOf(privateBoard)
                     every { postReader.findRecentByBoardIds(listOf(privateBoard.id), any()) } returns slice
                     every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
+                    every { postLikeReader.findLikedPostIds(listOf(post.id), userId) } returns emptySet()
 
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
