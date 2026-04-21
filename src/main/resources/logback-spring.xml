@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>trace_id</includeMdcKeyName>
+            <includeMdcKeyName>span_id</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>path</includeMdcKeyName>
+            <includeMdcKeyName>method</includeMdcKeyName>
+            <includeMdcKeyName>status</includeMdcKeyName>
+            <includeMdcKeyName>durationMs</includeMdcKeyName>
+            <includeMdcKeyName>errorType</includeMdcKeyName>
+            <includeMdcKeyName>errorMessage</includeMdcKeyName>
+            <jsonGeneratorDecorator class="com.weeth.global.logging.MaskingJsonGeneratorDecorator"/>
+        </encoder>
+    </appender>
+
+    <springProfile name="local">
+        <!-- 로컬: JSON 콘솔 로그 + Alloy push API로 Loki 전송 -->
+        <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+            <http>
+                <url>http://localhost:3101/loki/api/v1/push</url>
+            </http>
+            <format>
+                <label>
+                    <pattern>app=weeth,env=local</pattern>
+                </label>
+                <message class="com.github.loki4j.logback.JsonLayout">
+                    <mdc>
+                        <fieldName></fieldName>
+                    </mdc>
+                </message>
+            </format>
+        </appender>
+
+        <root level="DEBUG">
+            <appender-ref ref="JSON_CONSOLE"/>
+            <appender-ref ref="LOKI"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev,prod">
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>
