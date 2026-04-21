@@ -31,10 +31,10 @@ class RedisConfig(
     }
 
     @Bean
-    fun redisTemplate(): RedisTemplate<String, String> =
+    fun redisTemplate(redisConnectionFactory: RedisConnectionFactory): RedisTemplate<String, String> =
         RedisTemplate<String, String>().apply {
             keySerializer = StringRedisSerializer()
             valueSerializer = StringRedisSerializer()
-            connectionFactory = redisConnectionFactory()
+            connectionFactory = redisConnectionFactory
         }
 }
