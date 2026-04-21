@@ -48,6 +48,7 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -58,6 +59,13 @@ dependencies {
     // Actuator + Prometheus
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+
+    // Logging
+    implementation("net.logstash.logback:logstash-logback-encoder:8.0")
+    implementation("com.github.loki4j:loki-logback-appender:1.5.2")
+
+    // Tracing API (runtime spans are produced by the OpenTelemetry Java Agent)
+    implementation("io.opentelemetry:opentelemetry-api")
 
     // --- JWT ---
     implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
