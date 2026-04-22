@@ -61,14 +61,13 @@ class SecurityConfig(
                         "/swagger-ui/**",
                         "/swagger/**",
                     ).permitAll()
-                    .requestMatchers("/actuator/prometheus")
-                    .access { _, context ->
-                        val ip = context.request.remoteAddr
-                        val allowed = ip.startsWith("172.") || ip == "127.0.0.1"
-                        AuthorizationDecision(allowed)
-                    }.requestMatchers("/actuator/health")
+                    .requestMatchers("/actuator/health")
                     .permitAll()
-                    .requestMatchers("/api/v4/users/terms")
+                    .requestMatchers("/actuator/**")
+                    .access { _, context ->
+                        val address = java.net.InetAddress.getByName(context.request.remoteAddr)
+                        AuthorizationDecision(address.isLoopbackAddress || address.isSiteLocalAddress)
+                    }.requestMatchers("/api/v4/users/terms")
                     .hasAnyRole("TEMPORARY", "USER")
                     .anyRequest()
                     .hasRole("USER")
