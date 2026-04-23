@@ -26,7 +26,8 @@ src/main/kotlin/com/weeth/
 └── global/
     ├── auth/
     ├── config/
-    └── common/
+    ├── common/
+    └── logging/
 ```
 
 ## Layer Dependencies
@@ -203,4 +204,4 @@ class User(
 2. **UseCase = orchestration**: coordinates flow; "how" is decided by Entity
 3. **No meaningless services**: Repository wrappers are eliminated; Domain Service only for multi-entity logic
 4. **Port-Adapter**: domain owns Port interfaces; infrastructure implements them
-5. **Incremental migration**: migrate Java → Kotlin preserving existing structure
+5. **Kotlin-first**: Java → Kotlin migration complete; all new code in Kotlin
