@@ -1,0 +1,76 @@
+discovery.docker "weeth" {
+  host = "unix:///var/run/docker.sock"
+
+  filter {
+    name   = "label"
+    values = ["com.docker.compose.service=app-blue", "com.docker.compose.service=app-green"]
+  }
+}
+
+loki.source.docker "app_logs" {
+  host       = "unix:///var/run/docker.sock"
+  targets    = discovery.docker.weeth.targets
+  forward_to = [loki.process.parse_json.receiver]
+}
+
+loki.process "parse_json" {
+  stage.static_labels {
+    values = { app = "weeth", env = "prod" }
+  }
+
+  stage.json {
+    expressions = {
+      level       = "level",
+      logger_name = "logger_name",
+    }
+  }
+
+  stage.labels {
+    values = { level = "", logger_name = "" }
+  }
+
+  stage.match {
+    selector = "{logger_name=\"ACCESS_LOG\"}"
+    stage.static_labels { values = { log_type = "access" } }
+  }
+  stage.match {
+    selector = "{logger_name=\"AUDIT_LOG\"}"
+    stage.static_labels { values = { log_type = "audit" } }
+  }
+  stage.match {
+    selector = "{logger_name=\"ERROR_LOG\"}"
+    stage.static_labels { values = { log_type = "error" } }
+  }
+  stage.match {
+    selector = "{logger_name!=\"ACCESS_LOG\", logger_name!=\"AUDIT_LOG\", logger_name!=\"ERROR_LOG\"}"
+    stage.static_labels { values = { log_type = "application" } }
+  }
+
+  stage.label_drop { values = ["logger_name"] }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+otelcol.receiver.otlp "default" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}
