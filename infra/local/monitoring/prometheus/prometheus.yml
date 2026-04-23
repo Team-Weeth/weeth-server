@@ -10,3 +10,9 @@ scrape_configs:
         labels:
           app: weeth
           env: local
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["redis-exporter:9121"]
+        labels:
+          env: local
