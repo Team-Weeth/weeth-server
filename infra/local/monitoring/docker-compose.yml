@@ -1,0 +1,76 @@
+name: weeth-local-monitoring
+
+services:
+  alloy:
+    image: grafana/alloy:v1.9.0
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
+    ports:
+      - "12345:12345"
+      - "3101:3101"
+      - "4318:4318"
+    depends_on:
+      - loki
+      - tempo
+    restart: unless-stopped
+
+  loki:
+    image: grafana/loki:3.4.2
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml
+      - loki_data:/loki
+    command: ["-config.file=/etc/loki/loki-config.yaml"]
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+
+  tempo:
+    image: grafana/tempo:2.7.1
+    volumes:
+      - ./tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml
+      - tempo_data:/var/tempo
+    command: ["-config.file=/etc/tempo/tempo-config.yaml"]
+    ports:
+      - "127.0.0.1:3200:3200"
+    restart: unless-stopped
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.67.0
+    environment:
+      - REDIS_ADDR=host.docker.internal:6379
+    ports:
+      - "127.0.0.1:9121:9121"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.5.2
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - "3000:3000"
+    depends_on:
+      - loki
+      - prometheus
+      - tempo
+    restart: unless-stopped
+
+volumes:
+  loki_data:
+  tempo_data:
