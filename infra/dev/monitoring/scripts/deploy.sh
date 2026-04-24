@@ -3,22 +3,16 @@ set -euo pipefail
 
 DEPLOY_DIR="${DEPLOY_DIR:-/home/ubuntu/infra/dev/monitoring}"
 APP_NETWORK="${APP_NETWORK:-weeth-dev_web}"
-MONITORING_ENV_FILE="${MONITORING_ENV_FILE:-$DEPLOY_DIR/../.env.monitoring}"
+MONITORING_ENV_FILE="${MONITORING_ENV_FILE:-$DEPLOY_DIR/.env.monitoring}"
 
 cd "$DEPLOY_DIR"
 
-if [ -f "$MONITORING_ENV_FILE" ]; then
-  ln -sf "$MONITORING_ENV_FILE" "$DEPLOY_DIR/.env"
-elif [ -f "$DEPLOY_DIR/../.env" ]; then
-  echo "[monitoring] warning: $MONITORING_ENV_FILE not found, falling back to $DEPLOY_DIR/../.env"
-  ln -sf "$DEPLOY_DIR/../.env" "$DEPLOY_DIR/.env"
-elif [ -f "$HOME/.env" ]; then
-  echo "[monitoring] warning: $MONITORING_ENV_FILE not found, falling back to $HOME/.env"
-  ln -sf "$HOME/.env" "$DEPLOY_DIR/.env"
-else
+if [ ! -f "$MONITORING_ENV_FILE" ]; then
   echo "[monitoring] env file not found: $MONITORING_ENV_FILE"
   exit 1
 fi
+
+export MONITORING_ENV_FILE
 
 if ! docker network inspect "$APP_NETWORK" >/dev/null 2>&1; then
   echo "[monitoring] required docker network not found: $APP_NETWORK"
@@ -27,10 +21,10 @@ if ! docker network inspect "$APP_NETWORK" >/dev/null 2>&1; then
 fi
 
 echo "[monitoring] pulling images..."
-docker compose pull
+docker compose --env-file "$MONITORING_ENV_FILE" pull
 
 echo "[monitoring] starting monitoring stack..."
-docker compose up -d
+docker compose --env-file "$MONITORING_ENV_FILE" up -d
 
 echo "[monitoring] waiting for services to be healthy..."
 for i in {1..15}; do

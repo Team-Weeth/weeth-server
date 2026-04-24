@@ -4,7 +4,7 @@ services:
   alloy:
     image: grafana/alloy:v1.9.0
     env_file:
-      - .env
+      - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
       - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -24,7 +24,7 @@ services:
   loki:
     image: grafana/loki:3.4.2
     env_file:
-      - .env
+      - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
       - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
       - loki_data:/loki
@@ -38,7 +38,7 @@ services:
   tempo:
     image: grafana/tempo:2.7.1
     env_file:
-      - .env
+      - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
       - ./tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
       - tempo_data:/var/tempo
@@ -106,7 +106,7 @@ services:
   grafana:
     image: grafana/grafana:11.5.2
     env_file:
-      - .env
+      - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
