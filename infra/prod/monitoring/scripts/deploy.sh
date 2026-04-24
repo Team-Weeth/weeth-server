@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/weeth/prod/monitoring}"
+DEPLOY_DIR="${DEPLOY_DIR:-/home/ubuntu/infra/prod/monitoring}"
 APP_NETWORK="${APP_NETWORK:-weeth-prod_web}"
 MONITORING_ENV_FILE="${MONITORING_ENV_FILE:-$DEPLOY_DIR/../.env.monitoring}"
 
