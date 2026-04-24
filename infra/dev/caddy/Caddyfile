@@ -34,6 +34,12 @@
         respond 404
     }
 
+    redir {$MONITORING_PATH} {$MONITORING_PATH}/
+
+    handle {$MONITORING_PATH}* {
+        reverse_proxy grafana:3000
+    }
+
     # 실제 reverse_proxy 설정은 upstream.conf 파일에서 불러옴
     import /etc/caddy/upstream.conf
 }

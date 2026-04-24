@@ -15,6 +15,7 @@ services:
       - caddy_config:/config
     environment:
       DOMAIN: ${DOMAIN}
+      MONITORING_PATH: ${MONITORING_PATH}
     networks:
       - web
 
