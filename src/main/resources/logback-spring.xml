@@ -32,9 +32,11 @@
     </springProfile>
 
     <springProfile name="local-monitoring">
+        <springProperty scope="context" name="LOKI_PORT" source="loki.port" defaultValue="3101"/>
+
         <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
             <http>
-                <url>http://localhost:3101/loki/api/v1/push</url>
+                <url>http://localhost:${LOKI_PORT}/loki/api/v1/push</url>
             </http>
             <format>
                 <label>
