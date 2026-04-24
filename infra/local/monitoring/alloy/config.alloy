@@ -1,0 +1,75 @@
+// Loki push API 수신 — 앱에서 HTTP로 로그를 직접 push
+loki.source.api "local_push" {
+  http {
+    listen_address = "0.0.0.0"
+    listen_port    = 3101
+  }
+  forward_to = [loki.process.parse_json.receiver]
+}
+
+// JSON 파싱 및 라벨 매핑
+loki.process "parse_json" {
+  stage.json {
+    expressions = {
+      level       = "level",
+      logger_name = "logger_name",
+    }
+  }
+
+  stage.labels {
+    values = { level = "", logger_name = "" }
+  }
+
+  // logger_name 기반으로 log_type 매핑
+  stage.match {
+    selector = "{logger_name=\"ACCESS_LOG\"}"
+    stage.static_labels { values = { log_type = "access" } }
+  }
+  stage.match {
+    selector = "{logger_name=\"AUDIT_LOG\"}"
+    stage.static_labels { values = { log_type = "audit" } }
+  }
+  stage.match {
+    selector = "{logger_name=\"ERROR_LOG\"}"
+    stage.static_labels { values = { log_type = "error" } }
+  }
+
+  // 위 매칭에 걸리지 않은 로그 → application
+  stage.match {
+    selector = "{logger_name!=\"ACCESS_LOG\", logger_name!=\"AUDIT_LOG\", logger_name!=\"ERROR_LOG\"}"
+    stage.static_labels { values = { log_type = "application" } }
+  }
+
+  stage.label_drop { values = ["logger_name"] }
+
+  forward_to = [loki.write.default.receiver]
+}
+
+// Loki로 전송
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
+
+// === 트레이스 수집 파이프라인 ===
+
+// OTLP HTTP receiver — 앱에서 트레이스 수신
+otelcol.receiver.otlp "default" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+// Tempo로 트레이스 전달
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "tempo:4317"
+    tls {
+      insecure = true
+    }
+  }
+}

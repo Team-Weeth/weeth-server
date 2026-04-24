@@ -21,7 +21,7 @@ Weeth Server is a community platform backend built with Spring Boot 3.5.10. The 
 
 **Prerequisites:** JDK 21, MySQL 8.0, Redis 7.0+, environment variables configured in `.env`
 
-**Profiles:** `local` (default dev), `dev` (dev server, ddl-auto: update), `prod` (Swagger disabled, ddl-auto: validate), `test`
+**Profiles:** `local` (default dev), `local-monitoring` (local + monitoring stack), `dev` (dev server, ddl-auto: update), `prod` (Swagger disabled, ddl-auto: validate)
 
 ## Architecture
 
@@ -35,7 +35,7 @@ presentation → application → domain ← infrastructure
 - **infrastructure/**: Port implementations (Adapters for S3, external APIs, etc.)
 
 ### Domain Package Layout
-Each of the 10 domains (`user`, `attendance`, `session`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`, `cardinal`) follows:
+Each of the 13 domains (`user`, `attendance`, `session`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`, `cardinal`, `club`, `dashboard`, `university`) follows:
 ```
 domain/{name}/
 ├── application/
@@ -79,11 +79,11 @@ JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser`
 
 ## Kotlin Migration Status
 
-**✅ Complete** — 305 Kotlin files (100%)
+**✅ Complete** — 452 Kotlin files (100%)
 
 - Java → Kotlin migration fully complete
 - Lombok and MapStruct dependencies removed
-- All 13 mappers migrated to manual `@Component` Mapper classes (see `.claude/rules/mapper-dto.md`)
+- All 16 mappers migrated to manual `@Component` Mapper classes (see `.claude/rules/mapper-dto.md`)
 - Entity fields use `private set` for Rich Domain Model pattern (see architecture.md)
 - OSIV disabled: `spring.jpa.open-in-view: false` in `application.yml`
 

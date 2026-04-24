@@ -5,6 +5,7 @@ import com.weeth.global.common.response.CommonResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.security.core.AuthenticationException
 import org.springframework.security.web.AuthenticationEntryPoint
 import org.springframework.stereotype.Component
@@ -13,7 +14,7 @@ import org.springframework.stereotype.Component
 class CustomAuthenticationEntryPoint(
     private val objectMapper: ObjectMapper,
 ) : AuthenticationEntryPoint {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val errorLog = LoggerFactory.getLogger("ERROR_LOG")
 
     override fun commence(
         request: HttpServletRequest,
@@ -21,11 +22,16 @@ class CustomAuthenticationEntryPoint(
         authException: AuthenticationException,
     ) {
         setResponse(response)
-        log.error(
-            "ExceptionClass: {}, Message: {}",
-            authException::class.simpleName,
-            authException.message,
-        )
+        try {
+            MDC.put("status", response.status.toString())
+            MDC.put("errorType", authException::class.simpleName ?: "AuthenticationException")
+            MDC.put("errorMessage", authException.message ?: ErrorMessage.UNAUTHORIZED.message)
+            errorLog.warn("Authentication Failed")
+        } finally {
+            MDC.remove("status")
+            MDC.remove("errorType")
+            MDC.remove("errorMessage")
+        }
     }
 
     private fun setResponse(response: HttpServletResponse) {

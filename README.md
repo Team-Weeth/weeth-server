@@ -2,6 +2,8 @@
 
 Spring Boot 3.5.10 + Kotlin 기반 동아리 커뮤니티 플랫폼 백엔드
 
+Java -> Kotlin 마이그레이션이 완료되어 현재 모든 애플리케이션 코드는 Kotlin으로 구성되어 있습니다.
+
 ## 기술 스택
 
 | 분류 | 스택 |
@@ -23,6 +25,7 @@ Spring Boot 3.5.10 + Kotlin 기반 동아리 커뮤니티 플랫폼 백엔드
 ```bash
 ./gradlew clean build                                     # 빌드
 ./gradlew bootRun                                         # 실행 (local 프로파일)
+./gradlew bootRun --args='--spring.profiles.active=local-monitoring' # 로컬 모니터링 프로필
 ./gradlew bootRun --args='--spring.profiles.active=dev'   # 프로파일 지정 실행
 ./gradlew test                                            # 전체 테스트
 ./gradlew ktlintFormat                                    # 자동 포맷팅
@@ -33,9 +36,9 @@ Spring Boot 3.5.10 + Kotlin 기반 동아리 커뮤니티 플랫폼 백엔드
 | Profile | DDL Auto | Swagger |
 |---------|----------|---------|
 | `local` (기본) | `update` | 활성화 |
+| `local-monitoring` | `update` | 활성화 |
 | `dev` | `update` | 활성화 |
 | `prod` | `validate` | 비활성화 |
-| `test` | `create-drop` | 비활성화 |
 
 ## 아키텍처
 
@@ -47,6 +50,7 @@ presentation → application → domain ← infrastructure
 - **UseCase = 오케스트레이션** — Command (`@Transactional`) / Query (`readOnly = true`)
 - **Port-Adapter** — domain이 Port 인터페이스 소유, infrastructure가 구현
 - **No thin wrappers** — UseCase가 Repository를 직접 호출
+- **Kotlin-first** — 신규 코드는 Kotlin만 사용
 
 ### 응답 코드 형식 (`XDDNN`)
 
@@ -73,12 +77,23 @@ src/main/kotlin/com/weeth/
 │   ├── file/           # 파일 업로드 (S3)
 │   ├── penalty/        # 페널티 관리
 │   ├── account/        # 회계, 영수증 관리
-│   └── cardinal/       # 기수 관리
+│   ├── cardinal/       # 기수 관리
+│   ├── club/           # 동아리 관리
+│   ├── dashboard/      # 대시보드 집계/조회
+│   └── university/     # 대학 정보 관리
 └── global/
     ├── auth/           # JWT, OAuth2, @CurrentUser
     ├── config/         # Spring 설정
-    └── common/         # 공통 유틸, 응답 포맷
+    ├── common/         # 공통 유틸, 응답 포맷
+    └── logging/        # 요청/모니터링 로깅
 ```
+
+## Kotlin 마이그레이션 상태
+
+- 452개 Kotlin 파일로 전환 완료
+- Lombok, MapStruct 제거
+- 16개 매퍼를 수동 `@Component` Mapper로 통일
+- Entity 필드는 `private set` 기반의 Rich Domain Model 패턴 적용
 
 ## 인프라
 

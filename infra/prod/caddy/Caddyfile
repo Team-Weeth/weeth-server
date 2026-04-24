@@ -23,6 +23,23 @@
         Referrer-Policy "strict-origin-when-cross-origin"
     }
 
+    # /actuator/** 외부 접근 차단 (Prometheus는 Docker 내부 네트워크로 직접 스크래핑)
+    handle /actuator/health {
+        import /etc/caddy/upstream.conf
+    }
+    handle /actuator {
+        respond 404
+    }
+    handle /actuator/* {
+        respond 404
+    }
+
+    redir {$MONITORING_PATH} {$MONITORING_PATH}/
+
+    handle {$MONITORING_PATH}* {
+        reverse_proxy grafana:3000
+    }
+
     # 실제 reverse_proxy 설정은 upstream.conf 파일에서 불러옴
     import /etc/caddy/upstream.conf
 }

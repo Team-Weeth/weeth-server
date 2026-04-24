@@ -6,6 +6,7 @@ import com.weeth.global.common.response.CommonResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.web.access.AccessDeniedHandler
@@ -15,23 +16,28 @@ import org.springframework.stereotype.Component
 class CustomAccessDeniedHandler(
     private val objectMapper: ObjectMapper,
 ) : AccessDeniedHandler {
-    private val log = LoggerFactory.getLogger(javaClass)
+    private val errorLog = LoggerFactory.getLogger("ERROR_LOG")
 
     override fun handle(
         request: HttpServletRequest,
         response: HttpServletResponse,
         accessDeniedException: AccessDeniedException,
     ) {
-        log.error(
-            "ExceptionClass: {}, Message: {}",
-            accessDeniedException::class.simpleName,
-            accessDeniedException.message,
-        )
-
         if (isTemporaryUser()) {
             setRegistrationIncompleteResponse(response)
         } else {
             setForbiddenResponse(response)
+        }
+
+        try {
+            MDC.put("status", response.status.toString())
+            MDC.put("errorType", accessDeniedException::class.simpleName ?: "AccessDeniedException")
+            MDC.put("errorMessage", accessDeniedException.message ?: ErrorMessage.FORBIDDEN.message)
+            errorLog.warn("Access Denied")
+        } finally {
+            MDC.remove("status")
+            MDC.remove("errorType")
+            MDC.remove("errorMessage")
         }
     }
 

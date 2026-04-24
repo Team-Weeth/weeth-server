@@ -1,6 +1,16 @@
+server:
+  tomcat:
+    mbeanregistry: # Tomcat Threads 확인을 위한 설정
+      enabled: true
+
 spring:
+  application:
+    name: weeth-server
   profiles:
     active: local
+    group:
+      local-monitoring:
+        - local
   jpa:
     open-in-view: false
 
@@ -37,10 +47,27 @@ management:
         include:
           - health
           - prometheus
+          - info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+    build:
+      enabled: true
   prometheus:
     metrics:
       export:
         enabled: true
+  metrics:
+    tags:
+      application: weeth-server
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s
 
 app:
   file:

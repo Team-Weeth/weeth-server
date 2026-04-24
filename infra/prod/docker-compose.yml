@@ -15,6 +15,7 @@ services:
       - caddy_config:/config
     environment:
       DOMAIN: ${DOMAIN}
+      MONITORING_PATH: ${MONITORING_PATH}
     networks:
       - web
 
@@ -39,6 +40,16 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       TZ: Asia/Seoul
+      OTEL_JAVAAGENT_ENABLED: ${OTEL_JAVAAGENT_ENABLED:-true}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-weeth-server}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=prod}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_traceidratio}
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_TRACES_SAMPLER_ARG:-0.1}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://alloy:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
     volumes:
       - ${HOME}/keys:/app/keys:ro
     ports:
@@ -46,6 +57,11 @@ services:
     depends_on:
       redis:
         condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
     networks:
       - web
 
@@ -59,6 +75,16 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       TZ: Asia/Seoul
+      OTEL_JAVAAGENT_ENABLED: ${OTEL_JAVAAGENT_ENABLED:-true}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-weeth-server}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=prod}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_traceidratio}
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_TRACES_SAMPLER_ARG:-0.1}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://alloy:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
     volumes:
       - ${HOME}/keys:/app/keys:ro
     ports:
@@ -66,6 +92,11 @@ services:
     depends_on:
       redis:
         condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
     networks:
       - web
 
