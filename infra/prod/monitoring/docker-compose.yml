@@ -1,4 +1,4 @@
-iname: weeth-prod-monitoring
+name: weeth-prod-monitoring
 
 services:
   alloy:
