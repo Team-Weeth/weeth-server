@@ -4,7 +4,6 @@ import com.weeth.global.config.properties.RedisProperties
 import io.lettuce.core.metrics.MicrometerCommandLatencyRecorder
 import io.lettuce.core.metrics.MicrometerOptions
 import io.micrometer.core.instrument.MeterRegistry
-import org.springframework.boot.autoconfigure.data.redis.LettuceClientConfigurationBuilderCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.redis.connection.RedisConnectionFactory
@@ -40,7 +39,7 @@ class RedisConfig(
                     io.lettuce.core.resource.ClientResources
                         .builder()
                         .commandLatencyRecorder(
-                            MicrometerCommandLatencyRecorder(meterRegistry, MicrometerOptions.defaults()),
+                            MicrometerCommandLatencyRecorder(meterRegistry, MicrometerOptions.create()),
                         ).build(),
                 ).build()
 
