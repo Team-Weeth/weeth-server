@@ -106,7 +106,7 @@ class GetBoardQueryService(
             BoardDetailResponse(
                 id = null,
                 name = "전체",
-                description = null,
+                description = "모든 게시글을 확인할 수 있는 게시판입니다.", // 우선 통일을 위해 백엔드에서 설정, 추후 변경될 수 있음
                 type = BoardType.ALL,
                 commentEnabled = null,
                 writePermission = null,

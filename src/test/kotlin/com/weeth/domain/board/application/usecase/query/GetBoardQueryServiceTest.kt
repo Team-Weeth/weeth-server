@@ -139,6 +139,14 @@ class GetBoardQueryServiceTest :
                 result.first().postCount shouldBe 5
             }
 
+            it("가상 전체 게시판은 기본 설명을 포함한다") {
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns emptyList()
+
+                val result = queryService.findAllBoardsForAdmin(clubId, userId)
+
+                result.first().description shouldBe "모든 게시글을 확인할 수 있는 게시판입니다."
+            }
+
             it("게시판이 없으면 postRepository를 호출하지 않는다") {
                 every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns emptyList()
 

@@ -32,7 +32,7 @@ object BoardTestFixture {
     fun createNoticeBoard(
         club: Club = ClubTestFixture.createClub(),
         name: String = "공지사항",
-        description: String = "공지사항 게시판 설명",
+        description: String = "운영진이 공지사항을 올리는 게시판입니다.",
     ): Board =
         create(
             club = club,
