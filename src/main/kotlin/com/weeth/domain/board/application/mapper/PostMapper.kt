@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 class PostMapper(
     private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
-    fun toSaveResponse(post: Post) = PostSaveResponse(id = post.id)
+    fun toSaveResponse(post: Post) = PostSaveResponse(id = post.id, boardId = post.board.id)
 
     fun toLikeResponse(
         post: Post,

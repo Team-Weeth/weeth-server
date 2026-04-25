@@ -191,6 +191,7 @@ class GetDashboardQueryServiceTest :
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
                     result.content.size shouldBe 1
+                    result.content[0].boardId shouldBe board.id
                     result.content[0].fileUrls.isEmpty() shouldBe true
                     result.content[0].like.isLiked shouldBe false
                 }

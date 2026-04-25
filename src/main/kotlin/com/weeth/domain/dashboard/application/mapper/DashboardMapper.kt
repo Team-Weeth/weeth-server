@@ -105,6 +105,7 @@ class DashboardMapper(
         isLiked: Boolean,
     ) = DashboardPostResponse(
         id = post.id,
+        boardId = post.board.id,
         author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
         title = post.title,
         content = post.content,
@@ -120,6 +121,7 @@ class DashboardMapper(
         now: LocalDateTime,
     ) = DashboardNoticeResponse(
         id = post.id,
+        boardId = post.board.id,
         title = post.title,
         content = post.content,
         time = post.createdAt,
@@ -129,6 +131,7 @@ class DashboardMapper(
     fun toUnreadNoticeResponse(post: Post) =
         DashboardUnreadNoticeResponse(
             id = post.id,
+            boardId = post.board.id,
             title = post.title,
             content = post.content,
         )

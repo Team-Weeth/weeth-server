@@ -9,6 +9,8 @@ import java.time.LocalDateTime
 data class DashboardPostResponse(
     @field:Schema(description = "게시글 ID", example = "1")
     val id: Long,
+    @field:Schema(description = "게시판 ID", example = "1")
+    val boardId: Long,
     @field:Schema(description = "작성자 정보")
     val author: UserInfo,
     @field:Schema(description = "제목", example = "안녕하세요")

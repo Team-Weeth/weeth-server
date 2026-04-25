@@ -89,7 +89,7 @@ class ManagePostUseCaseTest :
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
             every { fileRepository.saveAll(any<List<File>>()) } returns emptyList()
             every { fileReader.findAll(any(), any<Long>(), any()) } returns emptyList()
-            every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(1L)
+            every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(id = 1L, boardId = 1L)
             every { fileRepository.delete(any()) } just runs
             every { fileRepository.flush() } just runs
             every { clubMemberCardinalReader.findLatestCardinalByClubMember(any()) } returns null
