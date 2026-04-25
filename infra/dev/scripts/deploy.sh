@@ -63,4 +63,5 @@ fi
 docker compose --profile "$OLD_COLOR" -f docker-compose.yml stop "app-$OLD_COLOR" || true
 docker compose --profile "$OLD_COLOR" -f docker-compose.yml rm -f "app-$OLD_COLOR" || true
 
+docker image prune -f
 echo "[deploy] completed"
