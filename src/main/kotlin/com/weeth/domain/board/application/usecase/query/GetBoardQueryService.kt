@@ -2,6 +2,7 @@ package com.weeth.domain.board.application.usecase.query
 
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.dto.response.BoardListResponse
+import com.weeth.domain.board.application.dto.response.BoardNameDuplicateResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
@@ -80,6 +81,24 @@ class GetBoardQueryService(
         return noticeBoards + virtualAllBoardForAdmin(totalPostCount) + otherBoards
     }
 
+    fun checkBoardNameDuplicate(
+        clubId: Long,
+        userId: Long,
+        name: String,
+        boardId: Long? = null,
+    ): BoardNameDuplicateResponse {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val duplicated =
+            if (boardId == null) {
+                boardRepository.existsByClubIdAndNameAndIsDeletedFalse(clubId, name)
+            } else {
+                boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(clubId, name, boardId)
+            }
+
+        return BoardNameDuplicateResponse(duplicated = duplicated)
+    }
+
     companion object {
         private val VIRTUAL_ALL_BOARD = BoardListResponse(id = null, name = "전체", type = BoardType.ALL)
 
@@ -87,6 +106,7 @@ class GetBoardQueryService(
             BoardDetailResponse(
                 id = null,
                 name = "전체",
+                description = "모든 게시글을 확인할 수 있는 게시판입니다.", // 우선 통일을 위해 백엔드에서 설정, 추후 변경될 수 있음
                 type = BoardType.ALL,
                 commentEnabled = null,
                 writePermission = null,

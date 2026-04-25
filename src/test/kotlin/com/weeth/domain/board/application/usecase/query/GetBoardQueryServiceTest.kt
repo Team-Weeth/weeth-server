@@ -139,6 +139,14 @@ class GetBoardQueryServiceTest :
                 result.first().postCount shouldBe 5
             }
 
+            it("가상 전체 게시판은 기본 설명을 포함한다") {
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns emptyList()
+
+                val result = queryService.findAllBoardsForAdmin(clubId, userId)
+
+                result.first().description shouldBe "모든 게시글을 확인할 수 있는 게시판입니다."
+            }
+
             it("게시판이 없으면 postRepository를 호출하지 않는다") {
                 every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns emptyList()
 
@@ -190,6 +198,26 @@ class GetBoardQueryServiceTest :
                 val result = queryService.findBoardDetailForAdmin(clubId, userId, board.id)
 
                 result.postCount shouldBe 3
+            }
+        }
+
+        describe("checkBoardNameDuplicate") {
+            it("같은 클럽의 활성 게시판에 같은 이름이 있으면 중복으로 반환한다") {
+                every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(clubId, "운영") } returns true
+
+                val result = queryService.checkBoardNameDuplicate(clubId, userId, "운영")
+
+                result.duplicated shouldBe true
+            }
+
+            it("수정 대상 boardId가 있으면 자기 자신은 중복 검사에서 제외한다") {
+                every {
+                    boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(clubId, "운영", 3L)
+                } returns false
+
+                val result = queryService.checkBoardNameDuplicate(clubId, userId, "운영", 3L)
+
+                result.duplicated shouldBe false
             }
         }
     })

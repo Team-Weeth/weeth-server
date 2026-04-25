@@ -30,6 +30,14 @@ class BoardEntityTest :
             }
         }
 
+        "updateDescription은 빈 설명이면 예외를 던진다" {
+            val board = BoardTestFixture.create(name = "게시판", type = BoardType.GENERAL)
+
+            shouldThrow<IllegalArgumentException> {
+                board.updateDescription(" ")
+            }
+        }
+
         "isAdminOnly는 writePermission이 ADMIN일 때 true를 반환한다" {
             val board =
                 BoardTestFixture.create(
@@ -112,7 +120,7 @@ class BoardEntityTest :
             val club = ClubTestFixture.createClub()
 
             shouldThrow<IllegalArgumentException> {
-                Board(club = club, name = "전체", type = BoardType.ALL)
+                Board(club = club, name = "전체", description = "전체 게시판 설명", type = BoardType.ALL)
             }
         }
     })

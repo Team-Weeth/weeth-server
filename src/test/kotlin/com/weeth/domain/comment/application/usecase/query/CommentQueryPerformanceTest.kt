@@ -66,6 +66,7 @@ class CommentQueryPerformanceTest(
                 Board(
                     club = club,
                     name = "perf-board",
+                    description = "성능 테스트용 게시판 설명",
                     type = BoardType.GENERAL,
                 ),
             )

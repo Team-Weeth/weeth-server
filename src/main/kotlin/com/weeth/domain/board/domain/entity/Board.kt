@@ -24,11 +24,13 @@ import jakarta.persistence.Table
 class Board(
     club: Club,
     name: String,
+    description: String,
     type: BoardType,
     config: BoardConfig = BoardConfig(),
 ) : BaseEntity() {
     init {
         require(name.isNotBlank()) { "게시판 이름은 공백이 될 수 없습니다" }
+        require(description.isNotBlank()) { "게시판 설명은 공백이 될 수 없습니다" }
         require(type != BoardType.ALL) { "ALL은 가상 타입으로 게시판을 생성할 수 없습니다" }
     }
 
@@ -44,6 +46,10 @@ class Board(
 
     @Column(nullable = false)
     var name: String = name
+        private set
+
+    @Column(nullable = false, length = 500)
+    var description: String = description
         private set
 
     @Enumerated(EnumType.STRING)
@@ -82,6 +88,11 @@ class Board(
     fun rename(newName: String) {
         require(newName.isNotBlank()) { "게시판 이름은 공백이 될 수 없습니다." }
         name = newName
+    }
+
+    fun updateDescription(newDescription: String) {
+        require(newDescription.isNotBlank()) { "게시판 설명은 공백이 될 수 없습니다." }
+        description = newDescription
     }
 
     fun markDeleted() {

@@ -102,6 +102,7 @@ class CommentConcurrencyTest(
                     Board(
                         club = club,
                         name = "concurrency-board-$runId",
+                        description = "동시성 테스트용 게시판 설명",
                         type = BoardType.GENERAL,
                     ),
                 )

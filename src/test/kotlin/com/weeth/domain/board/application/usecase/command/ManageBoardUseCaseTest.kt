@@ -59,6 +59,7 @@ class ManageBoardUseCaseTest :
                 val request =
                     CreateBoardRequest(
                         name = "운영 게시판",
+                        description = "운영진만 사용하는 게시판입니다.",
                         type = BoardType.GENERAL,
                         commentEnabled = false,
                         writePermission = MemberRole.ADMIN,
@@ -68,6 +69,7 @@ class ManageBoardUseCaseTest :
                 val result = useCase.create(clubId, request, userId)
 
                 result.name shouldBe "운영 게시판"
+                result.description shouldBe "운영진만 사용하는 게시판입니다."
                 result.type shouldBe BoardType.GENERAL
                 result.commentEnabled shouldBe false
                 result.writePermission shouldBe MemberRole.ADMIN
@@ -79,6 +81,7 @@ class ManageBoardUseCaseTest :
                 val request =
                     CreateBoardRequest(
                         name = "첫 게시판",
+                        description = "첫 번째 게시판 설명",
                         type = BoardType.GENERAL,
                         commentEnabled = true,
                         writePermission = MemberRole.USER,
@@ -95,6 +98,7 @@ class ManageBoardUseCaseTest :
                 val request =
                     CreateBoardRequest(
                         name = "새 게시판",
+                        description = "새 게시판 설명",
                         type = BoardType.GENERAL,
                         commentEnabled = true,
                         writePermission = MemberRole.USER,
@@ -111,6 +115,7 @@ class ManageBoardUseCaseTest :
                 val request =
                     CreateBoardRequest(
                         name = "새 게시판",
+                        description = "새 게시판 설명",
                         type = BoardType.GENERAL,
                         commentEnabled = true,
                         writePermission = MemberRole.USER,
@@ -127,6 +132,7 @@ class ManageBoardUseCaseTest :
                 val request =
                     CreateBoardRequest(
                         name = "초과 게시판",
+                        description = "초과 게시판 설명",
                         type = BoardType.GENERAL,
                         commentEnabled = true,
                         writePermission = MemberRole.USER,
@@ -143,6 +149,7 @@ class ManageBoardUseCaseTest :
                 val request =
                     CreateBoardRequest(
                         name = "중복 이름",
+                        description = "중복 이름 설명",
                         type = BoardType.GENERAL,
                         commentEnabled = true,
                         writePermission = MemberRole.USER,
@@ -160,9 +167,16 @@ class ManageBoardUseCaseTest :
                 val board = BoardTestFixture.create(club = club, name = "기존", type = BoardType.GENERAL)
                 every { boardRepository.findByIdAndIsDeletedFalse(1L) } returns board
 
-                val result = useCase.update(clubId, 1L, UpdateBoardRequest(name = "변경", isPrivate = true), userId)
+                val result =
+                    useCase.update(
+                        clubId,
+                        1L,
+                        UpdateBoardRequest(name = "변경", description = "변경된 설명", isPrivate = true),
+                        userId,
+                    )
 
                 result.name shouldBe "변경"
+                result.description shouldBe "변경된 설명"
                 result.commentEnabled shouldBe true
                 result.writePermission shouldBe MemberRole.USER
                 result.isPrivate shouldBe true
@@ -175,6 +189,7 @@ class ManageBoardUseCaseTest :
                 val result = useCase.update(clubId, 1L, UpdateBoardRequest(), userId)
 
                 result.name shouldBe "기존"
+                result.description shouldBe "일반 게시판 설명"
                 result.commentEnabled shouldBe true
                 result.writePermission shouldBe MemberRole.USER
                 result.isPrivate shouldBe false

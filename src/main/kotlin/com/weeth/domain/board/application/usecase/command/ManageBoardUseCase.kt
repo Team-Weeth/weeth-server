@@ -67,6 +67,7 @@ class ManageBoardUseCase(
             Board(
                 club = club,
                 name = request.name,
+                description = request.description,
                 type = request.type,
                 config =
                     BoardConfig(
@@ -104,6 +105,8 @@ class ManageBoardUseCase(
             }
             board.rename(it)
         }
+
+        request.description?.let(board::updateDescription)
 
         // BoardConfig는 불변 VO이므로 개별 필드 수정이 불가능하여 copy()로 새 객체를 만들어 통째로 교체한다. null이면 기존 값을 명시적으로 채운다.
         // 바깥 if 문은 config 관련 필드가 전부 null인 요청에서 불필요한 VO 생성을 방지한다.

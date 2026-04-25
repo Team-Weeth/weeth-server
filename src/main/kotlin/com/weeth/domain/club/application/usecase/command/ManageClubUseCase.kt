@@ -97,6 +97,7 @@ class ManageClubUseCase(
             Board(
                 club = club,
                 name = "공지사항",
+                description = "운영진이 공지사항을 올리는 게시판입니다.",
                 type = BoardType.NOTICE,
                 config = BoardConfig(writePermission = MemberRole.ADMIN),
             )

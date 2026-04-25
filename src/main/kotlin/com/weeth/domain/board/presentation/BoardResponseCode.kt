@@ -24,4 +24,5 @@ enum class BoardResponseCode(
     BOARD_REORDERED_SUCCESS(10413, HttpStatus.OK, "게시판 순서가 성공적으로 변경되었습니다."),
     POST_LIKE_SUCCESS(10414, HttpStatus.OK, "게시글에 좋아요를 눌렀습니다."),
     POST_UNLIKE_SUCCESS(10415, HttpStatus.OK, "게시글 좋아요를 취소했습니다."),
+    BOARD_NAME_DUPLICATE_CHECK_SUCCESS(10416, HttpStatus.OK, "게시판 이름 중복 여부를 성공적으로 확인했습니다."),
 }

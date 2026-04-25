@@ -18,6 +18,7 @@ class BoardMapper {
         BoardDetailResponse(
             id = board.id,
             name = board.name,
+            description = board.description,
             type = board.type,
             commentEnabled = board.config.commentEnabled,
             writePermission = board.config.writePermission,
@@ -32,6 +33,7 @@ class BoardMapper {
     ) = BoardDetailResponse(
         id = board.id,
         name = board.name,
+        description = board.description,
         type = board.type,
         commentEnabled = board.config.commentEnabled,
         writePermission = board.config.writePermission,

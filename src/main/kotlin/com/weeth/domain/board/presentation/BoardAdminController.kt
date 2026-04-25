@@ -4,6 +4,7 @@ import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
+import com.weeth.domain.board.application.dto.response.BoardNameDuplicateResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
 import com.weeth.domain.board.application.usecase.command.ManageBoardUseCase
 import com.weeth.domain.board.application.usecase.query.GetBoardQueryService
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "Board-Admin", description = "Board Admin API")
@@ -57,6 +59,20 @@ class BoardAdminController(
         CommonResponse.success(
             BoardResponseCode.BOARD_FIND_BY_ID_SUCCESS,
             getBoardQueryService.findBoardDetailForAdmin(clubId, userId, boardId),
+        )
+
+    @GetMapping("/name-duplicate")
+    @Operation(summary = "게시판 이름 중복 체크")
+    fun checkBoardNameDuplicate(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @RequestParam name: String,
+        @RequestParam(required = false) boardId: Long?,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<BoardNameDuplicateResponse> =
+        CommonResponse.success(
+            BoardResponseCode.BOARD_NAME_DUPLICATE_CHECK_SUCCESS,
+            getBoardQueryService.checkBoardNameDuplicate(clubId, userId, name, boardId),
         )
 
     @PostMapping
