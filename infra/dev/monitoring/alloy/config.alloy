@@ -2,8 +2,8 @@ discovery.docker "weeth" {
   host = "unix:///var/run/docker.sock"
 
   filter {
-    name   = "label"
-    values = ["com.docker.compose.service=app-blue", "com.docker.compose.service=app-green"]
+    name   = "name"
+    values = ["weeth-dev-app"]
   }
 }
 

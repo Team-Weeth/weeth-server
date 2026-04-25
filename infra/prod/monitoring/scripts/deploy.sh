@@ -12,7 +12,17 @@ if [ ! -f "$MONITORING_ENV_FILE" ]; then
   exit 1
 fi
 
-export MONITORING_ENV_FILE
+if [ -z "${DOCKER_GID:-}" ]; then
+  DOCKER_GID="$(stat -c '%g' /var/run/docker.sock 2>/dev/null || stat -f '%g' /var/run/docker.sock 2>/dev/null || true)"
+fi
+
+if [ -z "${DOCKER_GID:-}" ]; then
+  echo "[monitoring] failed to detect docker.sock group id"
+  echo "[monitoring] set DOCKER_GID explicitly in $MONITORING_ENV_FILE or the shell environment"
+  exit 1
+fi
+
+export MONITORING_ENV_FILE DOCKER_GID
 
 if ! docker network inspect "$APP_NETWORK" >/dev/null 2>&1; then
   echo "[monitoring] required docker network not found: $APP_NETWORK"
@@ -20,6 +30,7 @@ if ! docker network inspect "$APP_NETWORK" >/dev/null 2>&1; then
   exit 1
 fi
 
+echo "[monitoring] docker.sock gid=$DOCKER_GID"
 echo "[monitoring] pulling images..."
 docker compose --env-file "$MONITORING_ENV_FILE" pull
 
