@@ -192,4 +192,24 @@ class GetBoardQueryServiceTest :
                 result.postCount shouldBe 3
             }
         }
+
+        describe("checkBoardNameDuplicate") {
+            it("같은 클럽의 활성 게시판에 같은 이름이 있으면 중복으로 반환한다") {
+                every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(clubId, "운영") } returns true
+
+                val result = queryService.checkBoardNameDuplicate(clubId, userId, "운영")
+
+                result.duplicated shouldBe true
+            }
+
+            it("수정 대상 boardId가 있으면 자기 자신은 중복 검사에서 제외한다") {
+                every {
+                    boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(clubId, "운영", 3L)
+                } returns false
+
+                val result = queryService.checkBoardNameDuplicate(clubId, userId, "운영", 3L)
+
+                result.duplicated shouldBe false
+            }
+        }
     })

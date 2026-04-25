@@ -11,6 +11,8 @@ data class BoardDetailResponse(
     val id: Long?,
     @field:Schema(description = "게시판 이름")
     val name: String,
+    @field:Schema(description = "게시판 설명 (관리자만 조회 가능)")
+    val description: String?,
     @field:Schema(description = "게시판 타입")
     val type: BoardType,
     @field:Schema(description = "댓글 허용 여부 (전체 게시판은 null)")

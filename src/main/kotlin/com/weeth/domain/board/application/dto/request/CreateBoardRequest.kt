@@ -12,6 +12,10 @@ data class CreateBoardRequest(
     @field:NotBlank
     @field:Size(max = 100)
     val name: String,
+    @field:Schema(description = "게시판 설명", example = "공지사항 게시판입니다.")
+    @field:NotBlank
+    @field:Size(max = 30)
+    val description: String,
     @field:Schema(description = "게시판 타입", example = "NOTICE")
     @field:NotNull
     var type: BoardType,
