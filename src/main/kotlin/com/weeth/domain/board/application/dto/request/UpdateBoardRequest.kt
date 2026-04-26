@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size
 
 data class UpdateBoardRequest(
     @field:Schema(description = "게시판 이름", example = "새 공지사항", nullable = true)
-    @field:Size(max = 100)
+    @field:Size(max = 20)
     val name: String? = null,
     @field:Schema(description = "게시판 설명", example = "운영 관련 새 공지사항입니다.", nullable = true)
     @field:Size(max = 30)

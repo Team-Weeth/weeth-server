@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Size
 data class CreateBoardRequest(
     @field:Schema(description = "게시판 이름", example = "공지사항")
     @field:NotBlank
-    @field:Size(max = 100)
+    @field:Size(max = 20)
     val name: String,
     @field:Schema(description = "게시판 설명", example = "공지사항 게시판입니다.")
     @field:NotBlank
