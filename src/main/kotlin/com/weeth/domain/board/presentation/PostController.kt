@@ -85,17 +85,18 @@ class PostController(
             getPostQueryService.findPosts(clubId, userId, boardId, pageNumber, pageSize),
         )
 
-    @GetMapping("/posts/{postId}")
+    @GetMapping("/{boardId}/posts/{postId}")
     @Operation(summary = "게시글 상세 조회")
     fun findPost(
         @TsidParam
         @TsidPathVariable clubId: Long,
+        @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostDetailResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_FIND_BY_ID_SUCCESS,
-            getPostQueryService.findPost(clubId, userId, postId),
+            getPostQueryService.findPost(clubId, userId, boardId, postId),
         )
 
     @PatchMapping("/posts/{postId}")
@@ -112,15 +113,16 @@ class PostController(
             managePostUseCase.update(clubId, postId, request, userId),
         )
 
-    @DeleteMapping("/posts/{postId}")
+    @DeleteMapping("/{boardId}/posts/{postId}")
     @Operation(summary = "게시글 삭제")
     fun delete(
         @TsidParam
         @TsidPathVariable clubId: Long,
+        @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void?> {
-        managePostUseCase.delete(clubId, postId, userId)
+        managePostUseCase.delete(clubId, boardId, postId, userId)
         return CommonResponse.success(BoardResponseCode.POST_DELETED_SUCCESS)
     }
 
@@ -152,29 +154,31 @@ class PostController(
         return CommonResponse.success(BoardResponseCode.BOARD_NOTICE_READ_SUCCESS)
     }
 
-    @PostMapping("/posts/{postId}/like")
+    @PostMapping("/{boardId}/posts/{postId}/like")
     @Operation(summary = "게시글 좋아요")
     fun like(
         @TsidParam
         @TsidPathVariable clubId: Long,
+        @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostLikeResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_LIKE_SUCCESS,
-            managePostLikeUseCase.like(clubId, postId, userId),
+            managePostLikeUseCase.like(clubId, boardId, postId, userId),
         )
 
-    @DeleteMapping("/posts/{postId}/like")
+    @DeleteMapping("/{boardId}/posts/{postId}/like")
     @Operation(summary = "게시글 좋아요 취소")
     fun unlike(
         @TsidParam
         @TsidPathVariable clubId: Long,
+        @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostLikeResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_UNLIKE_SUCCESS,
-            managePostLikeUseCase.unlike(clubId, postId, userId),
+            managePostLikeUseCase.unlike(clubId, boardId, postId, userId),
         )
 }

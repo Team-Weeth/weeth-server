@@ -47,11 +47,13 @@ class GetPostQueryService(
     fun findPost(
         clubId: Long,
         userId: Long,
+        boardId: Long,
         postId: Long,
     ): PostDetailResponse {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val post = postRepository.findByIdAndIsDeletedFalse(postId) ?: throw PostNotFoundException()
 
+        if (post.board.id != boardId) throw BoardNotFoundException()
         if (post.board.club.id != clubId || post.board.isDeleted || !post.board.isAccessibleBy(member.memberRole)) {
             throw PostNotFoundException()
         }
