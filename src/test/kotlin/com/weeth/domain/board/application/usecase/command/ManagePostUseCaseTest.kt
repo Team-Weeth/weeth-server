@@ -325,7 +325,7 @@ class ManagePostUseCaseTest :
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
                 every { fileRepository.deleteAll(any<List<File>>()) } just runs
 
-                useCase.delete(clubId, 1L, 1L)
+                useCase.delete(clubId, board.id, 1L, 1L)
 
                 post.isDeleted shouldBe true
                 verify(exactly = 1) { fileRepository.deleteAll(listOf(oldFile)) }
@@ -336,7 +336,20 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns null
 
                 shouldThrow<PostNotFoundException> {
-                    useCase.delete(1L, 1L, 1L)
+                    useCase.delete(1L, 0L, 1L, 1L)
+                }
+            }
+
+            it("URL의 boardId와 게시글의 게시판이 다르면 BoardNotFoundException을 던진다") {
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
+                val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = ownerMember, board = board)
+
+                every { postRepository.findActivePostById(1L) } returns post
+
+                shouldThrow<BoardNotFoundException> {
+                    useCase.delete(clubId, board.id + 1, 1L, 1L)
                 }
             }
 
@@ -354,7 +367,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.delete(clubId, 1L, 1L)
+                    useCase.delete(clubId, board.id, 1L, 1L)
                 }
             }
         }
