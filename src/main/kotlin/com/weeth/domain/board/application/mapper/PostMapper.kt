@@ -1,6 +1,7 @@
 package com.weeth.domain.board.application.mapper
 
 import com.weeth.domain.board.application.dto.response.PostDetailResponse
+import com.weeth.domain.board.application.dto.response.PostLikeActionResponse
 import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
@@ -22,7 +23,12 @@ class PostMapper(
     fun toLikeResponse(
         post: Post,
         isLiked: Boolean,
-    ) = PostLikeResponse(boardId = post.board.id, isLiked = isLiked, likeCount = post.likeCount)
+    ) = PostLikeResponse(isLiked = isLiked, likeCount = post.likeCount)
+
+    fun toLikeActionResponse(
+        post: Post,
+        isLiked: Boolean,
+    ) = PostLikeActionResponse(boardId = post.board.id, isLiked = isLiked, likeCount = post.likeCount)
 
     fun toDetailResponse(
         post: Post,

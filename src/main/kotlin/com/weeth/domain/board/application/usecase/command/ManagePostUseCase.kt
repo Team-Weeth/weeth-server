@@ -67,12 +67,14 @@ class ManagePostUseCase(
     @Transactional
     fun update(
         clubId: Long,
+        boardId: Long,
         postId: Long,
         request: UpdatePostRequest,
         userId: Long,
     ): PostSaveResponse {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
         val post = findPost(postId)
+        if (post.board.id != boardId) throw BoardNotFoundException()
         if (post.board.club.id != clubId) throw PostNotFoundException()
         validateOwner(post, userId)
         validateWritePermission(post.board, member)

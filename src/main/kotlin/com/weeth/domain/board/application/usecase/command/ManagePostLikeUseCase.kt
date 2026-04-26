@@ -1,6 +1,6 @@
 package com.weeth.domain.board.application.usecase.command
 
-import com.weeth.domain.board.application.dto.response.PostLikeResponse
+import com.weeth.domain.board.application.dto.response.PostLikeActionResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
@@ -28,7 +28,7 @@ class ManagePostLikeUseCase(
         boardId: Long,
         postId: Long,
         userId: Long,
-    ): PostLikeResponse {
+    ): PostLikeActionResponse {
         val (post, existingLike) = getValidatedPostWithLike(clubId, boardId, postId, userId)
 
         when {
@@ -43,7 +43,7 @@ class ManagePostLikeUseCase(
             }
         }
 
-        return postMapper.toLikeResponse(post, isLiked = true)
+        return postMapper.toLikeActionResponse(post, isLiked = true)
     }
 
     @Transactional
@@ -52,7 +52,7 @@ class ManagePostLikeUseCase(
         boardId: Long,
         postId: Long,
         userId: Long,
-    ): PostLikeResponse {
+    ): PostLikeActionResponse {
         val (post, existingLike) = getValidatedPostWithLike(clubId, boardId, postId, userId)
 
         if (existingLike?.isActive == true) {
@@ -60,7 +60,7 @@ class ManagePostLikeUseCase(
             post.decreaseLikeCount()
         }
 
-        return postMapper.toLikeResponse(post, isLiked = false)
+        return postMapper.toLikeActionResponse(post, isLiked = false)
     }
 
     private fun getValidatedPostWithLike(

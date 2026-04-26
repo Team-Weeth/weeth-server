@@ -111,7 +111,7 @@ class DashboardMapper(
         content = post.content,
         time = post.createdAt,
         commentCount = post.commentCount,
-        like = PostLikeResponse(boardId = post.board.id, isLiked = isLiked, likeCount = post.likeCount),
+        like = PostLikeResponse(isLiked = isLiked, likeCount = post.likeCount),
         fileUrls = files.map(fileMapper::toFileResponse),
         isNew = post.createdAt.isAfter(now.minusHours(24)),
     )

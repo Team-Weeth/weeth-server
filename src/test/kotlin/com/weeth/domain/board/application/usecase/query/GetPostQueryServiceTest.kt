@@ -143,7 +143,7 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 1,
-                        like = PostLikeResponse(boardId = board.id, isLiked = false, likeCount = 0),
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
                         comments = comments,
                         fileUrls = fileResponses,
                         isNew = false,
@@ -284,7 +284,7 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 0,
-                        like = PostLikeResponse(boardId = board.id, isLiked = false, likeCount = 0),
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
                         fileUrls = emptyList(),
                         isNew = true,
                     )
@@ -335,7 +335,7 @@ class GetPostQueryServiceTest :
                         content = "내용",
                         time = LocalDateTime.now(),
                         commentCount = 0,
-                        like = PostLikeResponse(boardId = board.id, isLiked = false, likeCount = 0),
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
                         fileUrls = emptyList(),
                         isNew = false,
                     )

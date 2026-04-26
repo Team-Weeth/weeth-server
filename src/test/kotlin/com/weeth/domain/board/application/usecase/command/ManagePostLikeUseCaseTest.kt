@@ -1,6 +1,6 @@
 package com.weeth.domain.board.application.usecase.command
 
-import com.weeth.domain.board.application.dto.response.PostLikeResponse
+import com.weeth.domain.board.application.dto.response.PostLikeActionResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
@@ -56,8 +56,8 @@ class ManagePostLikeUseCaseTest :
             clearMocks(postRepository, postLikeRepository, clubMemberPolicy, postMapper)
             every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
             every { postLikeRepository.save(any()) } answers { firstArg() }
-            every { postMapper.toLikeResponse(any(), any()) } answers {
-                PostLikeResponse(
+            every { postMapper.toLikeActionResponse(any(), any()) } answers {
+                PostLikeActionResponse(
                     boardId = firstArg<Post>().board.id,
                     isLiked = secondArg(),
                     likeCount = firstArg<Post>().likeCount,

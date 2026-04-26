@@ -3,7 +3,7 @@ package com.weeth.domain.board.presentation
 import com.weeth.domain.board.application.dto.request.CreatePostRequest
 import com.weeth.domain.board.application.dto.request.UpdatePostRequest
 import com.weeth.domain.board.application.dto.response.PostDetailResponse
-import com.weeth.domain.board.application.dto.response.PostLikeResponse
+import com.weeth.domain.board.application.dto.response.PostLikeActionResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
@@ -99,18 +99,19 @@ class PostController(
             getPostQueryService.findPost(clubId, userId, boardId, postId),
         )
 
-    @PatchMapping("/posts/{postId}")
+    @PatchMapping("/{boardId}/posts/{postId}")
     @Operation(summary = "게시글 수정")
     fun update(
         @TsidParam
         @TsidPathVariable clubId: Long,
+        @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @RequestBody @Valid request: UpdatePostRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<PostSaveResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_UPDATED_SUCCESS,
-            managePostUseCase.update(clubId, postId, request, userId),
+            managePostUseCase.update(clubId, boardId, postId, request, userId),
         )
 
     @DeleteMapping("/{boardId}/posts/{postId}")
@@ -162,7 +163,7 @@ class PostController(
         @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<PostLikeResponse> =
+    ): CommonResponse<PostLikeActionResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_LIKE_SUCCESS,
             managePostLikeUseCase.like(clubId, boardId, postId, userId),
@@ -176,7 +177,7 @@ class PostController(
         @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<PostLikeResponse> =
+    ): CommonResponse<PostLikeActionResponse> =
         CommonResponse.success(
             BoardResponseCode.POST_UNLIKE_SUCCESS,
             managePostLikeUseCase.unlike(clubId, boardId, postId, userId),

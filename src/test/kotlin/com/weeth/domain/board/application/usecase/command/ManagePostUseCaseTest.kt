@@ -194,7 +194,7 @@ class ManagePostUseCaseTest :
 
                 every { postRepository.findActivePostById(1L) } returns post
 
-                useCase.update(clubId, 1L, request, 1L)
+                useCase.update(clubId, board.id, 1L, request, 1L)
 
                 verify(exactly = 0) { fileReader.findAll(any(), any<Long>(), any()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
@@ -229,7 +229,7 @@ class ManagePostUseCaseTest :
                 every { fileMapper.toFileList(request.files, FileOwnerType.POST, any<Long>()) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
 
-                useCase.update(clubId, 1L, request, 1L)
+                useCase.update(clubId, board.id, 1L, request, 1L)
 
                 post.title shouldBe "수정"
                 post.content shouldBe "수정"
@@ -246,7 +246,7 @@ class ManagePostUseCaseTest :
 
                 every { postRepository.findActivePostById(1L) } returns post
 
-                useCase.update(clubId, 1L, request, 1L)
+                useCase.update(clubId, board.id, 1L, request, 1L)
 
                 post.title shouldBe "원래 제목"
                 post.content shouldBe "수정된 내용"
@@ -261,7 +261,7 @@ class ManagePostUseCaseTest :
 
                 every { postRepository.findActivePostById(1L) } returns post
 
-                useCase.update(clubId, 1L, request, 1L)
+                useCase.update(clubId, board.id, 1L, request, 1L)
 
                 post.title shouldBe "수정된 제목"
                 post.content shouldBe "원래 내용"
@@ -271,7 +271,19 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns null
 
                 shouldThrow<PostNotFoundException> {
-                    useCase.update(1L, 1L, UpdatePostRequest(title = "수정"), 1L)
+                    useCase.update(1L, 0L, 1L, UpdatePostRequest(title = "수정"), 1L)
+                }
+            }
+
+            it("URL의 boardId와 게시글의 게시판이 다르면 BoardNotFoundException을 던진다") {
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val clubId = board.club.id
+                val post = PostTestFixture.create(title = "제목", content = "내용", board = board)
+
+                every { postRepository.findActivePostById(1L) } returns post
+
+                shouldThrow<BoardNotFoundException> {
+                    useCase.update(clubId, board.id + 1, 1L, UpdatePostRequest(title = "수정"), 1L)
                 }
             }
 
@@ -289,7 +301,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.update(clubId, 1L, UpdatePostRequest(title = "수정"), 1L)
+                    useCase.update(clubId, board.id, 1L, UpdatePostRequest(title = "수정"), 1L)
                 }
             }
 
@@ -307,7 +319,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<CategoryAccessDeniedException> {
-                    useCase.update(clubId, 1L, UpdatePostRequest(title = "수정"), 1L)
+                    useCase.update(clubId, board.id, 1L, UpdatePostRequest(title = "수정"), 1L)
                 }
             }
         }
@@ -343,8 +355,7 @@ class ManagePostUseCaseTest :
             it("URL의 boardId와 게시글의 게시판이 다르면 BoardNotFoundException을 던진다") {
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
-                val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
-                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = ownerMember, board = board)
+                val post = PostTestFixture.create(title = "제목", content = "내용", board = board)
 
                 every { postRepository.findActivePostById(1L) } returns post
 
@@ -383,7 +394,7 @@ class ManagePostUseCaseTest :
                 every { postRepository.findActivePostById(1L) } returns post
 
                 shouldThrow<PostNotOwnedException> {
-                    useCase.update(clubId, 1L, request, 2L)
+                    useCase.update(clubId, board.id, 1L, request, 2L)
                 }
             }
         }
