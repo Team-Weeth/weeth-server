@@ -22,7 +22,7 @@ class PostMapper(
     fun toLikeResponse(
         post: Post,
         isLiked: Boolean,
-    ) = PostLikeResponse(isLiked = isLiked, likeCount = post.likeCount)
+    ) = PostLikeResponse(boardId = post.board.id, isLiked = isLiked, likeCount = post.likeCount)
 
     fun toDetailResponse(
         post: Post,
