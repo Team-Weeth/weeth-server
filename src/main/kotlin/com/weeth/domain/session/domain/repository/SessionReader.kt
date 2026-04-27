@@ -32,4 +32,8 @@ interface SessionReader {
         clubId: Long,
         cardinals: List<Int>,
     ): List<Session>
+
+    fun findOpenByClubId(clubId: Long): Session?
+
+    fun findClubIdById(sessionId: Long): Long?
 }

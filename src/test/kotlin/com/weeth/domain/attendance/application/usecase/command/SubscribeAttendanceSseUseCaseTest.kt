@@ -1,8 +1,11 @@
 package com.weeth.domain.attendance.application.usecase.command
 
+import com.weeth.domain.attendance.domain.port.QrAttendancePort
+import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.attendance.domain.port.SseSubscribePort
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.session.domain.repository.SessionReader
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -11,31 +14,72 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import java.time.LocalDateTime
 
 class SubscribeAttendanceSseUseCaseTest :
     DescribeSpec({
         val sseSubscribePort = mockk<SseSubscribePort>()
+        val sseBroadcastPort = mockk<SseBroadcastPort>(relaxed = true)
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
-        val useCase = SubscribeAttendanceSseUseCase(sseSubscribePort, clubMemberPolicy)
+        val sessionReader = mockk<SessionReader>()
+        val qrAttendancePort = mockk<QrAttendancePort>()
+        val useCase =
+            SubscribeAttendanceSseUseCase(
+                sseSubscribePort,
+                sseBroadcastPort,
+                clubMemberPolicy,
+                sessionReader,
+                qrAttendancePort,
+            )
 
-        beforeTest { clearMocks(sseSubscribePort, clubMemberPolicy) }
+        beforeTest { clearMocks(sseSubscribePort, sseBroadcastPort, clubMemberPolicy, sessionReader, qrAttendancePort) }
 
         describe("execute") {
             val clubId = 1L
             val userId = 100L
+            val emitter = mockk<SseEmitter>(relaxed = true)
 
-            context("활성 멤버인 경우") {
-                it("SseSubscribePort를 호출하고 SseEmitter를 반환한다") {
-                    val emitter = mockk<SseEmitter>(relaxed = true)
+            beforeTest {
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns mockk()
+                every { sseSubscribePort.subscribe(clubId, userId) } returns emitter
+            }
 
-                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns mockk()
-                    every { sseSubscribePort.subscribe(clubId, userId) } returns emitter
+            context("활성 QR이 없는 경우") {
+                it("qr-none 이벤트를 전송하고 emitter를 반환한다") {
+                    every { sessionReader.findOpenByClubId(clubId) } returns null
 
                     val result = useCase.execute(clubId, userId)
 
                     result shouldBe emitter
-                    verify(exactly = 1) { clubMemberPolicy.getActiveMember(clubId, userId) }
-                    verify(exactly = 1) { sseSubscribePort.subscribe(clubId, userId) }
+                    verify(exactly = 1) { sseBroadcastPort.sendToUser(clubId, userId, "qr-none", any()) }
+                    verify(exactly = 0) { sseBroadcastPort.sendToUser(clubId, userId, "qr-open", any()) }
+                }
+            }
+
+            context("열린 세션이 있지만 QR이 만료된 경우") {
+                it("qr-none 이벤트를 전송한다") {
+                    val session = mockk<com.weeth.domain.session.domain.entity.Session> { every { id } returns 10L }
+                    every { sessionReader.findOpenByClubId(clubId) } returns session
+                    every { qrAttendancePort.getExpiredAt(10L) } returns null
+
+                    useCase.execute(clubId, userId)
+
+                    verify(exactly = 1) { sseBroadcastPort.sendToUser(clubId, userId, "qr-none", any()) }
+                }
+            }
+
+            context("활성 QR이 있는 경우") {
+                it("qr-open 이벤트를 전송하고 emitter를 반환한다") {
+                    val session = mockk<com.weeth.domain.session.domain.entity.Session> { every { id } returns 10L }
+                    val expiredAt = LocalDateTime.now().plusMinutes(5)
+                    every { sessionReader.findOpenByClubId(clubId) } returns session
+                    every { qrAttendancePort.getExpiredAt(10L) } returns expiredAt
+
+                    val result = useCase.execute(clubId, userId)
+
+                    result shouldBe emitter
+                    verify(exactly = 1) { sseBroadcastPort.sendToUser(clubId, userId, "qr-open", any()) }
+                    verify(exactly = 0) { sseBroadcastPort.sendToUser(clubId, userId, "qr-none", any()) }
                 }
             }
 

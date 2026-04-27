@@ -72,6 +72,19 @@ interface SessionRepository :
         cardinals: List<Int>,
     ): List<Session>
 
+    fun findFirstByClubIdAndStatusOrderByIdAsc(
+        clubId: Long,
+        status: SessionStatus,
+    ): Session?
+
+    override fun findOpenByClubId(clubId: Long): Session? =
+        findFirstByClubIdAndStatusOrderByIdAsc(clubId, SessionStatus.OPEN)
+
+    @Query("SELECT s.club.id FROM Session s WHERE s.id = :sessionId")
+    override fun findClubIdById(
+        @Param("sessionId") sessionId: Long,
+    ): Long?
+
     // 기준 시작시각 이후 세션 조회
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))

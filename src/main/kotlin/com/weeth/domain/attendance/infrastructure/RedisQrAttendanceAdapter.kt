@@ -3,6 +3,7 @@ package com.weeth.domain.attendance.infrastructure
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 
 @Component
@@ -18,9 +19,10 @@ class RedisQrAttendanceAdapter(
 
     override fun getCode(sessionId: Long): Int? = redisTemplate.opsForValue().get(key(sessionId))?.toIntOrNull()
 
-    private fun key(sessionId: Long) = "$PREFIX$sessionId"
-
-    companion object {
-        private const val PREFIX = "qr:"
+    override fun getExpiredAt(sessionId: Long): LocalDateTime? {
+        val ttl = redisTemplate.getExpire(key(sessionId), TimeUnit.SECONDS)
+        return if (ttl > 0) LocalDateTime.now().plusSeconds(ttl) else null
     }
+
+    private fun key(sessionId: Long) = "${QrAttendancePort.KEY_PREFIX}$sessionId"
 }

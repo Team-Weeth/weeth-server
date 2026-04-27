@@ -2,6 +2,7 @@ package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.event.AttendanceOpenEvent
+import com.weeth.domain.attendance.application.event.AttendanceSseEvent
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
@@ -57,7 +58,7 @@ class GenerateQrTokenUseCaseTest :
                     verify(exactly = 1) { clubPermissionPolicy.requireAdmin(10L, 20L) }
                     verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
                     verify(exactly = 1) {
-                        ssePort.broadcast(10L, GenerateQrTokenUseCase.EVENT_QR_OPEN, any<AttendanceOpenEvent>())
+                        ssePort.broadcast(10L, AttendanceSseEvent.QR_OPEN, any<AttendanceOpenEvent>())
                     }
                 }
             }
