@@ -2,6 +2,7 @@ package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.event.AttendanceOpenEvent
+import com.weeth.domain.attendance.application.event.AttendanceSseEvent
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
@@ -31,11 +32,7 @@ class GenerateQrTokenUseCase(
         qrAttendancePort.store(sessionId, session.code)
 
         val response = attendanceMapper.toQrTokenResponse(session, expiredAt)
-        ssePort.broadcast(clubId, EVENT_QR_OPEN, AttendanceOpenEvent(expiredAt))
+        ssePort.broadcast(clubId, AttendanceSseEvent.QR_OPEN, AttendanceOpenEvent(expiredAt))
         return response
-    }
-
-    companion object {
-        internal const val EVENT_QR_OPEN = "qr-open"
     }
 }
