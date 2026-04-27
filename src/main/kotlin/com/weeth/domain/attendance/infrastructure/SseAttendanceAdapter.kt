@@ -24,7 +24,7 @@ class SseAttendanceAdapter(
         val emitter = SseEmitter(TIMEOUT)
         val cleanup = { store.remove(clubId, userId, emitter) }
 
-        store.add(clubId, userId, emitter)
+        store.replace(clubId, userId, emitter)
         emitter.onCompletion(cleanup)
         emitter.onTimeout(cleanup)
         emitter.onError { cleanup() }
@@ -39,15 +39,37 @@ class SseAttendanceAdapter(
     override fun broadcast(
         clubId: Long,
         eventName: String,
-        data: Any,
+        data: Any?,
     ) {
-        val payload = runCatching { objectMapper.writeValueAsString(data) }.getOrElse { return }
+        val payload =
+            runCatching {
+                objectMapper.writeValueAsString(
+                    data ?: emptyMap<String, Any>(),
+                )
+            }.getOrElse { return }
 
         store.getAllByClub(clubId).forEach { (userId, emitter) ->
-            val cleanup = { store.remove(clubId, userId, emitter) }
             runCatching {
                 emitter.send(SseEmitter.event().name(eventName).data(payload))
-            }.onFailure { cleanup() }
+            }.onFailure { store.remove(clubId, userId, emitter) }
         }
+    }
+
+    override fun sendToUser(
+        clubId: Long,
+        userId: Long,
+        eventName: String,
+        data: Any?,
+    ) {
+        val emitter = store.getByUser(clubId, userId) ?: return
+        val payload =
+            runCatching {
+                objectMapper.writeValueAsString(
+                    data ?: emptyMap<String, Any>(),
+                )
+            }.getOrElse { return }
+        runCatching {
+            emitter.send(SseEmitter.event().name(eventName).data(payload))
+        }.onFailure { store.remove(clubId, userId, emitter) }
     }
 }
