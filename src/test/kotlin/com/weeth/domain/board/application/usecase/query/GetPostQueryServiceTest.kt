@@ -86,7 +86,20 @@ class GetPostQueryServiceTest :
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns null
 
                 shouldThrow<PostNotFoundException> {
-                    queryService.findPost(clubId, userId, 1L)
+                    queryService.findPost(clubId, userId, 0L, 1L)
+                }
+            }
+
+            it("URL의 boardId와 게시글의 게시판이 다르면 BoardNotFoundException을 던진다") {
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club)
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
+
+                every { clubMemberPolicy.getActiveMember(board.club.id, userId) } returns member
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+
+                shouldThrow<BoardNotFoundException> {
+                    queryService.findPost(board.club.id, userId, board.id + 1, 1L)
                 }
             }
 
@@ -145,7 +158,7 @@ class GetPostQueryServiceTest :
                 every { postMapper.toDetailResponse(post, comments, fileResponses, false, any()) } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
-                val result = queryService.findPost(actualClubId, userId, 1L)
+                val result = queryService.findPost(actualClubId, userId, board.id, 1L)
 
                 result.id shouldBe 1L
                 result.comments.size shouldBe 1
@@ -170,7 +183,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
                 shouldThrow<PostNotFoundException> {
-                    queryService.findPost(actualClubId, userId, 1L)
+                    queryService.findPost(actualClubId, userId, privateBoard.id, 1L)
                 }
             }
 
@@ -194,7 +207,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
 
                 shouldThrow<PostNotFoundException> {
-                    queryService.findPost(actualClubId, userId, 1L)
+                    queryService.findPost(actualClubId, userId, deletedBoard.id, 1L)
                 }
             }
         }

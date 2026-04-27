@@ -1,6 +1,7 @@
 package com.weeth.domain.board.application.usecase.command
 
-import com.weeth.domain.board.application.dto.response.PostLikeResponse
+import com.weeth.domain.board.application.dto.response.PostLikeActionResponse
+import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
 import com.weeth.domain.board.application.exception.PostNotFoundException
@@ -24,10 +25,11 @@ class ManagePostLikeUseCase(
     @Transactional
     fun like(
         clubId: Long,
+        boardId: Long,
         postId: Long,
         userId: Long,
-    ): PostLikeResponse {
-        val (post, existingLike) = getValidatedPostWithLike(clubId, postId, userId)
+    ): PostLikeActionResponse {
+        val (post, existingLike) = getValidatedPostWithLike(clubId, boardId, postId, userId)
 
         when {
             existingLike == null -> {
@@ -41,27 +43,29 @@ class ManagePostLikeUseCase(
             }
         }
 
-        return postMapper.toLikeResponse(post, isLiked = true)
+        return postMapper.toLikeActionResponse(post, isLiked = true)
     }
 
     @Transactional
     fun unlike(
         clubId: Long,
+        boardId: Long,
         postId: Long,
         userId: Long,
-    ): PostLikeResponse {
-        val (post, existingLike) = getValidatedPostWithLike(clubId, postId, userId)
+    ): PostLikeActionResponse {
+        val (post, existingLike) = getValidatedPostWithLike(clubId, boardId, postId, userId)
 
         if (existingLike?.isActive == true) {
             existingLike.deactivate()
             post.decreaseLikeCount()
         }
 
-        return postMapper.toLikeResponse(post, isLiked = false)
+        return postMapper.toLikeActionResponse(post, isLiked = false)
     }
 
     private fun getValidatedPostWithLike(
         clubId: Long,
+        boardId: Long,
         postId: Long,
         userId: Long,
     ): Pair<Post, PostLike?> {
@@ -73,6 +77,7 @@ class ManagePostLikeUseCase(
                 throw PostLikeLockTimeoutException()
             }
 
+        if (post.board.id != boardId) throw BoardNotFoundException()
         if (!post.belongsToClub(clubId)) throw PostNotFoundException()
         if (!post.board.isAccessibleBy(member.memberRole)) throw CategoryAccessDeniedException()
 

@@ -1,6 +1,7 @@
 package com.weeth.domain.board.application.usecase.command
 
-import com.weeth.domain.board.application.dto.response.PostLikeResponse
+import com.weeth.domain.board.application.dto.response.PostLikeActionResponse
+import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
 import com.weeth.domain.board.application.exception.PostNotFoundException
@@ -39,6 +40,7 @@ class ManagePostLikeUseCaseTest :
 
         val club = ClubTestFixture.createClub(id = clubId)
         val board = BoardTestFixture.create(club = club)
+        val boardId = board.id
         val member = ClubMemberTestFixture.createActiveMember(club = club)
         val otherPost =
             PostTestFixture.create(
@@ -54,8 +56,12 @@ class ManagePostLikeUseCaseTest :
             clearMocks(postRepository, postLikeRepository, clubMemberPolicy, postMapper)
             every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
             every { postLikeRepository.save(any()) } answers { firstArg() }
-            every { postMapper.toLikeResponse(any(), any()) } answers {
-                PostLikeResponse(isLiked = secondArg(), likeCount = firstArg<Post>().likeCount)
+            every { postMapper.toLikeActionResponse(any(), any()) } answers {
+                PostLikeActionResponse(
+                    boardId = firstArg<Post>().board.id,
+                    isLiked = secondArg(),
+                    likeCount = firstArg<Post>().likeCount,
+                )
             }
         }
 
@@ -64,7 +70,7 @@ class ManagePostLikeUseCaseTest :
                 it("PostNotFoundException을 던진다") {
                     every { postRepository.findByIdWithLock(postId) } returns null
 
-                    shouldThrow<PostNotFoundException> { useCase.like(clubId, postId, userId) }
+                    shouldThrow<PostNotFoundException> { useCase.like(clubId, boardId, postId, userId) }
                 }
             }
 
@@ -73,7 +79,16 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } throws
                         PessimisticLockingFailureException("lock timeout")
 
-                    shouldThrow<PostLikeLockTimeoutException> { useCase.like(clubId, postId, userId) }
+                    shouldThrow<PostLikeLockTimeoutException> { useCase.like(clubId, boardId, postId, userId) }
+                }
+            }
+
+            context("URL의 boardId와 게시글의 게시판이 다를 때") {
+                it("BoardNotFoundException을 던진다") {
+                    val post = PostTestFixture.create(board = board)
+                    every { postRepository.findByIdWithLock(postId) } returns post
+
+                    shouldThrow<BoardNotFoundException> { useCase.like(clubId, boardId + 1, postId, userId) }
                 }
             }
 
@@ -81,7 +96,7 @@ class ManagePostLikeUseCaseTest :
                 it("PostNotFoundException을 던진다") {
                     every { postRepository.findByIdWithLock(postId) } returns otherPost
 
-                    shouldThrow<PostNotFoundException> { useCase.like(clubId, postId, userId) }
+                    shouldThrow<PostNotFoundException> { useCase.like(clubId, boardId, postId, userId) }
                 }
             }
 
@@ -90,7 +105,7 @@ class ManagePostLikeUseCaseTest :
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns userMember
                     every { postRepository.findByIdWithLock(postId) } returns privatePost
 
-                    shouldThrow<CategoryAccessDeniedException> { useCase.like(clubId, postId, userId) }
+                    shouldThrow<CategoryAccessDeniedException> { useCase.like(clubId, boardId, postId, userId) }
                 }
             }
 
@@ -100,7 +115,7 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } returns post
                     every { postLikeRepository.findByPostAndUserId(post, userId) } returns null
 
-                    val result = useCase.like(clubId, postId, userId)
+                    val result = useCase.like(clubId, boardId, postId, userId)
 
                     result.isLiked shouldBe true
                     result.likeCount shouldBe 1
@@ -115,7 +130,7 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } returns post
                     every { postLikeRepository.findByPostAndUserId(post, userId) } returns existingLike
 
-                    val result = useCase.like(clubId, postId, userId)
+                    val result = useCase.like(clubId, boardId, postId, userId)
 
                     result.isLiked shouldBe true
                     result.likeCount shouldBe 1
@@ -130,7 +145,7 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } returns post
                     every { postLikeRepository.findByPostAndUserId(post, userId) } returns existingLike
 
-                    val result = useCase.like(clubId, postId, userId)
+                    val result = useCase.like(clubId, boardId, postId, userId)
 
                     result.isLiked shouldBe true
                     result.likeCount shouldBe 1
@@ -144,7 +159,7 @@ class ManagePostLikeUseCaseTest :
                 it("PostNotFoundException을 던진다") {
                     every { postRepository.findByIdWithLock(postId) } returns null
 
-                    shouldThrow<PostNotFoundException> { useCase.unlike(clubId, postId, userId) }
+                    shouldThrow<PostNotFoundException> { useCase.unlike(clubId, boardId, postId, userId) }
                 }
             }
 
@@ -153,7 +168,16 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } throws
                         PessimisticLockingFailureException("lock timeout")
 
-                    shouldThrow<PostLikeLockTimeoutException> { useCase.unlike(clubId, postId, userId) }
+                    shouldThrow<PostLikeLockTimeoutException> { useCase.unlike(clubId, boardId, postId, userId) }
+                }
+            }
+
+            context("URL의 boardId와 게시글의 게시판이 다를 때") {
+                it("BoardNotFoundException을 던진다") {
+                    val post = PostTestFixture.create(board = board)
+                    every { postRepository.findByIdWithLock(postId) } returns post
+
+                    shouldThrow<BoardNotFoundException> { useCase.unlike(clubId, boardId + 1, postId, userId) }
                 }
             }
 
@@ -161,7 +185,7 @@ class ManagePostLikeUseCaseTest :
                 it("PostNotFoundException을 던진다") {
                     every { postRepository.findByIdWithLock(postId) } returns otherPost
 
-                    shouldThrow<PostNotFoundException> { useCase.unlike(clubId, postId, userId) }
+                    shouldThrow<PostNotFoundException> { useCase.unlike(clubId, boardId, postId, userId) }
                 }
             }
 
@@ -170,7 +194,7 @@ class ManagePostLikeUseCaseTest :
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns userMember
                     every { postRepository.findByIdWithLock(postId) } returns privatePost
 
-                    shouldThrow<CategoryAccessDeniedException> { useCase.unlike(clubId, postId, userId) }
+                    shouldThrow<CategoryAccessDeniedException> { useCase.unlike(clubId, boardId, postId, userId) }
                 }
             }
 
@@ -181,7 +205,7 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } returns post
                     every { postLikeRepository.findByPostAndUserId(post, userId) } returns existingLike
 
-                    val result = useCase.unlike(clubId, postId, userId)
+                    val result = useCase.unlike(clubId, boardId, postId, userId)
 
                     result.isLiked shouldBe false
                     result.likeCount shouldBe 0
@@ -195,7 +219,7 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } returns post
                     every { postLikeRepository.findByPostAndUserId(post, userId) } returns existingLike
 
-                    val result = useCase.unlike(clubId, postId, userId)
+                    val result = useCase.unlike(clubId, boardId, postId, userId)
 
                     result.isLiked shouldBe false
                     result.likeCount shouldBe 0
@@ -208,7 +232,7 @@ class ManagePostLikeUseCaseTest :
                     every { postRepository.findByIdWithLock(postId) } returns post
                     every { postLikeRepository.findByPostAndUserId(post, userId) } returns null
 
-                    val result = useCase.unlike(clubId, postId, userId)
+                    val result = useCase.unlike(clubId, boardId, postId, userId)
 
                     result.isLiked shouldBe false
                     result.likeCount shouldBe 0
