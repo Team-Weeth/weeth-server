@@ -1,5 +1,6 @@
 package com.weeth.global.config
 
+import com.weeth.domain.attendance.infrastructure.QrExpiredEventListener
 import com.weeth.global.config.properties.RedisProperties
 import io.lettuce.core.metrics.MicrometerCommandLatencyRecorder
 import io.lettuce.core.metrics.MicrometerOptions
@@ -12,6 +13,8 @@ import org.springframework.data.redis.connection.lettuce.LettuceClientConfigurat
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.RedisKeyValueAdapter
 import org.springframework.data.redis.core.RedisTemplate
+import org.springframework.data.redis.listener.PatternTopic
+import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.data.redis.repository.configuration.EnableRedisRepositories
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
@@ -52,5 +55,15 @@ class RedisConfig(
             keySerializer = StringRedisSerializer()
             valueSerializer = StringRedisSerializer()
             connectionFactory = redisConnectionFactory
+        }
+
+    @Bean
+    fun redisMessageListenerContainer(
+        redisConnectionFactory: RedisConnectionFactory,
+        qrKeyExpiredListener: QrExpiredEventListener,
+    ): RedisMessageListenerContainer =
+        RedisMessageListenerContainer().apply {
+            setConnectionFactory(redisConnectionFactory)
+            addMessageListener(qrKeyExpiredListener, PatternTopic("__keyevent@*__:expired"))
         }
 }
