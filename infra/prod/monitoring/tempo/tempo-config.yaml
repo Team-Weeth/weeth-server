@@ -4,11 +4,18 @@ server:
   http_listen_port: 3200
 
 distributor:
+  max_attribute_bytes: 1024
   receivers:
     otlp:
       protocols:
         grpc:
           endpoint: "0.0.0.0:4317"
+
+query_frontend:
+  max_query_expression_size_bytes: 32768
+  search:
+    default_spans_per_span_set: 1
+    max_spans_per_span_set: 20
 
 storage:
   trace:
@@ -25,11 +32,7 @@ compactor:
   compaction:
     block_retention: 720h
 
-metrics_generator:
-  storage:
-    path: /var/tempo/generator/wal
-  registry:
-    external_labels:
-      source: tempo
-  traces_storage:
-    path: /var/tempo/generator/traces
+overrides:
+  defaults:
+    global:
+      max_bytes_per_trace: 3000000
