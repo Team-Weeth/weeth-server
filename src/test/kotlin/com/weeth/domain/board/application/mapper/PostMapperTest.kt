@@ -32,6 +32,8 @@ class PostMapperTest :
 
         every { board.id } returns 10L
         every { board.name } returns "일반 게시판"
+        every { board.canWriteBy(any()) } returns true
+        every { board.isCommentEnabled } returns true
 
         every { authorMember.memberRole } returns MemberRole.USER
         every { authorMember.profileImageStorageKey } returns null
@@ -55,6 +57,7 @@ class PostMapperTest :
                         files = emptyList(),
                         now = now,
                         isLiked = false,
+                        memberRole = MemberRole.USER,
                     )
 
                 response.id shouldBe 1L
@@ -89,7 +92,15 @@ class PostMapperTest :
                         ),
                     )
 
-                val response = mapper.toDetailResponse(post, comments, files, isLiked = false, now = now)
+                val response =
+                    mapper.toDetailResponse(
+                        post,
+                        comments,
+                        files,
+                        isLiked = false,
+                        now = now,
+                        memberRole = MemberRole.USER,
+                    )
 
                 response.id shouldBe 1L
                 response.commentCount shouldBe 2

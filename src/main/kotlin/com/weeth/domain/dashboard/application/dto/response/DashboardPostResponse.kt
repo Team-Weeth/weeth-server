@@ -1,5 +1,6 @@
 package com.weeth.domain.dashboard.application.dto.response
 
+import com.weeth.domain.board.application.dto.response.BoardConfigResponse
 import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.user.application.dto.response.UserInfo
@@ -27,4 +28,6 @@ data class DashboardPostResponse(
     val fileUrls: List<FileResponse>,
     @field:Schema(description = "24시간 내 새 게시글 여부", example = "true")
     val isNew: Boolean,
+    @field:Schema(description = "게시판 설정")
+    val boardConfig: BoardConfigResponse,
 )

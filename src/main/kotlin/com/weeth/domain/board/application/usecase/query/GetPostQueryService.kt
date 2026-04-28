@@ -64,7 +64,7 @@ class GetPostQueryService(
         val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId)
         val now = LocalDateTime.now()
 
-        return postMapper.toDetailResponse(post, commentTree, files, isLiked, now)
+        return postMapper.toDetailResponse(post, commentTree, files, isLiked, now, member.memberRole)
     }
 
     fun findAllPosts(
@@ -90,7 +90,7 @@ class GetPostQueryService(
 
         val posts = postRepository.findAllActiveByBoardIds(accessibleBoardIds, pageable)
 
-        return toPostListResponses(posts, userId)
+        return toPostListResponses(posts, userId, member.memberRole)
     }
 
     fun findPosts(
@@ -107,7 +107,7 @@ class GetPostQueryService(
         val pageable = PageRequest.of(pageNumber, pageSize, Sort.by(Sort.Direction.DESC, "id"))
         val posts = postRepository.findAllActiveByBoardId(boardId, pageable)
 
-        return toPostListResponses(posts, userId)
+        return toPostListResponses(posts, userId, member.memberRole)
     }
 
     fun searchPosts(
@@ -128,12 +128,13 @@ class GetPostQueryService(
             throw NoSearchResultException()
         }
 
-        return toPostListResponses(posts, userId)
+        return toPostListResponses(posts, userId, member.memberRole)
     }
 
     private fun toPostListResponses(
         posts: Slice<Post>,
         userId: Long,
+        memberRole: MemberRole,
     ): Slice<PostListResponse> {
         val postIds = posts.content.map { it.id }
         val filesByPostId = buildFileMap(postIds)
@@ -146,6 +147,7 @@ class GetPostQueryService(
                 filesByPostId[post.id]?.map(fileMapper::toFileResponse) ?: emptyList(),
                 now,
                 post.id in likedPostIds,
+                memberRole,
             )
         }
     }

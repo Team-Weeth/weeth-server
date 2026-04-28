@@ -31,4 +31,6 @@ data class PostDetailResponse(
     val fileUrls: List<FileResponse>,
     @field:Schema(description = "신규 게시글 여부 (24시간 이내)")
     val isNew: Boolean,
+    @field:Schema(description = "게시판 설정")
+    val boardConfig: BoardConfigResponse,
 )

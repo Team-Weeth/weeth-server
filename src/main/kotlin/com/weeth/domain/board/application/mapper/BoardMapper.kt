@@ -1,18 +1,23 @@
 package com.weeth.domain.board.application.mapper
 
+import com.weeth.domain.board.application.dto.response.BoardConfigResponse
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.dto.response.BoardListResponse
 import com.weeth.domain.board.domain.entity.Board
+import com.weeth.domain.club.domain.enums.MemberRole
 import org.springframework.stereotype.Component
 
 @Component
 class BoardMapper {
-    fun toListResponse(board: Board) =
-        BoardListResponse(
-            id = board.id,
-            name = board.name,
-            type = board.type,
-        )
+    fun toListResponse(
+        board: Board,
+        memberRole: MemberRole,
+    ) = BoardListResponse(
+        id = board.id,
+        name = board.name,
+        type = board.type,
+        boardConfig = BoardConfigResponse.of(board, memberRole),
+    )
 
     fun toDetailResponse(board: Board) =
         BoardDetailResponse(
