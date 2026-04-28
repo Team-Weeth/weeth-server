@@ -1,5 +1,6 @@
 package com.weeth.domain.board.application.usecase.query
 
+import com.weeth.domain.board.application.dto.response.BoardConfigResponse
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.dto.response.BoardListResponse
 import com.weeth.domain.board.application.dto.response.BoardNameDuplicateResponse
@@ -34,9 +35,10 @@ class GetBoardQueryService(
                 .filter { it.isAccessibleBy(member.memberRole) }
 
         // 공지사항 고정 첫 번째, 전체(가상) 두 번째, 나머지는 displayOrder 순
+        val memberRole = member.memberRole
         val (noticeList, otherList) = realBoards.partition { it.type == BoardType.NOTICE }
-        val noticeBoards = noticeList.map(boardMapper::toListResponse)
-        val otherBoards = otherList.map(boardMapper::toListResponse)
+        val noticeBoards = noticeList.map { boardMapper.toListResponse(it, memberRole) }
+        val otherBoards = otherList.map { boardMapper.toListResponse(it, memberRole) }
 
         return noticeBoards + VIRTUAL_ALL_BOARD + otherBoards
     }
@@ -100,7 +102,13 @@ class GetBoardQueryService(
     }
 
     companion object {
-        private val VIRTUAL_ALL_BOARD = BoardListResponse(id = null, name = "전체", type = BoardType.ALL)
+        private val VIRTUAL_ALL_BOARD =
+            BoardListResponse(
+                id = null,
+                name = "전체",
+                type = BoardType.ALL,
+                boardConfig = BoardConfigResponse(canWrite = false, canComment = false),
+            )
 
         private fun virtualAllBoardForAdmin(totalPostCount: Int) =
             BoardDetailResponse(

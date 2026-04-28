@@ -1,9 +1,11 @@
 package com.weeth.domain.dashboard.application.mapper
 
+import com.weeth.domain.board.application.dto.response.BoardConfigResponse
 import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.dashboard.application.dto.response.DashboardClubInfoResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardHomeResponse
 import com.weeth.domain.dashboard.application.dto.response.DashboardMyClubResponse
@@ -103,6 +105,7 @@ class DashboardMapper(
         files: List<File>,
         now: LocalDateTime,
         isLiked: Boolean,
+        memberRole: MemberRole,
     ) = DashboardPostResponse(
         id = post.id,
         boardId = post.board.id,
@@ -114,6 +117,7 @@ class DashboardMapper(
         like = PostLikeResponse(isLiked = isLiked, likeCount = post.likeCount),
         fileUrls = files.map(fileMapper::toFileResponse),
         isNew = post.createdAt.isAfter(now.minusHours(24)),
+        boardConfig = BoardConfigResponse.of(post.board, memberRole),
     )
 
     fun toNoticeResponse(

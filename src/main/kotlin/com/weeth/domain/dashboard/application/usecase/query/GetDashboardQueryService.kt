@@ -102,6 +102,7 @@ class GetDashboardQueryService(
                 files = filesByPostId[post.id] ?: emptyList(),
                 now = now,
                 isLiked = post.id in likedPostIds,
+                memberRole = member.memberRole,
             )
         }
     }

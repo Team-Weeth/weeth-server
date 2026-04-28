@@ -1,5 +1,6 @@
 package com.weeth.domain.board.application.usecase.query
 
+import com.weeth.domain.board.application.dto.response.BoardConfigResponse
 import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.NoSearchResultException
@@ -147,6 +148,7 @@ class GetPostQueryServiceTest :
                         comments = comments,
                         fileUrls = fileResponses,
                         isNew = false,
+                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
                     )
 
                 every { clubMemberPolicy.getActiveMember(actualClubId, userId) } returns member
@@ -155,7 +157,9 @@ class GetPostQueryServiceTest :
                 every { getCommentQueryService.toCommentTreeResponses(any()) } returns comments
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
                 every { postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId) } returns false
-                every { postMapper.toDetailResponse(post, comments, fileResponses, false, any()) } returns detail
+                every {
+                    postMapper.toDetailResponse(post, comments, fileResponses, false, any(), MemberRole.USER)
+                } returns detail
                 every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
 
                 val result = queryService.findPost(actualClubId, userId, board.id, 1L)
@@ -287,6 +291,7 @@ class GetPostQueryServiceTest :
                         like = PostLikeResponse(isLiked = false, likeCount = 0),
                         fileUrls = emptyList(),
                         isNew = true,
+                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
                     )
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
@@ -295,7 +300,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findAllActiveByBoardIds(any(), any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
                 every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
-                every { postMapper.toListResponse(any(), any(), any(), any()) } returns response
+                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
 
                 val result = queryService.findAllPosts(clubId, userId, 0, 10)
 
@@ -338,6 +343,7 @@ class GetPostQueryServiceTest :
                         like = PostLikeResponse(isLiked = false, likeCount = 0),
                         fileUrls = emptyList(),
                         isNew = false,
+                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
                     )
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
@@ -345,7 +351,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findAllActiveByBoardId(1L, any()) } returns postSlice
                 every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
                 every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
-                every { postMapper.toListResponse(any(), any(), any(), any()) } returns response
+                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
 
                 val result = queryService.findPosts(clubId, userId, 1L, 0, 10)
 
