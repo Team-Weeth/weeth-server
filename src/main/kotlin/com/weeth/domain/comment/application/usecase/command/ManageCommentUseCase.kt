@@ -7,6 +7,7 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.comment.application.dto.request.CommentSaveRequest
 import com.weeth.domain.comment.application.dto.request.CommentUpdateRequest
 import com.weeth.domain.comment.application.exception.CommentAlreadyDeletedException
+import com.weeth.domain.comment.application.exception.CommentNotAllowedException
 import com.weeth.domain.comment.application.exception.CommentNotFoundException
 import com.weeth.domain.comment.application.exception.CommentNotOwnedException
 import com.weeth.domain.comment.domain.entity.Comment
@@ -35,6 +36,8 @@ class ManageCommentUseCase(
         userId: Long,
     ) {
         val post = findPostWithLock(postId)
+        ensureCommentAllowed(post)
+
         val clubId = post.board.club.id
         val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
         val parent =
@@ -153,6 +156,12 @@ class ManageCommentUseCase(
     private fun ensureNotDeleted(comment: Comment) {
         if (comment.isDeleted) {
             throw CommentAlreadyDeletedException()
+        }
+    }
+
+    private fun ensureCommentAllowed(post: Post) {
+        if (!post.board.isCommentEnabled) {
+            throw CommentNotAllowedException()
         }
     }
 

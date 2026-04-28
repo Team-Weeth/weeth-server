@@ -17,4 +17,7 @@ enum class CommentErrorCode(
 
     @ExplainError("이미 삭제된 댓글에 대해 삭제를 재시도할 때 발생합니다.")
     COMMENT_ALREADY_DELETED(20502, HttpStatus.BAD_REQUEST, "이미 삭제된 댓글입니다."),
+
+    @ExplainError("댓글이 허용되지 않은 게시판의 게시글에 댓글을 작성하려 할 때 발생합니다.")
+    COMMENT_NOT_ALLOWED(20503, HttpStatus.FORBIDDEN, "댓글이 허용되지 않은 게시판입니다."),
 }
