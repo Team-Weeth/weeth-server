@@ -1,5 +1,7 @@
 package com.weeth.domain.attendance.application.usecase.command
 
+import com.weeth.domain.attendance.application.event.AttendanceOpenEvent
+import com.weeth.domain.attendance.application.event.AttendanceSseEvent
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.attendance.domain.port.SseSubscribePort
@@ -51,8 +53,12 @@ class SubscribeAttendanceSseUseCaseTest :
                     val result = useCase.execute(clubId, userId)
 
                     result shouldBe emitter
-                    verify(exactly = 1) { sseBroadcastPort.sendToUser(clubId, userId, "qr-none", any()) }
-                    verify(exactly = 0) { sseBroadcastPort.sendToUser(clubId, userId, "qr-open", any()) }
+                    verify(
+                        exactly = 1,
+                    ) { sseBroadcastPort.sendToUser(clubId, userId, AttendanceSseEvent.QR_NONE, null) }
+                    verify(
+                        exactly = 0,
+                    ) { sseBroadcastPort.sendToUser(clubId, userId, AttendanceSseEvent.QR_OPEN, any()) }
                 }
             }
 
@@ -64,7 +70,9 @@ class SubscribeAttendanceSseUseCaseTest :
 
                     useCase.execute(clubId, userId)
 
-                    verify(exactly = 1) { sseBroadcastPort.sendToUser(clubId, userId, "qr-none", any()) }
+                    verify(
+                        exactly = 1,
+                    ) { sseBroadcastPort.sendToUser(clubId, userId, AttendanceSseEvent.QR_NONE, null) }
                 }
             }
 
@@ -78,8 +86,17 @@ class SubscribeAttendanceSseUseCaseTest :
                     val result = useCase.execute(clubId, userId)
 
                     result shouldBe emitter
-                    verify(exactly = 1) { sseBroadcastPort.sendToUser(clubId, userId, "qr-open", any()) }
-                    verify(exactly = 0) { sseBroadcastPort.sendToUser(clubId, userId, "qr-none", any()) }
+                    verify(exactly = 1) {
+                        sseBroadcastPort.sendToUser(
+                            clubId,
+                            userId,
+                            AttendanceSseEvent.QR_OPEN,
+                            AttendanceOpenEvent(expiredAt),
+                        )
+                    }
+                    verify(
+                        exactly = 0,
+                    ) { sseBroadcastPort.sendToUser(clubId, userId, AttendanceSseEvent.QR_NONE, any()) }
                 }
             }
 
@@ -90,6 +107,7 @@ class SubscribeAttendanceSseUseCaseTest :
                     shouldThrow<MemberNotActiveException> { useCase.execute(clubId, userId) }
 
                     verify(exactly = 0) { sseSubscribePort.subscribe(any(), any()) }
+                    verify(exactly = 0) { sseBroadcastPort.sendToUser(any(), any(), any(), any()) }
                 }
             }
         }

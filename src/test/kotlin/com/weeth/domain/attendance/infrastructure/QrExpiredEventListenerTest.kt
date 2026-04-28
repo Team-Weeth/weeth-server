@@ -3,6 +3,7 @@ package com.weeth.domain.attendance.infrastructure
 import com.weeth.domain.attendance.application.event.AttendanceSseEvent
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.session.domain.repository.SessionReader
+import io.kotest.assertions.throwables.shouldNotThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.clearMocks
 import io.mockk.every
@@ -27,7 +28,7 @@ class QrExpiredEventListenerTest :
 
                     listener.onMessage(message("qr:42"), null)
 
-                    verify { sseBroadcastPort.broadcast(7L, AttendanceSseEvent.QR_CLOSE, any()) }
+                    verify { sseBroadcastPort.broadcast(7L, AttendanceSseEvent.QR_CLOSE, null) }
                 }
             }
 
@@ -54,6 +55,15 @@ class QrExpiredEventListenerTest :
                     listener.onMessage(message("qr:99"), null)
 
                     verify(exactly = 0) { sseBroadcastPort.broadcast(any(), any(), any()) }
+                }
+            }
+
+            context("broadcast 중 예외가 발생하는 경우") {
+                it("예외가 전파되지 않는다") {
+                    every { sessionReader.findClubIdById(42L) } returns 7L
+                    every { sseBroadcastPort.broadcast(any(), any(), any()) } throws RuntimeException("network error")
+
+                    shouldNotThrow<Exception> { listener.onMessage(message("qr:42"), null) }
                 }
             }
         }

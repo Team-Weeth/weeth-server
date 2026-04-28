@@ -77,6 +77,7 @@ interface SessionRepository :
         status: SessionStatus,
     ): Session?
 
+    // OPEN 세션이 복수인 경우 id가 가장 작은 것 반환
     override fun findOpenByClubId(clubId: Long): Session? =
         findFirstByClubIdAndStatusOrderByIdAsc(clubId, SessionStatus.OPEN)
 

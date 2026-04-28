@@ -64,6 +64,6 @@ class RedisConfig(
     ): RedisMessageListenerContainer =
         RedisMessageListenerContainer().apply {
             setConnectionFactory(redisConnectionFactory)
-            addMessageListener(qrKeyExpiredListener, PatternTopic("__keyevent@*__:expired"))
+            addMessageListener(qrKeyExpiredListener, PatternTopic("__keyevent@0__:expired"))
         }
 }

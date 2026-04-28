@@ -19,6 +19,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.transaction.PlatformTransactionManager
 import java.time.LocalDateTime
 
 class GenerateQrTokenUseCaseTest :
@@ -28,11 +29,21 @@ class GenerateQrTokenUseCaseTest :
         val attendanceMapper = mockk<AttendanceMapper>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val ssePort = mockk<SseBroadcastPort>(relaxed = true)
+        val transactionManager = mockk<PlatformTransactionManager>(relaxed = true)
 
         val useCase =
-            GenerateQrTokenUseCase(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort)
+            GenerateQrTokenUseCase(
+                sessionReader,
+                qrAttendancePort,
+                attendanceMapper,
+                clubPermissionPolicy,
+                ssePort,
+                transactionManager,
+            )
 
-        beforeTest { clearMocks(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort) }
+        beforeTest {
+            clearMocks(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort)
+        }
 
         describe("execute") {
             val sessionId = 1L
@@ -45,7 +56,7 @@ class GenerateQrTokenUseCaseTest :
                         QrTokenResponse(
                             sessionId = sessionId,
                             code = code,
-                            expiredAt = LocalDateTime.now().plusSeconds(600),
+                            expiredAt = LocalDateTime.now().plusSeconds(QrAttendancePort.TTL_SECONDS),
                         )
 
                     every { sessionReader.getById(sessionId) } returns session

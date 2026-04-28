@@ -26,10 +26,10 @@ class SubscribeAttendanceSseUseCase(
     ): SseEmitter {
         clubMemberPolicy.getActiveMember(clubId, userId)
 
+        val emitter = sseSubscribePort.subscribe(clubId, userId)
+
         val openSession = sessionReader.findOpenByClubId(clubId)
         val expiredAt = openSession?.let { qrAttendancePort.getExpiredAt(it.id) }
-
-        val emitter = sseSubscribePort.subscribe(clubId, userId)
 
         if (expiredAt != null) {
             sseBroadcastPort.sendToUser(clubId, userId, AttendanceSseEvent.QR_OPEN, AttendanceOpenEvent(expiredAt))

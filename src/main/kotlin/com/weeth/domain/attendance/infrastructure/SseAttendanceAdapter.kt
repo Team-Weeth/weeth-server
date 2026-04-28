@@ -3,6 +3,7 @@ package com.weeth.domain.attendance.infrastructure
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.attendance.domain.port.SseSubscribePort
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
@@ -13,6 +14,7 @@ class SseAttendanceAdapter(
 ) : SseBroadcastPort,
     SseSubscribePort {
     companion object {
+        private val log = LoggerFactory.getLogger(SseAttendanceAdapter::class.java)
         private const val TIMEOUT = 30 * 60 * 1000L
         private const val EVENT_CONNECT = "connect"
     }
@@ -42,11 +44,9 @@ class SseAttendanceAdapter(
         data: Any?,
     ) {
         val payload =
-            runCatching {
-                objectMapper.writeValueAsString(
-                    data ?: emptyMap<String, Any>(),
-                )
-            }.getOrElse { return }
+            runCatching { objectMapper.writeValueAsString(data) }
+                .onFailure { log.error("SSE payload 직렬화 실패: eventName={}", eventName, it) }
+                .getOrElse { return }
 
         store.getAllByClub(clubId).forEach { (userId, emitter) ->
             runCatching {
@@ -63,11 +63,9 @@ class SseAttendanceAdapter(
     ) {
         val emitter = store.getByUser(clubId, userId) ?: return
         val payload =
-            runCatching {
-                objectMapper.writeValueAsString(
-                    data ?: emptyMap<String, Any>(),
-                )
-            }.getOrElse { return }
+            runCatching { objectMapper.writeValueAsString(data) }
+                .onFailure { log.error("SSE payload 직렬화 실패: eventName={}", eventName, it) }
+                .getOrElse { return }
         runCatching {
             emitter.send(SseEmitter.event().name(eventName).data(payload))
         }.onFailure { store.remove(clubId, userId, emitter) }
