@@ -260,6 +260,74 @@
       "fieldConfig": {
         "defaults": { "unit": "percentunit", "max": 1, "custom": { "fillOpacity": 10 } }
       }
+    },
+    {
+      "id": 15,
+      "title": "Host & Docker",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 37 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 16,
+      "title": "Host Memory Used / Total",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 12, "x": 0, "y": 38 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes",
+          "legendFormat": "used"
+        },
+        {
+          "expr": "node_memory_MemTotal_bytes",
+          "legendFormat": "total"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value_and_name",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 17,
+      "title": "Swap Used / Total",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 38 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "node_memory_SwapTotal_bytes - node_memory_SwapFree_bytes",
+          "legendFormat": "used"
+        },
+        {
+          "expr": "node_memory_SwapTotal_bytes",
+          "legendFormat": "total"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "bytes" }
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": ["lastNotNull"],
+          "fields": ""
+        },
+        "orientation": "auto",
+        "textMode": "value_and_name",
+        "wideLayout": true
+      }
     }
   ],
   "schemaVersion": 39
