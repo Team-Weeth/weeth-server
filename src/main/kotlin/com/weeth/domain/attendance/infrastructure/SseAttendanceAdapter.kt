@@ -3,6 +3,7 @@ package com.weeth.domain.attendance.infrastructure
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.attendance.domain.port.SseSubscribePort
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
@@ -13,6 +14,7 @@ class SseAttendanceAdapter(
 ) : SseBroadcastPort,
     SseSubscribePort {
     companion object {
+        private val log = LoggerFactory.getLogger(SseAttendanceAdapter::class.java)
         private const val TIMEOUT = 30 * 60 * 1000L
         private const val EVENT_CONNECT = "connect"
     }
@@ -24,7 +26,7 @@ class SseAttendanceAdapter(
         val emitter = SseEmitter(TIMEOUT)
         val cleanup = { store.remove(clubId, userId, emitter) }
 
-        store.add(clubId, userId, emitter)
+        store.replace(clubId, userId, emitter)
         emitter.onCompletion(cleanup)
         emitter.onTimeout(cleanup)
         emitter.onError { cleanup() }
@@ -39,15 +41,33 @@ class SseAttendanceAdapter(
     override fun broadcast(
         clubId: Long,
         eventName: String,
-        data: Any,
+        data: Any?,
     ) {
-        val payload = runCatching { objectMapper.writeValueAsString(data) }.getOrElse { return }
+        val payload =
+            runCatching { objectMapper.writeValueAsString(data) }
+                .onFailure { log.error("SSE payload 직렬화 실패: eventName={}", eventName, it) }
+                .getOrElse { return }
 
         store.getAllByClub(clubId).forEach { (userId, emitter) ->
-            val cleanup = { store.remove(clubId, userId, emitter) }
             runCatching {
                 emitter.send(SseEmitter.event().name(eventName).data(payload))
-            }.onFailure { cleanup() }
+            }.onFailure { store.remove(clubId, userId, emitter) }
         }
+    }
+
+    override fun sendToUser(
+        clubId: Long,
+        userId: Long,
+        eventName: String,
+        data: Any?,
+    ) {
+        val emitter = store.getByUser(clubId, userId) ?: return
+        val payload =
+            runCatching { objectMapper.writeValueAsString(data) }
+                .onFailure { log.error("SSE payload 직렬화 실패: eventName={}", eventName, it) }
+                .getOrElse { return }
+        runCatching {
+            emitter.send(SseEmitter.event().name(eventName).data(payload))
+        }.onFailure { store.remove(clubId, userId, emitter) }
     }
 }

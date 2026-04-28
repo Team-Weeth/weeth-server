@@ -2,6 +2,7 @@ package com.weeth.domain.attendance.application.usecase.command
 
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.application.event.AttendanceOpenEvent
+import com.weeth.domain.attendance.application.event.AttendanceSseEvent
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
@@ -18,6 +19,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.transaction.PlatformTransactionManager
 import java.time.LocalDateTime
 
 class GenerateQrTokenUseCaseTest :
@@ -27,11 +29,21 @@ class GenerateQrTokenUseCaseTest :
         val attendanceMapper = mockk<AttendanceMapper>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val ssePort = mockk<SseBroadcastPort>(relaxed = true)
+        val transactionManager = mockk<PlatformTransactionManager>(relaxed = true)
 
         val useCase =
-            GenerateQrTokenUseCase(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort)
+            GenerateQrTokenUseCase(
+                sessionReader,
+                qrAttendancePort,
+                attendanceMapper,
+                clubPermissionPolicy,
+                ssePort,
+                transactionManager,
+            )
 
-        beforeTest { clearMocks(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort) }
+        beforeTest {
+            clearMocks(sessionReader, qrAttendancePort, attendanceMapper, clubPermissionPolicy, ssePort)
+        }
 
         describe("execute") {
             val sessionId = 1L
@@ -44,7 +56,7 @@ class GenerateQrTokenUseCaseTest :
                         QrTokenResponse(
                             sessionId = sessionId,
                             code = code,
-                            expiredAt = LocalDateTime.now().plusSeconds(600),
+                            expiredAt = LocalDateTime.now().plusSeconds(QrAttendancePort.TTL_SECONDS),
                         )
 
                     every { sessionReader.getById(sessionId) } returns session
@@ -57,7 +69,7 @@ class GenerateQrTokenUseCaseTest :
                     verify(exactly = 1) { clubPermissionPolicy.requireAdmin(10L, 20L) }
                     verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
                     verify(exactly = 1) {
-                        ssePort.broadcast(10L, GenerateQrTokenUseCase.EVENT_QR_OPEN, any<AttendanceOpenEvent>())
+                        ssePort.broadcast(10L, AttendanceSseEvent.QR_OPEN, any<AttendanceOpenEvent>())
                     }
                 }
             }

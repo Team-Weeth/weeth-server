@@ -4,6 +4,13 @@ interface SseBroadcastPort {
     fun broadcast(
         clubId: Long,
         eventName: String,
-        data: Any,
+        data: Any?,
+    )
+
+    fun sendToUser(
+        clubId: Long,
+        userId: Long,
+        eventName: String,
+        data: Any?,
     )
 }

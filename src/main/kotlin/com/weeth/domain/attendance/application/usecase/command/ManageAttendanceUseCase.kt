@@ -14,7 +14,6 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.application.exception.SessionNotInProgressException
-import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
@@ -62,14 +61,15 @@ class ManageAttendanceUseCase(
     @Transactional
     fun autoClose() {
         val sessions = sessionReader.findAllByStatusAndEndBeforeOrderByEndAsc(SessionStatus.OPEN, LocalDateTime.now())
-        sessions.forEach { session -> closeSingleSession(session) }
-    }
-
-    private fun closeSingleSession(session: Session) {
-        session.close()
-        val attendances =
-            attendanceRepository.findAllBySessionAndClubMemberMemberStatusWithLock(session, MemberStatus.ACTIVE)
-        closePendingAttendances(attendances)
+        if (sessions.isEmpty()) return
+        sessions.forEach { it.close() }
+        val pendingAttendances =
+            attendanceRepository.findPendingBySessionInAndMemberStatusWithLock(
+                sessions,
+                MemberStatus.ACTIVE,
+                AttendanceStatus.PENDING,
+            )
+        closePendingAttendances(pendingAttendances)
     }
 
     @Transactional
@@ -115,11 +115,9 @@ class ManageAttendanceUseCase(
     }
 
     private fun closePendingAttendances(attendances: List<Attendance>) {
-        attendances
-            .filter { it.isPending() }
-            .forEach { attendance ->
-                attendance.close()
-                attendance.clubMember.absent()
-            }
+        attendances.forEach { attendance ->
+            attendance.close()
+            attendance.clubMember.absent()
+        }
     }
 }

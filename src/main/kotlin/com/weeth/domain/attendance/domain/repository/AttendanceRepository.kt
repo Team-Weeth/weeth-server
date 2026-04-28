@@ -1,6 +1,7 @@
 package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.session.domain.entity.Session
@@ -109,6 +110,17 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
     fun findAllBySessionInAndClubMemberMemberStatusWithLock(
         @Param("sessions") sessions: List<Session>,
         @Param("status") status: MemberStatus,
+    ): List<Attendance>
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session IN :sessions AND cm.memberStatus = :memberStatus AND a.status = :attendanceStatus ORDER BY a.id ASC",
+    )
+    fun findPendingBySessionInAndMemberStatusWithLock(
+        @Param("sessions") sessions: List<Session>,
+        @Param("memberStatus") memberStatus: MemberStatus,
+        @Param("attendanceStatus") attendanceStatus: AttendanceStatus,
     ): List<Attendance>
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
