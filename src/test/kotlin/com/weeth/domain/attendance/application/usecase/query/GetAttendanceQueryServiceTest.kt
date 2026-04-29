@@ -16,9 +16,11 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.time.LocalDateTime
 
 class GetAttendanceQueryServiceTest :
     DescribeSpec({
@@ -40,7 +42,11 @@ class GetAttendanceQueryServiceTest :
             )
 
         describe("findAttendance") {
-            it("오늘 출석 요약을 ClubMember 기준으로 반환한다") {
+            beforeTest {
+                clearMocks(clubMemberPolicy, attendanceRepository)
+            }
+
+            it("오늘 출석이 1개이면 해당 출석을 반환한다") {
                 val member = ClubMemberTestFixture.createActiveMember()
                 member.attend()
                 val session =
@@ -53,7 +59,8 @@ class GetAttendanceQueryServiceTest :
                 val attendance = Attendance.create(session, member)
 
                 every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
-                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns attendance
+                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns
+                    listOf(attendance)
 
                 val result = queryService.findAttendance(member.club.id, member.user.id)
 
@@ -61,6 +68,79 @@ class GetAttendanceQueryServiceTest :
                 result.title shouldBe session.title
                 result.status shouldBe AttendanceStatus.PENDING
                 verify(exactly = 1) { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) }
+            }
+
+            it("오늘 출석이 없으면 세션 관련 필드를 null로 반환한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns emptyList()
+
+                val result = queryService.findAttendance(member.club.id, member.user.id)
+
+                result.title shouldBe null
+                result.status shouldBe null
+                result.sessionId shouldBe null
+            }
+
+            it("오늘 세션이 여러 개이면 현재 시각 이후 가장 가까운 세션을 반환한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                val now = LocalDateTime.now()
+                val pastSession =
+                    SessionTestFixture.createSession(
+                        title = "오전 세션",
+                        start = now.minusHours(3),
+                        end = now.minusHours(1),
+                        club = member.club,
+                    )
+                val upcomingSession =
+                    SessionTestFixture.createSession(
+                        title = "오후 세션",
+                        start = now.plusHours(1),
+                        end = now.plusHours(3),
+                        club = member.club,
+                    )
+
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns
+                    listOf(
+                        Attendance.create(pastSession, member),
+                        Attendance.create(upcomingSession, member),
+                    )
+
+                val result = queryService.findAttendance(member.club.id, member.user.id)
+
+                result.title shouldBe "오후 세션"
+            }
+
+            it("오늘 세션이 여러 개이고 모두 현재 시각 이전이면 마지막 세션을 반환한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                val now = LocalDateTime.now()
+                val morningSession =
+                    SessionTestFixture.createSession(
+                        title = "오전 세션",
+                        start = now.minusHours(5),
+                        end = now.minusHours(3),
+                        club = member.club,
+                    )
+                val afternoonSession =
+                    SessionTestFixture.createSession(
+                        title = "오후 세션",
+                        start = now.minusHours(2),
+                        end = now.minusHours(1),
+                        club = member.club,
+                    )
+
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns
+                    listOf(
+                        Attendance.create(morningSession, member),
+                        Attendance.create(afternoonSession, member),
+                    )
+
+                val result = queryService.findAttendance(member.club.id, member.user.id)
+
+                result.title shouldBe "오후 세션"
             }
         }
 
