@@ -66,7 +66,7 @@ class AdminClubMemberUseCase(
     ) {
         val adminMember = clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
+        val member = clubMemberPolicy.getActiveMemberInClubWithLock(clubId, clubMemberId)
         if (adminMember.id == member.id) throw SelfBanNotAllowedException()
         if (member.isLead()) throw CannotBanLeadException()
         member.ban()

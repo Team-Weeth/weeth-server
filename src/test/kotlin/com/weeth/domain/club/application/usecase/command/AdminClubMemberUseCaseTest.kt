@@ -112,7 +112,7 @@ class AdminClubMemberUseCaseTest :
                 ReflectionTestUtils.setField(adminMember, "id", 10L)
                 val member = ClubMemberTestFixture.createActiveMember(id = 20L)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 20L) } returns member
 
                 useCase.ban(1L, 10L, 20L)
 
@@ -122,7 +122,7 @@ class AdminClubMemberUseCaseTest :
             it("자기 자신은 추방할 수 없다") {
                 ReflectionTestUtils.setField(adminMember, "id", 10L)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 10L) } returns adminMember
 
                 shouldThrow<SelfBanNotAllowedException> {
                     useCase.ban(1L, 10L, 10L)
@@ -133,7 +133,7 @@ class AdminClubMemberUseCaseTest :
                 ReflectionTestUtils.setField(adminMember, "id", 10L)
                 val leadMember = ClubMemberTestFixture.createLeadMember(club = club)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns leadMember
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 20L) } returns leadMember
 
                 shouldThrow<CannotBanLeadException> {
                     useCase.ban(1L, 10L, 20L)
