@@ -30,6 +30,9 @@ enum class ClubErrorCode(
     @ExplainError("비활성 멤버가 동아리 리소스에 접근할 때 발생합니다.")
     MEMBER_NOT_ACTIVE(21106, HttpStatus.FORBIDDEN, "비활성 멤버입니다."),
 
+    @ExplainError("리더를 권한 이양 없이 추방하려 할 때 발생합니다.")
+    CANNOT_BAN_LEAD(21107, HttpStatus.BAD_REQUEST, "리더는 권한 이양 후 추방할 수 있습니다."),
+
     @ExplainError("요청한 멤버가 해당 동아리에 속하지 않을 때 발생합니다.")
     CLUB_MEMBER_NOT_IN_CLUB(21108, HttpStatus.BAD_REQUEST, "해당 동아리에 속한 멤버가 아닙니다."),
 
