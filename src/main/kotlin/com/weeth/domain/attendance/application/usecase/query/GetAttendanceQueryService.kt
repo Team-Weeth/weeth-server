@@ -13,7 +13,7 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 @Transactional(readOnly = true)
@@ -30,14 +30,26 @@ class GetAttendanceQueryService(
         userId: Long,
     ): AttendanceSummaryResponse {
         val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
-        val today = LocalDate.now()
-
-        val todayAttendance =
+        val now = LocalDateTime.now()
+        val today = now.toLocalDate()
+        val todayAttendances =
             attendanceRepository.findTodayByClubMemberId(
                 clubMember.id,
                 today.atStartOfDay(),
                 today.plusDays(1).atStartOfDay(),
             )
+
+        val todayAttendance =
+            when {
+                todayAttendances.size <= 1 -> {
+                    todayAttendances.firstOrNull()
+                }
+
+                else -> {
+                    todayAttendances.firstOrNull { it.session.start >= now }
+                        ?: todayAttendances.last()
+                }
+            }
 
         return attendanceMapper.toSummaryResponse(clubMember, todayAttendance)
     }

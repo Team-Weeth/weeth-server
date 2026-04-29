@@ -75,13 +75,14 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         WHERE a.clubMember.id = :clubMemberId
         AND s.start >= :dayStart
         AND s.end < :dayEnd
+        ORDER BY s.start ASC
         """,
     )
     fun findTodayByClubMemberId(
         @Param("clubMemberId") clubMemberId: Long,
         @Param("dayStart") dayStart: LocalDateTime,
         @Param("dayEnd") dayEnd: LocalDateTime,
-    ): Attendance?
+    ): List<Attendance>
 
     @Query(
         """
