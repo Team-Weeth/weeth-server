@@ -8,6 +8,7 @@ import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
+import com.weeth.domain.club.application.exception.CannotBanLeadException
 import com.weeth.domain.club.application.exception.CardinalRemovalHasAttendanceException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.LeadSelfTransferException
@@ -111,7 +112,7 @@ class AdminClubMemberUseCaseTest :
                 ReflectionTestUtils.setField(adminMember, "id", 10L)
                 val member = ClubMemberTestFixture.createActiveMember(id = 20L)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 20L) } returns member
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 20L) } returns member
 
                 useCase.ban(1L, 10L, 20L)
 
@@ -121,10 +122,21 @@ class AdminClubMemberUseCaseTest :
             it("자기 자신은 추방할 수 없다") {
                 ReflectionTestUtils.setField(adminMember, "id", 10L)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubMemberPolicy.getMemberInClub(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 10L) } returns adminMember
 
                 shouldThrow<SelfBanNotAllowedException> {
                     useCase.ban(1L, 10L, 10L)
+                }
+            }
+
+            it("리더는 권한 이양 전 추방할 수 없다") {
+                ReflectionTestUtils.setField(adminMember, "id", 10L)
+                val leadMember = ClubMemberTestFixture.createLeadMember(club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberPolicy.getActiveMemberInClubWithLock(1L, 20L) } returns leadMember
+
+                shouldThrow<CannotBanLeadException> {
+                    useCase.ban(1L, 10L, 20L)
                 }
             }
         }

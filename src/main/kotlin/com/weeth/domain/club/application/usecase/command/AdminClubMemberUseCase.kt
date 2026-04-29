@@ -9,6 +9,7 @@ import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
+import com.weeth.domain.club.application.exception.CannotBanLeadException
 import com.weeth.domain.club.application.exception.CardinalRemovalHasAttendanceException
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
@@ -65,8 +66,9 @@ class AdminClubMemberUseCase(
     ) {
         val adminMember = clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val member = clubMemberPolicy.getMemberInClub(clubId, clubMemberId)
+        val member = clubMemberPolicy.getActiveMemberInClubWithLock(clubId, clubMemberId)
         if (adminMember.id == member.id) throw SelfBanNotAllowedException()
+        if (member.isLead()) throw CannotBanLeadException()
         member.ban()
     }
 
