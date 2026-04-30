@@ -1,0 +1,14 @@
+package com.weeth.domain.schedule.application.exception
+
+import com.weeth.global.common.exception.ErrorCodeInterface
+import com.weeth.global.common.exception.ExplainError
+import org.springframework.http.HttpStatus
+
+enum class EventErrorCode(
+    override val code: Int,
+    override val status: HttpStatus,
+    override val message: String,
+) : ErrorCodeInterface {
+    @ExplainError("요청한 일정 ID에 해당하는 일정이 존재하지 않거나 동아리에 속하지 않은 경우에 발생합니다.")
+    EVENT_NOT_FOUND(20800, HttpStatus.NOT_FOUND, "존재하지 않는 일정입니다."),
+}

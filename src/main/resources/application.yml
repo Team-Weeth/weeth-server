@@ -1,6 +1,18 @@
+server:
+  tomcat:
+    mbeanregistry: # Tomcat Threads 확인을 위한 설정
+      enabled: true
+
 spring:
+  application:
+    name: weeth-server
   profiles:
     active: local
+    group:
+      local-monitoring:
+        - local
+  jpa:
+    open-in-view: false
 
 springdoc:
   use-fqn: true
@@ -26,6 +38,7 @@ auth:
       token_uri: https://appleid.apple.com/auth/token
       keys_uri: https://appleid.apple.com/auth/keys
       private_key_path: ${APPLE_PRIVATE_KEY_PATH}
+      frontend_redirect_uri: ${APPLE_FRONTEND_REDIRECT_URI}
 
 management:
   endpoints:
@@ -34,7 +47,41 @@ management:
         include:
           - health
           - prometheus
+          - info
+  endpoint:
+    health:
+      show-details: when-authorized
+  info:
+    env:
+      enabled: true
+    build:
+      enabled: true
   prometheus:
     metrics:
       export:
         enabled: true
+  metrics:
+    tags:
+      application: weeth-server
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms,100ms,200ms,500ms,1s
+
+app:
+  file:
+    cdn-base-url: ${CDN_BASE_URL:}
+    presigned-url-expiration-minutes: 5
+
+career-net:
+  key: ${CAREER_NET_API_KEY}
+  base-url: https://www.career.go.kr/cnet/openapi/getOpenApi
+
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL}
+
+notion:
+  token: ${NOTION_TOKEN}
+  version: ${NOTION_VERSION}
+  inquiry-database-id: ${NOTION_INQUIRY_DATABASE_ID}

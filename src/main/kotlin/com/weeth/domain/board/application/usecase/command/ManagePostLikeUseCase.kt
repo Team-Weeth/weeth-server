@@ -1,0 +1,86 @@
+package com.weeth.domain.board.application.usecase.command
+
+import com.weeth.domain.board.application.dto.response.PostLikeActionResponse
+import com.weeth.domain.board.application.exception.BoardNotFoundException
+import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
+import com.weeth.domain.board.application.exception.PostLikeLockTimeoutException
+import com.weeth.domain.board.application.exception.PostNotFoundException
+import com.weeth.domain.board.application.mapper.PostMapper
+import com.weeth.domain.board.domain.entity.Post
+import com.weeth.domain.board.domain.entity.PostLike
+import com.weeth.domain.board.domain.repository.PostLikeRepository
+import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import org.springframework.dao.PessimisticLockingFailureException
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Service
+class ManagePostLikeUseCase(
+    private val postRepository: PostRepository,
+    private val postLikeRepository: PostLikeRepository,
+    private val clubMemberPolicy: ClubMemberPolicy,
+    private val postMapper: PostMapper,
+) {
+    @Transactional
+    fun like(
+        clubId: Long,
+        boardId: Long,
+        postId: Long,
+        userId: Long,
+    ): PostLikeActionResponse {
+        val (post, existingLike) = getValidatedPostWithLike(clubId, boardId, postId, userId)
+
+        when {
+            existingLike == null -> {
+                postLikeRepository.save(PostLike(post = post, userId = userId))
+                post.increaseLikeCount()
+            }
+
+            !existingLike.isActive -> {
+                existingLike.activate()
+                post.increaseLikeCount()
+            }
+        }
+
+        return postMapper.toLikeActionResponse(post, isLiked = true)
+    }
+
+    @Transactional
+    fun unlike(
+        clubId: Long,
+        boardId: Long,
+        postId: Long,
+        userId: Long,
+    ): PostLikeActionResponse {
+        val (post, existingLike) = getValidatedPostWithLike(clubId, boardId, postId, userId)
+
+        if (existingLike?.isActive == true) {
+            existingLike.deactivate()
+            post.decreaseLikeCount()
+        }
+
+        return postMapper.toLikeActionResponse(post, isLiked = false)
+    }
+
+    private fun getValidatedPostWithLike(
+        clubId: Long,
+        boardId: Long,
+        postId: Long,
+        userId: Long,
+    ): Pair<Post, PostLike?> {
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val post =
+            try {
+                postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
+            } catch (_: PessimisticLockingFailureException) {
+                throw PostLikeLockTimeoutException()
+            }
+
+        if (post.board.id != boardId) throw BoardNotFoundException()
+        if (!post.belongsToClub(clubId)) throw PostNotFoundException()
+        if (!post.board.isAccessibleBy(member.memberRole)) throw CategoryAccessDeniedException()
+
+        return post to postLikeRepository.findByPostAndUserId(post, userId)
+    }
+}

@@ -2,11 +2,15 @@ package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.attendance.domain.entity.Attendance
-import com.weeth.domain.schedule.domain.entity.Meeting
-import com.weeth.domain.schedule.domain.entity.enums.MeetingStatus
-import com.weeth.domain.schedule.domain.repository.MeetingRepository
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.repository.ClubMemberRepository
+import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.fixture.ClubTestFixture
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.enums.SessionStatus
+import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.user.domain.entity.User
-import com.weeth.domain.user.domain.entity.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldBeEmpty
@@ -22,60 +26,91 @@ import java.time.LocalDateTime
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class AttendanceRepositoryTest(
     private val attendanceRepository: AttendanceRepository,
-    private val meetingRepository: MeetingRepository,
+    private val sessionRepository: SessionRepository,
     private val userRepository: UserRepository,
+    private val clubRepository: ClubRepository,
+    private val clubMemberRepository: ClubMemberRepository,
 ) : DescribeSpec({
 
-        lateinit var meeting: Meeting
+        lateinit var session: Session
         lateinit var activeUser1: User
         lateinit var activeUser2: User
+        lateinit var activeMember1: ClubMember
+        lateinit var activeMember2: ClubMember
 
         beforeEach {
-            meeting =
-                Meeting
-                    .builder()
-                    .title("1차 정기모임")
-                    .start(LocalDateTime.now().minusHours(1))
-                    .end(LocalDateTime.now().plusHours(1))
-                    .code(1234)
-                    .cardinal(1)
-                    .meetingStatus(MeetingStatus.OPEN)
-                    .build()
-            meetingRepository.save(meeting)
+            val club = clubRepository.save(ClubTestFixture.createClub())
+
+            session =
+                Session(
+                    club = club,
+                    title = "1차 정기모임",
+                    start = LocalDateTime.now().minusHours(1),
+                    end = LocalDateTime.now().plusHours(1),
+                    code = 1234,
+                    cardinal = 1,
+                    status = SessionStatus.OPEN,
+                )
+            sessionRepository.save(session)
 
             activeUser1 =
-                User
-                    .builder()
-                    .name("이지훈")
-                    .status(Status.ACTIVE)
-                    .build()
+                User.create(
+                    name = "이지훈",
+                    email = "lee.jihoon@test.com",
+                    studentId = "",
+                    tel = "",
+                    department = "",
+                )
             activeUser2 =
-                User
-                    .builder()
-                    .name("이강혁")
-                    .status(Status.ACTIVE)
-                    .build()
+                User.create(
+                    name = "이강혁",
+                    email = "lee.ganghyuk@test.com",
+                    studentId = "",
+                    tel = "",
+                    department = "",
+                )
             userRepository.saveAll(listOf(activeUser1, activeUser2))
             activeUser1.accept()
             activeUser2.accept()
             userRepository.saveAll(listOf(activeUser1, activeUser2))
 
-            attendanceRepository.save(Attendance(meeting, activeUser1))
-            attendanceRepository.save(Attendance(meeting, activeUser2))
+            activeMember1 =
+                clubMemberRepository.save(
+                    ClubMember(
+                        club = club,
+                        user = activeUser1,
+                        memberStatus = MemberStatus.ACTIVE,
+                    ),
+                )
+            activeMember2 =
+                clubMemberRepository.save(
+                    ClubMember(
+                        club = club,
+                        user = activeUser2,
+                        memberStatus = MemberStatus.ACTIVE,
+                    ),
+                )
+
+            attendanceRepository.save(Attendance.create(session, activeMember1))
+            attendanceRepository.save(Attendance.create(session, activeMember2))
         }
 
-        describe("findAllByMeetingAndUserStatus") {
-            it("특정 정기모임 + 사용자 상태로 출석 목록 조회") {
-                val attendances = attendanceRepository.findAllByMeetingAndUserStatus(meeting, Status.ACTIVE)
+        describe("findAllBySessionAndClubMemberMemberStatus") {
+            it("특정 세션 + 멤버 상태로 출석 목록 조회") {
+                val attendances =
+                    attendanceRepository.findAllBySessionAndClubMemberMemberStatus(
+                        session,
+                        MemberStatus.ACTIVE,
+                    )
 
                 attendances shouldHaveSize 2
-                attendances.map { it.user.name } shouldContainExactlyInAnyOrder listOf("이지훈", "이강혁")
+                attendances.map { it.clubMember.user.name } shouldContainExactlyInAnyOrder listOf("이지훈", "이강혁")
             }
         }
 
-        describe("deleteAllByMeeting") {
-            it("특정 정기모임의 모든 출석 레코드 삭제") {
-                attendanceRepository.deleteAllByMeeting(meeting)
+        describe("deleteAllBySession") {
+            it("특정 세션의 모든 출석 레코드 삭제") {
+                attendanceRepository.deleteAllBySession(session)
 
                 attendanceRepository.findAll().shouldBeEmpty()
             }

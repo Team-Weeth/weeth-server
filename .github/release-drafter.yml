@@ -1,0 +1,55 @@
+name-template: "v$RESOLVED_VERSION"
+tag-template: "v$RESOLVED_VERSION"
+
+categories:
+  - title: "✨ Features"
+    labels: ["✨ Feature"]
+  - title: "🐞 Bug Fixes"
+    labels: ["🐞 BugFix"]
+  - title: "🔐 Security"
+    labels: ["🔐 Security"]
+  - title: "🔨 Refactors"
+    labels: ["🔨 Refactor"]
+  - title: "✅ Tests"
+    labels: ["✅ Test"]
+  - title: "📃 Docs"
+    labels: ["📃 Docs"]
+  - title: "🌏 Deploy"
+    labels: ["🌏 Deploy"]
+  - title: "⚙ Settings"
+    labels: ["⚙ Setting"]
+  - title: "💻 Cross Browsing"
+    labels: ["💻 CrossBrowsing"]
+  - title: "📬 API"
+    labels: ["📬 API"]
+  - title: "🤖 Agent"
+    labels: ["🤖 Agent"]
+
+change-template: "- $TITLE (#$NUMBER) @$AUTHOR"
+change-title-escapes: "<*_&"
+
+version-resolver:
+  major:
+     labels: ["💥 Breaking"]
+
+  minor:
+    labels: ["✨ Feature"]
+
+  patch:
+    labels:
+      - "🐞 BugFix"
+      - "🔐 Security"
+      - "🔨 Refactor"
+      - "✅ Test"
+      - "📃 Docs"
+      - "🌏 Deploy"
+      - "⚙ Setting"
+      - "💻 CrossBrowsing"
+      - "📬 API"
+      - "🤖 Agent"
+
+  default: patch
+
+template: |
+  ## Changes
+  $CHANGES

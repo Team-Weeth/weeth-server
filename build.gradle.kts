@@ -17,8 +17,12 @@ version = "0.0.1-SNAPSHOT"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
+}
+
+kotlin {
+    jvmToolchain(21)
 }
 
 repositories {
@@ -33,21 +37,7 @@ val testcontainersBomVersion = "2.0.3"
 val kotestVersion = "5.9.1"
 val mockkVersion = "1.13.14"
 val springmockkVersion = "4.0.2"
-val lombokVersion = "1.18.36"
-val mapstructVersion = "1.6.3"
-
 dependencies {
-    // --- Lombok (temporary, will be removed during Kotlin migration) ---
-    compileOnly("org.projectlombok:lombok:$lombokVersion")
-    annotationProcessor("org.projectlombok:lombok:$lombokVersion")
-    testCompileOnly("org.projectlombok:lombok:$lombokVersion")
-    testAnnotationProcessor("org.projectlombok:lombok:$lombokVersion")
-
-    // --- MapStruct (temporary, will be removed during Kotlin migration) ---
-    implementation("org.mapstruct:mapstruct:$mapstructVersion")
-    annotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
-    testAnnotationProcessor("org.mapstruct:mapstruct-processor:$mapstructVersion")
-
     // --- Kotlin ---
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -58,18 +48,32 @@ dependencies {
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.boot:spring-boot-starter-aop")
 
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+
+    // Cache
+    implementation("org.springframework.boot:spring-boot-starter-cache")
 
     // Actuator + Prometheus
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     runtimeOnly("io.micrometer:micrometer-registry-prometheus")
 
+    // Logging
+    implementation("net.logstash.logback:logstash-logback-encoder:8.0")
+    implementation("com.github.loki4j:loki-logback-appender:1.5.2")
+
+    // Tracing API (runtime spans are produced by the OpenTelemetry Java Agent)
+    implementation("io.opentelemetry:opentelemetry-api")
+
     // --- JWT ---
     implementation("io.jsonwebtoken:jjwt-api:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-impl:$jjwtVersion")
     runtimeOnly("io.jsonwebtoken:jjwt-jackson:$jjwtVersion")
+
+    // --- TSID ---
+    implementation("io.hypersistence:hypersistence-tsid:2.1.4")
 
     // --- DB ---
     runtimeOnly("com.mysql:mysql-connector-j")
@@ -112,12 +116,18 @@ tasks.withType<KotlinCompile>().configureEach {
             "-Xjsr305=strict",
             "-Xjvm-default=all",
         )
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
 tasks.test {
-    useJUnitPlatform()
+    val runPerformanceTests = (findProperty("runPerformanceTests") as String?)?.toBoolean() ?: false
+    systemProperty("runPerformanceTests", runPerformanceTests.toString())
+    useJUnitPlatform {
+        if (!runPerformanceTests) {
+            excludeTags("performance")
+        }
+    }
 }
 
 // plain jar 파일 생성 방지 (bootJar는 그대로)

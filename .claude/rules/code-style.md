@@ -67,6 +67,17 @@ companion object {
 }
 ```
 
+## Comments
+
+- Do NOT comment on self-explanatory code
+- Add comments in these cases:
+  - **Core business logic**: Domain rules, policy decisions — explain "why", not "what"
+  - **Collaboration aid**: Intent or background that other developers need to understand the code
+  - **Non-obvious implementation**: Performance optimizations, workarounds, external system constraints
+  - **Architecture decisions**: Reason for choosing a specific pattern or structure (e.g., `// NOTE: Kept in Java for Lombok @SuperBuilder compatibility`)
+- Use KDoc (`/** */`) for public APIs, Port interfaces, and external contracts
+- Use inline comments (`//`) for implementation intent within methods
+
 ## Null Handling
 
 ```kotlin

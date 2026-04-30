@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Weeth Server is a community platform backend built with Spring Boot 3.5.10. The codebase is in active **Java → Kotlin migration** — new code should be written in Kotlin, while ~271 Java files remain. Lombok and MapStruct are temporary dependencies being phased out in favor of Kotlin idioms and manual mappers.
+Weeth Server is a community platform backend built with Spring Boot 3.5.10. The codebase has completed **Java → Kotlin migration** — all code is Kotlin.
 
 ## Build & Development Commands
 
@@ -19,9 +19,9 @@ Weeth Server is a community platform backend built with Spring Boot 3.5.10. The 
 ./gradlew bootRun --args='--spring.profiles.active=dev'  # Run with specific profile
 ```
 
-**Prerequisites:** JDK 17, MySQL 8.0, Redis 7.0+, environment variables configured in `.env`
+**Prerequisites:** JDK 21, MySQL 8.0, Redis 7.0+, environment variables configured in `.env`
 
-**Profiles:** `local` (default dev), `dev` (dev server, ddl-auto: update), `prod` (Swagger disabled, ddl-auto: validate), `test`
+**Profiles:** `local` (default dev), `local-monitoring` (local + monitoring stack), `dev` (dev server, ddl-auto: update), `prod` (Swagger disabled, ddl-auto: validate)
 
 ## Architecture
 
@@ -35,7 +35,7 @@ presentation → application → domain ← infrastructure
 - **infrastructure/**: Port implementations (Adapters for S3, external APIs, etc.)
 
 ### Domain Package Layout
-Each of the 8 domains (`user`, `attendance`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`) follows:
+Each of the 13 domains (`user`, `attendance`, `session`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`, `cardinal`, `club`, `dashboard`, `university`) follows:
 ```
 domain/{name}/
 ├── application/
@@ -52,8 +52,8 @@ domain/{name}/
 │   └── service/            # Multi-entity logic only (no thin wrappers)
 ├── infrastructure/         # Port implementations
 └── presentation/
-    ├── {Domain}Controller.java
-    └── {Domain}ResponseCode.java
+    ├── {Domain}Controller.kt
+    └── {Domain}ResponseCode.kt
 ```
 
 ### Key Patterns
@@ -64,21 +64,7 @@ domain/{name}/
 - **`@Transactional` on UseCase only** — Domain Services have no transaction annotations
 
 ### Response Format
-All API responses wrapped in `CommonResponse<T>` with code/message/data. Success codes use `ResponseCodeInterface` enums (1xxx range), error codes use `ErrorCodeInterface` enums (2xxx domain errors, 3xxx server, 4xxx client).
-
-### Error Code Ranges
-
-| Domain | Success | Error |
-|--------|---------|-------|
-| Account | 11xx | 21xx |
-| Attendance | 12xx | 22xx |
-| Board | 13xx | 23xx |
-| Comment | 140xx | 240x |
-| File | 15xx | 25xx |
-| Penalty | 160xx | 260x |
-| Schedule | 17xx | 27xx |
-| User | 18xx | 28xx |
-| JWT (Global) | — | 29xx |
+All API responses wrapped in `CommonResponse<T>` with code/message/data. 5-digit code format `XDDNN`: X=category (1=Success, 2=Domain Error, 3=Infra Error, 4=Client Error), DD=domain ID, NN=sequence. See `.claude/rules/api-design.md` for full domain ID mapping and code ranges.
 
 ### Authentication
 JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser` annotation injects authenticated user ID into controller methods.
@@ -91,14 +77,32 @@ JWT with symmetric key (JJWT 0.13.0), OAuth2 via Kakao and Apple. `@CurrentUser`
 - **Fixture pattern**: `{Entity}TestFixture` objects with factory methods in `fixture/` directories
 - Test architecture mirrors source: mock Repository/Reader/Port in UseCase tests, mock Port (not adapter) in application tests
 
-## Kotlin Migration Notes
+## Kotlin Migration Status
 
-- New code: Kotlin. Existing Java code migrated incrementally.
-- Replace Lombok with Kotlin data classes/properties
-- Replace MapStruct with manual `@Component` Mapper classes (see `.claude/rules/mapper-dto.md`)
+**✅ Complete** — 452 Kotlin files (100%)
+
+- Java → Kotlin migration fully complete
+- Lombok and MapStruct dependencies removed
+- All 16 mappers migrated to manual `@Component` Mapper classes (see `.claude/rules/mapper-dto.md`)
+- Entity fields use `private set` for Rich Domain Model pattern (see architecture.md)
+- OSIV disabled: `spring.jpa.open-in-view: false` in `application.yml`
+
+## Kotlin Conventions
+
 - Use `?.`, `?:`, `requireNotNull` — avoid `!!`
 - Entities: regular `class` (not `data class`); DTOs: `data class`
+- Entity setters: `private set` to enforce business logic via named methods
+- Example:
+  ```kotlin
+  var name: String
+      private set
+
+  fun updateName(newName: String) {
+      require(newName.isNotBlank()) { "Name cannot be empty" }
+      this.name = newName
+  }
+  ```
 
 ## Detailed Rules
 
-Architecture, code style, testing, API design, exception handling, transactions, git conventions, and logging rules are documented in `.claude/rules/`. Refer to those files for comprehensive guidance on each topic.
+Architecture, code style, testing, API design, exception handling, transactions, and git conventions are documented in `.claude/rules/`. Refer to those files for comprehensive guidance on each topic.

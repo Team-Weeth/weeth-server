@@ -1,0 +1,40 @@
+name: Deploy Monitoring (Dev)
+
+on:
+  push:
+    branches: [dev]
+    paths:
+      - "infra/dev/monitoring/**"
+      - ".github/workflows/deploy-monitoring-dev.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Upload monitoring files to EC2
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          source: "infra/dev/monitoring"
+          target: "${{ secrets.DEV_DEPLOY_DIR }}"
+
+      - name: Deploy monitoring stack
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEV_EC2_HOST }}
+          username: ${{ secrets.DEV_EC2_USER }}
+          key: ${{ secrets.DEV_EC2_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            DEPLOY_DIR="${{ secrets.DEV_DEPLOY_DIR }}/infra/dev/monitoring"
+            chmod +x "$DEPLOY_DIR/scripts/deploy.sh"
+            DEPLOY_DIR="$DEPLOY_DIR" "$DEPLOY_DIR/scripts/deploy.sh"

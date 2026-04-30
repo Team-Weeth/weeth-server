@@ -1,0 +1,58 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ktlint-format.sh",
+            "timeout": 120,
+            "statusMessage": "Running ktlint format..."
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "deny": [
+      "Edit(**/.env*)",
+      "Edit(**/*.pem)",
+      "Edit(**/*.key)",
+      "Edit(**/*secret*)",
+      "Edit(**/*credential*)",
+      "Write(**/.env*)",
+      "Write(**/*.pem)",
+      "Write(**/*.key)",
+      "Write(**/*secret*)",
+      "Write(**/*credential*)"
+    ],
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "NotebookEdit",
+      "mcp__ide__getDiagnostics",
+      "Edit(src/main/**)",
+      "Edit(src/test/**)",
+      "Edit(docs/**)",
+      "Edit(build.gradle.kts)",
+      "Edit(settings.gradle.kts)",
+      "Edit(CLAUDE.md)",
+      "Edit(.claude/**)",
+      "Edit(.editorconfig)",
+      "Write(src/main/**)",
+      "Write(src/test/**)",
+      "Write(docs/**)",
+      "Write(.claude/**)"
+    ],
+    "ask": [
+      "Bash(git *)",
+      "Bash(gh *)",
+      "Edit(src/main/resources/application-prod*)",
+      "Edit(src/main/resources/application-dev*)",
+      "Write(src/main/resources/application-prod*)",
+      "Write(src/main/resources/application-dev*)"
+    ]
+  }
+}

@@ -3,7 +3,7 @@
 ## Package Structure
 
 ```text
-src/main/kotlin/weeth/
+src/main/kotlin/com/weeth/
 ├── domain/{domain-name}/
 │   ├── application/
 │   │   ├── dto/request/, dto/response/
@@ -26,7 +26,8 @@ src/main/kotlin/weeth/
 └── global/
     ├── auth/
     ├── config/
-    └── common/
+    ├── common/
+    └── logging/
 ```
 
 ## Layer Dependencies
@@ -79,10 +80,49 @@ presentation → application → domain (owns Port)
 
 ## Entity (Rich Domain Model)
 
-- **Factory method**: `companion object` with `create()` / `of()` including validation
 - **State changes**: named methods (`publish()`, `softDelete()`) — no public setters
 - **Validation**: `require` for argument checks, `check` for state preconditions
 - **Business decisions**: `isEditableBy()`, `canPublish()` belong to Entity
+
+### Constructor Pattern
+
+Primary constructor takes **business creation params only** (non-property) — JPA-managed fields (`id`, `isDeleted`) belong in the body with `private set` and default values.
+
+```kotlin
+@Entity
+class Post(
+    title: String,
+    content: String,
+    user: User,
+    board: Board,
+) : BaseEntity() {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long = 0L
+        private set
+
+    var title: String = title
+        private set
+    // ...
+
+    companion object {
+        fun create(title: String, content: String, user: User, board: Board): Post {
+            require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
+            return Post(title = title, content = content, user = user, board = board)
+        }
+    }
+}
+```
+
+| Concern | Location |
+|---------|----------|
+| JPA-managed fields (`id`, `isDeleted`) | Body, `private set`, default value |
+| Business creation params | Primary constructor (non-property) |
+| Validation | `create()` / named mutation methods — not constructor |
+
+- **Factory method** (`companion object`): use when the entity has creation logic or validation. Expresses domain intent.
+- **Simple entities** (e.g., `Board`): public constructor is fine; no factory method needed if creation is trivial.
 
 ## Value Object (VO)
 
@@ -154,8 +194,8 @@ class User(
 
 ## Port-Adapter Pattern
 
-- **Port** (`domain/port/`): interface in domain language, no tech names → `FileStorage`, `PushNotificationSender`
-- **Adapter** (`infrastructure/`): implementation with tech prefix → `S3FileStorage`, `FcmPushNotificationSender`
+- **Port** (`domain/port/`): interface in domain language → `FileStoragePort`, `PushNotificationSenderPort`
+- **Adapter** (`infrastructure/`): implementation with tech prefix → `S3FileStorageAdapter`, `FcmPushNotificationSenderAdapter`
 - UseCase depends on Port interface only → swappable, testable
 
 ## Core Principles
@@ -164,4 +204,4 @@ class User(
 2. **UseCase = orchestration**: coordinates flow; "how" is decided by Entity
 3. **No meaningless services**: Repository wrappers are eliminated; Domain Service only for multi-entity logic
 4. **Port-Adapter**: domain owns Port interfaces; infrastructure implements them
-5. **Incremental migration**: migrate Java → Kotlin preserving existing structure
+5. **Kotlin-first**: Java → Kotlin migration complete; all new code in Kotlin

@@ -1,0 +1,362 @@
+package com.weeth.domain.board.application.usecase.query
+
+import com.weeth.domain.board.application.dto.response.BoardConfigResponse
+import com.weeth.domain.board.application.dto.response.PostLikeResponse
+import com.weeth.domain.board.application.exception.BoardNotFoundException
+import com.weeth.domain.board.application.exception.NoSearchResultException
+import com.weeth.domain.board.application.exception.PageNotFoundException
+import com.weeth.domain.board.application.exception.PostNotFoundException
+import com.weeth.domain.board.application.mapper.PostMapper
+import com.weeth.domain.board.domain.enums.BoardType
+import com.weeth.domain.board.domain.repository.BoardRepository
+import com.weeth.domain.board.domain.repository.PostLikeRepository
+import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.board.fixture.BoardTestFixture
+import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.comment.application.dto.response.CommentResponse
+import com.weeth.domain.comment.application.usecase.query.GetCommentQueryService
+import com.weeth.domain.comment.domain.repository.CommentReader
+import com.weeth.domain.file.application.dto.response.FileResponse
+import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.user.application.dto.response.UserInfo
+import com.weeth.domain.user.fixture.UserTestFixture
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.SliceImpl
+import java.time.LocalDateTime
+
+class GetPostQueryServiceTest :
+    DescribeSpec({
+        val postRepository = mockk<PostRepository>()
+        val boardRepository = mockk<BoardRepository>()
+        val postLikeRepository = mockk<PostLikeRepository>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val commentReader = mockk<CommentReader>()
+        val getCommentQueryService = mockk<GetCommentQueryService>()
+        val fileReader = mockk<FileReader>()
+        val fileMapper = mockk<FileMapper>()
+        val postMapper = mockk<PostMapper>()
+
+        val queryService =
+            GetPostQueryService(
+                postRepository,
+                boardRepository,
+                postLikeRepository,
+                clubMemberPolicy,
+                commentReader,
+                getCommentQueryService,
+                fileReader,
+                fileMapper,
+                postMapper,
+            )
+
+        val clubId = 1L
+        val userId = 1L
+
+        beforeTest {
+            clearMocks(
+                postRepository,
+                boardRepository,
+                postLikeRepository,
+                clubMemberPolicy,
+                commentReader,
+                getCommentQueryService,
+                fileReader,
+                fileMapper,
+                postMapper,
+            )
+        }
+
+        describe("findPost") {
+            it("존재하지 않는 게시글이면 예외를 던진다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns null
+
+                shouldThrow<PostNotFoundException> {
+                    queryService.findPost(clubId, userId, 0L, 1L)
+                }
+            }
+
+            it("URL의 boardId와 게시글의 게시판이 다르면 BoardNotFoundException을 던진다") {
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club)
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
+
+                every { clubMemberPolicy.getActiveMember(board.club.id, userId) } returns member
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+
+                shouldThrow<BoardNotFoundException> {
+                    queryService.findPost(board.club.id, userId, board.id + 1, 1L)
+                }
+            }
+
+            it("댓글/파일을 포함한 상세 응답을 반환한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val actualClubId = board.club.id
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
+                val comments = listOf(mockk<CommentResponse>())
+                val fileResponses =
+                    listOf(
+                        FileResponse(
+                            fileId = 1L,
+                            fileName = "a.png",
+                            fileUrl = "https://cdn/a.png",
+                            storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_a.png",
+                            fileSize = 100,
+                            contentType = "image/png",
+                            status = FileStatus.UPLOADED,
+                        ),
+                    )
+                val files =
+                    listOf(
+                        File.createUploaded(
+                            fileName = "a.png",
+                            storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_a.png",
+                            fileSize = 100,
+                            contentType = "image/png",
+                            ownerType = FileOwnerType.POST,
+                            ownerId = 1L,
+                        ),
+                    )
+                val detail =
+                    com.weeth.domain.board.application.dto.response.PostDetailResponse(
+                        id = 1L,
+                        boardId = 1L,
+                        boardName = "일반 게시판",
+                        author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = MemberRole.USER),
+                        title = "제목",
+                        content = "내용",
+                        time = LocalDateTime.now(),
+                        commentCount = 1,
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
+                        comments = comments,
+                        fileUrls = fileResponses,
+                        isNew = false,
+                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
+                    )
+
+                every { clubMemberPolicy.getActiveMember(actualClubId, userId) } returns member
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+                every { commentReader.findAllByPostId(any<Long>()) } returns emptyList()
+                every { getCommentQueryService.toCommentTreeResponses(any()) } returns comments
+                every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
+                every { postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId) } returns false
+                every {
+                    postMapper.toDetailResponse(post, comments, fileResponses, false, any(), MemberRole.USER)
+                } returns detail
+                every { fileMapper.toFileResponse(files.first()) } returns fileResponses.first()
+
+                val result = queryService.findPost(actualClubId, userId, board.id, 1L)
+
+                result.id shouldBe 1L
+                result.comments.size shouldBe 1
+                result.fileUrls.size shouldBe 1
+            }
+
+            it("비공개 게시판 게시글은 일반 멤버에게 노출하지 않는다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val privateBoard = BoardTestFixture.create(name = "비공개", type = BoardType.GENERAL)
+                val actualClubId = privateBoard.club.id
+                privateBoard.updateConfig(privateBoard.config.copy(isPrivate = true))
+                val member = ClubMemberTestFixture.createActiveMember(club = privateBoard.club, user = user)
+                val post =
+                    PostTestFixture.create(
+                        title = "제목",
+                        content = "내용",
+                        clubMember = member,
+                        board = privateBoard,
+                    )
+
+                every { clubMemberPolicy.getActiveMember(actualClubId, userId) } returns member
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+
+                shouldThrow<PostNotFoundException> {
+                    queryService.findPost(actualClubId, userId, privateBoard.id, 1L)
+                }
+            }
+
+            it("삭제된 게시판의 게시글은 조회할 수 없다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val deletedBoard =
+                    BoardTestFixture
+                        .create(name = "삭제", type = BoardType.GENERAL)
+                        .also { it.markDeleted() }
+                val actualClubId = deletedBoard.club.id
+                val member = ClubMemberTestFixture.createActiveMember(club = deletedBoard.club, user = user)
+                val post =
+                    PostTestFixture.create(
+                        title = "제목",
+                        content = "내용",
+                        clubMember = member,
+                        board = deletedBoard,
+                    )
+
+                every { clubMemberPolicy.getActiveMember(actualClubId, userId) } returns member
+                every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
+
+                shouldThrow<PostNotFoundException> {
+                    queryService.findPost(actualClubId, userId, deletedBoard.id, 1L)
+                }
+            }
+        }
+
+        describe("searchPosts") {
+            it("검색 결과가 없으면 예외를 던진다") {
+                val pageable = PageRequest.of(0, 10)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(1L, clubId) } returns board
+                every { postRepository.searchByBoardId(1L, "키워드", any()) } returns
+                    SliceImpl(emptyList(), pageable, false)
+
+                shouldThrow<NoSearchResultException> {
+                    queryService.searchPosts(clubId, userId, 1L, "키워드", 0, 10)
+                }
+            }
+
+            it("비공개 게시판은 일반 멤버가 검색할 수 없다") {
+                val privateBoard = BoardTestFixture.create(name = "비공개", type = BoardType.GENERAL)
+                privateBoard.updateConfig(privateBoard.config.copy(isPrivate = true))
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(1L, clubId) } returns privateBoard
+
+                shouldThrow<BoardNotFoundException> {
+                    queryService.searchPosts(clubId, userId, 1L, "키워드", 0, 10)
+                }
+            }
+        }
+
+        describe("validatePage") {
+            it("음수 페이지면 예외를 던진다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                shouldThrow<PageNotFoundException> {
+                    queryService.findPosts(clubId, userId, 1L, -1, 10)
+                }
+            }
+
+            it("pageSize가 0이면 예외를 던진다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                shouldThrow<PageNotFoundException> {
+                    queryService.findPosts(clubId, userId, 1L, 0, 0)
+                }
+            }
+
+            it("pageSize가 최대값을 초과하면 예외를 던진다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                shouldThrow<PageNotFoundException> {
+                    queryService.findPosts(clubId, userId, 1L, 0, 51)
+                }
+            }
+        }
+
+        describe("findAllPosts") {
+            it("접근 가능한 게시판의 게시글을 최신순으로 반환한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
+                val pageable = PageRequest.of(0, 10)
+                val postSlice = SliceImpl(listOf(post), pageable, false)
+                val response =
+                    com.weeth.domain.board.application.dto.response.PostListResponse(
+                        id = post.id,
+                        author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = MemberRole.USER),
+                        boardId = board.id,
+                        boardName = "일반",
+                        title = "제목",
+                        content = "내용",
+                        time = LocalDateTime.now(),
+                        commentCount = 0,
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
+                        fileUrls = emptyList(),
+                        isNew = true,
+                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
+                    )
+
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns
+                    listOf(board)
+                every { postRepository.findAllActiveByBoardIds(any(), any()) } returns postSlice
+                every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
+                every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
+                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
+
+                val result = queryService.findAllPosts(clubId, userId, 0, 10)
+
+                result.content.size shouldBe 1
+            }
+
+            it("접근 가능한 게시판이 없으면 빈 슬라이스를 반환한다") {
+                val board = BoardTestFixture.create(name = "비공개", type = BoardType.GENERAL)
+                board.updateConfig(board.config.copy(isPrivate = true))
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club)
+
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns
+                    listOf(board)
+
+                val result = queryService.findAllPosts(clubId, userId, 0, 10)
+
+                result.content shouldBe emptyList()
+            }
+        }
+
+        describe("findPosts") {
+            it("목록 조회 시 mapper를 통해 응답으로 변환한다") {
+                val user = UserTestFixture.createActiveUser1(1L)
+                val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
+                val member = ClubMemberTestFixture.createActiveMember(club = board.club, user = user)
+                val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = member, board = board)
+                val pageable = PageRequest.of(0, 10)
+                val postSlice = SliceImpl(listOf(post), pageable, false)
+                val response =
+                    com.weeth.domain.board.application.dto.response.PostListResponse(
+                        id = 10L,
+                        author = UserInfo(id = 1L, name = "적순", profileImageUrl = null, role = MemberRole.USER),
+                        boardId = board.id,
+                        boardName = "일반 게시판",
+                        title = "제목",
+                        content = "내용",
+                        time = LocalDateTime.now(),
+                        commentCount = 0,
+                        like = PostLikeResponse(isLiked = false, likeCount = 0),
+                        fileUrls = emptyList(),
+                        isNew = false,
+                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
+                    )
+
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(1L, clubId) } returns board
+                every { postRepository.findAllActiveByBoardId(1L, any()) } returns postSlice
+                every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
+                every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
+                every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
+
+                val result = queryService.findPosts(clubId, userId, 1L, 0, 10)
+
+                result.content.size shouldBe 1
+                verify(exactly = 1) { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) }
+            }
+        }
+    })

@@ -1,0 +1,373 @@
+{
+  "uid": "weeth-external-infra",
+  "title": "External Infrastructure",
+  "tags": ["weeth", "db", "redis"],
+  "timezone": "Asia/Seoul",
+  "refresh": "10s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "HikariCP (MySQL)",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 2,
+      "title": "Active",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active",
+          "legendFormat": "active"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 5 },
+              { "color": "red", "value": 8 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Idle",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_idle",
+          "legendFormat": "idle"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "green", "value": 3 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 4,
+      "title": "Pending",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_pending",
+          "legendFormat": "pending"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 3 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "Total / Max",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "hikaricp_connections",
+          "legendFormat": "total"
+        },
+        {
+          "expr": "hikaricp_connections_max",
+          "legendFormat": "max"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Timeout Total",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "커넥션 획득 timeout 누적 횟수. 0이 아니면 커넥션 풀 고갈 발생.",
+      "targets": [
+        {
+          "expr": "hikaricp_connections_timeout_total",
+          "legendFormat": "timeouts"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 7,
+      "title": "Timeout Rate / min",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_timeout_total[1m]) * 60",
+          "legendFormat": "timeouts/min"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 0.1 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 8,
+      "title": "Connection Pool Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "hikaricp_connections_active",
+          "legendFormat": "active"
+        },
+        {
+          "expr": "hikaricp_connections_idle",
+          "legendFormat": "idle"
+        },
+        {
+          "expr": "hikaricp_connections_pending",
+          "legendFormat": "pending"
+        },
+        {
+          "expr": "hikaricp_connections",
+          "legendFormat": "total"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "custom": { "fillOpacity": 10 } }
+      }
+    },
+    {
+      "id": 9,
+      "title": "Connection Acquire Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_acquire_seconds_sum[1m]) / rate(hikaricp_connections_acquire_seconds_count[1m])",
+          "legendFormat": "avg acquire time"
+        },
+        {
+          "expr": "hikaricp_connections_acquire_seconds_max",
+          "legendFormat": "max acquire time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "fillOpacity": 10 } }
+      }
+    },
+    {
+      "id": 10,
+      "title": "Connection Creation Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_creation_seconds_sum[1m]) / rate(hikaricp_connections_creation_seconds_count[1m])",
+          "legendFormat": "avg creation time"
+        },
+        {
+          "expr": "hikaricp_connections_creation_seconds_max",
+          "legendFormat": "max creation time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "fillOpacity": 10 } }
+      }
+    },
+    {
+      "id": 11,
+      "title": "Connection Usage Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(hikaricp_connections_usage_seconds_sum[1m]) / rate(hikaricp_connections_usage_seconds_count[1m])",
+          "legendFormat": "avg usage time"
+        },
+        {
+          "expr": "hikaricp_connections_usage_seconds_max",
+          "legendFormat": "max usage time"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "fillOpacity": 10 } }
+      }
+    },
+    {
+      "id": 12,
+      "title": "Redis",
+      "type": "row",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "id": 13,
+      "title": "Redis Command Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 22 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(lettuce_command_completion_seconds_count[1m]))",
+          "legendFormat": "commands/sec"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "fillOpacity": 10 } }
+      }
+    },
+    {
+      "id": 14,
+      "title": "Redis Command Latency",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(lettuce_command_completion_seconds_sum[1m]) / rate(lettuce_command_completion_seconds_count[1m])",
+          "legendFormat": "avg latency"
+        },
+        {
+          "expr": "lettuce_command_completion_seconds_max",
+          "legendFormat": "max latency"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s", "custom": { "fillOpacity": 10 } }
+      }
+    },
+    {
+      "id": 15,
+      "title": "Redis Command by Type",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 22 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum by(command) (rate(lettuce_command_completion_seconds_count[1m]))",
+          "legendFormat": "{{command}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "fillOpacity": 5 } }
+      }
+    },
+    {
+      "id": 16,
+      "title": "Redis Command Errors",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(rate(lettuce_command_firstresponse_seconds_count{outcome=\"ERROR\"}[1m]))",
+          "legendFormat": "errors/sec"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ops",
+          "custom": { "fillOpacity": 10 },
+          "color": { "fixedColor": "red", "mode": "fixed" }
+        }
+      }
+    },
+    {
+      "id": 17,
+      "title": "Redis Cache Hit Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "description": "Redis 서버 전체 캐시 히트율. redis_exporter의 keyspace_hits/misses 기반.",
+      "targets": [
+        {
+          "expr": "rate(redis_keyspace_hits_total[5m]) / clamp_min(rate(redis_keyspace_hits_total[5m]) + rate(redis_keyspace_misses_total[5m]), 0.001) * 100",
+          "legendFormat": "hit rate"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": { "fillOpacity": 10 },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 80 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 18,
+      "title": "Redis Cache Hits / Misses",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 30 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(redis_keyspace_hits_total[1m])",
+          "legendFormat": "hits/sec"
+        },
+        {
+          "expr": "rate(redis_keyspace_misses_total[1m])",
+          "legendFormat": "misses/sec"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ops", "custom": { "fillOpacity": 10 } }
+      }
+    }
+  ],
+  "schemaVersion": 39
+}

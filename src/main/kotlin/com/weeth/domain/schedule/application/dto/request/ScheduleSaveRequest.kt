@@ -1,0 +1,27 @@
+package com.weeth.domain.schedule.application.dto.request
+
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Size
+import org.springframework.format.annotation.DateTimeFormat
+import java.time.LocalDateTime
+
+data class ScheduleSaveRequest(
+    @field:Schema(description = "일정 제목", example = "MT")
+    @field:NotBlank
+    val title: String,
+    @field:Schema(description = "일정 내용", example = "1박 2일 MT입니다.")
+    @field:Size(max = 500)
+    val content: String? = null,
+    @field:Schema(description = "장소", example = "가평")
+    val location: String? = null,
+    @field:Schema(description = "기수", example = "4")
+    val cardinal: Int,
+    @field:Schema(description = "시작 시간", example = "2026-03-25T10:00:00")
+    @field:DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    val start: LocalDateTime,
+    @field:Schema(description = "종료 시간", example = "2026-03-25T12:00:00")
+    @field:DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    val end: LocalDateTime,
+)

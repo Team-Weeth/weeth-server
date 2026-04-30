@@ -20,12 +20,11 @@
 ## Directory Structure
 
 ```text
-src/test/kotlin/weeth/domain/{domain-name}/
+src/test/kotlin/com/weeth/domain/{domain-name}/
 ├── application/usecase/command/   # Command UseCase tests
 ├── application/usecase/query/     # QueryService tests
 ├── domain/service/                # Domain service tests (multi-entity logic)
 ├── domain/entity/                 # Entity behavior tests
-├── presentation/                  # Controller tests (@WebMvcTest)
 └── fixture/                       # Shared fixtures for the domain
 ```
 
@@ -74,7 +73,7 @@ object UserTestFixture {
 }
 ```
 
-- Location: `src/test/kotlin/weeth/domain/{domain-name}/fixture/`
+- Location: `src/test/kotlin/com/weeth/domain/{domain-name}/fixture/`
 - Use `object` with factory methods
 - Provide sensible defaults for all parameters
 - Reuse across test classes in the same domain
@@ -92,6 +91,30 @@ object UserTestFixture {
 - Thin wrapper methods that only delegate to Repository without logic
 - Getter/setter, trivial DTO mapping
 - Framework-provided functionality
+
+## Mock Lifecycle in DescribeSpec
+
+MockK mocks are **not** automatically cleared between `it` blocks. Without clearing, accumulated invocations cause `verify(exactly = N)` to fail in subsequent tests.
+
+Always add `beforeTest { clearMocks(...) }` when mocks are shared:
+
+```kotlin
+class SomeUseCaseTest : DescribeSpec({
+    val repository = mockk<SomeRepository>()
+    val useCase = SomeUseCase(repository)
+
+    beforeTest {
+        clearMocks(repository)
+        // Re-stub defaults after clearing
+        every { repository.save(any()) } answers { firstArg() }
+    }
+
+    describe("someMethod") {
+        it("case 1") { verify(exactly = 1) { repository.save(any()) } }
+        it("case 2") { verify(exactly = 1) { repository.save(any()) } } // OK - count reset
+    }
+})
+```
 
 ## Running Tests
 

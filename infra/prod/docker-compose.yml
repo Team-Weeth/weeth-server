@@ -1,0 +1,114 @@
+name: weeth-prod
+
+services:
+  caddy:
+    image: caddy:2.8
+    container_name: weeth-prod-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/upstream.conf:/etc/caddy/upstream.conf
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN}
+      MONITORING_PATH: ${MONITORING_PATH}
+    networks:
+      - web
+
+  redis:
+    image: redis:7.0
+    container_name: weeth-prod-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - web
+
+  app-blue:
+    image: ${APP_IMAGE}
+    container_name: weeth-prod-app-blue
+    restart: unless-stopped
+    profiles: ["blue"]
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
+      OTEL_JAVAAGENT_ENABLED: ${OTEL_JAVAAGENT_ENABLED:-true}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-weeth-server}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=prod}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_traceidratio}
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_TRACES_SAMPLER_ARG:-0.1}
+      OTEL_BSP_SCHEDULE_DELAY: ${OTEL_BSP_SCHEDULE_DELAY:-15000}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://alloy:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      OTEL_EXPORTER_OTLP_COMPRESSION: ${OTEL_EXPORTER_OTLP_COMPRESSION:-gzip}
+    volumes:
+      - ${HOME}/keys:/app/keys:ro
+    ports:
+      - "127.0.0.1:18081:8080"
+    depends_on:
+      redis:
+        condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+    networks:
+      - web
+
+  app-green:
+    image: ${APP_IMAGE}
+    container_name: weeth-prod-app-green
+    restart: unless-stopped
+    profiles: ["green"]
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      TZ: Asia/Seoul
+      OTEL_JAVAAGENT_ENABLED: ${OTEL_JAVAAGENT_ENABLED:-true}
+      OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-weeth-server}
+      OTEL_RESOURCE_ATTRIBUTES: ${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment=prod}
+      OTEL_TRACES_EXPORTER: ${OTEL_TRACES_EXPORTER:-otlp}
+      OTEL_TRACES_SAMPLER: ${OTEL_TRACES_SAMPLER:-parentbased_traceidratio}
+      OTEL_TRACES_SAMPLER_ARG: ${OTEL_TRACES_SAMPLER_ARG:-0.1}
+      OTEL_BSP_SCHEDULE_DELAY: ${OTEL_BSP_SCHEDULE_DELAY:-15000}
+      OTEL_METRICS_EXPORTER: ${OTEL_METRICS_EXPORTER:-none}
+      OTEL_LOGS_EXPORTER: ${OTEL_LOGS_EXPORTER:-none}
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://alloy:4318}
+      OTEL_EXPORTER_OTLP_PROTOCOL: ${OTEL_EXPORTER_OTLP_PROTOCOL:-http/protobuf}
+      OTEL_EXPORTER_OTLP_COMPRESSION: ${OTEL_EXPORTER_OTLP_COMPRESSION:-gzip}
+    volumes:
+      - ${HOME}/keys:/app/keys:ro
+    ports:
+      - "127.0.0.1:18082:8080"
+    depends_on:
+      redis:
+        condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "5"
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge
+
+volumes:
+  caddy_data:
+  caddy_config:
+  redis_data:

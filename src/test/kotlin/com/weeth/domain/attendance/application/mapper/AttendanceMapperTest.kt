@@ -1,142 +1,150 @@
 package com.weeth.domain.attendance.application.mapper
 
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUserWithAttendances
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUserWithAttendances
+import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createOneDayMeeting
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.enrichUserProfile
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setUserAttendanceStats
-import com.weeth.domain.user.domain.entity.enums.Position
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.session.fixture.SessionTestFixture.createOneDaySession
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
-import org.mapstruct.factory.Mappers
 import java.time.LocalDate
 
 class AttendanceMapperTest :
     DescribeSpec({
+        val mapper = AttendanceMapper()
 
-        val attendanceMapper = Mappers.getMapper(AttendanceMapper::class.java)
-
-        describe("toMainDto") {
-            it("사용자 + 당일 출석 객체를 Main DTO로 매핑한다") {
+        describe("toSummaryResponse") {
+            it("사용자 + 당일 출석 객체를 MainResponse로 매핑한다") {
                 val today = LocalDate.now()
-                val meeting = createOneDayMeeting(today, 1, 1111, "Today")
-                val user = createActiveUserWithAttendances("이지훈", listOf(meeting))
-                val attendance = user.attendances[0]
+                val session = createOneDaySession(today, 1, 1111, "Today")
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("이지훈"),
+                    )
+                val attendance = createAttendance(session, member)
 
-                val main = attendanceMapper.toMainDto(user, attendance)
+                val main = mapper.toSummaryResponse(member, attendance)
 
                 main.shouldNotBeNull()
-                main.title() shouldBe "Today"
-                main.status() shouldBe attendance.status
-                main.start() shouldBe meeting.start
-                main.end() shouldBe meeting.end
-                main.location() shouldBe meeting.location
+                main.title shouldBe session.title
+                main.status shouldBe attendance.status
+                main.start shouldBe session.start
+                main.end shouldBe session.end
+                main.location shouldBe session.location
             }
 
-            it("todayAttendance가 null이면 필드는 null로 매핑") {
-                val user = createActiveUser("이지훈")
+            it("attendance가 null이면 필드는 null로 매핑") {
+                val member = ClubMemberTestFixture.createActiveMember(user = createActiveUser("이지훈"))
 
-                val main = attendanceMapper.toMainDto(user, null)
+                val main = mapper.toSummaryResponse(member, null)
 
                 main.shouldNotBeNull()
-                main.title().shouldBeNull()
-                main.start().shouldBeNull()
-                main.end().shouldBeNull()
-                main.location().shouldBeNull()
+                main.title.shouldBeNull()
+                main.start.shouldBeNull()
+                main.end.shouldBeNull()
+                main.location.shouldBeNull()
             }
 
             it("일반 유저는 출석 코드가 null로 매핑된다") {
                 val today = LocalDate.now()
-                val meeting = createOneDayMeeting(today, 1, 1234, "Today")
-                val user = createActiveUserWithAttendances("일반유저", listOf(meeting))
-                val attendance = user.attendances[0]
+                val session = createOneDaySession(today, 1, 1234, "Today")
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("일반유저"),
+                    )
+                val attendance = createAttendance(session, member)
 
-                val main = attendanceMapper.toMainDto(user, attendance)
+                val main = mapper.toSummaryResponse(member, attendance)
 
                 main.shouldNotBeNull()
-                main.code().shouldBeNull()
-                main.title() shouldBe "Today"
-                main.status() shouldBe attendance.status
+                main.title shouldBe session.title
+                main.status shouldBe attendance.status
             }
-        }
 
-        describe("toResponseDto") {
-            it("단일 출석을 Response DTO로 매핑한다") {
-                val meeting = createOneDayMeeting(LocalDate.now().minusDays(1), 1, 2222, "D-1")
-                val user = createActiveUser("사용자A")
-                val attendance = createAttendance(meeting, user)
-
-                val response = attendanceMapper.toResponseDto(attendance)
-
-                response.shouldNotBeNull()
-                response.title() shouldBe "D-1"
-                response.start() shouldBe meeting.start
-                response.end() shouldBe meeting.end
-                response.location() shouldBe meeting.location
-            }
-        }
-
-        describe("toDetailDto") {
-            it("사용자 + Response 리스트를 Detail DTO로 매핑(total = attend + absence)") {
-                val base = LocalDate.now()
-                val m1 = createOneDayMeeting(base.minusDays(2), 1, 1000, "D-2")
-                val m2 = createOneDayMeeting(base.minusDays(1), 1, 1001, "D-1")
-                val user = createActiveUser("이지훈")
-                setUserAttendanceStats(user, 3, 2)
-
-                val a1 = createAttendance(m1, user)
-                val a2 = createAttendance(m2, user)
-
-                val r1 = attendanceMapper.toResponseDto(a1)
-                val r2 = attendanceMapper.toResponseDto(a2)
-
-                val detail = attendanceMapper.toDetailDto(user, listOf(r1, r2))
-
-                detail.shouldNotBeNull()
-                detail.attendances() shouldBe listOf(r1, r2)
-                detail.total() shouldBe 5
-            }
-        }
-
-        describe("toAttendanceInfoDto") {
-            it("Attendance를 Info DTO로 매핑") {
-                val meeting = createOneDayMeeting(LocalDate.now(), 1, 3333, "Info")
-                val user = createActiveUser("유저B")
-                enrichUserProfile(user, Position.BE, "컴퓨터공학과", "20201234")
-
-                val attendance = createAttendance(meeting, user)
-                setAttendanceId(attendance, 10L)
-
-                val info = attendanceMapper.toAttendanceInfoDto(attendance)
-
-                info.shouldNotBeNull()
-                info.id() shouldBe 10L
-                info.status() shouldBe attendance.status
-                info.name() shouldBe "유저B"
-            }
-        }
-
-        describe("toAdminResponse") {
             it("ADMIN 유저는 출석 코드가 포함된다") {
                 val today = LocalDate.now()
                 val expectedCode = 1234
-                val meeting = createOneDayMeeting(today, 1, expectedCode, "Today")
-                val adminUser = createAdminUserWithAttendances("관리자", listOf(meeting))
-                val attendance = adminUser.attendances[0]
+                val session = createOneDaySession(today, 1, expectedCode, "Today")
+                val adminUser = createAdminUser("관리자")
+                val member = ClubMemberTestFixture.createAdminMember(club = session.club, user = adminUser)
+                val attendance = createAttendance(session, member)
 
-                val main = attendanceMapper.toAdminResponse(adminUser, attendance)
+                val main = mapper.toSummaryResponse(member, attendance)
 
                 main.shouldNotBeNull()
-                main.code() shouldBe expectedCode
-                main.title() shouldBe "Today"
-                main.start() shouldBe meeting.start
-                main.end() shouldBe meeting.end
-                main.location() shouldBe meeting.location
+                main.title shouldBe session.title
+                main.start shouldBe session.start
+                main.end shouldBe session.end
+                main.location shouldBe session.location
+            }
+        }
+
+        describe("toResponse") {
+            it("단일 출석을 AttendanceResponse로 매핑한다") {
+                val session = createOneDaySession(LocalDate.now().minusDays(1), 1, 2222, "D-1")
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = session.club,
+                        user = createActiveUser("사용자A"),
+                    )
+                val attendance = createAttendance(session, member)
+
+                val response = mapper.toResponse(attendance)
+
+                response.shouldNotBeNull()
+                response.title shouldBe session.title
+                response.start shouldBe session.start
+                response.end shouldBe session.end
+                response.location shouldBe session.location
+            }
+        }
+
+        describe("toDetailResponse") {
+            it("사용자 + Response 리스트를 DetailResponse로 매핑(total = attend + absence)") {
+                val base = LocalDate.now()
+                val m1 = createOneDaySession(base.minusDays(2), 1, 1000, "D-2")
+                val m2 = createOneDaySession(base.minusDays(1), 1, 1001, "D-1", club = m1.club)
+                val member = ClubMemberTestFixture.createActiveMember(club = m1.club, user = createActiveUser("이지훈"))
+                repeat(3) { member.attend() }
+                repeat(2) { member.absent() }
+
+                val a1 = createAttendance(m1, member)
+                val a2 = createAttendance(m2, member)
+
+                val r1 = mapper.toResponse(a1)
+                val r2 = mapper.toResponse(a2)
+
+                val detail = mapper.toDetailResponse(member, listOf(r1, r2))
+
+                detail.shouldNotBeNull()
+                detail.attendances shouldBe listOf(r1, r2)
+                detail.total shouldBe member.attendanceStats.attendanceCount + member.attendanceStats.absenceCount
+            }
+        }
+
+        describe("toInfoResponse") {
+            it("Attendance를 InfoResponse로 매핑") {
+                val session = createOneDaySession(LocalDate.now(), 1, 3333, "Info")
+                val user = createActiveUser("유저B")
+                enrichUserProfile(user, "컴퓨터공학과", "20201234")
+                val member = ClubMemberTestFixture.createActiveMember(club = session.club, user = user)
+
+                val attendance = createAttendance(session, member)
+                setAttendanceId(attendance, 10L)
+
+                val info = mapper.toInfoResponse(attendance)
+
+                info.shouldNotBeNull()
+                info.id shouldBe attendance.id
+                info.status shouldBe attendance.status
+                info.name shouldBe user.name
+                info.department shouldBe user.department
             }
         }
     })

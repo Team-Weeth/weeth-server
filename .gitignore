@@ -39,7 +39,8 @@ out/
 /.idea/
 
 ### Environment Variables ###
-src/main/resources/.env
+src/main/resources/*.env
 src/main/resources/*.p8
+src/test/resources/*.env
 .env.local
 .env.*.local
