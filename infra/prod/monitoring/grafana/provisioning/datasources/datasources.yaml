@@ -9,23 +9,9 @@ datasources:
     isDefault: true
     editable: true
 
-  - name: Tempo
-    type: tempo
-    access: proxy
-    url: http://tempo:3200
-    uid: tempo
-    editable: true
-
   - name: Loki
     type: loki
     access: proxy
     url: http://loki:3100
     uid: loki
     editable: true
-    jsonData:
-      derivedFields:
-        - datasourceUid: tempo
-          matcherRegex: '"(?:traceId|trace_id|mdc_traceId|mdc_trace_id)"\s*:\s*"([^"]+)"'
-          name: traceId
-          url: "$${__value.raw}"
-          urlDisplayLabel: "View Trace"
