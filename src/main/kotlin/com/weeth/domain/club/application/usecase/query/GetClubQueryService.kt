@@ -5,6 +5,7 @@ import com.weeth.domain.club.application.dto.response.ClubInfoResponse
 import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.mapper.ClubMapper
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubReader
@@ -22,7 +23,7 @@ class GetClubQueryService(
     private val clubMapper: ClubMapper,
 ) {
     fun findMyClubs(userId: Long): List<ClubInfoResponse> {
-        val members = clubMemberReader.findAllByUserIdWithClub(userId)
+        val members = clubMemberReader.findAllByUserIdAndMemberStatusWithClub(userId, MemberStatus.ACTIVE)
         if (members.isEmpty()) return emptyList()
 
         val cardinalsByMemberId =

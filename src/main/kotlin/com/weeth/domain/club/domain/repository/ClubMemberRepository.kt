@@ -78,6 +78,20 @@ interface ClubMemberRepository :
         """
         SELECT cm
         FROM ClubMember cm
+        JOIN FETCH cm.club
+        WHERE cm.user.id = :userId
+        AND cm.memberStatus = :memberStatus
+        """,
+    )
+    override fun findAllByUserIdAndMemberStatusWithClub(
+        @Param("userId") userId: Long,
+        @Param("memberStatus") memberStatus: MemberStatus,
+    ): List<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
         WHERE cm.user.id = :userId
         AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
         """,
