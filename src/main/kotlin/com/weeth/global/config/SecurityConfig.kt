@@ -89,6 +89,8 @@ class SecurityConfig(
                         "https://*.v4.weeth.kr",
                         "https://landing.weeth.kr",
                         "https://www.landing.weeth.kr",
+                        "https://weeth.kr",
+                        "https://www.weeth.kr",
                         "https://appleid.apple.com",
                     )
                 allowedMethods = listOf("GET", "POST", "PATCH", "DELETE", "OPTIONS")
