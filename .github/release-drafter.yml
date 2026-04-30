@@ -1,5 +1,9 @@
 name-template: "v$RESOLVED_VERSION"
 tag-template: "v$RESOLVED_VERSION"
+commitish: "dev"
+filter-by-commitish: true
+pull-request-limit: 20
+history-limit: 100
 
 categories:
   - title: "✨ Features"
