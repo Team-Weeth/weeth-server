@@ -118,10 +118,12 @@ class ClubMapper(
     ): ClubMembershipStatusResponse {
         val activeMember = members.firstOrNull { it.memberStatus == MemberStatus.ACTIVE }
         val waitingMember = members.firstOrNull { it.memberStatus == MemberStatus.WAITING }
+        val bannedMember = members.firstOrNull { it.memberStatus == MemberStatus.BANNED }
 
         return ClubMembershipStatusResponse(
             hasActiveClub = activeMember != null,
             hasWaitingClub = waitingMember != null,
+//            hasBannedClub = bannedMember != null, 추후 추가
             activeClub =
                 activeMember?.let {
                     toInfoResponse(
