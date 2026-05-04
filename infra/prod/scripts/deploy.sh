@@ -13,8 +13,13 @@ export APP_IMAGE DOMAIN
 # EC2 홈 디렉토리의 .env를 심링크
 ln -sf "$HOME/.env" "$DEPLOY_DIR/.env"
 
+# upstream.conf가 없으면 현재 실행 중인 컨테이너를 감지하여 생성
 if [ ! -f ./caddy/upstream.conf ]; then
-  echo "reverse_proxy weeth-prod-app-blue:8080" > ./caddy/upstream.conf
+  if docker ps --format '{{.Names}}' | grep -q "weeth-prod-app-green"; then
+    echo "reverse_proxy weeth-prod-app-green:8080" > ./caddy/upstream.conf
+  else
+    echo "reverse_proxy weeth-prod-app-blue:8080" > ./caddy/upstream.conf
+  fi
 fi
 
 if grep -q "app-blue" ./caddy/upstream.conf; then
