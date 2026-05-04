@@ -44,7 +44,9 @@ for i in {1..20}; do
   fi
 
   if [ "$i" -eq 20 ]; then
-    echo "[deploy] health check failed"
+    echo "[deploy] health check failed, stopping new container"
+    docker compose --profile "$NEW_COLOR" -f docker-compose.yml stop "app-$NEW_COLOR" || true
+    docker compose --profile "$NEW_COLOR" -f docker-compose.yml rm -f "app-$NEW_COLOR" || true
     exit 1
   fi
 
