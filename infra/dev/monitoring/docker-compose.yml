@@ -14,10 +14,8 @@ services:
     command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
     ports:
       - "127.0.0.1:12345:12345"
-      - "127.0.0.1:4318:4318"
     depends_on:
       - loki
-      - tempo
     networks:
       - monitoring
       - weeth-app
@@ -37,74 +35,6 @@ services:
       - monitoring
     restart: unless-stopped
 
-  tempo:
-    image: grafana/tempo:2.7.1
-    env_file:
-      - ${MONITORING_ENV_FILE:-../.env.monitoring}
-    volumes:
-      - ./tempo/tempo-config.yaml:/etc/tempo/tempo-config.yaml:ro
-      - tempo_data:/var/tempo
-    command: ["-config.file=/etc/tempo/tempo-config.yaml", "-config.expand-env=true"]
-    ports:
-      - "127.0.0.1:3200:3200"
-    networks:
-      - monitoring
-    restart: unless-stopped
-
-  redis-exporter:
-    image: oliver006/redis_exporter:v1.67.0
-    environment:
-      REDIS_ADDR: redis:6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    networks:
-      - monitoring
-      - weeth-app
-    restart: unless-stopped
-
-  prometheus:
-    image: prom/prometheus:v2.53.0
-    volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus_data:/prometheus
-    ports:
-      - "127.0.0.1:9090:9090"
-    networks:
-      - monitoring
-      - weeth-app
-    restart: unless-stopped
-
-  node-exporter:
-    image: prom/node-exporter:v1.9.0
-    pid: host
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - "--path.procfs=/host/proc"
-      - "--path.sysfs=/host/sys"
-      - "--path.rootfs=/rootfs"
-      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
-    networks:
-      - monitoring
-    restart: unless-stopped
-
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.51.0
-    privileged: true
-    devices:
-      - /dev/kmsg
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker:/var/lib/docker:ro
-      - /dev/disk:/dev/disk:ro
-    networks:
-      - monitoring
-      - weeth-app
-    restart: unless-stopped
-
   grafana:
     image: grafana/grafana:11.5.2
     env_file:
@@ -122,8 +52,6 @@ services:
       - "127.0.0.1:3000:3000"
     depends_on:
       - loki
-      - prometheus
-      - tempo
     networks:
       - monitoring
       - weeth-app
@@ -139,5 +67,3 @@ networks:
 volumes:
   grafana_data:
   loki_data:
-  prometheus_data:
-  tempo_data:
