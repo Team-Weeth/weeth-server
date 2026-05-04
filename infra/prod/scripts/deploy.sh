@@ -49,7 +49,7 @@ done
 echo "reverse_proxy weeth-prod-app-${NEW_COLOR}:8080" > ./caddy/upstream.conf
 
 # 현재 Caddy 컨테이너의 DOMAIN과 비교하여 변경 시에만 재생성
-CURRENT_DOMAIN=$(docker inspect weeth-prod-caddy --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^DOMAIN=' | cut -d= -f2-)
+CURRENT_DOMAIN=$(docker inspect weeth-prod-caddy --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^DOMAIN=' | cut -d= -f2- || true)
 
 if [ "$CURRENT_DOMAIN" != "$DOMAIN" ]; then
   echo "[deploy] domain changed, recreating caddy"
