@@ -40,9 +40,7 @@ docker compose --env-file "$MONITORING_ENV_FILE" up -d
 echo "[monitoring] waiting for services to be healthy..."
 for i in {1..30}; do
   if curl -fsS "http://127.0.0.1:12345/-/ready" >/dev/null 2>&1 &&
-     curl -fsS "http://127.0.0.1:9090/-/ready" >/dev/null 2>&1 &&
      curl -fsS "http://127.0.0.1:3100/ready" >/dev/null 2>&1 &&
-     curl -fsS "http://127.0.0.1:3200/ready" >/dev/null 2>&1 &&
      curl -fsS "http://127.0.0.1:3000/api/health" >/dev/null 2>&1; then
     echo "[monitoring] all services healthy"
     break

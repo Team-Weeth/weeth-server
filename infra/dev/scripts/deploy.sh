@@ -13,8 +13,13 @@ export APP_IMAGE DOMAIN
 # EC2 홈 디렉토리의 .env를 심링크
 ln -sf "$HOME/.env" "$DEPLOY_DIR/.env"
 
+# upstream.conf가 없으면 현재 실행 중인 컨테이너를 감지하여 생성
 if [ ! -f ./caddy/upstream.conf ]; then
-  echo "reverse_proxy weeth-dev-app-blue:8080" > ./caddy/upstream.conf
+  if docker ps --format '{{.Names}}' | grep -q "weeth-dev-app-green"; then
+    echo "reverse_proxy weeth-dev-app-green:8080" > ./caddy/upstream.conf
+  else
+    echo "reverse_proxy weeth-dev-app-blue:8080" > ./caddy/upstream.conf
+  fi
 fi
 
 if grep -q "app-blue" ./caddy/upstream.conf; then
@@ -39,7 +44,9 @@ for i in {1..20}; do
   fi
 
   if [ "$i" -eq 20 ]; then
-    echo "[deploy] health check failed"
+    echo "[deploy] health check failed, stopping new container"
+    docker compose --profile "$NEW_COLOR" -f docker-compose.yml stop "app-$NEW_COLOR" || true
+    docker compose --profile "$NEW_COLOR" -f docker-compose.yml rm -f "app-$NEW_COLOR" || true
     exit 1
   fi
 
@@ -49,7 +56,7 @@ done
 echo "reverse_proxy weeth-dev-app-${NEW_COLOR}:8080" > ./caddy/upstream.conf
 
 # 현재 Caddy 컨테이너의 DOMAIN과 비교하여 변경 시에만 재생성
-CURRENT_DOMAIN=$(docker inspect weeth-dev-caddy --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^DOMAIN=' | cut -d= -f2-)
+CURRENT_DOMAIN=$(docker inspect weeth-dev-caddy --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^DOMAIN=' | cut -d= -f2- || true)
 
 if [ "$CURRENT_DOMAIN" != "$DOMAIN" ]; then
   echo "[deploy] domain changed, recreating caddy"

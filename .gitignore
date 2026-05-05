@@ -38,6 +38,9 @@ out/
 .vscode/
 /.idea/
 
+### Caddy upstream (runtime-managed by deploy.sh) ###
+infra/*/caddy/upstream.conf
+
 ### Environment Variables ###
 src/main/resources/*.env
 src/main/resources/*.p8
