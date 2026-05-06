@@ -62,7 +62,12 @@ if [ "$CURRENT_DOMAIN" != "$DOMAIN" ]; then
   echo "[deploy] domain changed, recreating caddy"
   docker compose up -d --force-recreate caddy
 elif docker compose ps caddy --format '{{.State}}' 2>/dev/null | grep -q running; then
-  docker compose exec caddy caddy reload --config /etc/caddy/Caddyfile
+  if docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile; then
+    echo "[deploy] caddy reloaded"
+  else
+    echo "[deploy] caddy reload failed, restarting caddy"
+    docker compose restart caddy
+  fi
 else
   docker compose up -d caddy
 fi
