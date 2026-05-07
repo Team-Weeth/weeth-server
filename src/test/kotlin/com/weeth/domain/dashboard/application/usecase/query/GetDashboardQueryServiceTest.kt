@@ -312,7 +312,14 @@ class GetDashboardQueryServiceTest :
                     val notice = PostTestFixture.create(board = noticeBoard)
 
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(clubId, clubMember.id, BoardType.NOTICE, any()) } returns
+                    every {
+                        postReader.findFirstUnreadNoticeSince(
+                            clubId,
+                            clubMember.id,
+                            BoardType.NOTICE,
+                            any(),
+                        )
+                    } returns
                         notice
 
                     val result = queryService.getUnreadNotice(clubId, userId)
@@ -324,7 +331,14 @@ class GetDashboardQueryServiceTest :
             context("모든 공지를 읽은 경우") {
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(clubId, clubMember.id, BoardType.NOTICE, any()) } returns
+                    every {
+                        postReader.findFirstUnreadNoticeSince(
+                            clubId,
+                            clubMember.id,
+                            BoardType.NOTICE,
+                            any(),
+                        )
+                    } returns
                         null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
@@ -336,7 +350,14 @@ class GetDashboardQueryServiceTest :
             context("2주 내 공지가 없는 경우") {
                 it("null을 반환한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
-                    every { postReader.findFirstUnreadNoticeSince(clubId, clubMember.id, BoardType.NOTICE, any()) } returns
+                    every {
+                        postReader.findFirstUnreadNoticeSince(
+                            clubId,
+                            clubMember.id,
+                            BoardType.NOTICE,
+                            any(),
+                        )
+                    } returns
                         null
 
                     val result = queryService.getUnreadNotice(clubId, userId)
