@@ -10,7 +10,6 @@ import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
-import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -26,7 +25,6 @@ class MarkNoticeReadUseCaseTest :
         val boardRepository = mockk<BoardRepository>()
         val lastNoticeReadReader = mockk<LastNoticeReadReader>()
         val lastNoticeReadRepository = mockk<LastNoticeReadRepository>()
-        val userReader = mockk<UserReader>()
         val clubMemberReader = mockk<ClubMemberReader>()
         val clubMemberPolicy = ClubMemberPolicy(clubMemberReader)
 
@@ -35,12 +33,11 @@ class MarkNoticeReadUseCaseTest :
                 boardRepository = boardRepository,
                 lastNoticeReadReader = lastNoticeReadReader,
                 lastNoticeReadRepository = lastNoticeReadRepository,
-                userReader = userReader,
                 clubMemberPolicy = clubMemberPolicy,
             )
 
         beforeTest {
-            clearMocks(boardRepository, lastNoticeReadReader, lastNoticeReadRepository, userReader, clubMemberReader)
+            clearMocks(boardRepository, lastNoticeReadReader, lastNoticeReadRepository, clubMemberReader)
         }
 
         describe("execute") {
@@ -49,7 +46,10 @@ class MarkNoticeReadUseCaseTest :
             val boardId = 1L
             val user = UserTestFixture.createActiveUser1(1L)
             val club = ClubTestFixture.createClub().also { ReflectionTestUtils.setField(it, "id", clubId) }
-            val clubMember = ClubTestFixture.createClubMember(club = club, user = user)
+            val clubMember =
+                ClubTestFixture
+                    .createClubMember(club = club, user = user)
+                    .also { ReflectionTestUtils.setField(it, "id", 10L) }
             val noticeBoard = BoardTestFixture.createNoticeBoard(club = club)
 
             context("클럽 멤버가 아닌 경우") {
@@ -90,16 +90,15 @@ class MarkNoticeReadUseCaseTest :
 
             context("이미 읽은 기록이 있는 경우") {
                 it("lastReadAt을 현재 시각으로 갱신하고 새 레코드를 저장하지 않는다") {
-                    val existing = LastNoticeRead.create(user = user, board = noticeBoard)
+                    val existing = LastNoticeRead.create(clubMember = clubMember, board = noticeBoard)
                     val beforeExecute = existing.lastReadAt
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { boardRepository.findByIdAndIsDeletedFalse(boardId) } returns noticeBoard
-                    every { lastNoticeReadReader.findByUserIdAndBoardId(userId, boardId) } returns existing
+                    every { lastNoticeReadReader.findByClubMemberIdAndBoardId(clubMember.id, boardId) } returns existing
 
                     useCase.execute(userId, clubId, boardId)
 
                     existing.lastReadAt shouldBeAfter beforeExecute
-                    verify(exactly = 0) { userReader.getById(any()) }
                     verify(exactly = 0) { lastNoticeReadRepository.save(any()) }
                 }
             }
@@ -108,13 +107,11 @@ class MarkNoticeReadUseCaseTest :
                 it("새 LastNoticeRead 레코드를 저장한다") {
                     every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
                     every { boardRepository.findByIdAndIsDeletedFalse(boardId) } returns noticeBoard
-                    every { lastNoticeReadReader.findByUserIdAndBoardId(userId, boardId) } returns null
-                    every { userReader.getById(userId) } returns user
+                    every { lastNoticeReadReader.findByClubMemberIdAndBoardId(clubMember.id, boardId) } returns null
                     every { lastNoticeReadRepository.save(any<LastNoticeRead>()) } answers { firstArg() }
 
                     useCase.execute(userId, clubId, boardId)
 
-                    verify(exactly = 1) { userReader.getById(userId) }
                     verify(exactly = 1) { lastNoticeReadRepository.save(any<LastNoticeRead>()) }
                 }
             }
