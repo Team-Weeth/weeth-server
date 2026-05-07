@@ -9,7 +9,6 @@ import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.LastNoticeReadReader
 import com.weeth.domain.board.domain.repository.LastNoticeReadRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
-import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -19,7 +18,6 @@ class MarkNoticeReadUseCase(
     private val boardRepository: BoardRepository,
     private val lastNoticeReadReader: LastNoticeReadReader,
     private val lastNoticeReadRepository: LastNoticeReadRepository,
-    private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
     @Transactional
@@ -28,7 +26,7 @@ class MarkNoticeReadUseCase(
         clubId: Long,
         boardId: Long,
     ) {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
 
         val board =
             boardRepository.findByIdAndIsDeletedFalse(boardId)
@@ -36,13 +34,12 @@ class MarkNoticeReadUseCase(
         if (board.club.id != clubId) throw BoardNotInClubException()
         if (board.type != BoardType.NOTICE) throw BoardTypeMismatchException()
 
-        val existing = lastNoticeReadReader.findByUserIdAndBoardId(userId, boardId)
+        val existing = lastNoticeReadReader.findByClubMemberIdAndBoardId(clubMember.id, boardId)
         if (existing != null) {
             existing.updateLastReadAt(LocalDateTime.now())
             return
         }
 
-        val user = userReader.getById(userId)
-        lastNoticeReadRepository.save(LastNoticeRead.create(user = user, board = board))
+        lastNoticeReadRepository.save(LastNoticeRead.create(clubMember = clubMember, board = board))
     }
 }

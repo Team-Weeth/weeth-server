@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface LastNoticeReadRepository :
     JpaRepository<LastNoticeRead, Long>,
     LastNoticeReadReader {
-    override fun findByUserIdAndBoardId(
-        userId: Long,
+    override fun findByClubMemberIdAndBoardId(
+        clubMemberId: Long,
         boardId: Long,
     ): LastNoticeRead?
 }
