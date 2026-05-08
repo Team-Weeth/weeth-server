@@ -34,7 +34,7 @@ interface PostReader {
 
     fun findFirstUnreadNoticeSince(
         clubId: Long,
-        userId: Long,
+        clubMemberId: Long,
         boardType: BoardType,
         since: LocalDateTime,
     ): Post?
