@@ -1,6 +1,6 @@
 package com.weeth.domain.board.domain.entity
 
-import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.club.domain.entity.ClubMember
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.FetchType
@@ -16,10 +16,10 @@ import java.time.LocalDateTime
 @Entity
 @Table(
     name = "last_notice_read",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["user_id", "board_id"])],
+    uniqueConstraints = [UniqueConstraint(columnNames = ["club_member_id", "board_id"])],
 )
 class LastNoticeRead(
-    user: User,
+    clubMember: ClubMember,
     board: Board,
 ) {
     @Id
@@ -28,8 +28,8 @@ class LastNoticeRead(
         private set
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    var user: User = user
+    @JoinColumn(name = "club_member_id", nullable = false)
+    var clubMember: ClubMember = clubMember
         private set
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,8 +47,8 @@ class LastNoticeRead(
 
     companion object {
         fun create(
-            user: User,
+            clubMember: ClubMember,
             board: Board,
-        ) = LastNoticeRead(user = user, board = board)
+        ) = LastNoticeRead(clubMember = clubMember, board = board)
     }
 }

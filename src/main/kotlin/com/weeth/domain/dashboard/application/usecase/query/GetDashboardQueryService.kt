@@ -139,11 +139,11 @@ class GetDashboardQueryService(
         clubId: Long,
         userId: Long,
     ): DashboardUnreadNoticeResponse? {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
 
         val since = LocalDateTime.now().minusWeeks(2)
         return postReader
-            .findFirstUnreadNoticeSince(clubId, userId, BoardType.NOTICE, since)
+            .findFirstUnreadNoticeSince(clubId, member.id, BoardType.NOTICE, since)
             ?.let(dashboardMapper::toUnreadNoticeResponse)
     }
 }

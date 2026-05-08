@@ -163,7 +163,7 @@ interface PostRepository :
         """
         SELECT p
         FROM Post p
-        LEFT JOIN LastNoticeRead lr ON lr.user.id = :userId AND lr.board.id = p.board.id
+        LEFT JOIN LastNoticeRead lr ON lr.clubMember.id = :clubMemberId AND lr.board.id = p.board.id
         WHERE p.board.club.id = :clubId
           AND p.board.type = :boardType
           AND p.isDeleted = false
@@ -175,7 +175,7 @@ interface PostRepository :
     )
     fun findUnreadNoticeSince(
         @Param("clubId") clubId: Long,
-        @Param("userId") userId: Long,
+        @Param("clubMemberId") clubMemberId: Long,
         @Param("boardType") boardType: BoardType,
         @Param("since") since: LocalDateTime,
         pageable: Pageable,
@@ -183,10 +183,10 @@ interface PostRepository :
 
     override fun findFirstUnreadNoticeSince(
         clubId: Long,
-        userId: Long,
+        clubMemberId: Long,
         boardType: BoardType,
         since: LocalDateTime,
-    ): Post? = findUnreadNoticeSince(clubId, userId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
+    ): Post? = findUnreadNoticeSince(clubId, clubMemberId, boardType, since, PageRequest.of(0, 1)).firstOrNull()
 
     @Query(
         """
