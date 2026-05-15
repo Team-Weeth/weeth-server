@@ -29,10 +29,13 @@ fun uploadFeed(userId: Long, request: FeedUploadRequest) {
 class CreateFeedUseCase(
     private val feedRepository: FeedRepository,
     private val mediaRepository: MediaRepository,
+    private val userReader: UserReader,
     private val feedMapper: FeedMapper
 ) {
     @Transactional
     fun execute(userId: Long, request: FeedUploadRequest) {
+        val user = userReader.findById(userId)
+            ?: throw UserNotFoundException()
         val feed = feedMapper.toEntity(user, request.description)
         feedRepository.save(feed)
         val mediaList = request.media.map { Media.create(feed, it) }
