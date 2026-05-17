@@ -17,10 +17,9 @@ class RedisQrAttendanceAdapterTest(
     private val redisTemplate: RedisTemplate<String, String>,
 ) : DescribeSpec({
         beforeTest {
-            redisTemplate.connectionFactory
-                ?.connection
-                ?.serverCommands()
-                ?.flushDb()
+            redisTemplate.execute<Unit> { connection ->
+                connection.serverCommands().flushDb()
+            }
         }
 
         describe("store") {
@@ -50,6 +49,12 @@ class RedisQrAttendanceAdapterTest(
 
                 result shouldBe false
                 redisQrAttendanceAdapter.getActiveSessionId(7L) shouldBe 99L
+            }
+
+            it("현재 활성 QR 세션이 없으면 false를 반환한다") {
+                val result = redisQrAttendanceAdapter.clearActiveSessionIfMatches(clubId = 7L, sessionId = 42L)
+
+                result shouldBe false
             }
         }
     })
