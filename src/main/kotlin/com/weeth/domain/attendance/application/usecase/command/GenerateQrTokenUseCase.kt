@@ -34,9 +34,10 @@ class GenerateQrTokenUseCase(
             requireNotNull(
                 txTemplate.execute {
                     clubPermissionPolicy.requireAdmin(clubId, userId)
-                    sessionReader.getById(sessionId).also { session ->
-                        if (session.club.id != clubId) throw SessionNotFoundException()
-                    }
+                    sessionReader
+                        .getById(sessionId)
+                        .takeIf { it.club.id == clubId }
+                        ?: throw SessionNotFoundException()
                 },
             )
 

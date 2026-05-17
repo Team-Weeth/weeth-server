@@ -94,7 +94,12 @@ class GenerateQrTokenUseCaseTest :
 
             context("다른 클럽의 sessionId") {
                 it("SessionNotFoundException을 던지고 QR을 저장하지 않는다") {
-                    val session = SessionTestFixture.createSession(id = sessionId, code = code)
+                    val session =
+                        SessionTestFixture.createSession(
+                            id = sessionId,
+                            code = code,
+                            club = ClubTestFixture.createClub(id = 999L),
+                        )
                     every { sessionReader.getById(sessionId) } returns session
 
                     shouldThrow<SessionNotFoundException> { useCase.execute(sessionId, clubId, 20L) }
