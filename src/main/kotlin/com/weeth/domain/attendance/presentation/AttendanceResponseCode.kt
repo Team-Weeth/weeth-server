@@ -19,4 +19,5 @@ enum class AttendanceResponseCode(
 
     // QR 관련
     QR_TOKEN_GENERATE_SUCCESS(10205, HttpStatus.OK, "QR 코드가 성공적으로 생성되었습니다."),
+    QR_STATUS_FIND_SUCCESS(10206, HttpStatus.OK, "QR 상태가 성공적으로 조회되었습니다."),
 }

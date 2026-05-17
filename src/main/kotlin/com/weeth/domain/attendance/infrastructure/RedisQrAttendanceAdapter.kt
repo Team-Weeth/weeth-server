@@ -23,6 +23,9 @@ class RedisQrAttendanceAdapter(
 
     override fun getCode(sessionId: Long): Int? = redisTemplate.opsForValue().get(key(sessionId))?.toIntOrNull()
 
+    override fun getActiveSessionId(clubId: Long): Long? =
+        redisTemplate.opsForValue().get(activeKey(clubId))?.toLongOrNull()
+
     override fun getExpiredAt(sessionId: Long): LocalDateTime? {
         val ttl = redisTemplate.getExpire(key(sessionId), TimeUnit.SECONDS)
         return if (ttl > 0) LocalDateTime.now().plusSeconds(ttl) else null

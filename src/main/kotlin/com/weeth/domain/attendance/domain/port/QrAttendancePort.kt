@@ -28,6 +28,12 @@ interface QrAttendancePort {
     fun getCode(sessionId: Long): Int?
 
     /**
+     * clubId에 해당하는 현재 활성 QR 세션 ID를 반환합니다.
+     * 활성 QR이 없거나 active key가 만료된 경우 null을 반환합니다.
+     */
+    fun getActiveSessionId(clubId: Long): Long?
+
+    /**
      * sessionId에 해당하는 QR 코드의 만료 시각을 반환합니다.
      * QR이 없거나 TTL이 만료된 경우 null을 반환합니다.
      */

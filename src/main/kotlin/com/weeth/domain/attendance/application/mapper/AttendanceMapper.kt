@@ -4,6 +4,7 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResp
 import com.weeth.domain.attendance.application.dto.response.AttendanceInfoResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
+import com.weeth.domain.attendance.application.dto.response.QrStatusResponse
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.club.domain.entity.ClubMember
@@ -65,5 +66,22 @@ class AttendanceMapper {
             sessionId = session.id,
             code = session.code,
             expiredAt = expiredAt,
+        )
+
+    fun toActiveQrStatusResponse(
+        sessionId: Long,
+        expiresAt: LocalDateTime,
+    ): QrStatusResponse =
+        QrStatusResponse(
+            isActive = true,
+            currentSessionId = sessionId,
+            expiresAt = expiresAt,
+        )
+
+    fun toInactiveQrStatusResponse(): QrStatusResponse =
+        QrStatusResponse(
+            isActive = false,
+            currentSessionId = null,
+            expiresAt = null,
         )
 }
