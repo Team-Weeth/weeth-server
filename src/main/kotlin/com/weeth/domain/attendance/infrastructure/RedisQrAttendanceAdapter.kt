@@ -16,10 +16,14 @@ class RedisQrAttendanceAdapter(
         sessionId: Long,
         code: Int,
     ) {
-        redisTemplate.opsForValue().set(key(sessionId), code.toString(), QrAttendancePort.TTL_SECONDS, TimeUnit.SECONDS)
-        redisTemplate
-            .opsForValue()
-            .set(activeKey(clubId), sessionId.toString(), QrAttendancePort.ACTIVE_TTL_SECONDS, TimeUnit.SECONDS)
+        redisTemplate.execute(
+            storeScript,
+            listOf(key(sessionId), activeKey(clubId)),
+            code.toString(),
+            sessionId.toString(),
+            QrAttendancePort.TTL_SECONDS.toString(),
+            QrAttendancePort.ACTIVE_TTL_SECONDS.toString(),
+        )
     }
 
     override fun getCode(sessionId: Long): Int? = redisTemplate.opsForValue().get(key(sessionId))?.toIntOrNull()
@@ -41,6 +45,16 @@ class RedisQrAttendanceAdapter(
         val ttl = redisTemplate.getExpire(key(sessionId), TimeUnit.SECONDS)
         return if (ttl > 0) LocalDateTime.now().plusSeconds(ttl) else null
     }
+
+    private val storeScript =
+        DefaultRedisScript(
+            """
+            redis.call('SET', KEYS[1], ARGV[1], 'EX', ARGV[3])
+            redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[4])
+            return 1
+            """.trimIndent(),
+            Long::class.java,
+        )
 
     private val clearIfMatchesScript =
         DefaultRedisScript(
