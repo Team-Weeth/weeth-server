@@ -5,14 +5,18 @@ import java.time.LocalDateTime
 interface QrAttendancePort {
     companion object {
         const val TTL_SECONDS = 600L
+        const val ACTIVE_TTL_SECONDS = TTL_SECONDS + 30L
         const val KEY_PREFIX = "qr:"
+        const val ACTIVE_KEY_PREFIX = "active-qr:"
     }
 
     /**
-     * QR 출석 코드를 Redis에 저장합니다.
-     * key: sessionId, value: code (TTL 10분)
+     * QR 출석 코드와 클럽의 현재 활성 QR 세션을 Redis에 저장합니다.
+     * code key: sessionId, value: code (TTL 10분)
+     * active key: clubId, value: sessionId (TTL 10분 30초)
      */
     fun store(
+        clubId: Long,
         sessionId: Long,
         code: Int,
     )

@@ -37,7 +37,7 @@ class GenerateQrTokenUseCase(
                 },
             )
 
-        qrAttendancePort.store(sessionId, session.code)
+        qrAttendancePort.store(clubId, sessionId, session.code)
         val expiredAt = LocalDateTime.now().plusSeconds(QrAttendancePort.TTL_SECONDS)
         ssePort.broadcast(clubId, AttendanceSseEvent.QR_OPEN, AttendanceOpenEvent(expiredAt))
         return attendanceMapper.toQrTokenResponse(session, expiredAt)

@@ -11,10 +11,14 @@ class RedisQrAttendanceAdapter(
     private val redisTemplate: RedisTemplate<String, String>,
 ) : QrAttendancePort {
     override fun store(
+        clubId: Long,
         sessionId: Long,
         code: Int,
     ) {
         redisTemplate.opsForValue().set(key(sessionId), code.toString(), QrAttendancePort.TTL_SECONDS, TimeUnit.SECONDS)
+        redisTemplate
+            .opsForValue()
+            .set(activeKey(clubId), sessionId.toString(), QrAttendancePort.ACTIVE_TTL_SECONDS, TimeUnit.SECONDS)
     }
 
     override fun getCode(sessionId: Long): Int? = redisTemplate.opsForValue().get(key(sessionId))?.toIntOrNull()
@@ -25,4 +29,6 @@ class RedisQrAttendanceAdapter(
     }
 
     private fun key(sessionId: Long) = "${QrAttendancePort.KEY_PREFIX}$sessionId"
+
+    private fun activeKey(clubId: Long) = "${QrAttendancePort.ACTIVE_KEY_PREFIX}$clubId"
 }

@@ -60,14 +60,14 @@ class GenerateQrTokenUseCaseTest :
                         )
 
                     every { sessionReader.getById(sessionId) } returns session
-                    every { qrAttendancePort.store(sessionId, code) } just Runs
+                    every { qrAttendancePort.store(10L, sessionId, code) } just Runs
                     every { attendanceMapper.toQrTokenResponse(eq(session), any()) } returns expectedResponse
 
                     val result = useCase.execute(sessionId, 10L, 20L)
 
                     result shouldBe expectedResponse
                     verify(exactly = 1) { clubPermissionPolicy.requireAdmin(10L, 20L) }
-                    verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
+                    verify(exactly = 1) { qrAttendancePort.store(10L, sessionId, code) }
                     verify(exactly = 1) {
                         ssePort.broadcast(10L, AttendanceSseEvent.QR_OPEN, any<AttendanceOpenEvent>())
                     }
@@ -80,7 +80,7 @@ class GenerateQrTokenUseCaseTest :
 
                     shouldThrow<SessionNotFoundException> { useCase.execute(sessionId, 10L, 20L) }
 
-                    verify(exactly = 0) { qrAttendancePort.store(any(), any()) }
+                    verify(exactly = 0) { qrAttendancePort.store(any(), any(), any()) }
                     verify(exactly = 0) { ssePort.broadcast(any(), any(), any()) }
                 }
             }
