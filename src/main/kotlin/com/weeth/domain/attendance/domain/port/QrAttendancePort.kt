@@ -34,6 +34,15 @@ interface QrAttendancePort {
     fun getActiveSessionId(clubId: Long): Long?
 
     /**
+     * 현재 활성 QR 세션이 sessionId와 일치하면 active key를 삭제하고 true를 반환합니다.
+     * 일치하지 않거나 활성 QR이 없으면 false를 반환합니다.
+     */
+    fun clearActiveSessionIfMatches(
+        clubId: Long,
+        sessionId: Long,
+    ): Boolean
+
+    /**
      * sessionId에 해당하는 QR 코드의 만료 시각을 반환합니다.
      * QR이 없거나 TTL이 만료된 경우 null을 반환합니다.
      */

@@ -26,6 +26,18 @@ class RedisQrAttendanceAdapter(
     override fun getActiveSessionId(clubId: Long): Long? =
         redisTemplate.opsForValue().get(activeKey(clubId))?.toLongOrNull()
 
+    override fun clearActiveSessionIfMatches(
+        clubId: Long,
+        sessionId: Long,
+    ): Boolean {
+        val activeKey = activeKey(clubId)
+        val activeSessionId = redisTemplate.opsForValue().get(activeKey)?.toLongOrNull() ?: return false
+        if (activeSessionId != sessionId) return false
+
+        redisTemplate.delete(activeKey)
+        return true
+    }
+
     override fun getExpiredAt(sessionId: Long): LocalDateTime? {
         val ttl = redisTemplate.getExpire(key(sessionId), TimeUnit.SECONDS)
         return if (ttl > 0) LocalDateTime.now().plusSeconds(ttl) else null
