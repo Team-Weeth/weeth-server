@@ -5,6 +5,10 @@ set -euo pipefail
 : "${APP_IMAGE:?APP_IMAGE is required}"
 : "${DOMAIN:?DOMAIN is required}"
 : "${DEPLOY_DIR:=/opt/weeth/dev}"
+: "${HEALTH_CHECK_TIMEOUT_SECONDS:=120}"
+: "${HEALTH_CHECK_INTERVAL_SECONDS:=3}"
+: "${HEALTH_CHECK_CURL_CONNECT_TIMEOUT_SECONDS:=2}"
+: "${HEALTH_CHECK_CURL_MAX_TIME_SECONDS:=5}"
 
 cd "$DEPLOY_DIR"
 
@@ -37,20 +41,25 @@ echo "[deploy] image=$APP_IMAGE new_color=$NEW_COLOR old_color=$OLD_COLOR"
 docker compose --profile "$NEW_COLOR" -f docker-compose.yml pull "app-$NEW_COLOR"
 docker compose --profile "$NEW_COLOR" -f docker-compose.yml up -d "app-$NEW_COLOR"
 
-for i in {1..20}; do
-  if curl -fsS "http://127.0.0.1:${NEW_HEALTH_PORT}/actuator/health" >/dev/null; then
+health_check_deadline=$((SECONDS + HEALTH_CHECK_TIMEOUT_SECONDS))
+
+while [ "$SECONDS" -le "$health_check_deadline" ]; do
+  if curl -fsS \
+    --connect-timeout "$HEALTH_CHECK_CURL_CONNECT_TIMEOUT_SECONDS" \
+    --max-time "$HEALTH_CHECK_CURL_MAX_TIME_SECONDS" \
+    "http://127.0.0.1:${NEW_HEALTH_PORT}/actuator/health" >/dev/null; then
     echo "[deploy] new app is healthy"
     break
   fi
 
-  if [ "$i" -eq 20 ]; then
-    echo "[deploy] health check failed, stopping new container"
+  if [ "$SECONDS" -ge "$health_check_deadline" ]; then
+    echo "[deploy] health check failed after ${HEALTH_CHECK_TIMEOUT_SECONDS}s, stopping new container"
     docker compose --profile "$NEW_COLOR" -f docker-compose.yml stop "app-$NEW_COLOR" || true
     docker compose --profile "$NEW_COLOR" -f docker-compose.yml rm -f "app-$NEW_COLOR" || true
     exit 1
   fi
 
-  sleep 3
+  sleep "$HEALTH_CHECK_INTERVAL_SECONDS"
 done
 
 echo "reverse_proxy weeth-dev-app-${NEW_COLOR}:8080" > ./caddy/upstream.conf
