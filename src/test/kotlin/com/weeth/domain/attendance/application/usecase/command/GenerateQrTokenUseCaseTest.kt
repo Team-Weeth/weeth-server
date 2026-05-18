@@ -7,6 +7,7 @@ import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.port.QrAttendancePort
 import com.weeth.domain.attendance.domain.port.SseBroadcastPort
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.application.exception.SessionNotFoundException
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
@@ -48,10 +49,16 @@ class GenerateQrTokenUseCaseTest :
         describe("execute") {
             val sessionId = 1L
             val code = 123456
+            val clubId = 10L
 
             context("유효한 sessionId") {
                 it("Redis에 코드를 저장하고 QrTokenResponse를 반환한다") {
-                    val session = SessionTestFixture.createSession(id = sessionId, code = code)
+                    val session =
+                        SessionTestFixture.createSession(
+                            id = sessionId,
+                            code = code,
+                            club = ClubTestFixture.createClub(id = clubId),
+                        )
                     val expectedResponse =
                         QrTokenResponse(
                             sessionId = sessionId,
@@ -60,16 +67,16 @@ class GenerateQrTokenUseCaseTest :
                         )
 
                     every { sessionReader.getById(sessionId) } returns session
-                    every { qrAttendancePort.store(sessionId, code) } just Runs
+                    every { qrAttendancePort.store(clubId, sessionId, code) } just Runs
                     every { attendanceMapper.toQrTokenResponse(eq(session), any()) } returns expectedResponse
 
-                    val result = useCase.execute(sessionId, 10L, 20L)
+                    val result = useCase.execute(sessionId, clubId, 20L)
 
                     result shouldBe expectedResponse
-                    verify(exactly = 1) { clubPermissionPolicy.requireAdmin(10L, 20L) }
-                    verify(exactly = 1) { qrAttendancePort.store(sessionId, code) }
+                    verify(exactly = 1) { clubPermissionPolicy.requireAdmin(clubId, 20L) }
+                    verify(exactly = 1) { qrAttendancePort.store(clubId, sessionId, code) }
                     verify(exactly = 1) {
-                        ssePort.broadcast(10L, AttendanceSseEvent.QR_OPEN, any<AttendanceOpenEvent>())
+                        ssePort.broadcast(clubId, AttendanceSseEvent.QR_OPEN, any<AttendanceOpenEvent>())
                     }
                 }
             }
@@ -78,9 +85,27 @@ class GenerateQrTokenUseCaseTest :
                 it("SessionNotFoundException을 던진다") {
                     every { sessionReader.getById(sessionId) } throws SessionNotFoundException()
 
-                    shouldThrow<SessionNotFoundException> { useCase.execute(sessionId, 10L, 20L) }
+                    shouldThrow<SessionNotFoundException> { useCase.execute(sessionId, clubId, 20L) }
 
-                    verify(exactly = 0) { qrAttendancePort.store(any(), any()) }
+                    verify(exactly = 0) { qrAttendancePort.store(any(), any(), any()) }
+                    verify(exactly = 0) { ssePort.broadcast(any(), any(), any()) }
+                }
+            }
+
+            context("다른 클럽의 sessionId") {
+                it("SessionNotFoundException을 던지고 QR을 저장하지 않는다") {
+                    val session =
+                        SessionTestFixture.createSession(
+                            id = sessionId,
+                            code = code,
+                            club = ClubTestFixture.createClub(id = 999L),
+                        )
+                    every { sessionReader.getById(sessionId) } returns session
+
+                    shouldThrow<SessionNotFoundException> { useCase.execute(sessionId, clubId, 20L) }
+
+                    verify(exactly = 1) { clubPermissionPolicy.requireAdmin(clubId, 20L) }
+                    verify(exactly = 0) { qrAttendancePort.store(any(), any(), any()) }
                     verify(exactly = 0) { ssePort.broadcast(any(), any(), any()) }
                 }
             }

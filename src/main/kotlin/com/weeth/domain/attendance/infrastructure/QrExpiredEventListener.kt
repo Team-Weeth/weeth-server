@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component
 @Component
 class QrExpiredEventListener(
     private val sessionReader: SessionReader,
+    private val qrAttendancePort: QrAttendancePort,
     private val sseBroadcastPort: SseBroadcastPort,
 ) : MessageListener {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -27,6 +28,7 @@ class QrExpiredEventListener(
 
         val clubId = sessionReader.findClubIdById(sessionId) ?: return
         runCatching {
+            if (!qrAttendancePort.clearActiveSessionIfMatches(clubId, sessionId)) return
             sseBroadcastPort.broadcast(clubId, AttendanceSseEvent.QR_CLOSE, null)
         }.onFailure { e ->
             log.error("QR 만료 이벤트 처리 실패: sessionId={}", sessionId, e)
