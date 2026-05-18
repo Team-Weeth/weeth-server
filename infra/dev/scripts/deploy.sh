@@ -62,10 +62,24 @@ if [ "$CURRENT_DOMAIN" != "$DOMAIN" ]; then
   echo "[deploy] domain changed, recreating caddy"
   docker compose up -d --force-recreate caddy
 elif docker compose ps caddy --format '{{.State}}' 2>/dev/null | grep -q running; then
-  if docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile; then
+  reload_ok=false
+  if reload_output=$(docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>&1); then
+    # reload가 0을 리턴해도 실제 활성 config에 새 upstream이 반영됐는지 admin API로 검증한다
+    if docker compose exec -T caddy wget -qO- http://localhost:2019/config/ 2>/dev/null \
+        | grep -q "weeth-dev-app-${NEW_COLOR}:8080"; then
+      reload_ok=true
+    else
+      echo "[deploy] caddy reload returned ok but new upstream not active"
+    fi
+  else
+    echo "[deploy] caddy reload failed:"
+    echo "$reload_output"
+  fi
+
+  if [ "$reload_ok" = true ]; then
     echo "[deploy] caddy reloaded"
   else
-    echo "[deploy] caddy reload failed, restarting caddy"
+    echo "[deploy] falling back to restart"
     docker compose restart caddy
   fi
 else
