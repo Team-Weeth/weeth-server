@@ -1,10 +1,21 @@
 # {$DOMAIN} 은 Github Action에서 주입한다.
 {$DOMAIN} {
 
+    @sseStream path_regexp /stream$
+    @notSseStream {
+        not path_regexp /stream$
+    }
+
     # 응답 압축 활성화
     # zstd: 최신 브라우저에서 더 효율적인 압축
     # gzip: 대부분 클라이언트와 호환되는 기본 압축
-    encode zstd gzip
+    # SSE는 장시간 스트리밍 응답이므로 압축 대상에서 제외한다.
+    encode @notSseStream zstd gzip
+
+    header @sseStream {
+        Cache-Control "no-cache, no-transform"
+        X-Accel-Buffering "no"
+    }
 
     # 보안 관련 HTTP 헤더 설정
     header {
