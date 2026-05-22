@@ -42,6 +42,7 @@ docker compose --profile "$NEW_COLOR" -f docker-compose.yml pull "app-$NEW_COLOR
 docker compose --profile "$NEW_COLOR" -f docker-compose.yml up -d "app-$NEW_COLOR"
 
 health_check_deadline=$((SECONDS + HEALTH_CHECK_TIMEOUT_SECONDS))
+healthy=false
 
 while [ "$SECONDS" -le "$health_check_deadline" ]; do
   if curl -fsS \
@@ -49,18 +50,19 @@ while [ "$SECONDS" -le "$health_check_deadline" ]; do
     --max-time "$HEALTH_CHECK_CURL_MAX_TIME_SECONDS" \
     "http://127.0.0.1:${NEW_HEALTH_PORT}/actuator/health" >/dev/null; then
     echo "[deploy] new app is healthy"
+    healthy=true
     break
-  fi
-
-  if [ "$SECONDS" -ge "$health_check_deadline" ]; then
-    echo "[deploy] health check failed after ${HEALTH_CHECK_TIMEOUT_SECONDS}s, stopping new container"
-    docker compose --profile "$NEW_COLOR" -f docker-compose.yml stop "app-$NEW_COLOR" || true
-    docker compose --profile "$NEW_COLOR" -f docker-compose.yml rm -f "app-$NEW_COLOR" || true
-    exit 1
   fi
 
   sleep "$HEALTH_CHECK_INTERVAL_SECONDS"
 done
+
+if [ "$healthy" != true ]; then
+  echo "[deploy] health check failed after ${HEALTH_CHECK_TIMEOUT_SECONDS}s, stopping new container"
+  docker compose --profile "$NEW_COLOR" -f docker-compose.yml stop "app-$NEW_COLOR" || true
+  docker compose --profile "$NEW_COLOR" -f docker-compose.yml rm -f "app-$NEW_COLOR" || true
+  exit 1
+fi
 
 echo "reverse_proxy weeth-dev-app-${NEW_COLOR}:8080" > ./caddy/upstream.conf
 
