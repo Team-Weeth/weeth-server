@@ -1,8 +1,8 @@
 package com.weeth.domain.club.application.usecase.command
 
-import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.attendance.domain.service.AttendanceInitializer
 import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
@@ -43,6 +43,7 @@ class AdminClubMemberUseCase(
     private val clubMemberReader: ClubMemberReader,
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
+    private val attendanceInitializer: AttendanceInitializer,
     private val penaltyReader: PenaltyReader,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
 ) {
@@ -159,7 +160,7 @@ class AdminClubMemberUseCase(
         }
 
         attendanceInitMap.forEach { (member, cardinals) ->
-            initializeAttendances(clubId, member, cardinals)
+            attendanceInitializer.initializeForMemberCardinals(clubId, member, cardinals)
         }
     }
 
@@ -235,19 +236,7 @@ class AdminClubMemberUseCase(
                 member.resetPenaltyCount()
             }
             clubMemberCardinalRepository.saveAll(toAdd.map { ClubMemberCardinal.create(member, it) })
-            initializeAttendances(clubId, member, toAdd)
+            attendanceInitializer.initializeForMemberCardinals(clubId, member, toAdd)
         }
-    }
-
-    // TODO: ManageClubMemberUsecase.initializeAttendances와 중복 — MVP 후 공통 서비스로 추출
-    private fun initializeAttendances(
-        clubId: Long,
-        member: ClubMember,
-        cardinals: List<Cardinal>,
-    ) {
-        val sessions = sessionReader.findAllByClubIdAndCardinalIn(clubId, cardinals.map { it.cardinalNumber })
-        if (sessions.isEmpty()) return
-
-        attendanceRepository.saveAll(sessions.map { Attendance.create(session = it, clubMember = member) })
     }
 }
