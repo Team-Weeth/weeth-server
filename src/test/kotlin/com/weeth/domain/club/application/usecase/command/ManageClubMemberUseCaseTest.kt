@@ -1,6 +1,6 @@
 package com.weeth.domain.club.application.usecase.command
 
-import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.attendance.domain.service.AttendanceInitializer
 import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
@@ -26,8 +26,6 @@ import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.file.fixture.FileTestFixture
-import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.session.fixture.SessionTestFixture
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -45,8 +43,7 @@ class ManageClubMemberUseCaseTest :
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>()
-        val sessionReader = mockk<SessionReader>()
-        val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
+        val attendanceInitializer = mockk<AttendanceInitializer>(relaxed = true)
         val userReader = mockk<UserReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
@@ -59,8 +56,7 @@ class ManageClubMemberUseCaseTest :
                 clubMemberRepository = clubMemberRepository,
                 clubMemberCardinalRepository = clubMemberCardinalRepository,
                 cardinalReader = cardinalReader,
-                sessionReader = sessionReader,
-                attendanceRepository = attendanceRepository,
+                attendanceInitializer = attendanceInitializer,
                 userReader = userReader,
                 clubMemberPolicy = clubMemberPolicy,
                 clubJoinPolicy = clubJoinPolicy,
@@ -74,8 +70,7 @@ class ManageClubMemberUseCaseTest :
                 clubMemberRepository,
                 clubMemberCardinalRepository,
                 cardinalReader,
-                sessionReader,
-                attendanceRepository,
+                attendanceInitializer,
                 userReader,
                 clubMemberPolicy,
                 clubJoinPolicy,
@@ -232,18 +227,12 @@ class ManageClubMemberUseCaseTest :
                             club = club,
                             cardinalNumber = 31,
                         )
-                    val session30 = SessionTestFixture.createSession(club = club, cardinal = 30)
-                    val session31 = SessionTestFixture.createSession(club = club, cardinal = 31)
-
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
                     every { clubMemberCardinalRepository.existsByClubMember(member) } returns false
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal30
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 31) } returns cardinal31
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
-                    every {
-                        sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30, 31))
-                    } returns listOf(session30, session31)
 
                     useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(30, 31)))
 
@@ -256,18 +245,13 @@ class ManageClubMemberUseCaseTest :
                         )
                     }
                     verify(exactly = 1) {
-                        attendanceRepository.saveAll(
-                            match<List<com.weeth.domain.attendance.domain.entity.Attendance>> {
-                                it.size ==
-                                    2
-                            },
-                        )
+                        attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal30, cardinal31))
                     }
                 }
             }
 
-            context("세션이 없는 기수를 설정하는 경우") {
-                it("ClubMemberCardinal만 저장되고 출석은 초기화되지 않는다") {
+            context("기수를 설정하는 경우") {
+                it("ClubMemberCardinal을 저장하고 출석 초기화를 요청한다") {
                     val cardinal =
                         CardinalTestFixture.createCardinal(
                             id = 1L,
@@ -280,7 +264,6 @@ class ManageClubMemberUseCaseTest :
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
-                    every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30)) } returns emptyList()
 
                     useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(30)))
 
@@ -292,12 +275,8 @@ class ManageClubMemberUseCaseTest :
                             },
                         )
                     }
-                    verify(
-                        exactly = 0,
-                    ) {
-                        attendanceRepository.saveAll(
-                            any<List<com.weeth.domain.attendance.domain.entity.Attendance>>(),
-                        )
+                    verify(exactly = 1) {
+                        attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal))
                     }
                 }
             }
@@ -316,7 +295,6 @@ class ManageClubMemberUseCaseTest :
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
-                    every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30)) } returns emptyList()
 
                     useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(30, 30)))
 
@@ -327,6 +305,9 @@ class ManageClubMemberUseCaseTest :
                                     1
                             },
                         )
+                    }
+                    verify(exactly = 1) {
+                        attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal))
                     }
                 }
             }
