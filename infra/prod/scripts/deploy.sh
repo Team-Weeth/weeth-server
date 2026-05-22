@@ -5,6 +5,10 @@ set -euo pipefail
 : "${APP_IMAGE:?APP_IMAGE is required}"
 : "${DOMAIN:?DOMAIN is required}"
 : "${DEPLOY_DIR:=/opt/weeth/prod}"
+: "${HEALTH_CHECK_TIMEOUT_SECONDS:=120}"
+: "${HEALTH_CHECK_INTERVAL_SECONDS:=3}"
+: "${HEALTH_CHECK_CURL_CONNECT_TIMEOUT_SECONDS:=2}"
+: "${HEALTH_CHECK_CURL_MAX_TIME_SECONDS:=5}"
 
 cd "$DEPLOY_DIR"
 
@@ -37,21 +41,28 @@ echo "[deploy] image=$APP_IMAGE new_color=$NEW_COLOR old_color=$OLD_COLOR"
 docker compose --profile "$NEW_COLOR" -f docker-compose.yml pull "app-$NEW_COLOR"
 docker compose --profile "$NEW_COLOR" -f docker-compose.yml up -d "app-$NEW_COLOR"
 
-for i in {1..20}; do
-  if curl -fsS "http://127.0.0.1:${NEW_HEALTH_PORT}/actuator/health" >/dev/null; then
+health_check_deadline=$((SECONDS + HEALTH_CHECK_TIMEOUT_SECONDS))
+healthy=false
+
+while [ "$SECONDS" -le "$health_check_deadline" ]; do
+  if curl -fsS \
+    --connect-timeout "$HEALTH_CHECK_CURL_CONNECT_TIMEOUT_SECONDS" \
+    --max-time "$HEALTH_CHECK_CURL_MAX_TIME_SECONDS" \
+    "http://127.0.0.1:${NEW_HEALTH_PORT}/actuator/health" >/dev/null; then
     echo "[deploy] new app is healthy"
+    healthy=true
     break
   fi
 
-  if [ "$i" -eq 20 ]; then
-    echo "[deploy] health check failed, stopping new container"
-    docker compose --profile "$NEW_COLOR" -f docker-compose.yml stop "app-$NEW_COLOR" || true
-    docker compose --profile "$NEW_COLOR" -f docker-compose.yml rm -f "app-$NEW_COLOR" || true
-    exit 1
-  fi
-
-  sleep 3
+  sleep "$HEALTH_CHECK_INTERVAL_SECONDS"
 done
+
+if [ "$healthy" != true ]; then
+  echo "[deploy] health check failed after ${HEALTH_CHECK_TIMEOUT_SECONDS}s, stopping new container"
+  docker compose --profile "$NEW_COLOR" -f docker-compose.yml stop "app-$NEW_COLOR" || true
+  docker compose --profile "$NEW_COLOR" -f docker-compose.yml rm -f "app-$NEW_COLOR" || true
+  exit 1
+fi
 
 echo "reverse_proxy weeth-prod-app-${NEW_COLOR}:8080" > ./caddy/upstream.conf
 
@@ -62,10 +73,24 @@ if [ "$CURRENT_DOMAIN" != "$DOMAIN" ]; then
   echo "[deploy] domain changed, recreating caddy"
   docker compose up -d --force-recreate caddy
 elif docker compose ps caddy --format '{{.State}}' 2>/dev/null | grep -q running; then
-  if docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile; then
+  reload_ok=false
+  if reload_output=$(docker compose exec -T caddy caddy reload --config /etc/caddy/Caddyfile 2>&1); then
+    # reload가 0을 리턴해도 실제 활성 config에 새 upstream이 반영됐는지 admin API로 검증한다
+    if docker compose exec -T caddy wget -qO- http://localhost:2019/config/ 2>/dev/null \
+        | grep -q "weeth-prod-app-${NEW_COLOR}:8080"; then
+      reload_ok=true
+    else
+      echo "[deploy] caddy reload returned ok but new upstream not active"
+    fi
+  else
+    echo "[deploy] caddy reload failed:"
+    echo "$reload_output"
+  fi
+
+  if [ "$reload_ok" = true ]; then
     echo "[deploy] caddy reloaded"
   else
-    echo "[deploy] caddy reload failed, restarting caddy"
+    echo "[deploy] falling back to restart"
     docker compose restart caddy
   fi
 else

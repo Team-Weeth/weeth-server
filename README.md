@@ -119,7 +119,7 @@ EC2 (ARM64)
 무중단 배포를 위해 Blue-Green 방식을 사용합니다.
 
 1. 새 컨테이너(Blue/Green) 시작
-2. `/actuator/health` 헬스 체크 (20회, 3초 간격)
+2. `/actuator/health` 헬스 체크 (기본 120초 타임아웃, 3초 간격)
 3. Caddy upstream 전환
 4. 이전 컨테이너 종료
 
