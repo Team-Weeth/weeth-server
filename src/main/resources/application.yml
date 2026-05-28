@@ -13,6 +13,8 @@ spring:
         - local
   jpa:
     open-in-view: false
+  flyway:
+    enabled: false
 
 springdoc:
   use-fqn: true
