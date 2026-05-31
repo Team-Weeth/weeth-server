@@ -1,7 +1,12 @@
 package com.weeth.domain.account.domain.repository
 
 import com.weeth.domain.account.domain.entity.Account
+import com.weeth.domain.account.domain.enums.AccountStatus
+import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface AccountRepository : JpaRepository<Account, Long> {
     fun findByClubIdAndCardinal(
@@ -13,4 +18,22 @@ interface AccountRepository : JpaRepository<Account, Long> {
         clubId: Long,
         cardinal: Int,
     ): Boolean
+
+    fun findByClubIdAndCardinalAndStatus(
+        clubId: Long,
+        cardinal: Int,
+        status: AccountStatus,
+    ): Account?
+
+    fun existsByClubIdAndCardinalAndStatus(
+        clubId: Long,
+        cardinal: Int,
+        status: AccountStatus,
+    ): Boolean
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select a from Account a where a.id = :id")
+    fun findByIdWithLock(
+        @Param("id") id: Long,
+    ): Account?
 }
