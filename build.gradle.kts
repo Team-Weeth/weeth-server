@@ -76,6 +76,8 @@ dependencies {
     implementation("io.hypersistence:hypersistence-tsid:2.1.4")
 
     // --- DB ---
+    implementation("org.flywaydb:flyway-core")
+    implementation("org.flywaydb:flyway-mysql")
     runtimeOnly("com.mysql:mysql-connector-j")
 
     // --- Swagger (springdoc) ---
@@ -123,6 +125,7 @@ tasks.withType<KotlinCompile>().configureEach {
 tasks.test {
     val runPerformanceTests = (findProperty("runPerformanceTests") as String?)?.toBoolean() ?: false
     systemProperty("runPerformanceTests", runPerformanceTests.toString())
+    systemProperty("spring.profiles.active", "test")
     useJUnitPlatform {
         if (!runPerformanceTests) {
             excludeTags("performance")
