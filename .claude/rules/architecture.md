@@ -128,7 +128,7 @@ class Post(
 
 - **Location**: `domain/vo/`
 - **Single field**: Kotlin `value class` — inline at JVM level, zero overhead
-- **Multi field**: `@Embeddable data class` — used with `@Embedded` in Entity
+- **Multi field**: `@Embeddable class` (NOT `data class`) — used with `@Embedded` in Entity. Apply the same `private set` pattern as Entity; handle normalization/validation in a `companion object` `of`/`from` factory when needed.
 
 ### value class (single field)
 
@@ -141,25 +141,37 @@ value class Email(val value: String) {
 }
 ```
 
-### @Embeddable data class (composite fields)
+### @Embeddable class (composite fields)
 
 ```kotlin
 @Embeddable
-data class Period(
+class Period(
+    startDate: LocalDate,
+    endDate: LocalDate,
+) {
     @Column(nullable = false)
-    val startDate: LocalDate,
+    var startDate: LocalDate = startDate
+        private set
 
     @Column(nullable = false)
-    val endDate: LocalDate,
-) {
+    var endDate: LocalDate = endDate
+        private set
+
     init {
-        require(!endDate.isBefore(startDate)) { "endDate must be after startDate" }
+        require(!this.endDate.isBefore(this.startDate)) { "endDate must be after startDate" }
     }
 
     fun contains(date: LocalDate): Boolean =
         !date.isBefore(startDate) && !date.isAfter(endDate)
+
+    companion object {
+        fun of(startDate: LocalDate, endDate: LocalDate): Period =
+            Period(startDate = startDate, endDate = endDate)
+    }
 }
 ```
+
+> Why not `data class`: keep state changes confined to explicit named methods via `private set`, mirroring Entity. The default identity-based `equals/hashCode` is fine because an embedded VO is compared as part of its owning Entity, not on its own.
 
 ### Usage in Entity
 
@@ -179,9 +191,10 @@ class User(
 
 | Rule | Description |
 |------|-------------|
-| Immutable | All fields `val`; return new instance on state change |
-| Self-validating | Validate with `require` in `init` block |
-| Equality | value class: automatic; data class: `equals/hashCode` auto-generated |
+| State control | `value class`: single `val` field. `@Embeddable class`: `var` + `private set` in the body; mutate only via named methods |
+| Self-validating | Validate with `require` in `init` block (or normalize in a factory and delegate) |
+| Equality | `value class`: automatic. `@Embeddable class`: default (identity); override `equals/hashCode` explicitly only when value-equality is required |
+| Factory | Use a `companion object` `of`/`from` factory when normalization (e.g. trim) or extra validation is needed |
 | Business logic | May contain operations/decisions relevant to the value |
 | JPA mapping | `@Embeddable` + `@Embedded` for composite; value class stored as primitive in Entity |
 
