@@ -1,11 +1,14 @@
 package com.weeth.domain.account.domain.entity
 
+import com.weeth.domain.account.domain.enums.AccountStatus
+import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import java.time.LocalDateTime
 
 class AccountTest :
     StringSpec({
@@ -51,5 +54,69 @@ class AccountTest :
             account.currentAmount shouldBe 200_000
             account.totalAmount shouldBe 200_000
             account.cardinal shouldBe 41
+        }
+
+        "createDraft는 DRAFT 상태의 회비 장부 초안을 생성한다" {
+            val club = ClubTestFixture.createClub()
+
+            val account = Account.createDraft(club = club, cardinal = 4)
+
+            account.club shouldBe club
+            account.cardinal shouldBe 4
+            account.status shouldBe AccountStatus.DRAFT
+            account.name shouldBe null
+            account.duesAmount shouldBe 0
+            account.currentBalance shouldBe 0
+        }
+
+        "activate는 필수 정보가 채워진 초안을 ACTIVE 상태로 변경한다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+
+            account.updateBasicInfo(name = "4기 회비", duesAmount = Money.of(50_000), description = "정기 회비")
+            account.activate()
+
+            account.status shouldBe AccountStatus.ACTIVE
+        }
+
+        "activate는 회비 이름이 없으면 IllegalStateException을 던진다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+
+            shouldThrow<IllegalStateException> {
+                account.activate()
+            }
+        }
+
+        "applyTransaction은 수입 거래를 currentBalance에 더한다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+            val transaction =
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "통장 이자",
+                    source = "토스",
+                    amount = Money.of(23),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                )
+
+            account.applyTransaction(transaction)
+
+            account.currentBalance shouldBe 23
+        }
+
+        "applyTransaction은 잔액보다 큰 지출 거래면 IllegalStateException을 던진다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+            val transaction =
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.EXPENSE,
+                    title = "굿즈",
+                    source = "oo팩토리",
+                    amount = Money.of(142_000),
+                    transactedAt = LocalDateTime.of(2026, 3, 17, 10, 0),
+                )
+
+            shouldThrow<IllegalStateException> {
+                account.applyTransaction(transaction)
+            }
         }
     })
