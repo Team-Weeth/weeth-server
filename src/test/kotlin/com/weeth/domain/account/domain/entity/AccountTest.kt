@@ -101,6 +101,68 @@ class AccountTest :
             account.applyTransaction(transaction)
 
             account.currentBalance shouldBe 23
+            transaction.isApplied shouldBe true
+        }
+
+        "applyTransaction은 같은 거래를 중복 반영할 수 없다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+            val transaction =
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "통장 이자",
+                    source = "토스",
+                    amount = Money.of(23),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                )
+            account.applyTransaction(transaction)
+
+            shouldThrow<IllegalStateException> {
+                account.applyTransaction(transaction)
+            }
+            account.currentBalance shouldBe 23
+            account.currentAmount shouldBe 23
+            transaction.isApplied shouldBe true
+        }
+
+        "revertTransaction은 반영된 거래를 되돌리고 다시 되돌릴 수 없다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+            val transaction =
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "통장 이자",
+                    source = "토스",
+                    amount = Money.of(23),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                )
+            account.applyTransaction(transaction)
+
+            account.revertTransaction(transaction)
+
+            account.currentBalance shouldBe 0
+            account.currentAmount shouldBe 0
+            transaction.isApplied shouldBe false
+            shouldThrow<IllegalStateException> {
+                account.revertTransaction(transaction)
+            }
+        }
+
+        "revertTransaction은 반영되지 않은 거래를 되돌릴 수 없다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+            val transaction =
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "통장 이자",
+                    source = "토스",
+                    amount = Money.of(23),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                )
+
+            shouldThrow<IllegalStateException> {
+                account.revertTransaction(transaction)
+            }
         }
 
         "applyTransaction은 잔액보다 큰 지출 거래면 IllegalStateException을 던진다" {

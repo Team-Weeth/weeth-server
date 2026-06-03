@@ -87,4 +87,39 @@ class AccountPaymentTargetTest :
                 target.markPaid(Money.of(50_000), confirmedBy = 1L, paidAt = LocalDateTime.now())
             }
         }
+
+        "markUnpaid는 납부 완료된 대상만 미납 처리할 수 있다" {
+            val account = AccountTestFixture.createAccount()
+            val clubMember = ClubMemberTestFixture.createActiveMember(club = account.club)
+            val target = AccountPaymentTarget.createTargeted(account, clubMember, Money.of(50_000))
+            val paidAt = LocalDateTime.of(2026, 3, 13, 10, 0)
+            target.markPaid(Money.of(50_000), confirmedBy = 1L, paidAt = paidAt)
+
+            target.markUnpaid()
+
+            target.paymentStatus shouldBe AccountPaymentStatus.UNPAID
+            target.paidAmount shouldBe 0
+            target.paidAt shouldBe null
+            target.confirmedBy shouldBe null
+        }
+
+        "미납 대상은 다시 미납 처리할 수 없다" {
+            val account = AccountTestFixture.createAccount()
+            val clubMember = ClubMemberTestFixture.createActiveMember(club = account.club)
+            val target = AccountPaymentTarget.createTargeted(account, clubMember, Money.of(50_000))
+
+            shouldThrow<IllegalStateException> {
+                target.markUnpaid()
+            }
+        }
+
+        "제외 대상은 미납 처리할 수 없다" {
+            val account = AccountTestFixture.createAccount()
+            val clubMember = ClubMemberTestFixture.createActiveMember(club = account.club)
+            val target = AccountPaymentTarget.createExcluded(account, clubMember, memo = null)
+
+            shouldThrow<IllegalStateException> {
+                target.markUnpaid()
+            }
+        }
     })

@@ -62,11 +62,11 @@ class AccountTransaction(
     val direction: AccountTransactionDirection = type.direction
 
     @Column(nullable = false, length = 100)
-    var title: String = normalizeRequired(title, "거래 내용")
+    var title: String = normalizeRequired(title, "거래 내용", MAX_TITLE_LENGTH)
         private set
 
     @Column(length = 50)
-    var source: String? = normalizeOptional(source)
+    var source: String? = normalizeOptional(source, "거래 출처", MAX_SOURCE_LENGTH)
         private set
 
     @Column(nullable = false)
@@ -76,14 +76,18 @@ class AccountTransaction(
     // MVP UI에서는 노출하지 않지만 분류/통계 확장을 위해 선반영해두는 자유 입력 카테고리.
     // 추후 카테고리 테이블로 승격될 수 있다 (membership-fee-domain-plan.md 참조).
     @Column(length = 30)
-    var category: String? = normalizeOptional(category)
+    var category: String? = normalizeOptional(category, "카테고리", MAX_CATEGORY_LENGTH)
         private set
 
     @Column(length = 200)
-    var memo: String? = normalizeOptional(memo)
+    var memo: String? = normalizeOptional(memo, "메모", MAX_MEMO_LENGTH)
         private set
 
     var deletedAt: LocalDateTime? = null
+        private set
+
+    @Column(name = "is_applied", nullable = false)
+    var isApplied: Boolean = false
         private set
 
     init {
@@ -99,7 +103,23 @@ class AccountTransaction(
         }
     }
 
+    internal fun markApplied() {
+        check(!isApplied) { "이미 반영된 거래입니다." }
+        check(deletedAt == null) { "삭제된 거래는 반영할 수 없습니다." }
+        isApplied = true
+    }
+
+    internal fun markReverted() {
+        check(isApplied) { "반영되지 않은 거래는 되돌릴 수 없습니다." }
+        isApplied = false
+    }
+
     companion object {
+        private const val MAX_TITLE_LENGTH = 100
+        private const val MAX_SOURCE_LENGTH = 50
+        private const val MAX_CATEGORY_LENGTH = 30
+        private const val MAX_MEMO_LENGTH = 200
+
         fun create(
             account: Account,
             type: AccountTransactionType,
@@ -126,13 +146,23 @@ class AccountTransaction(
         private fun normalizeRequired(
             value: String,
             fieldName: String,
+            maxLength: Int,
         ): String {
             val normalized = value.trim()
             require(normalized.isNotBlank()) { "$fieldName 은 비어 있을 수 없습니다." }
+            require(normalized.length <= maxLength) { "$fieldName 은 ${maxLength}자를 초과할 수 없습니다." }
             return normalized
         }
 
-        private fun normalizeOptional(value: String?): String? = value?.trim()?.takeIf { it.isNotBlank() }
+        private fun normalizeOptional(
+            value: String?,
+            fieldName: String,
+            maxLength: Int,
+        ): String? =
+            value
+                ?.trim()
+                ?.takeIf { it.isNotBlank() }
+                ?.also { require(it.length <= maxLength) { "$fieldName 은 ${maxLength}자를 초과할 수 없습니다." } }
 
         private fun AccountPaymentTarget.belongsTo(account: Account): Boolean =
             when {

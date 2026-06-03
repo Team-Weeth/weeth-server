@@ -51,6 +51,56 @@ class AccountTransactionTest :
             }
         }
 
+        "문자열 필드가 컬럼 길이를 초과하면 생성할 수 없다" {
+            val account = AccountTestFixture.createAccount()
+
+            shouldThrow<IllegalArgumentException> {
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "가".repeat(101),
+                    source = "토스",
+                    amount = Money.of(1_000),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                )
+            }
+
+            shouldThrow<IllegalArgumentException> {
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "통장 이자",
+                    source = "가".repeat(51),
+                    amount = Money.of(1_000),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                )
+            }
+
+            shouldThrow<IllegalArgumentException> {
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "통장 이자",
+                    source = "토스",
+                    amount = Money.of(1_000),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                    category = "가".repeat(31),
+                )
+            }
+
+            shouldThrow<IllegalArgumentException> {
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.INCOME,
+                    title = "통장 이자",
+                    source = "토스",
+                    amount = Money.of(1_000),
+                    transactedAt = LocalDateTime.of(2026, 3, 24, 10, 0),
+                    memo = "가".repeat(201),
+                )
+            }
+        }
+
         "다른 장부의 납부 대상은 거래에 연결할 수 없다" {
             val targetAccount = AccountTestFixture.createAccount(id = 1L)
             val transactionAccount = AccountTestFixture.createAccount(id = 2L)

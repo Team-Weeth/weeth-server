@@ -124,6 +124,8 @@ class AccountPaymentTarget(
     }
 
     fun markUnpaid() {
+        check(targetStatus == AccountTargetStatus.TARGETED) { "납부 대상만 미납 처리할 수 있습니다." }
+        check(paymentStatus == AccountPaymentStatus.PAID) { "납부 완료된 대상만 미납 처리할 수 있습니다." }
         paymentStatus = AccountPaymentStatus.UNPAID
         paidAmount = 0
         paidAt = null

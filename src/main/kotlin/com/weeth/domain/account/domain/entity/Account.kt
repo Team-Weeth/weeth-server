@@ -196,6 +196,7 @@ class Account(
     fun applyTransaction(transaction: AccountTransaction) {
         check(transaction.belongsTo()) { "거래가 해당 장부에 속하지 않습니다." }
         check(transaction.deletedAt == null) { "삭제된 거래는 반영할 수 없습니다." }
+        check(!transaction.isApplied) { "이미 반영된 거래입니다." }
         when (transaction.direction) {
             AccountTransactionDirection.INCOME -> {
                 currentBalance += transaction.amount
@@ -210,6 +211,7 @@ class Account(
                 currentAmount -= transaction.amount
             }
         }
+        transaction.markApplied()
     }
 
     /**
@@ -217,6 +219,7 @@ class Account(
      */
     fun revertTransaction(transaction: AccountTransaction) {
         check(transaction.belongsTo()) { "거래가 해당 장부에 속하지 않습니다." }
+        check(transaction.isApplied) { "반영되지 않은 거래는 되돌릴 수 없습니다." }
         when (transaction.direction) {
             AccountTransactionDirection.INCOME -> {
                 check(currentBalance >= transaction.amount) {
@@ -231,6 +234,7 @@ class Account(
                 currentAmount += transaction.amount
             }
         }
+        transaction.markReverted()
     }
 
     companion object {
