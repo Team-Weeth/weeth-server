@@ -18,6 +18,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -71,6 +72,14 @@ class ClubMember(
     var bio: String? = null
         private set
 
+    @Column(name = "left_at")
+    var leftAt: LocalDateTime? = null
+        private set
+
+    @Column(name = "hard_delete_after")
+    var hardDeleteAfter: LocalDateTime? = null
+        private set
+
     fun accept() {
         check(memberStatus == MemberStatus.WAITING) { "대기 상태인 멤버만 승인할 수 있습니다." }
         memberStatus = MemberStatus.ACTIVE
@@ -88,9 +97,11 @@ class ClubMember(
         memberStatus = MemberStatus.ACTIVE
     }
 
-    fun leave() {
+    fun leave(now: LocalDateTime) {
         check(memberStatus == MemberStatus.ACTIVE) { "활동 중인 멤버만 탈퇴할 수 있습니다." }
         memberStatus = MemberStatus.LEFT
+        leftAt = now
+        hardDeleteAfter = now.plusDays(RETENTION_DAYS)
     }
 
     fun isActive(): Boolean = memberStatus == MemberStatus.ACTIVE
@@ -177,6 +188,8 @@ class ClubMember(
     }
 
     companion object {
+        private const val RETENTION_DAYS = 30L
+
         fun create(
             club: Club,
             user: User,

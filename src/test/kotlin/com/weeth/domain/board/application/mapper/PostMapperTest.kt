@@ -4,6 +4,7 @@ import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.domain.enums.FileStatus
@@ -36,6 +37,7 @@ class PostMapperTest :
         every { board.isCommentEnabled } returns true
 
         every { authorMember.memberRole } returns MemberRole.USER
+        every { authorMember.memberStatus } returns MemberStatus.ACTIVE
         every { authorMember.profileImageStorageKey } returns null
         every { authorMember.user } returns user
 
@@ -63,6 +65,45 @@ class PostMapperTest :
                 response.id shouldBe 1L
                 response.fileUrls shouldBe emptyList()
                 response.isNew shouldBe true
+            }
+        }
+
+        describe("작성자 익명화") {
+            it("LEFT 멤버가 작성한 게시글은 작성자 이름이 익명 라벨로 치환되고 프로필이 null이 된다") {
+                every { fileAccessUrlPort.resolve("POST/2026-05/leak.png") } returns "https://cdn/leak.png"
+                val leftUser = mockk<User>()
+                every { leftUser.id } returns 7L
+                every { leftUser.name } returns "노출되면안됨"
+
+                val leftMember = mockk<ClubMember>()
+                every { leftMember.memberRole } returns MemberRole.USER
+                every { leftMember.memberStatus } returns MemberStatus.LEFT
+                every { leftMember.profileImageStorageKey } returns "POST/2026-05/leak.png"
+                every { leftMember.user } returns leftUser
+
+                val leftPost = mockk<Post>()
+                every { leftPost.id } returns 100L
+                every { leftPost.title } returns "탈퇴자 글"
+                every { leftPost.content } returns "내용"
+                every { leftPost.clubMember } returns leftMember
+                every { leftPost.board } returns board
+                every { leftPost.commentCount } returns 0
+                every { leftPost.likeCount } returns 0
+                every { leftPost.createdAt } returns now
+                every { leftPost.modifiedAt } returns now
+
+                val response =
+                    mapper.toListResponse(
+                        leftPost,
+                        files = emptyList(),
+                        now = now,
+                        isLiked = false,
+                        memberRole = MemberRole.USER,
+                    )
+
+                response.author.name shouldBe UserInfo.ANONYMOUS_USER_NAME
+                response.author.profileImageUrl shouldBe null
+                response.author.id shouldBe 7L
             }
         }
 

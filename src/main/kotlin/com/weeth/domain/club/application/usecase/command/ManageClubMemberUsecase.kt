@@ -30,6 +30,7 @@ import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 /**
  * 동아리 가입, 탈퇴 UseCase.
@@ -192,6 +193,6 @@ class ManageClubMemberUsecase(
             throw CannotLeaveAsLeadException()
         }
 
-        member.leave()
+        member.leave(LocalDateTime.now())
     }
 }
