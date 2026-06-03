@@ -111,6 +111,7 @@ class AccountTransaction(
 
     internal fun markReverted() {
         check(isApplied) { "반영되지 않은 거래는 되돌릴 수 없습니다." }
+        check(deletedAt == null) { "삭제된 거래는 되돌릴 수 없습니다." }
         isApplied = false
     }
 
