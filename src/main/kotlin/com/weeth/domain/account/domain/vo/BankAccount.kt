@@ -15,26 +15,20 @@ class BankAccount(
     guide: String? = null,
 ) {
     @Column(name = "bank_name", length = 30)
-    var bankName: String = bankName
+    var bankName: String = normalizeRequired(bankName, "은행명")
         private set
 
     @Column(name = "bank_account_number", length = 50)
-    var accountNumber: String = accountNumber
+    var accountNumber: String = normalizeRequired(accountNumber, "계좌번호")
         private set
 
     @Column(name = "account_holder", length = 50)
-    var holder: String = holder
+    var holder: String = normalizeRequired(holder, "예금주")
         private set
 
     @Column(name = "bank_guide", length = 200)
-    var guide: String? = guide
+    var guide: String? = normalizeOptional(guide)
         private set
-
-    init {
-        require(this.bankName.isNotBlank()) { "은행명은 비어 있을 수 없습니다." }
-        require(this.accountNumber.isNotBlank()) { "계좌번호는 비어 있을 수 없습니다." }
-        require(this.holder.isNotBlank()) { "예금주는 비어 있을 수 없습니다." }
-    }
 
     companion object {
         fun of(
@@ -44,10 +38,21 @@ class BankAccount(
             guide: String? = null,
         ): BankAccount =
             BankAccount(
-                bankName = bankName.trim(),
-                accountNumber = accountNumber.trim(),
-                holder = holder.trim(),
-                guide = guide?.trim()?.takeIf { it.isNotBlank() },
+                bankName = bankName,
+                accountNumber = accountNumber,
+                holder = holder,
+                guide = guide,
             )
+
+        private fun normalizeRequired(
+            value: String,
+            fieldName: String,
+        ): String {
+            val normalized = value.trim()
+            require(normalized.isNotBlank()) { "$fieldName 은 비어 있을 수 없습니다." }
+            return normalized
+        }
+
+        private fun normalizeOptional(value: String?): String? = value?.trim()?.takeIf { it.isNotBlank() }
     }
 }
