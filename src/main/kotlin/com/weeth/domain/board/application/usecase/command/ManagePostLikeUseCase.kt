@@ -81,6 +81,6 @@ class ManagePostLikeUseCase(
         if (!post.belongsToClub(clubId)) throw PostNotFoundException()
         if (!post.board.isAccessibleBy(member.memberRole)) throw CategoryAccessDeniedException()
 
-        return post to postLikeRepository.findByPostAndUserId(post, userId)
+        return post to postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId)
     }
 }

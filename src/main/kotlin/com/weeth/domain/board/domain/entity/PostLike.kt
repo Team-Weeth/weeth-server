@@ -11,6 +11,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -39,11 +40,21 @@ class PostLike(
     var isActive: Boolean = true
         private set
 
+    @Column(name = "deleted_at")
+    var deletedAt: LocalDateTime? = null
+        private set
+
     fun activate() {
         isActive = true
     }
 
     fun deactivate() {
         isActive = false
+    }
+
+    fun markDeleted(now: LocalDateTime) {
+        if (deletedAt != null) return
+        isActive = false
+        deletedAt = now
     }
 }
