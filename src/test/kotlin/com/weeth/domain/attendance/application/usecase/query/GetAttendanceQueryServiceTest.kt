@@ -218,7 +218,8 @@ class GetAttendanceQueryServiceTest :
 
                 every { clubPermissionPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { sessionReader.getById(session.id) } returns session
-                every { attendanceRepository.findAllBySession(session) } returns listOf(activeAttendance, leftAttendance)
+                every { attendanceRepository.findAllBySession(session) } returns
+                    listOf(activeAttendance, leftAttendance)
 
                 val result = queryService.findAllAttendanceBySession(admin.club.id, admin.user.id, session.id)
 

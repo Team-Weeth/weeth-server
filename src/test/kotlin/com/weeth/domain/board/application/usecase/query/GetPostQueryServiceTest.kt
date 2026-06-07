@@ -156,7 +156,12 @@ class GetPostQueryServiceTest :
                 every { commentReader.findAllByPostId(any<Long>()) } returns emptyList()
                 every { getCommentQueryService.toCommentTreeResponses(any()) } returns comments
                 every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
-                every { postLikeRepository.existsByPostAndUserIdAndIsActiveTrueAndDeletedAtIsNull(post, userId) } returns
+                every {
+                    postLikeRepository.existsByPostAndUserIdAndIsActiveTrueAndDeletedAtIsNull(
+                        post,
+                        userId,
+                    )
+                } returns
                     false
                 every {
                     postMapper.toDetailResponse(post, comments, fileResponses, false, any(), MemberRole.USER)

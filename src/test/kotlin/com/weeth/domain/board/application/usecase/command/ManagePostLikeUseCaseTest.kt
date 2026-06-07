@@ -128,7 +128,8 @@ class ManagePostLikeUseCaseTest :
                     val post = PostTestFixture.create(board = board)
                     val existingLike = PostLikeTestFixture.createInactive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns existingLike
+                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                        existingLike
 
                     val result = useCase.like(clubId, boardId, postId, userId)
 
@@ -143,7 +144,8 @@ class ManagePostLikeUseCaseTest :
                     val post = PostTestFixture.create(board = board, initialLikeCount = 1)
                     val existingLike = PostLikeTestFixture.createActive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns existingLike
+                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                        existingLike
 
                     val result = useCase.like(clubId, boardId, postId, userId)
 
@@ -203,7 +205,8 @@ class ManagePostLikeUseCaseTest :
                     val post = PostTestFixture.create(board = board, initialLikeCount = 1)
                     val existingLike = PostLikeTestFixture.createActive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns existingLike
+                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                        existingLike
 
                     val result = useCase.unlike(clubId, boardId, postId, userId)
 
@@ -217,7 +220,8 @@ class ManagePostLikeUseCaseTest :
                     val post = PostTestFixture.create(board = board)
                     val existingLike = PostLikeTestFixture.createInactive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns existingLike
+                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                        existingLike
 
                     val result = useCase.unlike(clubId, boardId, postId, userId)
 
