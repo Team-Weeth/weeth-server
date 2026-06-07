@@ -195,6 +195,21 @@ class ClubMemberTest :
             }
         }
 
+        "leave — LEFT 상태에서 재호출 시 예외가 발생하고 탈퇴 메타데이터를 유지한다" {
+            val member = ClubMember(club = club, user = user)
+            member.accept()
+            val leftAt = LocalDateTime.of(2026, 5, 19, 12, 0)
+            member.leave(leftAt)
+
+            shouldThrow<IllegalStateException> {
+                member.leave(leftAt.plusDays(1))
+            }
+
+            member.memberStatus shouldBe MemberStatus.LEFT
+            member.leftAt shouldBe leftAt
+            member.hardDeleteAfter shouldBe leftAt.plusDays(30)
+        }
+
         "releaseLead — LEAD 멤버를 ADMIN으로 변경한다" {
             val member = ClubMember(club = club, user = user, memberRole = MemberRole.LEAD)
 
