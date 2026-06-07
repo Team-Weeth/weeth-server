@@ -16,6 +16,7 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
 import com.weeth.domain.club.domain.service.ClubCodePolicy
 import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -42,6 +43,7 @@ class ManageClubMemberUsecase(
     private val userReader: UserReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubJoinPolicy: ClubJoinPolicy,
+    private val clubActivityDeletionPolicy: ClubActivityDeletionPolicy,
     private val fileRepository: FileRepository,
     private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
@@ -176,6 +178,8 @@ class ManageClubMemberUsecase(
             throw CannotLeaveAsLeadException()
         }
 
-        member.leave(LocalDateTime.now())
+        val now = LocalDateTime.now()
+        clubActivityDeletionPolicy.markMemberActivitiesDeleted(member, now)
+        member.leave(now)
     }
 }
