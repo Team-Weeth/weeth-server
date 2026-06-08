@@ -25,6 +25,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.dao.PessimisticLockingFailureException
+import java.time.LocalDateTime
 
 class ManagePostLikeUseCaseTest :
     DescribeSpec({
@@ -54,7 +55,7 @@ class ManagePostLikeUseCaseTest :
 
         beforeTest {
             clearMocks(postRepository, postLikeRepository, clubMemberPolicy, postMapper)
-            every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+            every { clubMemberPolicy.getActiveMemberWithLock(clubId, userId) } returns member
             every { postLikeRepository.save(any()) } answers { firstArg() }
             every { postMapper.toLikeActionResponse(any(), any()) } answers {
                 PostLikeActionResponse(
@@ -102,7 +103,7 @@ class ManagePostLikeUseCaseTest :
 
             context("접근 권한이 없는 비공개 게시판일 때") {
                 it("CategoryAccessDeniedException을 던진다") {
-                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns userMember
+                    every { clubMemberPolicy.getActiveMemberWithLock(clubId, userId) } returns userMember
                     every { postRepository.findByIdWithLock(postId) } returns privatePost
 
                     shouldThrow<CategoryAccessDeniedException> { useCase.like(clubId, boardId, postId, userId) }
@@ -113,7 +114,7 @@ class ManagePostLikeUseCaseTest :
                 it("새 PostLike를 생성하고 likeCount를 증가시킨다") {
                     val post = PostTestFixture.create(board = board)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns null
+                    every { postLikeRepository.findByPostAndUserId(post, userId) } returns null
 
                     val result = useCase.like(clubId, boardId, postId, userId)
 
@@ -128,7 +129,7 @@ class ManagePostLikeUseCaseTest :
                     val post = PostTestFixture.create(board = board)
                     val existingLike = PostLikeTestFixture.createInactive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                    every { postLikeRepository.findByPostAndUserId(post, userId) } returns
                         existingLike
 
                     val result = useCase.like(clubId, boardId, postId, userId)
@@ -139,12 +140,30 @@ class ManagePostLikeUseCaseTest :
                 }
             }
 
+            context("탈퇴 처리로 삭제된 PostLike가 있을 때") {
+                it("기존 row를 복구하고 likeCount를 증가시킨다") {
+                    val post = PostTestFixture.create(board = board)
+                    val existingLike = PostLikeTestFixture.createActive(post = post, userId = userId)
+                    existingLike.markDeleted(LocalDateTime.of(2026, 5, 19, 12, 0))
+                    every { postRepository.findByIdWithLock(postId) } returns post
+                    every { postLikeRepository.findByPostAndUserId(post, userId) } returns existingLike
+
+                    val result = useCase.like(clubId, boardId, postId, userId)
+
+                    result.isLiked shouldBe true
+                    result.likeCount shouldBe 1
+                    existingLike.isActive shouldBe true
+                    existingLike.deletedAt shouldBe null
+                    verify(exactly = 0) { postLikeRepository.save(any()) }
+                }
+            }
+
             context("PostLike(isActive=true)가 이미 있을 때") {
                 it("no-op으로 isLiked=true를 그대로 반환한다") {
                     val post = PostTestFixture.create(board = board, initialLikeCount = 1)
                     val existingLike = PostLikeTestFixture.createActive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                    every { postLikeRepository.findByPostAndUserId(post, userId) } returns
                         existingLike
 
                     val result = useCase.like(clubId, boardId, postId, userId)
@@ -193,7 +212,7 @@ class ManagePostLikeUseCaseTest :
 
             context("접근 권한이 없는 비공개 게시판일 때") {
                 it("CategoryAccessDeniedException을 던진다") {
-                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns userMember
+                    every { clubMemberPolicy.getActiveMemberWithLock(clubId, userId) } returns userMember
                     every { postRepository.findByIdWithLock(postId) } returns privatePost
 
                     shouldThrow<CategoryAccessDeniedException> { useCase.unlike(clubId, boardId, postId, userId) }
@@ -205,7 +224,7 @@ class ManagePostLikeUseCaseTest :
                     val post = PostTestFixture.create(board = board, initialLikeCount = 1)
                     val existingLike = PostLikeTestFixture.createActive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                    every { postLikeRepository.findByPostAndUserId(post, userId) } returns
                         existingLike
 
                     val result = useCase.unlike(clubId, boardId, postId, userId)
@@ -220,7 +239,7 @@ class ManagePostLikeUseCaseTest :
                     val post = PostTestFixture.create(board = board)
                     val existingLike = PostLikeTestFixture.createInactive(post = post, userId = userId)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns
+                    every { postLikeRepository.findByPostAndUserId(post, userId) } returns
                         existingLike
 
                     val result = useCase.unlike(clubId, boardId, postId, userId)
@@ -234,7 +253,7 @@ class ManagePostLikeUseCaseTest :
                 it("no-op으로 isLiked=false를 반환한다") {
                     val post = PostTestFixture.create(board = board)
                     every { postRepository.findByIdWithLock(postId) } returns post
-                    every { postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId) } returns null
+                    every { postLikeRepository.findByPostAndUserId(post, userId) } returns null
 
                     val result = useCase.unlike(clubId, boardId, postId, userId)
 

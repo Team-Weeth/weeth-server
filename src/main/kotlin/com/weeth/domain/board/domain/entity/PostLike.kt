@@ -52,9 +52,15 @@ class PostLike(
         isActive = false
     }
 
-    fun markDeleted(now: LocalDateTime) {
-        if (deletedAt != null) return
+    fun markDeleted(now: LocalDateTime): Boolean {
+        if (deletedAt != null) return false
         isActive = false
         deletedAt = now
+        return true
+    }
+
+    fun restore() {
+        isActive = true
+        deletedAt = null
     }
 }

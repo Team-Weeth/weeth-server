@@ -35,8 +35,9 @@ class PostLikeEntityTest :
             val like = PostLikeTestFixture.createActive()
             val now = LocalDateTime.of(2026, 5, 19, 12, 0)
 
-            like.markDeleted(now)
+            val deleted = like.markDeleted(now)
 
+            deleted shouldBe true
             like.isActive shouldBe false
             like.deletedAt shouldBe now
         }
@@ -46,9 +47,20 @@ class PostLikeEntityTest :
             val deletedAt = LocalDateTime.of(2026, 5, 19, 12, 0)
             like.markDeleted(deletedAt)
 
-            like.markDeleted(deletedAt.plusDays(1))
+            val deleted = like.markDeleted(deletedAt.plusDays(1))
 
+            deleted shouldBe false
             like.isActive shouldBe false
             like.deletedAt shouldBe deletedAt
+        }
+
+        "restore는 isActive를 true로 변경하고 deletedAt을 null로 초기화한다" {
+            val like = PostLikeTestFixture.createActive()
+            like.markDeleted(LocalDateTime.of(2026, 5, 19, 12, 0))
+
+            like.restore()
+
+            like.isActive shouldBe true
+            like.deletedAt shouldBe null
         }
     })

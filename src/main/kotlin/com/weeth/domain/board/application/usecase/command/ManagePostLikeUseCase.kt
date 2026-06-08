@@ -37,6 +37,11 @@ class ManagePostLikeUseCase(
                 post.increaseLikeCount()
             }
 
+            existingLike.deletedAt != null -> {
+                existingLike.restore()
+                post.increaseLikeCount()
+            }
+
             !existingLike.isActive -> {
                 existingLike.activate()
                 post.increaseLikeCount()
@@ -69,7 +74,7 @@ class ManagePostLikeUseCase(
         postId: Long,
         userId: Long,
     ): Pair<Post, PostLike?> {
-        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMemberWithLock(clubId, userId)
         val post =
             try {
                 postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
@@ -81,6 +86,6 @@ class ManagePostLikeUseCase(
         if (!post.belongsToClub(clubId)) throw PostNotFoundException()
         if (!post.board.isAccessibleBy(member.memberRole)) throw CategoryAccessDeniedException()
 
-        return post to postLikeRepository.findByPostAndUserIdAndDeletedAtIsNull(post, userId)
+        return post to postLikeRepository.findByPostAndUserId(post, userId)
     }
 }

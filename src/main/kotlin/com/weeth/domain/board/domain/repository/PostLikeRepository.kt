@@ -14,16 +14,16 @@ interface PostLikeRepository :
         userId: Long,
     ): Boolean
 
-    fun findByPostAndUserIdAndDeletedAtIsNull(
+    fun findByPostAndUserId(
         post: Post,
         userId: Long,
     ): PostLike?
 
     @Query(
         """
-        SELECT pl
+        SELECT p.id
         FROM PostLike pl
-        JOIN FETCH pl.post p
+        JOIN pl.post p
         JOIN p.board b
         WHERE pl.userId = :userId
           AND b.club.id = :clubId
@@ -32,9 +32,26 @@ interface PostLikeRepository :
         ORDER BY p.id ASC
         """,
     )
-    fun findAllActiveByUserIdAndClubId(
+    fun findActivePostIdsByUserIdAndClubId(
         @Param("userId") userId: Long,
         @Param("clubId") clubId: Long,
+    ): List<Long>
+
+    @Query(
+        """
+        SELECT pl
+        FROM PostLike pl
+        JOIN FETCH pl.post p
+        WHERE pl.userId = :userId
+          AND p.id IN :postIds
+          AND pl.isActive = true
+          AND pl.deletedAt IS NULL
+        ORDER BY p.id ASC
+        """,
+    )
+    fun findAllActiveByUserIdAndPostIds(
+        @Param("userId") userId: Long,
+        @Param("postIds") postIds: List<Long>,
     ): List<PostLike>
 
     @Query(
