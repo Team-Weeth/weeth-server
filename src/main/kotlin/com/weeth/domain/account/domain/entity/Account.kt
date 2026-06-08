@@ -1,5 +1,6 @@
 package com.weeth.domain.account.domain.entity
 
+import com.weeth.domain.account.domain.enums.AccountRegistrationStep
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionDirection
 import com.weeth.domain.account.domain.vo.BankAccount
@@ -46,7 +47,9 @@ class Account(
     bankAccount: BankAccount? = null,
     bankAccountVisible: Boolean = false, // 계좌 노출 여부
     memberVisible: Boolean = false, // 회비 회원 공개 여부
+    lastModifiedBy: Long? = null, // 마지막 수정자. 추후 수정 로그 기능 확장에 따라 수정될 가능성 존재
     status: AccountStatus = AccountStatus.ACTIVE,
+    registrationStep: AccountRegistrationStep = AccountRegistrationStep.BASIC,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -106,9 +109,17 @@ class Account(
     var memberVisible: Boolean = memberVisible
         private set
 
+    var lastModifiedBy: Long? = lastModifiedBy
+        private set
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: AccountStatus = status
+        private set
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var registrationStep: AccountRegistrationStep = registrationStep
         private set
 
     fun spend(amount: Money) {
@@ -146,6 +157,7 @@ class Account(
         this.name = normalizedName
         this.duesAmount = duesAmount.value
         this.description = normalizedDescription
+        advanceRegistrationStep(AccountRegistrationStep.PAYMENT_TARGETS)
     }
 
     fun updateCarryOver(
@@ -157,6 +169,7 @@ class Account(
         require(carryOver.value >= 0) { "이월 금액은 0 이상이어야 합니다: ${carryOver.value}" }
         carryOverAmount = carryOver.value
         carryOverMemo = memo?.trim()?.takeIf { it.isNotBlank() }
+        advanceRegistrationStep(AccountRegistrationStep.BANK_ACCOUNT)
     }
 
     fun updateBankAccount(
@@ -168,6 +181,14 @@ class Account(
         }
         this.bankAccount = bankAccount
         bankAccountVisible = visible
+        advanceRegistrationStep(AccountRegistrationStep.REVIEW)
+    }
+
+    fun advanceRegistrationStep(next: AccountRegistrationStep) {
+        if (status != AccountStatus.DRAFT) return
+        if (next.ordinal > registrationStep.ordinal) {
+            registrationStep = next
+        }
     }
 
     fun showToMembers() {
@@ -177,6 +198,11 @@ class Account(
 
     fun hideFromMembers() {
         memberVisible = false
+    }
+
+    fun markModifiedBy(adminId: Long) {
+        require(adminId > 0) { "마지막 수정자 ID는 0보다 커야 합니다: $adminId" }
+        lastModifiedBy = adminId
     }
 
     fun activate() {
