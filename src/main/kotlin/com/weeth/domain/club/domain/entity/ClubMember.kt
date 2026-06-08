@@ -72,11 +72,11 @@ class ClubMember(
     var bio: String? = null
         private set
 
-    @Column(name = "left_at")
+    @Column(name = "left_at", nullable = true)
     var leftAt: LocalDateTime? = null
         private set
 
-    @Column(name = "hard_delete_after")
+    @Column(name = "hard_delete_after", nullable = true)
     var hardDeleteAfter: LocalDateTime? = null
         private set
 
