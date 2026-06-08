@@ -16,6 +16,7 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
 import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
@@ -36,6 +37,10 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class ManageClubMemberUseCaseTest :
     DescribeSpec({
@@ -47,8 +52,10 @@ class ManageClubMemberUseCaseTest :
         val userReader = mockk<UserReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
+        val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
         val fileRepository = mockk<FileRepository>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val clock = Clock.fixed(Instant.parse("2026-06-08T03:00:00Z"), ZoneId.of("Asia/Seoul"))
 
         val useCase =
             ManageClubMemberUsecase(
@@ -60,8 +67,10 @@ class ManageClubMemberUseCaseTest :
                 userReader = userReader,
                 clubMemberPolicy = clubMemberPolicy,
                 clubJoinPolicy = clubJoinPolicy,
+                clubActivityDeletionPolicy = clubActivityDeletionPolicy,
                 fileRepository = fileRepository,
                 fileAccessUrlPort = fileAccessUrlPort,
+                clock = clock,
             )
 
         beforeTest {
@@ -74,6 +83,7 @@ class ManageClubMemberUseCaseTest :
                 userReader,
                 clubMemberPolicy,
                 clubJoinPolicy,
+                clubActivityDeletionPolicy,
                 fileRepository,
                 fileAccessUrlPort,
             )
@@ -348,15 +358,21 @@ class ManageClubMemberUseCaseTest :
                 shouldThrow<CannotLeaveAsLeadException> {
                     useCase.leave(1L, 10L)
                 }
+
+                verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
             }
 
-            it("일반 멤버가 탈퇴하면 LEFT 상태로 전환된다") {
+            it("일반 멤버가 탈퇴하면 활동 삭제 정책을 적용하고 LEFT 상태로 전환된다") {
                 val member = ClubMemberTestFixture.createActiveMember()
+                val now = LocalDateTime.now(clock)
                 every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
+                justRun { clubActivityDeletionPolicy.markMemberActivitiesDeleted(eq(member), any()) }
 
                 useCase.leave(1L, 10L)
 
                 member.memberStatus shouldBe MemberStatus.LEFT
+                member.leftAt shouldBe now
+                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(eq(member), now) }
             }
         }
 

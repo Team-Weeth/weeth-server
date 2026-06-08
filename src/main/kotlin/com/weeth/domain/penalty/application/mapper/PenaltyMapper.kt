@@ -31,6 +31,7 @@ class PenaltyMapper {
         PenaltyResponse(
             userId = clubMember.user.id,
             name = clubMember.user.name,
+            memberStatus = clubMember.memberStatus,
             penaltyCount = clubMember.penaltyCount,
             cardinals = clubMemberCardinals.map { it.cardinal.cardinalNumber },
             penalties = penalties.map(::toDetailResponse),

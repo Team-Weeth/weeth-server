@@ -6,7 +6,6 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryRes
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
-import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
@@ -80,7 +79,7 @@ class GetAttendanceQueryService(
             throw AttendanceNotFoundException()
         }
 
-        val attendances = attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, MemberStatus.ACTIVE)
+        val attendances = attendanceRepository.findAllBySession(session)
         return attendances.map(attendanceMapper::toInfoResponse)
     }
 }

@@ -1,6 +1,7 @@
 package com.weeth.domain.attendance.application.dto.response
 
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
+import com.weeth.domain.club.domain.enums.MemberStatus
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class AttendanceInfoResponse(
@@ -14,4 +15,6 @@ data class AttendanceInfoResponse(
     val department: String?,
     @field:Schema(description = "학번", example = "20201234")
     val studentId: String?,
+    @field:Schema(description = "동아리 멤버 상태", example = "ACTIVE")
+    val memberStatus: MemberStatus,
 )
