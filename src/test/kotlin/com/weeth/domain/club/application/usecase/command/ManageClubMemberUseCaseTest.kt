@@ -37,6 +37,10 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class ManageClubMemberUseCaseTest :
     DescribeSpec({
@@ -51,6 +55,7 @@ class ManageClubMemberUseCaseTest :
         val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
         val fileRepository = mockk<FileRepository>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val clock = Clock.fixed(Instant.parse("2026-06-08T03:00:00Z"), ZoneId.of("Asia/Seoul"))
 
         val useCase =
             ManageClubMemberUsecase(
@@ -65,6 +70,7 @@ class ManageClubMemberUseCaseTest :
                 clubActivityDeletionPolicy = clubActivityDeletionPolicy,
                 fileRepository = fileRepository,
                 fileAccessUrlPort = fileAccessUrlPort,
+                clock = clock,
             )
 
         beforeTest {
@@ -358,13 +364,15 @@ class ManageClubMemberUseCaseTest :
 
             it("일반 멤버가 탈퇴하면 활동 삭제 정책을 적용하고 LEFT 상태로 전환된다") {
                 val member = ClubMemberTestFixture.createActiveMember()
+                val now = LocalDateTime.now(clock)
                 every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
                 justRun { clubActivityDeletionPolicy.markMemberActivitiesDeleted(eq(member), any()) }
 
                 useCase.leave(1L, 10L)
 
                 member.memberStatus shouldBe MemberStatus.LEFT
-                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(eq(member), any()) }
+                member.leftAt shouldBe now
+                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(eq(member), now) }
             }
         }
 

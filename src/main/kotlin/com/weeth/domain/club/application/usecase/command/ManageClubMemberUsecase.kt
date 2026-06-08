@@ -28,6 +28,7 @@ import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
 import java.time.LocalDateTime
 
 /**
@@ -46,6 +47,7 @@ class ManageClubMemberUsecase(
     private val clubActivityDeletionPolicy: ClubActivityDeletionPolicy,
     private val fileRepository: FileRepository,
     private val fileAccessUrlPort: FileAccessUrlPort,
+    private val clock: Clock,
 ) {
     /**
      * 초대 코드가 일치하면 자동으로 활성 상태로 가입됨
@@ -178,7 +180,7 @@ class ManageClubMemberUsecase(
             throw CannotLeaveAsLeadException()
         }
 
-        val now = LocalDateTime.now()
+        val now = LocalDateTime.now(clock)
         clubActivityDeletionPolicy.markMemberActivitiesDeleted(member, now)
         member.leave(now)
     }
