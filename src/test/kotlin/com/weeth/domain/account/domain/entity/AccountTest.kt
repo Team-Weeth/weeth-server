@@ -1,5 +1,6 @@
 package com.weeth.domain.account.domain.entity
 
+import com.weeth.domain.account.domain.enums.AccountRegistrationStep
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.vo.Money
@@ -76,6 +77,14 @@ class AccountTest :
             account.activate()
 
             account.status shouldBe AccountStatus.ACTIVE
+        }
+
+        "markModifiedBy는 마지막 수정자 ID를 기록한다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+
+            account.markModifiedBy(100L)
+
+            account.lastModifiedBy shouldBe 100L
         }
 
         "activate는 회비 이름이 없으면 IllegalStateException을 던진다" {
@@ -163,6 +172,40 @@ class AccountTest :
             shouldThrow<IllegalStateException> {
                 account.revertTransaction(transaction)
             }
+        }
+
+        "advanceRegistrationStep은 DRAFT에서 다음 단계로만 진행된다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+            account.advanceRegistrationStep(
+                AccountRegistrationStep.PAYMENT_TARGETS,
+            )
+            account.registrationStep shouldBe
+                AccountRegistrationStep.PAYMENT_TARGETS
+
+            // 이미 지난 단계로 되돌릴 수 없다
+            account.advanceRegistrationStep(AccountRegistrationStep.BASIC)
+            account.registrationStep shouldBe
+                AccountRegistrationStep.PAYMENT_TARGETS
+        }
+
+        "advanceRegistrationStep은 ACTIVE 상태에서 아무 변경도 하지 않는다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+            account.updateBasicInfo("4기 회비", Money.of(50_000), "정기 회비")
+            account.activate()
+
+            account.advanceRegistrationStep(AccountRegistrationStep.CARRY_OVER)
+
+            account.registrationStep shouldBe
+                AccountRegistrationStep.PAYMENT_TARGETS
+        }
+
+        "updateBasicInfo 호출 시 registrationStep이 PAYMENT_TARGETS로 진행된다" {
+            val account = Account.createDraft(club = ClubTestFixture.createClub(), cardinal = 4)
+
+            account.updateBasicInfo("4기 회비", Money.of(50_000), "정기 회비")
+
+            account.registrationStep shouldBe
+                AccountRegistrationStep.PAYMENT_TARGETS
         }
 
         "applyTransaction은 잔액보다 큰 지출 거래면 IllegalStateException을 던진다" {
