@@ -4,6 +4,7 @@ import com.weeth.domain.account.application.dto.response.AccountPaymentTargetRes
 import com.weeth.domain.account.application.dto.response.AccountPaymentTargetsResponse
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.AccountPaymentTargetMapper
+import com.weeth.domain.account.application.usecase.validateOwnedBy
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
@@ -37,7 +38,7 @@ class GetAccountPaymentTargetQueryService(
     ): AccountPaymentTargetsResponse {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val account = accountRepository.findById(accountId).orElseThrow { AccountNotFoundException() }
-        if (account.club.id != 0L && account.club.id != clubId) throw AccountNotFoundException()
+        account.validateOwnedBy(clubId)
 
         val pageable = PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, 100))
         val normalizedKeyword = keyword?.trim()?.takeIf { it.isNotBlank() }
