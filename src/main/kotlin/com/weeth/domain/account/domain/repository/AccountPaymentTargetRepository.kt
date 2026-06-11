@@ -3,9 +3,105 @@ package com.weeth.domain.account.domain.repository
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
 import com.weeth.domain.account.domain.enums.AccountTargetStatus
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
 
 interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, Long> {
+    fun findAllByAccountId(accountId: Long): List<AccountPaymentTarget>
+
+    @Query(
+        """
+        select target
+        from AccountPaymentTarget target
+        join fetch target.clubMember clubMember
+        join fetch clubMember.user
+        where target.account.id = :accountId
+        order by target.id asc
+        """,
+    )
+    fun findAllByAccountIdOrderByIdAsc(
+        @Param("accountId") accountId: Long,
+    ): List<AccountPaymentTarget>
+
+    @Query(
+        """
+        select target
+        from AccountPaymentTarget target
+        join fetch target.clubMember clubMember
+        join fetch clubMember.user
+        where target.account.id = :accountId
+        and clubMember.id in :clubMemberIds
+        """,
+    )
+    fun findAllByAccountIdAndClubMemberIdIn(
+        @Param("accountId") accountId: Long,
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+    ): List<AccountPaymentTarget>
+
+    @Query(
+        """
+        select count(target)
+        from AccountPaymentTarget target
+        join target.clubMember clubMember
+        where target.account.id = :accountId
+        and target.targetStatus = :targetStatus
+        and clubMember.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        """,
+    )
+    fun countActiveClubMemberTargetsByAccountIdAndTargetStatus(
+        @Param("accountId") accountId: Long,
+        @Param("targetStatus") targetStatus: AccountTargetStatus,
+    ): Long
+
+    @Query(
+        value = """
+        select target
+        from AccountPaymentTarget target
+        join fetch target.clubMember clubMember
+        join fetch clubMember.user user
+        where target.account.id = :accountId
+        and target.targetStatus = :targetStatus
+        and clubMember.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        and (:keyword is null or user.name like concat('%', :keyword, '%'))
+        order by target.id asc
+        """,
+        countQuery = """
+        select count(target)
+        from AccountPaymentTarget target
+        join target.clubMember clubMember
+        join clubMember.user user
+        where target.account.id = :accountId
+        and target.targetStatus = :targetStatus
+        and clubMember.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        and (:keyword is null or user.name like concat('%', :keyword, '%'))
+        """,
+    )
+    fun findAllActiveClubMemberTargetsByAccountIdAndTargetStatus(
+        @Param("accountId") accountId: Long,
+        @Param("targetStatus") targetStatus: AccountTargetStatus,
+        @Param("keyword") keyword: String?,
+        pageable: Pageable,
+    ): Page<AccountPaymentTarget>
+
+    /** 탈퇴/퇴출 등으로 비활성화된 멤버의 미납 납부 대상 행. 등록 완료 시 제외 처리 대상이다. */
+    @Query(
+        """
+        select target
+        from AccountPaymentTarget target
+        join fetch target.clubMember clubMember
+        where target.account.id = :accountId
+        and target.targetStatus = com.weeth.domain.account.domain.enums.AccountTargetStatus.TARGETED
+        and target.paymentStatus = com.weeth.domain.account.domain.enums.AccountPaymentStatus.UNPAID
+        and clubMember.memberStatus <> com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        """,
+    )
+    fun findAllUnpaidTargetsWithInactiveClubMemberByAccountId(
+        @Param("accountId") accountId: Long,
+    ): List<AccountPaymentTarget>
+
     fun countByAccountIdAndTargetStatus(
         accountId: Long,
         targetStatus: AccountTargetStatus,
