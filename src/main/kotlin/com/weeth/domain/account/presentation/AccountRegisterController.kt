@@ -19,6 +19,7 @@ import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_DRAFT_D
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_DRAFT_SAVE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_TARGET_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_TARGET_UPDATE_SUCCESS
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_REGISTRATION_COMPLETE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_SAVE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_UPDATE_SUCCESS
 import com.weeth.global.auth.annotation.CurrentUser
@@ -209,6 +210,25 @@ class AccountRegisterController(
             userId = userId,
         )
         return CommonResponse.success(ACCOUNT_UPDATE_SUCCESS)
+    }
+
+    @PostMapping("/{accountId}/registration/complete")
+    @Operation(
+        summary = "[6단계] 회비 등록 완료",
+        description =
+            "모든 단계(계좌 공개까지)를 저장한 뒤 호출해주세요. 미완료 시 20107, 이미 완료된 장부는 20104 에러가 발생합니다. " +
+                "완료 시 장부 활성화와 함께 이월 수입 기록, 이전 기수 장부 잔액의 자동 지출 정리가 수행됩니다. " +
+                "이월 금액이 완료 시점의 이전 기수 잔액과 다르면 20108 에러가 발생하니, " +
+                "이월 재원 조회 후 이월 설정을 다시 저장하고 재시도해주세요.",
+    )
+    fun completeRegistration(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        registerAccountUseCase.completeRegistration(clubId = clubId, accountId = accountId, userId = userId)
+        return CommonResponse.success(ACCOUNT_REGISTRATION_COMPLETE_SUCCESS)
     }
 
     @PostMapping

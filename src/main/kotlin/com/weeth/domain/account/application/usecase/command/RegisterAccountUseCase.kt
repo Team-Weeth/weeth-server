@@ -5,11 +5,13 @@ import com.weeth.domain.account.application.dto.request.SaveAccountBasicRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountCarryOverRequest
 import com.weeth.domain.account.application.dto.request.SavePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.response.CreateAccountDraftResponse
+import com.weeth.domain.account.application.exception.AccountCarryOverAmountMismatchException
 import com.weeth.domain.account.application.exception.AccountExistsException
 import com.weeth.domain.account.application.exception.AccountInvalidDraftStateException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.exception.AccountPaymentTargetMemberInvalidException
 import com.weeth.domain.account.application.exception.AccountPaymentTargetPaidException
+import com.weeth.domain.account.application.exception.AccountRegistrationStepIncompleteException
 import com.weeth.domain.account.application.usecase.validateOwnedBy
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
@@ -152,6 +154,72 @@ class RegisterAccountUseCase(
         account.markModifiedBy(userId)
     }
 
+    @Transactional
+    fun completeRegistration(
+        clubId: Long,
+        accountId: Long,
+        userId: Long,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val account = getAccountWithLock(clubId, accountId)
+        if (account.status != AccountStatus.DRAFT) throw AccountInvalidDraftStateException()
+        // 이월/계좌 단계를 건너뛴 채 완료하면 이월 결정 없이 이전 장부가 마감되는 부수효과가 생기므로 모든 단계 저장을 강제한다.
+        if (!account.registrationStep.isAtLeast(AccountRegistrationStep.REVIEW)) {
+            throw AccountRegistrationStepIncompleteException()
+        }
+
+        // 이월 재원 조회와 완료 사이에 이전 장부 잔액이 변했을 수 있으므로 잠금 조회 후 이월 금액과 대조한다.
+        val previousAccount = findPreviousAccountWithLock(clubId, account)
+        if (account.carryOverAmount > 0 &&
+            previousAccount != null &&
+            previousAccount.currentBalance != account.carryOverAmount
+        ) {
+            throw AccountCarryOverAmountMismatchException()
+        }
+
+        account.activate()
+
+        // 초안 작성 중 탈퇴/퇴출된 멤버의 미납 대상 행은 조회 화면에서 보이지 않아 갱신할 방법이 없으므로
+        // 활성 장부로 넘기지 않고 여기서 제외 처리한다. 활성화 이후의 탈퇴는 어드민 수동 환불 정책에 따라 행을 유지한다.
+        paymentTargetRepository
+            .findAllUnpaidTargetsWithInactiveClubMemberByAccountId(accountId)
+            .forEach { it.exclude() }
+
+        if (account.carryOverAmount > 0) {
+            val transaction =
+                AccountTransaction.create(
+                    account = account,
+                    type = AccountTransactionType.CARRY_OVER,
+                    title = "이월 금액",
+                    source = null,
+                    amount = Money.of(account.carryOverAmount),
+                    transactedAt = LocalDateTime.now(),
+                    memo = account.carryOverMemo,
+                )
+            transactionRepository.save(transaction)
+            account.applyTransaction(transaction)
+        }
+
+        // 이월 여부와 무관하게 이전 기수 장부에 남은 잔액을 지출로 자동 정리해 장부를 마감한다.
+        settlePreviousAccountBalance(previousAccount, account)
+
+        account.markModifiedBy(userId)
+    }
+
+    /** 직전 활성 기수 장부를 잠금 조회한다. 잔액 검증과 마감에 같은 잠금 인스턴스를 재사용한다. */
+    private fun findPreviousAccountWithLock(
+        clubId: Long,
+        account: Account,
+    ): Account? {
+        val previousAccount =
+            accountRepository.findTopByClubIdAndCardinalLessThanAndStatusOrderByCardinalDesc(
+                clubId = clubId,
+                cardinal = account.cardinal,
+                status = AccountStatus.ACTIVE,
+            ) ?: return null
+        return accountRepository.findByIdWithLock(previousAccount.id)
+    }
+
     /**
      * 등록 완료 시 직전 활성 기수 장부에 남은 잔액을 지출 거래로 정리해 0원으로 만든다.
      * 실제 이월된 금액이 있으면 신규 장부로의 전출, 없으면 미이월 잔액 정리 명목으로 기록해
@@ -159,19 +227,10 @@ class RegisterAccountUseCase(
      * (CARRY_OVER 수입 거래와 같은 조건이므로 전출 기록이 있을 때만 대응하는 이월 수입이 존재한다)
      */
     private fun settlePreviousAccountBalance(
-        clubId: Long,
+        previousAccount: Account?,
         account: Account,
     ) {
-        val previousAccount =
-            accountRepository.findTopByClubIdAndCardinalLessThanAndStatusOrderByCardinalDesc(
-                clubId = clubId,
-                cardinal = account.cardinal,
-                status = AccountStatus.ACTIVE,
-            ) ?: return
-        if (previousAccount.currentBalance <= 0) return
-
-        val lockedPrevious = accountRepository.findByIdWithLock(previousAccount.id) ?: return
-        if (lockedPrevious.currentBalance <= 0) return
+        if (previousAccount == null || previousAccount.currentBalance <= 0) return
 
         val (title, memo) =
             if (account.carryOverAmount > 0) {
@@ -182,17 +241,17 @@ class RegisterAccountUseCase(
 
         val expense =
             AccountTransaction.create(
-                account = lockedPrevious,
+                account = previousAccount,
                 type = AccountTransactionType.EXPENSE,
                 title = title,
                 source = null,
-                amount = Money.of(lockedPrevious.currentBalance),
+                amount = Money.of(previousAccount.currentBalance),
                 transactedAt = LocalDateTime.now(),
                 memo = memo,
             )
 
         transactionRepository.save(expense)
-        lockedPrevious.applyTransaction(expense)
+        previousAccount.applyTransaction(expense)
     }
 
     /**
