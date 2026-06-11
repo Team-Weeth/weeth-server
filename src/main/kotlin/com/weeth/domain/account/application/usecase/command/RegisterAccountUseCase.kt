@@ -10,6 +10,7 @@ import com.weeth.domain.account.application.exception.AccountInvalidDraftStateEx
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.exception.AccountPaymentTargetMemberInvalidException
 import com.weeth.domain.account.application.exception.AccountPaymentTargetPaidException
+import com.weeth.domain.account.application.usecase.validateOwnedBy
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.entity.AccountTransaction
@@ -133,6 +134,24 @@ class RegisterAccountUseCase(
         account.markModifiedBy(userId)
     }
 
+    @Transactional
+    fun saveBankAccount(
+        clubId: Long,
+        accountId: Long,
+        request: SaveAccountBankAccountRequest,
+        userId: Long,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val account = getAccountWithLock(clubId, accountId)
+
+        account.updateBankAccount(
+            bankAccount = request.bankAccount?.toBankAccount(),
+            visible = request.bankAccountVisible,
+        )
+
+        account.markModifiedBy(userId)
+    }
+
     /**
      * 등록 완료 시 직전 활성 기수 장부에 남은 잔액을 지출 거래로 정리해 0원으로 만든다.
      * 실제 이월된 금액이 있으면 신규 장부로의 전출, 없으면 미이월 잔액 정리 명목으로 기록해
@@ -246,7 +265,7 @@ class RegisterAccountUseCase(
         accountId: Long,
     ): Account {
         val account = accountRepository.findByIdWithLock(accountId) ?: throw AccountNotFoundException()
-        if (account.club.id != 0L && account.club.id != clubId) throw AccountNotFoundException()
+        account.validateOwnedBy(clubId)
         return account
     }
 }

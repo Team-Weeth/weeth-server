@@ -1,6 +1,7 @@
 package com.weeth.domain.account.presentation
 
 import com.weeth.domain.account.application.dto.request.AccountSaveRequest
+import com.weeth.domain.account.application.dto.request.SaveAccountBankAccountRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountBasicRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountCarryOverRequest
 import com.weeth.domain.account.application.dto.request.SavePaymentTargetsRequest
@@ -189,6 +190,24 @@ class AccountRegisterController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
         registerAccountUseCase.saveCarryOver(clubId = clubId, accountId = accountId, request = request, userId = userId)
+        return CommonResponse.success(ACCOUNT_UPDATE_SUCCESS)
+    }
+
+    @PatchMapping("/{accountId}/registration/bank-account")
+    @Operation(summary = "[5단계] 회비 계좌 설정 저장")
+    fun saveBankAccount(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @RequestBody @Valid request: SaveAccountBankAccountRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        registerAccountUseCase.saveBankAccount(
+            clubId = clubId,
+            accountId = accountId,
+            request = request,
+            userId = userId,
+        )
         return CommonResponse.success(ACCOUNT_UPDATE_SUCCESS)
     }
 
