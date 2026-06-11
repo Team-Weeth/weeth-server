@@ -35,12 +35,13 @@ class Account(
     @JoinColumn(name = "club_id", nullable = false)
     val club: Club,
     id: Long = 0,
-    description: String,
+    description: String? = null,
     totalAmount: Int,
     currentAmount: Int,
     cardinal: Int,
     name: String? = null,
     duesAmount: Int = 0,
+    carryOverEnabled: Boolean = false,
     carryOverAmount: Int = 0,
     carryOverMemo: String? = null,
     currentBalance: Int = 0,
@@ -57,8 +58,8 @@ class Account(
     var id: Long = id
         private set
 
-    @Column(nullable = false)
-    var description: String = description
+    @Column(nullable = true)
+    var description: String? = description
         private set
 
     @Column(nullable = false)
@@ -81,6 +82,10 @@ class Account(
 
     @Column(nullable = false)
     var duesAmount: Int = duesAmount
+        private set
+
+    @Column(nullable = false)
+    var carryOverEnabled: Boolean = carryOverEnabled
         private set
 
     @Column(nullable = false)
@@ -147,13 +152,12 @@ class Account(
     fun updateBasicInfo(
         name: String,
         duesAmount: Money,
-        description: String,
+        description: String? = null,
     ) {
         val normalizedName = name.trim()
-        val normalizedDescription = description.trim()
+        val normalizedDescription = description?.trim()
         require(normalizedName.isNotBlank()) { "회비 이름은 비어 있을 수 없습니다." }
         require(duesAmount.value > 0) { "1인 회비 금액은 0보다 커야 합니다: ${duesAmount.value}" }
-        require(normalizedDescription.isNotBlank()) { "회비 설명은 비어 있을 수 없습니다." }
         this.name = normalizedName
         this.duesAmount = duesAmount.value
         this.description = normalizedDescription
@@ -167,6 +171,7 @@ class Account(
     ) {
         val carryOver = if (enabled) requireNotNull(amount) { "이월 금액은 필수입니다." } else Money.ZERO
         require(carryOver.value >= 0) { "이월 금액은 0 이상이어야 합니다: ${carryOver.value}" }
+        carryOverEnabled = enabled
         carryOverAmount = carryOver.value
         carryOverMemo = memo?.trim()?.takeIf { it.isNotBlank() }
         advanceRegistrationStep(AccountRegistrationStep.BANK_ACCOUNT)
@@ -186,7 +191,7 @@ class Account(
 
     fun advanceRegistrationStep(next: AccountRegistrationStep) {
         if (status != AccountStatus.DRAFT) return
-        if (next.ordinal > registrationStep.ordinal) {
+        if (next.isAfter(registrationStep)) {
             registrationStep = next
         }
     }
