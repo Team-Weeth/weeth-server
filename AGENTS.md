@@ -93,5 +93,5 @@ For shared MockK mocks in `DescribeSpec`, clear mocks in `beforeTest` and restub
 
 ## Codex Skills
 
-Project-specific Codex skills are stored in `.agents/skills/`.
-Codex scans `.agents/skills` from the current working directory up to the repository root, so these skills are available without a separate install step when Codex starts in this repository.
+Project-specific skills live in `.claude/skills/` as the single source of truth.
+`.agents/skills` is a symlink to `.claude/skills` so Codex can discover the same skills without a separate install step.

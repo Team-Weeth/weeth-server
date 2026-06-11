@@ -34,32 +34,4 @@ data class CreateUserRequest(
 ```
 
 - Response DTO: `@Schema` on every field; non-nullable for required fields, nullable + default `null` for optional
-
-## Pagination Response Pattern
-
-List responses wrap items + shared `PageResponse`:
-
-```kotlin
-data class UserListResponse(
-    val users: List<UserResponse>,
-    val page: PageResponse,
-)
-
-data class PageResponse(
-    val pageNumber: Int,
-    val pageSize: Int,
-    val totalElements: Long,
-    val totalPages: Int,
-    val hasNext: Boolean,
-) {
-    companion object {
-        fun from(page: Page<*>) = PageResponse(
-            pageNumber = page.number,
-            pageSize = page.size,
-            totalElements = page.totalElements,
-            totalPages = page.totalPages,
-            hasNext = page.hasNext(),
-        )
-    }
-}
-```
+- Use the `api-contract-update` skill for paginated/list response templates.

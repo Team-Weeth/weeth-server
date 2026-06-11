@@ -64,28 +64,7 @@ presentation → application → domain (owns Port)
 
 ### Constructor Pattern
 
-Primary constructor takes **business creation params only** (non-property). JPA-managed fields (`id`, `isDeleted`) go in the body with `private set` and defaults. Validation lives in a `companion object` `create()` factory (or named mutation methods), not the constructor:
-
-```kotlin
-@Entity
-class Post(title: String, user: User) : BaseEntity() {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    var id: Long = 0L
-        private set
-
-    var title: String = title
-        private set
-
-    companion object {
-        fun create(title: String, user: User): Post {
-            require(title.isNotBlank()) { "제목은 비어 있을 수 없습니다" }
-            return Post(title = title, user = user)
-        }
-    }
-}
-```
-
-Simple entities with trivial creation (e.g. `Board`) may use a public constructor without a factory.
+Primary constructor takes **business creation params only** (non-property). JPA-managed fields (`id`, `isDeleted`) go in the body with `private set` and defaults. Validation lives in a `companion object` `create()` factory (or named mutation methods), not the constructor. Simple entities with trivial creation (e.g. `Board`) may use a public constructor without a factory. Use `architecture-guide` for full examples.
 
 ## Value Object (`domain/vo/`)
 

@@ -1,13 +1,13 @@
 ---
 name: test-create
-description: Generate unit and integration tests for Kotlin Spring Boot applications using Kotest + MockK. Use when the user asks to "write tests", "create test", "generate test", "add test coverage", or mentions testing specific classes/methods. Supports service tests, controller tests, and test fixtures.
+description: Generate unit and integration tests for Kotlin Spring Boot applications using Kotest, MockK, springmockk, and Testcontainers. Use when the user asks to "write tests", "create test", "generate test", "add test coverage", or mentions testing specific classes/methods. Supports UseCase tests, controller tests, entity tests, and test fixtures.
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
 # Test Generator
 
-Generate comprehensive tests for: $ARGUMENTS
+Generate focused Kotlin tests for the requested target.
 
 ## Workflow
 
@@ -17,16 +17,20 @@ Generate comprehensive tests for: $ARGUMENTS
    - Class type (Controller, Service/UseCase, Repository, Entity)
    - Dependencies (injected fields)
    - Public methods to test
+2. Read `.claude/rules/testing.md` before writing tests.
 
 ### Step 2: Determine Test Location
 
 ```
 src/test/
-└── kotlin/com/example/app/domain/{domain}/
-    ├── application/usecase/     # UseCase unit tests
-    ├── domain/service/          # Service unit tests
-    ├── presentation/            # Controller tests
-    └── fixture/                 # Test fixtures
+└── kotlin/com/weeth/domain/{domain}/
+    ├── application/usecase/
+    │   ├── command/
+    │   └── query/
+    ├── domain/entity/
+    ├── domain/service/
+    ├── presentation/
+    └── fixture/
 ```
 
 Test file naming: `{ClassName}Test.kt`
@@ -35,9 +39,10 @@ Test file naming: `{ClassName}Test.kt`
 
 | Class Type | Test Style | Framework |
 |------------|------------|-----------|
-| Service/UseCase (recommended) | DescribeSpec | Kotest + MockK |
-| Service/UseCase (BDD) | BehaviorSpec | Kotest + MockK |
-| Validation/Simple | StringSpec | Kotest |
+| Command UseCase | DescribeSpec | Kotest + MockK |
+| QueryService | DescribeSpec | Kotest + MockK |
+| Entity / Domain Service | DescribeSpec or BehaviorSpec | Kotest |
+| Validation / Simple Value Object | StringSpec | Kotest |
 | Controller | @WebMvcTest + DescribeSpec | MockMvc + @MockkBean |
 
 **Decision Guide:**
@@ -60,8 +65,10 @@ For each public method, create tests for:
 3. Mock all dependencies
 4. Implement test cases following given/when/then pattern
 5. Add verification for mock interactions
+6. For shared MockK mocks in `DescribeSpec`, clear mocks in `beforeTest` and restub defaults after clearing
 
-See detailed examples: [references/kotlin-examples.md](references/kotlin-examples.md)
+See detailed examples:
+- Kotlin: [references/kotlin-examples.md](references/kotlin-examples.md)
 
 ### Step 6: Run Tests
 
@@ -103,6 +110,17 @@ Use @WebMvcTest for controller layer tests:
 
 See [references/kotlin-examples.md](references/kotlin-examples.md) for complete examples.
 
+## Mock Lifecycle in DescribeSpec
+
+MockK mocks are not cleared between `it` blocks. Accumulated invocations can break `verify(exactly = N)`. When mocks are shared, clear and restub them before each test:
+
+```kotlin
+beforeTest {
+    clearMocks(repository)
+    every { repository.save(any()) } answers { firstArg() }
+}
+```
+
 ## Checklist
 
 Before completing:
@@ -110,6 +128,7 @@ Before completing:
 - [ ] Failure/exception case test written
 - [ ] Edge case test written (empty, null, max value)
 - [ ] Mock verification added (verify)
+- [ ] Shared mocks cleared and restubbed in `beforeTest` when using `DescribeSpec`
 - [ ] Fixture created and reused
 - [ ] Tests run successfully (`./gradlew test --tests "{TestClass}"`)
 
@@ -117,12 +136,7 @@ Before completing:
 
 ### Test Compilation Errors
 
-**Missing imports**: Add these dependencies to build.gradle:
-```groovy
-testImplementation 'org.springframework.boot:spring-boot-starter-test'
-testImplementation 'io.kotest:kotest-runner-junit5:5.x.x'  // Kotlin only
-testImplementation 'io.mockk:mockk:1.x.x'                  // Kotlin only
-```
+**Missing imports**: Check the existing Gradle test dependencies before adding anything. Prefer existing Kotest, MockK, springmockk, and Testcontainers versions already configured in the project.
 
 ### MockK "no answer found" errors
 

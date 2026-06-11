@@ -1,5 +1,7 @@
 # Transaction & Concurrency Rules
 
+Use the `concurrency-safety` skill when changing transaction boundaries, lock behavior, concurrent counter updates, same-transaction cross-domain writes, or external I/O around transactions.
+
 ## Transaction Placement
 
 - `@Transactional` goes on **UseCase** methods only — Command: `@Transactional`, Query: `@Transactional(readOnly = true)`
@@ -13,21 +15,4 @@
 | Counter updates, concurrent modifications | PESSIMISTIC_WRITE |
 | Read-heavy, write-rare | OPTIMISTIC (`@Version` field) |
 
-Pessimistic lock queries live in the Repository with an explicit timeout, and UseCases convert lock failures to a domain error:
-
-```kotlin
-@Lock(LockModeType.PESSIMISTIC_WRITE)
-@QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
-@Query("SELECT f FROM Feed f WHERE f.id = :id")
-fun findByIdWithLock(@Param("id") id: Long): Feed?
-```
-
-```kotlin
-try {
-    val feed = feedRepository.findByIdWithLock(feedId) ?: throw FeedNotFoundException()
-} catch (e: PessimisticLockingFailureException) {
-    throw ResourceLockedException()
-}
-```
-
-Rules: always set lock timeouts, acquire locks in a consistent order, and surface lock failures as user-friendly domain errors.
+Rules: pessimistic lock queries live in the Repository, always set lock timeouts, acquire locks in a consistent order, and surface lock failures as user-friendly domain errors.
