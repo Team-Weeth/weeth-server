@@ -1,6 +1,8 @@
 package com.weeth.domain.account.application.usecase.command
 
+import com.weeth.domain.account.application.dto.request.SaveAccountBankAccountRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountBasicRequest
+import com.weeth.domain.account.application.dto.request.SaveAccountCarryOverRequest
 import com.weeth.domain.account.application.dto.request.SavePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.response.CreateAccountDraftResponse
 import com.weeth.domain.account.application.exception.AccountExistsException
@@ -10,12 +12,15 @@ import com.weeth.domain.account.application.exception.AccountPaymentTargetMember
 import com.weeth.domain.account.application.exception.AccountPaymentTargetPaidException
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
+import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
 import com.weeth.domain.account.domain.enums.AccountRegistrationStep
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTargetStatus
+import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
+import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
@@ -26,11 +31,13 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class RegisterAccountUseCase(
     private val accountRepository: AccountRepository,
     private val paymentTargetRepository: AccountPaymentTargetRepository,
+    private val transactionRepository: AccountTransactionRepository,
     private val cardinalReader: CardinalReader,
     private val clubReader: ClubReader,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
@@ -105,6 +112,68 @@ class RegisterAccountUseCase(
         )
 
         account.markModifiedBy(userId)
+    }
+
+    @Transactional
+    fun saveCarryOver(
+        clubId: Long,
+        accountId: Long,
+        request: SaveAccountCarryOverRequest,
+        userId: Long,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val account = getAccountWithLock(clubId, accountId)
+
+        account.updateCarryOver(
+            enabled = request.enabled,
+            amount = request.amount?.let(Money::of),
+            memo = request.memo,
+        )
+
+        account.markModifiedBy(userId)
+    }
+
+    /**
+     * 등록 완료 시 직전 활성 기수 장부에 남은 잔액을 지출 거래로 정리해 0원으로 만든다.
+     * 실제 이월된 금액이 있으면 신규 장부로의 전출, 없으면 미이월 잔액 정리 명목으로 기록해
+     * 같은 돈이 두 장부에 중복 집계되지 않도록 한다.
+     * (CARRY_OVER 수입 거래와 같은 조건이므로 전출 기록이 있을 때만 대응하는 이월 수입이 존재한다)
+     */
+    private fun settlePreviousAccountBalance(
+        clubId: Long,
+        account: Account,
+    ) {
+        val previousAccount =
+            accountRepository.findTopByClubIdAndCardinalLessThanAndStatusOrderByCardinalDesc(
+                clubId = clubId,
+                cardinal = account.cardinal,
+                status = AccountStatus.ACTIVE,
+            ) ?: return
+        if (previousAccount.currentBalance <= 0) return
+
+        val lockedPrevious = accountRepository.findByIdWithLock(previousAccount.id) ?: return
+        if (lockedPrevious.currentBalance <= 0) return
+
+        val (title, memo) =
+            if (account.carryOverAmount > 0) {
+                "이월 잔액 전출" to "${account.cardinal}기 회비로 이월되어 자동 지출 처리되었습니다."
+            } else {
+                "미이월 잔액 정리" to "${account.cardinal}기 회비 등록 시 이월하지 않기를 선택하여 자동 지출 처리되었습니다."
+            }
+
+        val expense =
+            AccountTransaction.create(
+                account = lockedPrevious,
+                type = AccountTransactionType.EXPENSE,
+                title = title,
+                source = null,
+                amount = Money.of(lockedPrevious.currentBalance),
+                transactedAt = LocalDateTime.now(),
+                memo = memo,
+            )
+
+        transactionRepository.save(expense)
+        lockedPrevious.applyTransaction(expense)
     }
 
     /**
