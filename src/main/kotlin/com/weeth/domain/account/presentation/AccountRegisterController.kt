@@ -7,6 +7,7 @@ import com.weeth.domain.account.application.dto.request.SaveAccountCarryOverRequ
 import com.weeth.domain.account.application.dto.request.SavePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.response.AccountCarryOverSourceResponse
 import com.weeth.domain.account.application.dto.response.AccountPaymentTargetsResponse
+import com.weeth.domain.account.application.dto.response.AccountRegistrationStatusResponse
 import com.weeth.domain.account.application.dto.response.CreateAccountDraftResponse
 import com.weeth.domain.account.application.exception.AccountErrorCode
 import com.weeth.domain.account.application.usecase.command.ManageAccountUseCase
@@ -51,6 +52,25 @@ class AccountRegisterController(
     private val getAccountRegistrationQueryService: GetAccountRegistrationQueryService,
     private val getAccountPaymentTargetQueryService: GetAccountPaymentTargetQueryService,
 ) {
+    @GetMapping("/{accountId}/registration/status")
+    @Operation(
+        summary = "회비 등록 현황 조회",
+        description =
+            "DRAFT 상태 장부의 현재 등록 단계와 각 단계별 저장 내용을 반환합니다. 이어서 작성 시 이 API 한 번으로 폼을 복원해주세요. " +
+                "registrationStep이 가리키는 단계에서 시작하고, basic/carryOver/bankAccount가 non-null이면 그 값으로 폼을 채워주세요. " +
+                "납부 대상 목록과 체크 상태는 납부 대상 목록 조회 API로 별도 조회해주세요.",
+    )
+    fun findRegistrationStatus(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<AccountRegistrationStatusResponse> =
+        CommonResponse.success(
+            AccountResponseCode.ACCOUNT_REGISTRATION_STATUS_FIND_SUCCESS,
+            getAccountRegistrationQueryService.findStatus(clubId = clubId, accountId = accountId, userId = userId),
+        )
+
     @PostMapping("/drafts")
     @Operation(
         summary = "[1단계] 회비 등록 초안 생성",
