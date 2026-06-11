@@ -29,4 +29,10 @@ enum class AccountErrorCode(
 
     @ExplainError("이미 납부 완료된 대상을 제외하려고 할 때 발생합니다.")
     ACCOUNT_PAYMENT_TARGET_ALREADY_PAID(20106, HttpStatus.BAD_REQUEST, "납부 완료된 대상은 제외할 수 없습니다."),
+
+    @ExplainError("모든 등록 단계를 저장하지 않은 채 회비 등록 완료를 요청할 때 발생합니다.")
+    ACCOUNT_REGISTRATION_STEP_INCOMPLETE(20107, HttpStatus.BAD_REQUEST, "모든 등록 단계를 완료한 후 등록할 수 있습니다."),
+
+    @ExplainError("이월 금액이 완료 시점의 이전 기수 장부 잔액과 다를 때 발생합니다. 이월 재원을 다시 조회한 후 이월 설정을 재저장해야 합니다.")
+    ACCOUNT_CARRY_OVER_AMOUNT_MISMATCH(20108, HttpStatus.CONFLICT, "이전 기수 잔액이 변경되었습니다. 이월 금액을 다시 확인해주세요."),
 }
