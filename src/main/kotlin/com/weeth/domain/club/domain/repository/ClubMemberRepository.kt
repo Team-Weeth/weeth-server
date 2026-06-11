@@ -28,6 +28,23 @@ interface ClubMemberRepository :
         @Param("ids") ids: List<Long>,
     ): List<ClubMember>
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.club
+        JOIN FETCH cm.user
+        WHERE cm.user.id = :userId
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        ORDER BY cm.id ASC
+        """,
+    )
+    fun findAllActiveByUserIdWithLock(
+        @Param("userId") userId: Long,
+    ): List<ClubMember>
+
     override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
         memberStatus: MemberStatus,

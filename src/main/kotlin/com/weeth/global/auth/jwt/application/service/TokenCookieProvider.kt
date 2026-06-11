@@ -27,6 +27,22 @@ class TokenCookieProvider(
             path = cookieProperties.refreshPath,
         )
 
+    fun expireAccessTokenCookie(): ResponseCookie =
+        buildCookie(
+            name = cookieProperties.accessTokenName,
+            value = "",
+            maxAge = Duration.ZERO,
+            path = cookieProperties.path,
+        )
+
+    fun expireRefreshTokenCookie(): ResponseCookie =
+        buildCookie(
+            name = cookieProperties.refreshTokenName,
+            value = "",
+            maxAge = Duration.ZERO,
+            path = cookieProperties.refreshPath,
+        )
+
     private fun buildCookie(
         name: String,
         value: String,

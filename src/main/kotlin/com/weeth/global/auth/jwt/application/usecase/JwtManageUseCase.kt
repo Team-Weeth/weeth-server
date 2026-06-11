@@ -38,4 +38,8 @@ class JwtManageUseCase(
 
         return create(userId, email, tokenType)
     }
+
+    fun deleteRefreshToken(userId: Long) {
+        refreshTokenStore.delete(userId)
+    }
 }
