@@ -95,6 +95,8 @@ class RegisterAccountUseCase(
 
         if (account.status != AccountStatus.DRAFT) throw AccountInvalidDraftStateException()
 
+        // 납부 대상 행이 장부를 FK로 참조하므로(cascade 없음) 장부보다 먼저 삭제한다.
+        paymentTargetRepository.deleteAllByAccountId(account.id)
         accountRepository.delete(account)
     }
 

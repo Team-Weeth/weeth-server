@@ -6,6 +6,7 @@ import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
@@ -85,6 +86,13 @@ interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, L
         @Param("keyword") keyword: String?,
         pageable: Pageable,
     ): Page<AccountPaymentTarget>
+
+    /** 초안 폐기 시 장부에 딸린 납부 대상 행을 일괄 삭제한다. (FK에 cascade가 없어 장부 삭제 전에 호출해야 한다) */
+    @Modifying
+    @Query("delete from AccountPaymentTarget target where target.account.id = :accountId")
+    fun deleteAllByAccountId(
+        @Param("accountId") accountId: Long,
+    )
 
     /** 탈퇴/퇴출 등으로 비활성화된 멤버의 미납 납부 대상 행. 등록 완료 시 제외 처리 대상이다. */
     @Query(
