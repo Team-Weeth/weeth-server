@@ -1,117 +1,12 @@
 # Exception Handling Rules
 
-## Exception Hierarchy
+## Structure
 
-```
-RuntimeException
-    └── BaseException (abstract)
-            ├── UserNotFoundException
-            ├── BoardNotFoundException
-            └── ... (domain-specific exceptions)
-```
-
-## Base Exception
-
-```kotlin
-abstract class BaseException(
-    val errorCode: ErrorCodeInterface,
-    message: String? = null
-) : RuntimeException(message ?: errorCode.message)
-```
-
-## Error Code Interface
-
-```kotlin
-interface ErrorCodeInterface {
-    val code: Int
-    val status: HttpStatus
-    val message: String
-
-    fun getExplainError(): String = message
-}
-```
-
-## Domain Error Codes
-
-```kotlin
-enum class UserErrorCode(
-    override val code: Int,
-    override val status: HttpStatus,
-    override val message: String
-) : ErrorCodeInterface {
-    @ExplainError("사용자 ID로 조회했으나 해당 사용자가 존재하지 않을 때 발생합니다.")
-    USER_NOT_FOUND(20900, HttpStatus.NOT_FOUND, "존재하지 않는 유저입니다."),
-
-    @ExplainError("가입 승인 대기 중인 사용자가 접근을 시도할 때 발생합니다.")
-    USER_INACTIVE(20901, HttpStatus.FORBIDDEN, "가입 승인이 허가되지 않은 계정입니다."),
-
-    @ExplainError("이미 가입된 이메일로 회원가입을 시도할 때 발생합니다.")
-    USER_EXISTS(20902, HttpStatus.BAD_REQUEST, "이미 가입된 사용자입니다."),
-}
-```
-
-## Common Error Codes (pattern example, not yet implemented)
-
-Follow the pattern below when introducing a common error code enum. Currently, `CommonExceptionHandler` uses `CommonResponse.createFailure()` directly.
-
-```kotlin
-enum class CommonErrorCode(
-    override val code: Int,
-    override val status: HttpStatus,
-    override val message: String
-) : ErrorCodeInterface {
-    // 3DDNN: Infra/Server errors (DD=99 for common)
-    INTERNAL_SERVER_ERROR(39901, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error"),
-    JSON_PROCESSING_ERROR(39902, HttpStatus.INTERNAL_SERVER_ERROR, "JSON processing error"),
-
-    // 4DDNN: Client/Validation errors (DD=99 for common)
-    INVALID_ARGUMENT(49901, HttpStatus.BAD_REQUEST, "Invalid argument"),
-    RESOURCE_NOT_FOUND(49903, HttpStatus.NOT_FOUND, "Resource not found"),
-}
-```
-
-## Domain Exception Classes
+Domain exceptions extend `BaseException(errorCode)`; error codes are per-domain enums implementing `ErrorCodeInterface` (`code: Int`, `status: HttpStatus`, `message: String`).
 
 ```kotlin
 class UserNotFoundException : BaseException(UserErrorCode.USER_NOT_FOUND)
-```
 
-## Swagger Exception Documentation (Auto)
-
-Swagger is customized so exception codes/examples are registered automatically from annotations and error-code enums.
-
-### Required Annotations
-
-- `@ApiErrorCodeExample`: Declare which `ErrorCodeInterface` enums can be returned by an API.
-- `@ExplainError`: Optional field-level description for richer Swagger examples.
-
-```kotlin
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-@Retention(AnnotationRetention.RUNTIME)
-annotation class ApiErrorCodeExample(
-    vararg val value: KClass<out ErrorCodeInterface>
-)
-```
-
-### Controller Convention
-
-- Apply `@ApiErrorCodeExample` at controller class level when most endpoints share the same domain errors.
-- Apply it at method level when a specific endpoint has different error sets.
-- If both are present, method-level declaration should take precedence for that endpoint.
-- If multiple enums are needed, pass them together:
-
-```kotlin
-@ApiErrorCodeExample(BoardErrorCode::class, NoticeErrorCode::class)
-class NoticeController
-```
-
-### ErrorCode Enum Convention
-
-- Domain error enums must implement `ErrorCodeInterface`.
-- Add `@ExplainError` to each enum constant when possible.
-- If `@ExplainError` is missing, fallback to `message`.
-
-```kotlin
 enum class UserErrorCode(
     override val code: Int,
     override val status: HttpStatus,
@@ -122,15 +17,19 @@ enum class UserErrorCode(
 }
 ```
 
-### Documentation-only Controller
+Error messages are Korean. Code numbering follows `XDDNN` (see api-design.md). There is no common error enum yet — `CommonExceptionHandler` uses `CommonResponse.createFailure()` directly; if one is introduced, use DD=99.
 
-- Keep an `ExceptionDocController` for aggregated, domain-wide exception browsing in Swagger.
-- This controller is for documentation only; it should not contain business logic.
+## Swagger Auto-documentation
 
-### When Adding a New Exception
+Error examples are auto-registered in Swagger from annotations — never hand-edit response specs:
 
-1. Add enum constant to the proper `*ErrorCode`.
-2. Add `@ExplainError` description.
-3. Create/adjust domain exception class extending `BaseException`.
-4. Ensure the relevant controller/method has `@ApiErrorCodeExample` for that enum.
-5. Verify Swagger examples show the new code without manual response-spec edits.
+- `@ApiErrorCodeExample(SomeErrorCode::class, ...)` on a controller class (shared errors) or method (endpoint-specific; method wins over class)
+- `@ExplainError("...")` on each enum constant (falls back to `message` if missing)
+- `ExceptionDocController` exists only for aggregated exception browsing in Swagger — no business logic there
+
+## When Adding a New Exception
+
+1. Add enum constant to the proper `*ErrorCode` with `@ExplainError`
+2. Create/adjust the exception class extending `BaseException`
+3. Ensure the relevant controller/method declares the enum in `@ApiErrorCodeExample`
+4. Verify Swagger shows the new code

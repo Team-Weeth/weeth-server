@@ -1,88 +1,32 @@
 # Code Style Rules
 
-## Language
+## Language & Formatting
 
-- Primary: Kotlin (Java → Kotlin migration in progress)
-- Build: Gradle (Kotlin DSL)
-
-## Formatting
-
-- Use ktlint
-- Run `./gradlew ktlintFormat` before committing
+- Kotlin only — do not introduce Java production code. Build: Gradle (Kotlin DSL)
+- ktlint enforced: run `./gradlew ktlintFormat` before committing
 
 ## Naming Conventions
 
 | Element | Convention | Example |
 |---------|-----------|---------|
-| Classes | PascalCase | `UserController`, `CreateUserUseCase` |
-| Methods | camelCase | `getUserDetail`, `createUser` |
-| Constants | SCREAMING_SNAKE_CASE | `MAX_PAGE_SIZE` |
-| Packages | lowercase | `com.example.domain.user` |
 | DTOs | Suffix with purpose | `CreateUserRequest`, `UserResponse` |
 | Test Fixtures | `{Entity}TestFixture` | `UserTestFixture` |
+| Constants | SCREAMING_SNAKE_CASE in `companion object` | `MAX_PAGE_SIZE` |
 
 ## Null Safety
 
-- Avoid using Kotlin non-null assertion operator `!!`.
-- Prefer safe call (`?.`), Elvis operator (`?:`), and `requireNotNull`/`checkNotNull` unless `!!` is truly unavoidable.
-- If `!!` must be used, add a short comment explaining why in that code block.
+- Avoid `!!`. Prefer `?.`, `?:`, `requireNotNull`/`checkNotNull`.
+- If `!!` is truly unavoidable, add a short comment explaining why.
 
-## Data Class vs Class
+## Class Kinds
 
-```kotlin
-// Request DTO - Use data class
-data class CreateUserRequest(
-    @field:NotBlank val name: String,
-    @field:Email val email: String
-)
-
-// Response DTO - Use data class
-data class UserResponse(
-    val id: Long,
-    val name: String
-)
-
-// Entity - Use class (not data class)
-@Entity
-class User(
-    @Id @GeneratedValue
-    val id: Long = 0,
-    var name: String
-) : BaseEntity()
-```
-
-## Import Organization
-
-1. Kotlin standard library
-2. Third-party libraries
-3. Spring framework
-4. Project classes
-
-## Constants
-
-```kotlin
-companion object {
-    private const val MAX_PAGE_SIZE = 20
-    private const val DEFAULT_PAGE_SIZE = 10
-}
-```
+- Entity: regular `class` (not `data class`), mutable props use `private set` + named mutation methods
+- DTO: `data class`
 
 ## Comments
 
-- Do NOT comment on self-explanatory code
-- Add comments in these cases:
-  - **Core business logic**: Domain rules, policy decisions — explain "why", not "what"
-  - **Collaboration aid**: Intent or background that other developers need to understand the code
-  - **Non-obvious implementation**: Performance optimizations, workarounds, external system constraints
-  - **Architecture decisions**: Reason for choosing a specific pattern or structure (e.g., `// NOTE: Kept in Java for Lombok @SuperBuilder compatibility`)
-- Use KDoc (`/** */`) for public APIs, Port interfaces, and external contracts
-- Use inline comments (`//`) for implementation intent within methods
-
-## Null Handling
-
-```kotlin
-// Use nullable types and Elvis operator
-fun getUser(userId: Long): User =
-    userRepository.findByIdOrNull(userId)
-        ?: throw UserNotFoundException()
-```
+- Do NOT comment self-explanatory code. Comment only for:
+  - Core business logic — explain "why", not "what"
+  - Non-obvious implementation: performance workarounds, external system constraints
+  - Architecture decisions: reason for choosing a specific pattern
+- KDoc (`/** */`) for public APIs, Port interfaces, and external contracts; inline `//` for intent within methods

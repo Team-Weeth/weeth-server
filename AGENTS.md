@@ -62,7 +62,7 @@ Core rules:
 
 ## Rule Files
 
-Detailed project rules live in `.agents/rules/`. Read the relevant file before making changes in that area:
+Detailed project rules live in `.agents/rules/` (a symlink to `.claude/rules/` — the single source of truth; edit files there). Read the relevant file before making changes in that area:
 
 - API and response codes: `.agents/rules/api-design.md`
 - Package structure and layer rules: `.agents/rules/architecture.md`
