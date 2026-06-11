@@ -12,6 +12,7 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
+import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -194,14 +195,38 @@ class GetAttendanceQueryServiceTest :
 
                 every { clubPermissionPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
                 every { sessionReader.getById(session.id) } returns session
-                every { attendanceRepository.findAllBySessionAndClubMemberMemberStatus(session, any()) } returns
-                    listOf(attendance)
+                every { attendanceRepository.findAllBySession(session) } returns listOf(attendance)
 
                 val result = queryService.findAllAttendanceBySession(admin.club.id, admin.user.id, session.id)
 
                 result shouldHaveSize 1
                 result.first().name shouldBe member.user.name
+                result.first().memberStatus shouldBe member.memberStatus
                 result.first().status shouldBe AttendanceStatus.ATTEND
+            }
+
+            it("관리자는 LEFT 멤버의 세션별 출석도 함께 조회한다") {
+                val admin = ClubMemberTestFixture.createAdminMember()
+                val activeMember = ClubMemberTestFixture.createActiveMember(club = admin.club)
+                val leftMember =
+                    ClubMemberTestFixture
+                        .createActiveMember(club = admin.club, user = UserTestFixture.createActiveUser2())
+                        .also { it.leave(LocalDateTime.of(2026, 5, 19, 12, 0)) }
+                val session = SessionTestFixture.createSession(id = 10L, club = admin.club, title = "세션")
+                val activeAttendance = Attendance.create(session, activeMember).also { it.attend() }
+                val leftAttendance = Attendance.create(session, leftMember).also { it.absent() }
+
+                every { clubPermissionPolicy.requireAdmin(admin.club.id, admin.user.id) } returns admin
+                every { sessionReader.getById(session.id) } returns session
+                every { attendanceRepository.findAllBySession(session) } returns
+                    listOf(activeAttendance, leftAttendance)
+
+                val result = queryService.findAllAttendanceBySession(admin.club.id, admin.user.id, session.id)
+
+                result shouldHaveSize 2
+                result.map { it.name } shouldBe listOf(activeMember.user.name, leftMember.user.name)
+                result.map { it.memberStatus } shouldBe listOf(activeMember.memberStatus, leftMember.memberStatus)
+                result.map { it.status } shouldBe listOf(AttendanceStatus.ATTEND, AttendanceStatus.ABSENT)
             }
 
             it("다른 동아리 세션이면 예외를 던진다") {

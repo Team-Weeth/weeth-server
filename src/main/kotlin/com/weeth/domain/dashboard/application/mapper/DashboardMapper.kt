@@ -49,7 +49,7 @@ class DashboardMapper(
         user: User,
         clubMember: ClubMember,
     ) = DashboardMyInfoResponse(
-        userInfo = UserInfo.of(user, clubMember.memberRole, resolveProfileImage(clubMember)),
+        userInfo = UserInfo.ofSelf(user, clubMember.memberRole, resolveProfileImage(clubMember)),
         bio = clubMember.bio,
     )
 
@@ -109,7 +109,7 @@ class DashboardMapper(
     ) = DashboardPostResponse(
         id = post.id,
         boardId = post.board.id,
-        author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
+        author = UserInfo.ofClubMember(post.clubMember, resolveProfileImage(post.clubMember)),
         title = post.title,
         content = post.content,
         time = post.createdAt,

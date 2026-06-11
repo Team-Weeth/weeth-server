@@ -33,6 +33,9 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
         memberStatus: MemberStatus,
     ): List<Attendance>
 
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    fun findAllBySession(session: Session): List<Attendance>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(

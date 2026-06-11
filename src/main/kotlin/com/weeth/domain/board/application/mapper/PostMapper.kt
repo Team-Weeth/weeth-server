@@ -43,7 +43,7 @@ class PostMapper(
         id = post.id,
         boardId = post.board.id,
         boardName = post.board.name,
-        author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
+        author = UserInfo.ofClubMember(post.clubMember, resolveProfileImage(post.clubMember)),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
@@ -63,7 +63,7 @@ class PostMapper(
         memberRole: MemberRole,
     ) = PostListResponse(
         id = post.id,
-        author = UserInfo.of(post.clubMember.user, post.clubMember.memberRole, resolveProfileImage(post.clubMember)),
+        author = UserInfo.ofClubMember(post.clubMember, resolveProfileImage(post.clubMember)),
         boardId = post.board.id,
         boardName = post.board.name,
         title = post.title,

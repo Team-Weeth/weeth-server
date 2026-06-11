@@ -37,6 +37,11 @@ class ManagePostLikeUseCase(
                 post.increaseLikeCount()
             }
 
+            existingLike.deletedAt != null -> {
+                existingLike.restore()
+                post.increaseLikeCount()
+            }
+
             !existingLike.isActive -> {
                 existingLike.activate()
                 post.increaseLikeCount()
@@ -69,7 +74,7 @@ class ManagePostLikeUseCase(
         postId: Long,
         userId: Long,
     ): Pair<Post, PostLike?> {
-        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMemberWithLock(clubId, userId)
         val post =
             try {
                 postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()

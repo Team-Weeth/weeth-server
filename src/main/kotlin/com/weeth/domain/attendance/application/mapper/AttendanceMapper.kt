@@ -55,6 +55,7 @@ class AttendanceMapper {
             name = attendance.clubMember.user.name,
             department = attendance.clubMember.user.department,
             studentId = attendance.clubMember.user.studentId,
+            memberStatus = attendance.clubMember.memberStatus,
         )
 
     fun toQrTokenResponse(

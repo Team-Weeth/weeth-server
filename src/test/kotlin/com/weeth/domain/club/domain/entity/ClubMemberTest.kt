@@ -8,6 +8,7 @@ import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import java.time.LocalDateTime
 
 class ClubMemberTest :
     StringSpec({
@@ -49,13 +50,16 @@ class ClubMemberTest :
             member.memberStatus shouldBe MemberStatus.BANNED
         }
 
-        "leave — ACTIVE 상태에서 LEFT로 전환한다" {
+        "leave — ACTIVE 상태에서 LEFT로 전환하고 leftAt, hardDeleteAfter를 설정한다" {
             val member = ClubMember(club = club, user = user)
             member.accept()
+            val now = LocalDateTime.of(2026, 5, 19, 12, 0)
 
-            member.leave()
+            member.leave(now)
 
             member.memberStatus shouldBe MemberStatus.LEFT
+            member.leftAt shouldBe now
+            member.hardDeleteAfter shouldBe now.plusDays(30)
         }
 
         "isActive — ACTIVE 상태일 때 true" {
@@ -176,7 +180,7 @@ class ClubMemberTest :
         "ban — LEFT 상태에서 호출 시 예외가 발생한다" {
             val member = ClubMember(club = club, user = user)
             member.accept()
-            member.leave()
+            member.leave(LocalDateTime.now())
 
             shouldThrow<IllegalStateException> {
                 member.ban()
@@ -187,8 +191,23 @@ class ClubMemberTest :
             val member = ClubMember(club = club, user = user)
 
             shouldThrow<IllegalStateException> {
-                member.leave()
+                member.leave(LocalDateTime.now())
             }
+        }
+
+        "leave — LEFT 상태에서 재호출 시 예외가 발생하고 탈퇴 메타데이터를 유지한다" {
+            val member = ClubMember(club = club, user = user)
+            member.accept()
+            val leftAt = LocalDateTime.of(2026, 5, 19, 12, 0)
+            member.leave(leftAt)
+
+            shouldThrow<IllegalStateException> {
+                member.leave(leftAt.plusDays(1))
+            }
+
+            member.memberStatus shouldBe MemberStatus.LEFT
+            member.leftAt shouldBe leftAt
+            member.hardDeleteAfter shouldBe leftAt.plusDays(30)
         }
 
         "releaseLead — LEAD 멤버를 ADMIN으로 변경한다" {
