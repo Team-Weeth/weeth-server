@@ -94,10 +94,6 @@ class User(
         hardDeleteAfter = now.plusDays(RETENTION_DAYS)
     }
 
-    fun leave() {
-        leave(LocalDateTime.now())
-    }
-
     fun isActive(): Boolean = status == Status.ACTIVE
 
     fun isInactive(): Boolean = !isActive()

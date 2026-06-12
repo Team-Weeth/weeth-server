@@ -8,7 +8,6 @@ import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 
 @Service
 class AuthUserUseCase(
@@ -16,12 +15,6 @@ class AuthUserUseCase(
     private val jwtManageUseCase: JwtManageUseCase,
     private val jwtTokenExtractor: JwtTokenExtractor,
 ) {
-    @Transactional
-    fun leave(userId: Long) {
-        val user = userReader.getById(userId)
-        user.leave()
-    }
-
     fun refreshToken(httpServletRequest: HttpServletRequest): JwtDto {
         val refreshToken = jwtTokenExtractor.extractRefreshToken(httpServletRequest)
         val userId = jwtTokenExtractor.extractId(refreshToken) ?: throw InvalidTokenException()

@@ -1,7 +1,6 @@
 package com.weeth.domain.user.application.usecase.command
 
 import com.weeth.domain.user.application.exception.UserInActiveException
-import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import com.weeth.global.auth.jwt.application.dto.JwtDto
@@ -32,17 +31,6 @@ class AuthUserUseCaseTest :
 
         beforeTest {
             clearMocks(userReader, jwtManageUseCase, jwtTokenExtractor)
-        }
-
-        describe("leave") {
-            it("회원 탈퇴 시 상태를 LEFT로 변경한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
-                every { userReader.getById(1L) } returns user
-
-                useCase.leave(1L)
-
-                user.status shouldBe Status.LEFT
-            }
         }
 
         describe("refreshToken") {

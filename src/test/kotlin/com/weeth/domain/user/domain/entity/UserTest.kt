@@ -21,7 +21,7 @@ class UserTest :
             user.ban()
             user.status shouldBe Status.BANNED
 
-            user.leave()
+            user.leave(LocalDateTime.of(2026, 6, 12, 12, 0))
             user.status shouldBe Status.LEFT
         }
 
@@ -150,7 +150,7 @@ class UserTest :
             user.isBannedOrLeft() shouldBe true
 
             user.accept()
-            user.leave()
+            user.leave(LocalDateTime.of(2026, 6, 12, 12, 0))
             user.isBannedOrLeft() shouldBe true
         }
 
