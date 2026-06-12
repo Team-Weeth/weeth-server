@@ -25,6 +25,7 @@ import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -63,6 +64,7 @@ class ManageClubMemberUsecase(
         val club = clubRepository.getClubById(clubId)
         val user =
             userReader.getByIdWithLock(userId)
+        if (!user.isRegistered()) throw UserInActiveException()
 
         clubMemberRepository.findByClubIdAndUserId(clubId, userId)?.let {
             throw AlreadyJoinedException()
