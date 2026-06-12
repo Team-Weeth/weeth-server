@@ -1,0 +1,130 @@
+package com.weeth.domain.user.application.usecase.command
+
+import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.repository.ClubMemberRepository
+import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.user.application.exception.UserHasLeadClubException
+import com.weeth.domain.user.domain.enums.Status
+import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.fixture.UserTestFixture
+import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
+import io.kotest.assertions.throwables.shouldThrow
+import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
+import io.mockk.clearMocks
+import io.mockk.every
+import io.mockk.justRun
+import io.mockk.mockk
+import io.mockk.verify
+import org.springframework.transaction.support.TransactionSynchronizationManager
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+
+class WithdrawUserUseCaseTest :
+    DescribeSpec({
+        val userReader = mockk<UserReader>()
+        val clubMemberRepository = mockk<ClubMemberRepository>()
+        val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
+        val jwtManageUseCase = mockk<JwtManageUseCase>()
+        val clock = Clock.fixed(Instant.parse("2026-06-12T03:00:00Z"), ZoneId.of("Asia/Seoul"))
+        val useCase =
+            WithdrawUserUseCase(
+                userReader = userReader,
+                clubMemberRepository = clubMemberRepository,
+                clubActivityDeletionPolicy = clubActivityDeletionPolicy,
+                jwtManageUseCase = jwtManageUseCase,
+                clock = clock,
+            )
+
+        beforeTest {
+            clearMocks(userReader, clubMemberRepository, clubActivityDeletionPolicy, jwtManageUseCase)
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization()
+            }
+        }
+
+        afterTest {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.clearSynchronization()
+            }
+        }
+
+        describe("execute") {
+            it("ACTIVE 멤버십이 없으면 사용자만 탈퇴하고 커밋 후 refresh token을 삭제한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val now = LocalDateTime.now(clock)
+                every { userReader.getByIdWithLock(1L) } returns user
+                every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns emptyList()
+                justRun { jwtManageUseCase.deleteRefreshToken(1L) }
+                TransactionSynchronizationManager.initSynchronization()
+
+                useCase.execute(1L)
+
+                user.status shouldBe Status.LEFT
+                user.leftAt shouldBe now
+                user.hardDeleteAfter shouldBe now.plusDays(30)
+                verify(exactly = 0) { jwtManageUseCase.deleteRefreshToken(any()) }
+
+                TransactionSynchronizationManager.getSynchronizations().forEach { it.afterCommit() }
+
+                verify(exactly = 1) { jwtManageUseCase.deleteRefreshToken(1L) }
+            }
+
+            it("USER와 ADMIN ACTIVE 멤버십을 모두 탈퇴 처리한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val userMember =
+                    ClubMemberTestFixture.createActiveMember(
+                        id = 10L,
+                        user = user,
+                        memberRole = MemberRole.USER,
+                    )
+                val adminMember =
+                    ClubMemberTestFixture.createActiveMember(
+                        id = 11L,
+                        user = user,
+                        memberRole = MemberRole.ADMIN,
+                    )
+                val now = LocalDateTime.now(clock)
+                every { userReader.getByIdWithLock(1L) } returns user
+                every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns listOf(userMember, adminMember)
+                justRun { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
+                justRun { jwtManageUseCase.deleteRefreshToken(1L) }
+                TransactionSynchronizationManager.initSynchronization()
+
+                useCase.execute(1L)
+
+                userMember.memberStatus shouldBe MemberStatus.LEFT
+                userMember.leftAt shouldBe now
+                adminMember.memberStatus shouldBe MemberStatus.LEFT
+                adminMember.leftAt shouldBe now
+                user.status shouldBe Status.LEFT
+                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(userMember, now) }
+                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(adminMember, now) }
+            }
+
+            it("ACTIVE LEAD 멤버십이 있으면 탈퇴를 차단하고 상태를 변경하지 않는다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val leadMember =
+                    ClubMemberTestFixture.createActiveMember(
+                        id = 10L,
+                        user = user,
+                        memberRole = MemberRole.LEAD,
+                    )
+                every { userReader.getByIdWithLock(1L) } returns user
+                every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns listOf(leadMember)
+
+                shouldThrow<UserHasLeadClubException> {
+                    useCase.execute(1L)
+                }
+
+                user.status shouldBe Status.ACTIVE
+                leadMember.memberStatus shouldBe MemberStatus.ACTIVE
+                verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
+                verify(exactly = 0) { jwtManageUseCase.deleteRefreshToken(any()) }
+            }
+        }
+    })

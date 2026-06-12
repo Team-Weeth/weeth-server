@@ -25,6 +25,7 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -37,6 +38,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import java.time.LocalDateTime
 
 class ManageClubUseCaseTest :
     DescribeSpec({
@@ -95,7 +97,7 @@ class ManageClubUseCaseTest :
         }
 
         describe("create") {
-            val user = UserTestFixture.createActiveUser1()
+            val user = UserTestFixture.createRegisteredUser()
 
             context("N기 동아리를 개설하는 경우") {
                 it("1기부터 N기까지 Cardinal이 생성되며, 마지막 기수만 IN_PROGRESS이다") {
@@ -286,6 +288,34 @@ class ManageClubUseCaseTest :
 
                     verify(exactly = 1) { userReader.getByIdWithLock(13L) }
                     verify(exactly = 1) { clubJoinPolicy.validateCreateLimit(13L) }
+                    verify(exactly = 0) { clubRepository.save(any()) }
+                    verify(exactly = 0) { clubMemberRepository.save(any()) }
+                    verify(exactly = 0) { cardinalRepository.saveAll(any<List<Cardinal>>()) }
+                }
+            }
+
+            context("탈퇴 사용자가 동아리 생성을 시도하는 경우") {
+                it("UserInActiveException이 발생하고 생성 처리를 진행하지 않는다") {
+                    val leftUser =
+                        UserTestFixture
+                            .createRegisteredUser()
+                            .apply { leave(LocalDateTime.of(2026, 6, 12, 12, 0)) }
+                    every { userReader.getByIdWithLock(10L) } returns leftUser
+
+                    shouldThrow<UserInActiveException> {
+                        useCase.create(
+                            10L,
+                            ClubCreateRequest(
+                                name = "테스트",
+                                schoolName = "가천대",
+                                currentCardinal = 1,
+                                contactPhoneNumber = "01000000000",
+                                primaryContact = PrimaryContact.PHONE,
+                            ),
+                        )
+                    }
+
+                    verify(exactly = 0) { clubJoinPolicy.validateCreateLimit(any()) }
                     verify(exactly = 0) { clubRepository.save(any()) }
                     verify(exactly = 0) { clubMemberRepository.save(any()) }
                     verify(exactly = 0) { cardinalRepository.saveAll(any<List<Cardinal>>()) }

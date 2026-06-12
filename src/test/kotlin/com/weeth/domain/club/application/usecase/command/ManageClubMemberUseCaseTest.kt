@@ -27,6 +27,7 @@ import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.file.fixture.FileTestFixture
+import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -380,7 +381,7 @@ class ManageClubMemberUseCaseTest :
             context("이미 USER로 1개 동아리에 가입한 사용자가 가입 시도하는 경우") {
                 it("ClubJoinLimitExceededException이 발생한다") {
                     val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
-                    val user = UserTestFixture.createActiveUser1()
+                    val user = UserTestFixture.createRegisteredUser()
 
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
@@ -402,7 +403,7 @@ class ManageClubMemberUseCaseTest :
             context("LEAD로 1개 동아리를 생성한 사용자가 USER로 가입 시도하는 경우") {
                 it("역할이 다르므로 가입에 성공한다") {
                     val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
-                    val user = UserTestFixture.createActiveUser1()
+                    val user = UserTestFixture.createRegisteredUser()
 
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
@@ -416,6 +417,31 @@ class ManageClubMemberUseCaseTest :
                     )
 
                     verify(exactly = 1) { clubMemberRepository.save(any()) }
+                }
+            }
+
+            context("탈퇴 사용자가 가입 시도하는 경우") {
+                it("UserInActiveException이 발생하고 가입 처리를 진행하지 않는다") {
+                    val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
+                    val user =
+                        UserTestFixture
+                            .createRegisteredUser()
+                            .apply { leave(LocalDateTime.of(2026, 6, 12, 12, 0)) }
+
+                    every { clubRepository.getClubById(1L) } returns targetClub
+                    every { userReader.getByIdWithLock(10L) } returns user
+
+                    shouldThrow<UserInActiveException> {
+                        useCase.join(
+                            clubId = 1L,
+                            userId = 10L,
+                            request = ClubJoinRequest(code = "JOIN-CODE"),
+                        )
+                    }
+
+                    verify(exactly = 0) { clubMemberRepository.findByClubIdAndUserId(any(), any()) }
+                    verify(exactly = 0) { clubJoinPolicy.validateJoinLimit(any()) }
+                    verify(exactly = 0) { clubMemberRepository.save(any()) }
                 }
             }
         }
