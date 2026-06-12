@@ -1,5 +1,7 @@
 package com.weeth.global.auth.jwt.filter
 
+import com.weeth.domain.user.application.exception.UserInActiveException
+import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.enums.TokenType
@@ -18,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 class JwtAuthenticationProcessingFilter(
     private val jwtTokenProvider: JwtTokenProvider,
     private val jwtTokenExtractor: JwtTokenExtractor,
+    private val userReader: UserReader,
 ) : OncePerRequestFilter() {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -41,6 +44,7 @@ class JwtAuthenticationProcessingFilter(
 
     private fun saveAuthentication(accessToken: String) {
         val claims = jwtTokenExtractor.extractClaims(accessToken) ?: throw TokenNotFoundException()
+        validateUserStatus(claims.id)
         val principal = AuthenticatedUser(claims.id, claims.email)
 
         val role =
@@ -58,5 +62,10 @@ class JwtAuthenticationProcessingFilter(
 
         SecurityContextHolder.getContext().authentication = authentication
         MDC.put("userId", claims.id.toString())
+    }
+
+    private fun validateUserStatus(userId: Long) {
+        val user = userReader.getById(userId)
+        if (user.isBannedOrLeft()) throw UserInActiveException()
     }
 }
