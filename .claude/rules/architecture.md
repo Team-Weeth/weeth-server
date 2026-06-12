@@ -1,5 +1,9 @@
 # Architecture Rules
 
+Structurally checkable rules in this document are enforced by Konsist
+(`src/test/kotlin/com/weeth/architecture/ArchitectureTest.kt`, runs with `./gradlew test`).
+Its BASELINE lists are pre-existing debt — never add entries, only remove after refactoring.
+
 ## Package Structure
 
 ```text
@@ -64,7 +68,7 @@ presentation → application → domain (owns Port)
 
 ### Constructor Pattern
 
-Primary constructor takes **business creation params only** (non-property). JPA-managed fields (`id`, `isDeleted`) go in the body with `private set` and defaults. Validation lives in a `companion object` `create()` factory (or named mutation methods), not the constructor. Simple entities with trivial creation (e.g. `Board`) may use a public constructor without a factory. Use `architecture-guide` for full examples.
+Primary constructor takes **business creation params only** (non-property). JPA-managed fields (`id`, `isDeleted`) go in the body with `private set` and defaults. Validation lives in a `companion object` `create()` factory (or named mutation methods), not the constructor. Simple entities with trivial creation (e.g. `Board`) may use a public constructor without a factory. Use the `architecture-guide` skill for full examples.
 
 ## Value Object (`domain/vo/`)
 
