@@ -42,5 +42,5 @@ Borderline → write the task file (err toward evaluation). The user can always 
 ```
 
 Acceptance criteria must be checkable statements — the evaluator grades against them
-literally. The task file is overwritten per task and lands in the PR diff, so human
-review sees it alongside the code.
+literally. The task file is overwritten per task and is not committed (gitignored; see
+Role Contract item 3), so it never appears in the PR diff.
