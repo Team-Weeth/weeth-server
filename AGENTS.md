@@ -72,6 +72,7 @@ Detailed project rules live in `.agents/rules/` (a symlink to `.claude/rules/` â
 - Mapper and DTO patterns: `.agents/rules/mapper-dto.md`
 - Test style and fixtures: `.agents/rules/testing.md`
 - Transactions and concurrency: `.agents/rules/transaction-concurrency.md`
+- Verification gate (task-file-first, no self-PASS): `.agents/rules/verification.md`
 
 ## Testing
 

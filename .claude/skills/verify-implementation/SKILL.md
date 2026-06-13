@@ -1,6 +1,6 @@
 ---
 name: verify-implementation
-description: Verify completed implementation work via the implementation-evaluator subagent before reporting done. Use after finishing any task that has a task file (.claude/tasks/current-task.md), or when asked to "검증해줘"/"평가해줘". Do NOT auto-invoke for trivial work without a task file (docs, config values, typo/single-line fixes, formatting) — those are covered by ktlint hook + compile + CI.
+description: Verify completed implementation work via the implementation-evaluator subagent before reporting done. Use after finishing any task that has an active task file (.claude/tasks/current-task.md with a populated 수용 기준 section), or when asked to "검증해줘"/"평가해줘". Do NOT auto-invoke for trivial work without a task file (docs, config values, typo/single-line fixes, formatting) — those are covered by ktlint hook + compile + CI.
 ---
 
 # Verify Implementation
@@ -8,11 +8,17 @@ description: Verify completed implementation work via the implementation-evaluat
 Completion gate: the builder (main session) never declares PASS on its own work.
 A clean-context, read-only evaluator grades the diff against the task file.
 
-## Step 1: Confirm the task file
+## Step 1: Confirm an active task file
 
-- Auto-invoked path: `.claude/tasks/current-task.md` already exists (it gated this skill).
-- Manually invoked without a task file: write it first, quoting the user's request
-  verbatim plus acceptance criteria (format in `.claude/rules/verification.md`), then proceed.
+An **active** task file is `.claude/tasks/current-task.md` that exists AND has a
+`## 수용 기준` section with at least one checklist item (`- [ ]` / `- [x]`). The bare
+template (`.claude/tasks/template.md`) and a placeholder current-task.md with no criteria
+do NOT count — they must not trigger evaluation.
+
+- Auto-invoked path: the active task file already exists (it gated this skill).
+- Manually invoked without one: copy `template.md` to `current-task.md`, fill it in
+  (quote the user's request verbatim + acceptance criteria, format in
+  `.claude/rules/verification.md`), then proceed.
 
 ## Step 2: Fix the diff baseline and record pre-spawn hashes
 

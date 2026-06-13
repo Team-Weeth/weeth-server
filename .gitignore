@@ -51,3 +51,5 @@ src/test/resources/*.env
 ### Claude Code ###
 # 로컬 평가 텔레메트리 — 분석은 로컬에서, 결론만 docs/plan에 반영
 .claude/metrics/
+# 작업별로 갈아끼우는 평가 입력 파일 — template.md만 추적
+.claude/tasks/current-task.md

@@ -32,6 +32,13 @@ esac
 # git --no-pager 접두 변형은 동일한 읽기성 명령으로 정규화
 NORMALIZED="${COMMAND/#git --no-pager /git }"
 
+# 읽기성 git 명령이라도 파일 쓰기가 가능한 출력 옵션은 차단
+case "$NORMALIZED" in
+  *' --output='* | *' --output '* | *' -o '*)
+    deny "쓰기 가능한 출력 옵션 포함: $COMMAND"
+    ;;
+esac
+
 case "$NORMALIZED" in
   'git diff' | 'git diff '* | \
   'git log' | 'git log '* | \

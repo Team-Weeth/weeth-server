@@ -5,11 +5,14 @@ Creator-evaluator separation: the session that implements never grades its own w
 ## Role Contract
 
 1. **Task file first**: for work at the scale of a new feature, domain logic change,
-   behavior-changing refactor, or multi-file change — write
-   `.claude/tasks/current-task.md` at the START of the work (planning stage), before
-   implementing. Never write it retroactively.
-2. **No self-PASS**: when a task file exists, the completion report MUST quote the
+   behavior-changing refactor, or multi-file change — copy `.claude/tasks/template.md`
+   to `.claude/tasks/current-task.md` and fill it in at the START of the work (planning
+   stage), before implementing. Never write it retroactively.
+2. **No self-PASS**: when an active task file exists, the completion report MUST quote the
    `verify-implementation` evaluation result. The builder never declares PASS itself.
+3. **Clean up after evaluation**: `current-task.md` is per-task and not committed (only
+   `template.md` is tracked). An *active* task file = `current-task.md` with a populated
+   `## 수용 기준` section. A bare/placeholder file does not gate evaluation.
 
 ## Evaluation Gate
 
