@@ -7,7 +7,7 @@ data class AccountResponse(
     @field:Schema(description = "회비 ID", example = "1")
     val accountId: Long,
     @field:Schema(description = "회비 설명", example = "2024년 2학기 회비")
-    val description: String,
+    val description: String?,
     @field:Schema(description = "총 금액", example = "100000")
     val totalAmount: Int,
     @field:Schema(description = "현재 금액", example = "90000")

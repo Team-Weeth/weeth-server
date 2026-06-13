@@ -22,11 +22,11 @@ class BankAccount(
     var accountNumber: String = normalizeRequired(accountNumber, "계좌번호")
         private set
 
-    @Column(name = "account_holder", length = 50)
+    @Column(name = "account_holder", length = 30)
     var holder: String = normalizeRequired(holder, "예금주")
         private set
 
-    @Column(name = "bank_guide", length = 200)
+    @Column(name = "bank_guide", length = 30)
     var guide: String? = normalizeOptional(guide)
         private set
 

@@ -36,14 +36,11 @@ class AccountTransaction(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false)
     val account: Account,
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    val type: AccountTransactionType,
+    type: AccountTransactionType,
     title: String,
     source: String?,
     amount: Money,
-    @Column(name = "transacted_at", nullable = false)
-    val transactedAt: LocalDateTime,
+    transactedAt: LocalDateTime,
     category: String? = null,
     memo: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
@@ -59,7 +56,13 @@ class AccountTransaction(
     // 인덱스/집계 쿼리에서 활용하기 위해 type 으로부터 파생된 방향을 함께 저장합니다.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    val direction: AccountTransactionDirection = type.direction
+    var type: AccountTransactionType = type
+        private set
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var direction: AccountTransactionDirection = type.direction
+        private set
 
     @Column(nullable = false, length = 100)
     var title: String = normalizeRequired(title, "거래 내용", MAX_TITLE_LENGTH)
@@ -71,6 +74,10 @@ class AccountTransaction(
 
     @Column(nullable = false)
     var amount: Int = amount.value
+        private set
+
+    @Column(name = "transacted_at", nullable = false)
+    var transactedAt: LocalDateTime = transactedAt
         private set
 
     // MVP UI에서는 노출하지 않지만 분류/통계 확장을 위해 선반영해두는 자유 입력 카테고리.
@@ -101,6 +108,28 @@ class AccountTransaction(
         if (this.deletedAt == null) {
             this.deletedAt = deletedAt
         }
+    }
+
+    fun update(
+        type: AccountTransactionType,
+        title: String,
+        source: String?,
+        amount: Money,
+        transactedAt: LocalDateTime,
+        category: String?,
+        memo: String?,
+    ) {
+        check(!isApplied) { "반영된 거래는 되돌린 뒤 수정할 수 있습니다." }
+        check(deletedAt == null) { "삭제된 거래는 수정할 수 없습니다." }
+        require(amount.value > 0) { "거래 금액은 0보다 커야 합니다: ${amount.value}" }
+        this.type = type
+        this.direction = type.direction
+        this.title = normalizeRequired(title, "거래 내용", MAX_TITLE_LENGTH)
+        this.source = normalizeOptional(source, "거래 출처", MAX_SOURCE_LENGTH)
+        this.amount = amount.value
+        this.transactedAt = transactedAt
+        this.category = normalizeOptional(category, "카테고리", MAX_CATEGORY_LENGTH)
+        this.memo = normalizeOptional(memo, "메모", MAX_MEMO_LENGTH)
     }
 
     internal fun markApplied() {
