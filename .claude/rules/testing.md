@@ -1,125 +1,42 @@
 # Testing Rules
 
-## Frameworks
+## Stack & Styles
 
-| Framework | Purpose |
-|-----------|---------|
-| Kotest | Kotlin test framework |
-| MockK | Kotlin mocking |
-| springmockk | Spring bean mocking (`@MockkBean`) |
-| Testcontainers | Integration tests (DB, Redis, etc.) |
+Kotest + MockK + springmockk (`@MockkBean`) + Testcontainers (MySQL). No Mockito.
 
-## Test Styles (Kotest)
-
-| Style | Use Case |
+| Kotest Style | Use Case |
 |-------|----------|
 | `DescribeSpec` | Default for application tests (Command UseCase, QueryService) |
 | `BehaviorSpec` | Complex business logic requiring BDD (Given/When/Then) |
 | `StringSpec` | Simple validation and pure domain logic tests |
 
-## Directory Structure
-
-```text
-src/test/kotlin/com/weeth/domain/{domain-name}/
-├── application/usecase/command/   # Command UseCase tests
-├── application/usecase/query/     # QueryService tests
-├── domain/service/                # Domain service tests (multi-entity logic)
-├── domain/entity/                 # Entity behavior tests
-└── fixture/                       # Shared fixtures for the domain
-```
-
-## Naming Conventions
-
-| Element | Convention | Example |
-|---------|-----------|---------|
-| Test class | `{ClassName}Test` | `CreateUserUseCaseTest`, `GetUserQueryServiceTest` |
-| Test fixture | `{Entity}TestFixture` | `UserTestFixture` |
-| DescribeSpec description | method/action + condition + behavior | `describe("execute") { context("with valid request") { it("creates user") } }` |
+Test packages mirror source. Test class: `{ClassName}Test`. Shared fixtures: `src/test/kotlin/com/weeth/domain/{domain}/fixture/{Entity}TestFixture` — `object` with factory methods and sensible defaults for all parameters.
 
 ## Architecture-aligned Unit Boundaries
 
-- Command UseCase test: mock Repository/Reader/Port, verify orchestration behavior.
-- QueryService test: verify read-only assembly (query/map/combine/paginate), no state mutation.
-- Entity test: verify `create/of`, state transitions, `require/check`, and business decisions.
-- Domain Service test: only for multi-entity logic/policy classes (not thin wrappers).
-- Controller test: verify request/response contract and serialization with `@WebMvcTest`.
+- Command UseCase test: mock Repository/Reader/Port, verify orchestration behavior
+- QueryService test: verify read-only assembly (query/map/combine/paginate), no state mutation
+- Entity test: verify `create/of`, state transitions, `require`/`check`, business decisions
+- Domain Service test: only for multi-entity logic/policy classes
+- Controller test: request/response contract with `@WebMvcTest`
 
-## Dependency Rules in Tests
+Mocking rules: same-domain → mock Repository directly; cross-domain read → mock Reader (not target Repository); application tests mock Port interfaces, never infrastructure adapters.
 
-- Same-domain dependencies: UseCase mocks Repository directly.
-- Cross-domain read: mock target domain Reader interface (not target Repository directly).
-- Cross-domain write: mock target domain Repository directly when same-transaction write is required.
-- Port-Adapter: application tests mock Port interface, not infrastructure adapter implementations.
-
-## Unit Test vs Integration Test
-
-| Category | Unit Test | Integration Test |
-|----------|-----------|-----------------|
-| Scope | Single class | Multiple layers / external systems |
-| Dependencies | MockK mocks | Testcontainers (DB, Redis) |
-| Speed | Fast (ms) | Slow (seconds) |
-| Annotation | None | `@SpringBootTest`, `@WebMvcTest` |
-| When to use | Orchestration, branching, entity/domain rules | DB queries, API endpoints, transaction behavior |
-
-## Fixture Pattern
-
-```kotlin
-object UserTestFixture {
-    fun createUser(
-        id: Long = 1L,
-        email: String = "test@example.com",
-        name: String = "Test User"
-    ) = User(id = id, name = name, email = email, status = UserStatus.ACTIVE)
-}
-```
-
-- Location: `src/test/kotlin/com/weeth/domain/{domain-name}/fixture/`
-- Use `object` with factory methods
-- Provide sensible defaults for all parameters
-- Reuse across test classes in the same domain
+Integration tests (`@SpringBootTest`/`@WebMvcTest` + Testcontainers) are for DB queries, API endpoints, and transaction behavior; everything else is a plain unit test with MockK.
 
 ## What to Test / Skip
 
-**Write tests for:**
-- UseCase orchestration paths (success/failure/branching)
-- Reader/Repository/Port interaction contracts (`verify`)
-- QueryService data assembly and pagination mapping
-- Entity invariants and state transitions (`require`/`check`)
-- Exception scenarios and error-code mapping
+**Test:** UseCase orchestration paths (success/failure/branching), mock interaction contracts (`verify`), QueryService assembly/pagination, entity invariants and state transitions, exception scenarios and error-code mapping.
 
-**Skip tests for:**
-- Thin wrapper methods that only delegate to Repository without logic
-- Getter/setter, trivial DTO mapping
-- Framework-provided functionality
+**Skip:** thin delegation without logic, getters/trivial DTO mapping, framework functionality.
 
-## Mock Lifecycle in DescribeSpec
+## Mock Lifecycle in DescribeSpec (pitfall)
 
-MockK mocks are **not** automatically cleared between `it` blocks. Without clearing, accumulated invocations cause `verify(exactly = N)` to fail in subsequent tests.
-
-Always add `beforeTest { clearMocks(...) }` when mocks are shared:
+MockK mocks are **not** cleared between `it` blocks — accumulated invocations break `verify(exactly = N)`. When mocks are shared, always:
 
 ```kotlin
-class SomeUseCaseTest : DescribeSpec({
-    val repository = mockk<SomeRepository>()
-    val useCase = SomeUseCase(repository)
-
-    beforeTest {
-        clearMocks(repository)
-        // Re-stub defaults after clearing
-        every { repository.save(any()) } answers { firstArg() }
-    }
-
-    describe("someMethod") {
-        it("case 1") { verify(exactly = 1) { repository.save(any()) } }
-        it("case 2") { verify(exactly = 1) { repository.save(any()) } } // OK - count reset
-    }
-})
-```
-
-## Running Tests
-
-```bash
-./gradlew test                              # All tests
-./gradlew test --tests "*UseCaseTest"       # Pattern match
-./gradlew test --tests "CreateUserUseCaseTest" # Specific class
+beforeTest {
+    clearMocks(repository)
+    every { repository.save(any()) } answers { firstArg() }  // re-stub defaults
+}
 ```

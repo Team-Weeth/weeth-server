@@ -142,23 +142,36 @@ class CreateOrderUseCase(
 
 ```kotlin
 @Entity
-class Post(
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
-    var title: String,
-    var content: String,
+class Post(title: String, content: String, author: User) : BaseEntity() {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var id: Long = 0L
+        private set
+
+    var title: String = title
+        private set
+
+    var content: String = content
+        private set
+
     @Enumerated(EnumType.STRING)
-    var status: PostStatus = PostStatus.DRAFT,
+    var status: PostStatus = PostStatus.DRAFT
+        private set
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
-    val author: User
-) : BaseEntity() {
+    var author: User = author
+        private set
 
     companion object {
-        fun create(title: String, content: String, imageUrl: String?, author: User): Post {
+        fun create(title: String, content: String, author: User): Post {
             require(title.isNotBlank()) { "Title must not be blank" }
             require(content.length <= 5000) { "Content must be 5000 chars or less" }
-            return Post(title = title, content = content, author = author)
+            return Post(
+                title = title,
+                content = content,
+                author = author,
+            )
         }
     }
 
@@ -187,7 +200,8 @@ class Post(
 | Pattern | How |
 |---------|-----|
 | Creation | `companion object` factory (`create`, `of`) with `require` validation |
-| State change | Named methods (`publish`, `softDelete`) — no public setters |
+| JPA fields | Put `id`, soft-delete flags, and other JPA-managed fields in the body with defaults and `private set` |
+| State change | Named methods (`publish`, `softDelete`) and `private set`; no public setters |
 | State validation | `check` for preconditions |
 | Business decision | `isEditableBy()`, `canPublish()` |
 
@@ -239,7 +253,7 @@ interface FileStoragePort {
 
 ```kotlin
 @Component
-class S3FileStorage(
+class S3FileStorageAdapter(
     private val s3Client: S3Client,
     @Value("\${cloud.aws.s3.bucket}") private val bucket: String
 ) : FileStoragePort {
@@ -269,6 +283,6 @@ class S3FileStorage(
 
 | Port (domain/port/)          | Adapter (infrastructure/) |
 |------------------------------|---------------------------|
-| `FileStoragePort`            | `S3FileStorage` |
-| `PushNotificationSenderPort` | `FcmPushNotificationSender` |
-| `CacheStorePort`             | `RedisCacheStore` |
+| `FileStoragePort`            | `S3FileStorageAdapter` |
+| `PushNotificationSenderPort` | `FcmPushNotificationSenderAdapter` |
+| `CacheStorePort`             | `RedisCacheStoreAdapter` |

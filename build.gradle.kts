@@ -37,6 +37,7 @@ val testcontainersBomVersion = "2.0.3"
 val kotestVersion = "5.9.1"
 val mockkVersion = "1.13.14"
 val springmockkVersion = "4.0.2"
+val konsistVersion = "0.17.3"
 dependencies {
     // --- Kotlin ---
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -102,6 +103,9 @@ dependencies {
     // MockK
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("com.ninja-squad:springmockk:$springmockkVersion")
+
+    // Konsist (아키텍처 규칙 테스트 — .claude/rules/architecture.md의 결정론적 게이트)
+    testImplementation("com.lemonappdev:konsist:$konsistVersion")
 
     // Testcontainers (BOM)
     testImplementation(platform("org.testcontainers:testcontainers-bom:$testcontainersBomVersion"))

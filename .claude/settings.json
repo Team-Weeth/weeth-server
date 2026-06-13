@@ -16,14 +16,20 @@
   },
   "permissions": {
     "deny": [
+      "Read(**/.env)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(**/*.p8)",
       "Edit(**/.env*)",
       "Edit(**/*.pem)",
       "Edit(**/*.key)",
+      "Edit(**/*.p8)",
       "Edit(**/*secret*)",
       "Edit(**/*credential*)",
       "Write(**/.env*)",
       "Write(**/*.pem)",
       "Write(**/*.key)",
+      "Write(**/*.p8)",
       "Write(**/*secret*)",
       "Write(**/*credential*)"
     ],

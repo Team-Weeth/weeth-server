@@ -1,52 +1,49 @@
 ---
 name: test-create
-description: Generate unit and integration tests for Java/Kotlin Spring Boot applications using JUnit 5/Kotest + Mockito/MockK. Use when the user asks to "write tests", "create test", "generate test", "add test coverage", or mentions testing specific classes/methods. Supports service tests, controller tests, and test fixtures.
+description: Generate unit and integration tests for Kotlin Spring Boot applications using Kotest, MockK, springmockk, and Testcontainers. Use when the user asks to "write tests", "create test", "generate test", "add test coverage", or mentions testing specific classes/methods. Supports UseCase tests, controller tests, entity tests, and test fixtures.
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 ---
 
 # Test Generator
 
-Generate comprehensive tests for: $ARGUMENTS
+Generate focused Kotlin tests for the requested target.
 
 ## Workflow
 
 ### Step 1: Analyze Target Code
 
 1. Read the source file to understand:
-   - Language (Java or Kotlin)
    - Class type (Controller, Service/UseCase, Repository, Entity)
    - Dependencies (injected fields)
    - Public methods to test
+2. Read `.claude/rules/testing.md` before writing tests.
 
 ### Step 2: Determine Test Location
 
 ```
 src/test/
-├── java/com/example/app/domain/{domain}/
-│   ├── application/usecase/     # UseCase unit tests
-│   ├── domain/service/          # Service unit tests
-│   ├── presentation/            # Controller tests
-│   └── fixture/                 # Test fixtures
-└── kotlin/com/example/app/domain/{domain}/
+└── kotlin/com/weeth/domain/{domain}/
     ├── application/usecase/
+    │   ├── command/
+    │   └── query/
+    ├── domain/entity/
     ├── domain/service/
     ├── presentation/
     └── fixture/
 ```
 
-Test file naming: `{ClassName}Test.{java|kt}`
+Test file naming: `{ClassName}Test.kt`
 
 ### Step 3: Choose Test Style
 
-| Language | Class Type | Test Style | Framework |
-|----------|------------|------------|-----------|
-| Java | Service/UseCase | JUnit 5 + Mockito | @ExtendWith(MockitoExtension.class) |
-| Java | Controller | @WebMvcTest | MockMvc + @MockBean |
-| Kotlin | Service/UseCase (recommended) | DescribeSpec | Kotest + MockK |
-| Kotlin | Service/UseCase (BDD) | BehaviorSpec | Kotest + MockK |
-| Kotlin | Validation/Simple | StringSpec | Kotest |
-| Kotlin | Controller | @WebMvcTest + DescribeSpec | MockMvc + @MockkBean |
+| Class Type | Test Style | Framework |
+|------------|------------|-----------|
+| Command UseCase | DescribeSpec | Kotest + MockK |
+| QueryService | DescribeSpec | Kotest + MockK |
+| Entity / Domain Service | DescribeSpec or BehaviorSpec | Kotest |
+| Validation / Simple Value Object | StringSpec | Kotest |
+| Controller | @WebMvcTest + DescribeSpec | MockMvc + @MockkBean |
 
 **Decision Guide:**
 - **DescribeSpec**: Default choice for service tests. Clean describe/context/it structure.
@@ -68,9 +65,9 @@ For each public method, create tests for:
 3. Mock all dependencies
 4. Implement test cases following given/when/then pattern
 5. Add verification for mock interactions
+6. For shared MockK mocks in `DescribeSpec`, clear mocks in `beforeTest` and restub defaults after clearing
 
 See detailed examples:
-- Java: [references/java-examples.md](references/java-examples.md)
 - Kotlin: [references/kotlin-examples.md](references/kotlin-examples.md)
 
 ### Step 6: Run Tests
@@ -93,21 +90,6 @@ See detailed examples:
 
 Create reusable test data builders in `fixture/` directory:
 
-**Java:**
-```java
-public class UserTestFixture {
-    public static User createUser(Long id, String email) {
-        return User.builder()
-            .id(id)
-            .name("Test User")
-            .email(email)
-            .status(UserStatus.ACTIVE)
-            .build();
-    }
-}
-```
-
-**Kotlin:**
 ```kotlin
 object UserTestFixture {
     fun createUser(
@@ -126,7 +108,18 @@ Use @WebMvcTest for controller layer tests:
 - Verify JSON serialization
 - Check status codes and response structure
 
-See [references/java-examples.md](references/java-examples.md) and [references/kotlin-examples.md](references/kotlin-examples.md) for complete examples.
+See [references/kotlin-examples.md](references/kotlin-examples.md) for complete examples.
+
+## Mock Lifecycle in DescribeSpec
+
+MockK mocks are not cleared between `it` blocks. Accumulated invocations can break `verify(exactly = N)`. When mocks are shared, clear and restub them before each test:
+
+```kotlin
+beforeTest {
+    clearMocks(repository)
+    every { repository.save(any()) } answers { firstArg() }
+}
+```
 
 ## Checklist
 
@@ -135,6 +128,7 @@ Before completing:
 - [ ] Failure/exception case test written
 - [ ] Edge case test written (empty, null, max value)
 - [ ] Mock verification added (verify)
+- [ ] Shared mocks cleared and restubbed in `beforeTest` when using `DescribeSpec`
 - [ ] Fixture created and reused
 - [ ] Tests run successfully (`./gradlew test --tests "{TestClass}"`)
 
@@ -142,12 +136,7 @@ Before completing:
 
 ### Test Compilation Errors
 
-**Missing imports**: Add these dependencies to build.gradle:
-```groovy
-testImplementation 'org.springframework.boot:spring-boot-starter-test'
-testImplementation 'io.kotest:kotest-runner-junit5:5.x.x'  // Kotlin only
-testImplementation 'io.mockk:mockk:1.x.x'                  // Kotlin only
-```
+**Missing imports**: Check the existing Gradle test dependencies before adding anything. Prefer existing Kotest, MockK, springmockk, and Testcontainers versions already configured in the project.
 
 ### MockK "no answer found" errors
 
@@ -169,5 +158,4 @@ userRepository.findById(1L)  // Will include deleted entities
 
 ## References
 
-- [Java Examples (JUnit 5 + Mockito)](references/java-examples.md)
 - [Kotlin Examples (Kotest + MockK)](references/kotlin-examples.md)

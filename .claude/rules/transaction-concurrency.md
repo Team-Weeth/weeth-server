@@ -1,138 +1,18 @@
 # Transaction & Concurrency Rules
 
-## Transaction Annotations
-
-### Read Operations
-```kotlin
-@Transactional(readOnly = true)
-fun getFeedDetail(feedId: Long): FeedDetailResponse {
-    // Query operations only
-}
-```
-
-### Write Operations
-```kotlin
-@Transactional
-fun uploadFeed(userId: Long, request: FeedUploadRequest) {
-    // Create/Update/Delete operations
-}
-```
+Use the `concurrency-safety` skill when changing transaction boundaries, lock behavior, concurrent counter updates, same-transaction cross-domain writes, or external I/O around transactions.
 
 ## Transaction Placement
 
-- Place `@Transactional` on **UseCase** methods
-- Domain Services should NOT have `@Transactional`
-- Let UseCase manage transaction boundaries
+- `@Transactional` goes on **UseCase** methods only — Command: `@Transactional`, Query: `@Transactional(readOnly = true)`
+- Domain Services must NOT have `@Transactional`; UseCase owns transaction boundaries
+- Keep transactions short — no external I/O (S3, HTTP) inside transactions
 
-```kotlin
-@Service
-class CreateFeedUseCase(
-    private val feedRepository: FeedRepository,
-    private val mediaRepository: MediaRepository,
-    private val feedMapper: FeedMapper
-) {
-    @Transactional
-    fun execute(userId: Long, request: FeedUploadRequest) {
-        val feed = feedMapper.toEntity(user, request.description)
-        feedRepository.save(feed)
-        val mediaList = request.media.map { Media.create(feed, it) }
-        mediaRepository.saveAll(mediaList)
-    }
-}
-```
-
-## Pessimistic Locking
-
-For resources that need concurrent access control:
-
-```kotlin
-interface FeedRepository : JpaRepository<Feed, Long> {
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
-    @Query("SELECT f FROM Feed f WHERE f.id = :id")
-    fun findByIdWithLock(@Param("id") id: Long): Feed?
-}
-```
-
-## When to Use Locking
+## Locking Policy
 
 | Scenario | Lock Type |
 |----------|-----------|
-| Counter updates (reaction count) | PESSIMISTIC_WRITE |
-| Concurrent modifications | PESSIMISTIC_WRITE |
-| Read-heavy, write-rare | OPTIMISTIC (version field) |
+| Counter updates, concurrent modifications | PESSIMISTIC_WRITE |
+| Read-heavy, write-rare | OPTIMISTIC (`@Version` field) |
 
-## Lock Timeout Handling
-
-```kotlin
-@Service
-class ReactionUsecase(
-    private val feedRepository: FeedRepository
-) {
-    @Transactional
-    fun react(userId: Long, feedId: Long) {
-        try {
-            val feed = feedRepository.findByIdWithLock(feedId)
-                ?: throw FeedNotFoundException()
-            // process reaction
-        } catch (e: PessimisticLockingFailureException) {
-            throw ResourceLockedException()
-        }
-    }
-}
-```
-
-## Optimistic Locking
-
-Add version field to entity:
-
-```kotlin
-@Entity
-class Feed(
-    @Version
-    val version: Long = 0
-) : BaseEntity()
-```
-
-## Transaction Propagation
-
-Default propagation is `REQUIRED`. Use others when needed:
-
-```kotlin
-// New transaction (for audit logs, etc.)
-@Transactional(propagation = Propagation.REQUIRES_NEW)
-fun logAction(action: String) { }
-
-// No transaction
-@Transactional(propagation = Propagation.NOT_SUPPORTED)
-fun nonTransactionalOperation() { }
-```
-
-## Transaction Isolation
-
-Default is database default. Adjust for specific needs:
-
-```kotlin
-@Transactional(isolation = Isolation.SERIALIZABLE)
-fun criticalOperation() { }
-```
-
-## Async Operations
-
-For async operations, transaction context is NOT propagated:
-
-```kotlin
-@Async
-@Transactional
-fun asyncOperation() {
-    // New transaction in async thread
-}
-```
-
-## Best Practices
-
-1. **Keep transactions short** - Don't do I/O operations inside transactions
-2. **Avoid nested transactions** - Can cause unexpected behavior
-3. **Lock ordering** - Always acquire locks in same order to prevent deadlocks
-4. **Timeout configuration** - Always set lock timeouts
-5. **Handle lock exceptions** - Convert to user-friendly errors
+Rules: pessimistic lock queries live in the Repository, always set lock timeouts, acquire locks in a consistent order, and surface lock failures as user-friendly domain errors.
