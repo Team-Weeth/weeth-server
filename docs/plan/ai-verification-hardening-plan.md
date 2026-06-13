@@ -243,8 +243,16 @@ baseline 백로그(테스트 파일의 BASELINE 상수와 동일, 제거만 허�
 |------|------|----------|
 | domain → application.exception import | Repository 5, Policy 5, VO 2, enum 1 (13개 파일) | 도메인이 던지는 예외를 domain 계층으로 이동 |
 | application → infrastructure | `SocialLoginUseCase` → `SocialAuthPortRegistry` | Registry의 Port 추출 또는 위치 이동 |
+| infrastructure → application | `AttendanceScheduler`, `QrExpiredEventListener`, `S3FileUploadUrlAdapter`, `CareerNetAdapter`, `KakaoSocialAuthAdapter` | 어댑터·스케줄러·리스너가 UseCase/DTO/예외 직접 참조 — Port/Reader 경유로 정리 |
 | 소문자 `Usecase` 접미사 | `ManageClubMemberUsecase`, `GenerateFileUrlUsecase` | 리네임 |
 | port 패키지 내 클래스 | `FileUploadUrl` (Port 반환 VO) | `domain/vo`로 이동 또는 규칙 예외 확정 |
+
+**코드 리뷰 반영 (2026-06-13)**: ① `infrastructure → application` 의존 검사 누락
+보완(위 baseline 추가) ② 평가 게이트 조건을 "파일 존재"에서 "수용 기준 항목이 채워진
+active 태스크 파일"로 강화하고, `current-task.md`는 gitignore + `template.md`만 추적
+(비활성 sentinel이 게이트를 항상 켜는 문제 차단) ③ 평가자 allowlist에서 `git diff
+--output`/`-o` 등 파일 쓰기 옵션 차단(읽기 전용 계약 누수 봉합) ④ `AGENTS.md`
+Rule Files에 `verification.md` 추가(Codex 진입점 누락 보완).
 
 **도입 후 평가자 기준 2 다이어트** (피드백 반영): Konsist가 들어오면 평가자가 돌리는
 `gradlew test`에 아키텍처 검사가 이미 포함된다. 그 시점부터 평가자가 같은 8개 규칙을

@@ -52,6 +52,16 @@ class ArchitectureTest :
                 }
         }
 
+        "infrastructure는 application에 의존하지 않는다 (baseline 제외)" {
+            productionScope
+                .files
+                .filter { INFRASTRUCTURE_LAYER_PATH.containsMatchIn(it.path) }
+                .filter { it.name !in INFRASTRUCTURE_TO_APPLICATION_BASELINE }
+                .assertFalse { file ->
+                    file.imports.any { it.name.matches(APPLICATION_PACKAGE_IMPORT) }
+                }
+        }
+
         "@Transactional은 usecase 패키지에만 붙는다" {
             productionScope
                 .classes()
@@ -116,6 +126,7 @@ class ArchitectureTest :
     companion object {
         private val DOMAIN_LAYER_PATH = Regex("com/weeth/domain/[^/]+/domain/")
         private val APPLICATION_LAYER_PATH = Regex("com/weeth/domain/[^/]+/application/")
+        private val INFRASTRUCTURE_LAYER_PATH = Regex("com/weeth/domain/[^/]+/infrastructure/")
 
         private val APPLICATION_PACKAGE_IMPORT = Regex("""com\.weeth\.domain\.[a-z]+\.application\..*""")
         private val INFRASTRUCTURE_PACKAGE_IMPORT = Regex("""com\.weeth\.domain\.[a-z]+\.infrastructure\..*""")
@@ -143,6 +154,16 @@ class ArchitectureTest :
         private val APPLICATION_TO_INFRASTRUCTURE_BASELINE =
             setOf(
                 "SocialLoginUseCase",
+            )
+
+        // 어댑터·스케줄러·리스너가 application(UseCase/DTO/예외)을 직접 참조하는 부채
+        private val INFRASTRUCTURE_TO_APPLICATION_BASELINE =
+            setOf(
+                "AttendanceScheduler",
+                "QrExpiredEventListener",
+                "S3FileUploadUrlAdapter",
+                "CareerNetAdapter",
+                "KakaoSocialAuthAdapter",
             )
 
         // 소문자 Usecase 접미사 — 리네임 대상
