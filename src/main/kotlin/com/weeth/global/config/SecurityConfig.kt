@@ -1,9 +1,9 @@
 package com.weeth.global.config
 
-import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.auth.authentication.CustomAccessDeniedHandler
 import com.weeth.global.auth.authentication.CustomAuthenticationEntryPoint
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
+import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.jwt.filter.JwtAuthenticationProcessingFilter
 import org.springframework.context.annotation.Bean
@@ -109,6 +109,8 @@ class SecurityConfig(
     }
 
     @Bean
-    fun jwtAuthenticationProcessingFilter(userReader: UserReader): JwtAuthenticationProcessingFilter =
-        JwtAuthenticationProcessingFilter(jwtTokenProvider, jwtTokenExtractor, userReader)
+    fun jwtAuthenticationProcessingFilter(
+        accessTokenBlacklistStore: AccessTokenBlacklistStorePort,
+    ): JwtAuthenticationProcessingFilter =
+        JwtAuthenticationProcessingFilter(jwtTokenProvider, jwtTokenExtractor, accessTokenBlacklistStore)
 }

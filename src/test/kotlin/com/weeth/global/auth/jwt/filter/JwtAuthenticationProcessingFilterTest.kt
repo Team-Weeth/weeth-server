@@ -1,9 +1,8 @@
 package com.weeth.global.auth.jwt.filter
 
-import com.weeth.domain.user.domain.repository.UserReader
-import com.weeth.domain.user.fixture.UserTestFixture
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.enums.TokenType
+import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.model.AuthenticatedUser
 import io.kotest.core.spec.style.DescribeSpec
@@ -18,18 +17,17 @@ import org.springframework.mock.web.MockFilterChain
 import org.springframework.mock.web.MockHttpServletRequest
 import org.springframework.mock.web.MockHttpServletResponse
 import org.springframework.security.core.context.SecurityContextHolder
-import java.time.LocalDateTime
 
 class JwtAuthenticationProcessingFilterTest :
     DescribeSpec({
         val jwtProvider = mockk<JwtTokenProvider>()
         val jwtService = mockk<JwtTokenExtractor>()
-        val userReader = mockk<UserReader>()
-        val filter = JwtAuthenticationProcessingFilter(jwtProvider, jwtService, userReader)
+        val accessTokenBlacklistStore = mockk<AccessTokenBlacklistStorePort>()
+        val filter = JwtAuthenticationProcessingFilter(jwtProvider, jwtService, accessTokenBlacklistStore)
 
         beforeTest {
             SecurityContextHolder.clearContext()
-            clearMocks(jwtProvider, jwtService, userReader)
+            clearMocks(jwtProvider, jwtService, accessTokenBlacklistStore)
         }
 
         afterTest {
@@ -46,7 +44,7 @@ class JwtAuthenticationProcessingFilterTest :
                 every { jwtProvider.validate("access-token") } just runs
                 every { jwtService.extractClaims("access-token") } returns
                     JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", TokenType.ACCESS)
-                every { userReader.getById(1L) } returns UserTestFixture.createActiveUser1(1L)
+                every { accessTokenBlacklistStore.isBlacklisted(1L) } returns false
 
                 filter.doFilter(request, response, chain)
 
@@ -68,7 +66,7 @@ class JwtAuthenticationProcessingFilterTest :
                 every { jwtProvider.validate("temp-token") } just runs
                 every { jwtService.extractClaims("temp-token") } returns
                     JwtTokenExtractor.TokenClaims(2L, "new@weeth.com", TokenType.TEMPORARY)
-                every { userReader.getById(2L) } returns UserTestFixture.createWaitingUser1(2L)
+                every { accessTokenBlacklistStore.isBlacklisted(2L) } returns false
 
                 filter.doFilter(request, response, chain)
 
@@ -105,20 +103,16 @@ class JwtAuthenticationProcessingFilterTest :
                 SecurityContextHolder.getContext().authentication shouldBe null
             }
 
-            it("LEFT 사용자의 토큰이면 인증을 저장하지 않는다") {
+            it("blacklist에 등록된 사용자의 토큰이면 인증을 저장하지 않는다") {
                 val request = MockHttpServletRequest().apply { requestURI = "/api/v4/users/me" }
                 val response = MockHttpServletResponse()
                 val chain = MockFilterChain()
-                val user =
-                    UserTestFixture
-                        .createActiveUser1(1L)
-                        .apply { leave(LocalDateTime.of(2026, 6, 12, 12, 0)) }
 
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
                 every { jwtService.extractClaims("access-token") } returns
                     JwtTokenExtractor.TokenClaims(1L, "left@weeth.com", TokenType.ACCESS)
-                every { userReader.getById(1L) } returns user
+                every { accessTokenBlacklistStore.isBlacklisted(1L) } returns true
 
                 filter.doFilter(request, response, chain)
 

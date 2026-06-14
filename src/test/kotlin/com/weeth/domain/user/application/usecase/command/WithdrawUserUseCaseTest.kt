@@ -10,6 +10,7 @@ import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
+import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -30,6 +31,7 @@ class WithdrawUserUseCaseTest :
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
         val jwtManageUseCase = mockk<JwtManageUseCase>()
+        val accessTokenBlacklistStore = mockk<AccessTokenBlacklistStorePort>()
         val clock = Clock.fixed(Instant.parse("2026-06-12T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val useCase =
             LeaveUserUseCase(
@@ -37,11 +39,18 @@ class WithdrawUserUseCaseTest :
                 clubMemberRepository = clubMemberRepository,
                 clubActivityDeletionPolicy = clubActivityDeletionPolicy,
                 jwtManageUseCase = jwtManageUseCase,
+                accessTokenBlacklistStore = accessTokenBlacklistStore,
                 clock = clock,
             )
 
         beforeTest {
-            clearMocks(userReader, clubMemberRepository, clubActivityDeletionPolicy, jwtManageUseCase)
+            clearMocks(
+                userReader,
+                clubMemberRepository,
+                clubActivityDeletionPolicy,
+                jwtManageUseCase,
+                accessTokenBlacklistStore,
+            )
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.clearSynchronization()
             }
@@ -60,6 +69,7 @@ class WithdrawUserUseCaseTest :
                 every { userReader.getByIdWithLock(1L) } returns user
                 every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns emptyList()
                 justRun { jwtManageUseCase.deleteRefreshToken(1L) }
+                justRun { accessTokenBlacklistStore.blacklist(1L) }
                 TransactionSynchronizationManager.initSynchronization()
 
                 useCase.execute(1L)
@@ -68,10 +78,12 @@ class WithdrawUserUseCaseTest :
                 user.leftAt shouldBe now
                 user.hardDeleteAfter shouldBe now.plusDays(30)
                 verify(exactly = 0) { jwtManageUseCase.deleteRefreshToken(any()) }
+                verify(exactly = 0) { accessTokenBlacklistStore.blacklist(any()) }
 
                 TransactionSynchronizationManager.getSynchronizations().forEach { it.afterCommit() }
 
                 verify(exactly = 1) { jwtManageUseCase.deleteRefreshToken(1L) }
+                verify(exactly = 1) { accessTokenBlacklistStore.blacklist(1L) }
             }
 
             it("커밋 후 refresh token 삭제가 일시 실패하면 재시도한다") {
@@ -83,6 +95,7 @@ class WithdrawUserUseCaseTest :
                     attempts++
                     if (attempts < 3) throw RuntimeException("temporary redis failure")
                 }
+                justRun { accessTokenBlacklistStore.blacklist(1L) }
                 TransactionSynchronizationManager.initSynchronization()
 
                 useCase.execute(1L)
@@ -91,6 +104,26 @@ class WithdrawUserUseCaseTest :
 
                 attempts shouldBe 3
                 verify(exactly = 3) { jwtManageUseCase.deleteRefreshToken(1L) }
+            }
+
+            it("커밋 후 access token blacklist 등록이 일시 실패하면 재시도한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                var attempts = 0
+                every { userReader.getByIdWithLock(1L) } returns user
+                every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns emptyList()
+                justRun { jwtManageUseCase.deleteRefreshToken(1L) }
+                every { accessTokenBlacklistStore.blacklist(1L) } answers {
+                    attempts++
+                    if (attempts < 3) throw RuntimeException("temporary redis failure")
+                }
+                TransactionSynchronizationManager.initSynchronization()
+
+                useCase.execute(1L)
+
+                TransactionSynchronizationManager.getSynchronizations().forEach { it.afterCommit() }
+
+                attempts shouldBe 3
+                verify(exactly = 3) { accessTokenBlacklistStore.blacklist(1L) }
             }
 
             it("USER와 ADMIN ACTIVE 멤버십을 모두 탈퇴 처리한다") {
@@ -112,6 +145,7 @@ class WithdrawUserUseCaseTest :
                 every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns listOf(userMember, adminMember)
                 justRun { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
                 justRun { jwtManageUseCase.deleteRefreshToken(1L) }
+                justRun { accessTokenBlacklistStore.blacklist(1L) }
                 TransactionSynchronizationManager.initSynchronization()
 
                 useCase.execute(1L)

@@ -1,10 +1,10 @@
 package com.weeth.global.auth.jwt.filter
 
 import com.weeth.domain.user.application.exception.UserInActiveException
-import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.auth.jwt.application.exception.TokenNotFoundException
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.enums.TokenType
+import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.model.AuthenticatedUser
 import jakarta.servlet.FilterChain
@@ -20,7 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter
 class JwtAuthenticationProcessingFilter(
     private val jwtTokenProvider: JwtTokenProvider,
     private val jwtTokenExtractor: JwtTokenExtractor,
-    private val userReader: UserReader,
+    private val accessTokenBlacklistStore: AccessTokenBlacklistStorePort,
 ) : OncePerRequestFilter() {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -44,7 +44,7 @@ class JwtAuthenticationProcessingFilter(
 
     private fun saveAuthentication(accessToken: String) {
         val claims = jwtTokenExtractor.extractClaims(accessToken) ?: throw TokenNotFoundException()
-        validateUserStatus(claims.id)
+        validateAccessTokenBlacklist(claims.id)
         val principal = AuthenticatedUser(claims.id, claims.email)
 
         val role =
@@ -64,8 +64,7 @@ class JwtAuthenticationProcessingFilter(
         MDC.put("userId", claims.id.toString())
     }
 
-    private fun validateUserStatus(userId: Long) {
-        val user = userReader.getById(userId)
-        if (user.isBannedOrLeft()) throw UserInActiveException()
+    private fun validateAccessTokenBlacklist(userId: Long) {
+        if (accessTokenBlacklistStore.isBlacklisted(userId)) throw UserInActiveException()
     }
 }
