@@ -25,7 +25,7 @@ import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-class WithdrawUserUseCaseTest :
+class LeaveUserUseCaseTest :
     DescribeSpec({
         val userReader = mockk<UserReader>()
         val clubMemberRepository = mockk<ClubMemberRepository>()
