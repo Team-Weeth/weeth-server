@@ -14,6 +14,7 @@ import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.justRun
@@ -32,6 +33,7 @@ class LeaveUserUseCaseTest :
         val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
         val jwtManageUseCase = mockk<JwtManageUseCase>()
         val accessTokenBlacklistStore = mockk<AccessTokenBlacklistStorePort>()
+        val meterRegistry = SimpleMeterRegistry()
         val clock = Clock.fixed(Instant.parse("2026-06-12T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val useCase =
             LeaveUserUseCase(
@@ -40,6 +42,7 @@ class LeaveUserUseCaseTest :
                 clubActivityDeletionPolicy = clubActivityDeletionPolicy,
                 jwtManageUseCase = jwtManageUseCase,
                 accessTokenBlacklistStore = accessTokenBlacklistStore,
+                meterRegistry = meterRegistry,
                 clock = clock,
             )
 
@@ -54,6 +57,7 @@ class LeaveUserUseCaseTest :
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.clearSynchronization()
             }
+            meterRegistry.clear()
         }
 
         afterTest {
@@ -124,6 +128,32 @@ class LeaveUserUseCaseTest :
 
                 attempts shouldBe 3
                 verify(exactly = 3) { accessTokenBlacklistStore.blacklist(1L) }
+            }
+
+            it("커밋 후 토큰 폐기가 모두 실패하면 실패 metric을 기록한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                every { userReader.getByIdWithLock(1L) } returns user
+                every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns emptyList()
+                every { jwtManageUseCase.deleteRefreshToken(1L) } throws RuntimeException("redis down")
+                every { accessTokenBlacklistStore.blacklist(1L) } throws RuntimeException("redis down")
+                TransactionSynchronizationManager.initSynchronization()
+
+                useCase.execute(1L)
+
+                TransactionSynchronizationManager.getSynchronizations().forEach { it.afterCommit() }
+
+                meterRegistry
+                    .counter(
+                        "user.leave.token_revoke.failure",
+                        "action",
+                        "refresh_token_delete",
+                    ).count() shouldBe 1.0
+                meterRegistry
+                    .counter(
+                        "user.leave.token_revoke.failure",
+                        "action",
+                        "access_token_blacklist",
+                    ).count() shouldBe 1.0
             }
 
             it("USER와 ADMIN ACTIVE 멤버십을 모두 탈퇴 처리한다") {

@@ -7,6 +7,7 @@ import com.weeth.domain.user.application.exception.UserHasLeadClubException
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
 import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
+import io.micrometer.core.instrument.MeterRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,6 +23,7 @@ class LeaveUserUseCase(
     private val clubActivityDeletionPolicy: ClubActivityDeletionPolicy,
     private val jwtManageUseCase: JwtManageUseCase,
     private val accessTokenBlacklistStore: AccessTokenBlacklistStorePort,
+    private val meterRegistry: MeterRegistry,
     private val clock: Clock,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -49,10 +51,10 @@ class LeaveUserUseCase(
         TransactionSynchronizationManager.registerSynchronization(
             object : TransactionSynchronization {
                 override fun afterCommit() {
-                    retryTokenRevoke("refresh token 삭제", userId) {
+                    retryTokenRevoke("refresh token 삭제", "refresh_token_delete", userId) {
                         jwtManageUseCase.deleteRefreshToken(userId)
                     }
-                    retryTokenRevoke("access token blacklist 등록", userId) {
+                    retryTokenRevoke("access token blacklist 등록", "access_token_blacklist", userId) {
                         accessTokenBlacklistStore.blacklist(userId)
                     }
                 }
@@ -62,6 +64,7 @@ class LeaveUserUseCase(
 
     private fun retryTokenRevoke(
         actionName: String,
+        metricAction: String,
         userId: Long,
         action: () -> Unit,
     ) {
@@ -69,20 +72,34 @@ class LeaveUserUseCase(
             val result = runCatching(action)
             if (result.isSuccess) break
 
-            result.onFailure { e ->
-                log.warn(
-                    "탈퇴 후 {} 실패. userId={}, attempt={}/{}",
-                    actionName,
-                    userId,
-                    attempt,
-                    TOKEN_REVOKE_ATTEMPTS,
-                    e,
-                )
+            result.onFailure { exception ->
+                if (attempt == TOKEN_REVOKE_ATTEMPTS) {
+                    log.error(
+                        "탈퇴 후 {} 최종 실패. userId={}, attempts={}",
+                        actionName,
+                        userId,
+                        TOKEN_REVOKE_ATTEMPTS,
+                        exception,
+                    )
+                    meterRegistry
+                        .counter(TOKEN_REVOKE_FAILURE_METRIC, "action", metricAction)
+                        .increment()
+                } else {
+                    log.warn(
+                        "탈퇴 후 {} 실패. userId={}, attempt={}/{}",
+                        actionName,
+                        userId,
+                        attempt,
+                        TOKEN_REVOKE_ATTEMPTS,
+                        exception,
+                    )
+                }
             }
         }
     }
 
     companion object {
         private const val TOKEN_REVOKE_ATTEMPTS = 3
+        private const val TOKEN_REVOKE_FAILURE_METRIC = "user.leave.token_revoke.failure"
     }
 }
