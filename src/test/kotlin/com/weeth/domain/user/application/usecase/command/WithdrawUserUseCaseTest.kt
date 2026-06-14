@@ -32,7 +32,7 @@ class WithdrawUserUseCaseTest :
         val jwtManageUseCase = mockk<JwtManageUseCase>()
         val clock = Clock.fixed(Instant.parse("2026-06-12T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val useCase =
-            WithdrawUserUseCase(
+            LeaveUserUseCase(
                 userReader = userReader,
                 clubMemberRepository = clubMemberRepository,
                 clubActivityDeletionPolicy = clubActivityDeletionPolicy,

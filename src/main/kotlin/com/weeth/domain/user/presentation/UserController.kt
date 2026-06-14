@@ -11,7 +11,7 @@ import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.CreateInquiryUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.command.WithdrawUserUseCase
+import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.dto.JwtDto
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -43,7 +43,7 @@ class UserController(
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val agreeTermsUseCase: AgreeTermsUseCase,
     private val createInquiryUseCase: CreateInquiryUseCase,
-    private val withdrawUserUseCase: WithdrawUserUseCase,
+    private val leaveUserUseCase: LeaveUserUseCase,
     private val tokenCookieProvider: TokenCookieProvider,
 ) {
     @PostMapping("/social/kakao")
@@ -115,7 +115,7 @@ class UserController(
     fun leave(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): ResponseEntity<CommonResponse<Void>> {
-        withdrawUserUseCase.execute(userId)
+        leaveUserUseCase.execute(userId)
         return buildExpiredTokenResponse(CommonResponse.success(UserResponseCode.USER_LEFT_SUCCESS))
     }
 

@@ -15,7 +15,7 @@ import java.time.Clock
 import java.time.LocalDateTime
 
 @Service
-class WithdrawUserUseCase(
+class LeaveUserUseCase(
     private val userReader: UserReader,
     private val clubMemberRepository: ClubMemberRepository,
     private val clubActivityDeletionPolicy: ClubActivityDeletionPolicy,

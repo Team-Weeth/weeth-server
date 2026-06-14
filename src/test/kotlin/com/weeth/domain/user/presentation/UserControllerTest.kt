@@ -5,7 +5,7 @@ import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.CreateInquiryUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.command.WithdrawUserUseCase
+import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -25,7 +25,7 @@ class UserControllerTest :
         val updateUserProfileUseCase = mockk<UpdateUserProfileUseCase>(relaxed = true)
         val agreeTermsUseCase = mockk<AgreeTermsUseCase>(relaxed = true)
         val createInquiryUseCase = mockk<CreateInquiryUseCase>(relaxed = true)
-        val withdrawUserUseCase = mockk<WithdrawUserUseCase>()
+        val leaveUserUseCase = mockk<LeaveUserUseCase>()
         val tokenCookieProvider = mockk<TokenCookieProvider>()
         val controller =
             UserController(
@@ -34,7 +34,7 @@ class UserControllerTest :
                 updateUserProfileUseCase = updateUserProfileUseCase,
                 agreeTermsUseCase = agreeTermsUseCase,
                 createInquiryUseCase = createInquiryUseCase,
-                withdrawUserUseCase = withdrawUserUseCase,
+                leaveUserUseCase = leaveUserUseCase,
                 tokenCookieProvider = tokenCookieProvider,
             )
 
@@ -45,7 +45,7 @@ class UserControllerTest :
                 updateUserProfileUseCase,
                 agreeTermsUseCase,
                 createInquiryUseCase,
-                withdrawUserUseCase,
+                leaveUserUseCase,
                 tokenCookieProvider,
             )
         }
@@ -67,7 +67,7 @@ class UserControllerTest :
 
         describe("leave") {
             it("위드 탈퇴를 수행하고 access/refresh token 쿠키를 만료한다") {
-                justRun { withdrawUserUseCase.execute(1L) }
+                justRun { leaveUserUseCase.execute(1L) }
                 everyExpireCookies()
 
                 val response = controller.leave(1L)
@@ -81,7 +81,7 @@ class UserControllerTest :
                 cookies[0] shouldContain "Max-Age=0"
                 cookies[1] shouldContain "refresh_token="
                 cookies[1] shouldContain "Max-Age=0"
-                verify(exactly = 1) { withdrawUserUseCase.execute(1L) }
+                verify(exactly = 1) { leaveUserUseCase.execute(1L) }
             }
         }
     })
