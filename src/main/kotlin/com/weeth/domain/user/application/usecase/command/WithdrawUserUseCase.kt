@@ -47,13 +47,28 @@ class WithdrawUserUseCase(
         TransactionSynchronizationManager.registerSynchronization(
             object : TransactionSynchronization {
                 override fun afterCommit() {
-                    runCatching {
-                        jwtManageUseCase.deleteRefreshToken(userId)
-                    }.onFailure { e ->
-                        log.warn("탈퇴 후 refresh token 삭제 실패. userId={}", userId, e)
+                    repeat(REFRESH_TOKEN_DELETE_ATTEMPTS) { index ->
+                        runCatching {
+                            jwtManageUseCase.deleteRefreshToken(userId)
+                        }.onSuccess {
+                            return
+                        }.onFailure { e ->
+                            val attempt = index + 1
+                            log.warn(
+                                "탈퇴 후 refresh token 삭제 실패. userId={}, attempt={}/{}",
+                                userId,
+                                attempt,
+                                REFRESH_TOKEN_DELETE_ATTEMPTS,
+                                e,
+                            )
+                        }
                     }
                 }
             },
         )
+    }
+
+    companion object {
+        private const val REFRESH_TOKEN_DELETE_ATTEMPTS = 3
     }
 }
