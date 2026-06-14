@@ -34,7 +34,6 @@ interface ClubMemberRepository :
         """
         SELECT cm
         FROM ClubMember cm
-        JOIN FETCH cm.club
         JOIN FETCH cm.user
         WHERE cm.user.id = :userId
         AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
