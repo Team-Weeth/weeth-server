@@ -3,9 +3,9 @@ package com.weeth.domain.user.presentation
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.CreateInquiryUseCase
+import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
