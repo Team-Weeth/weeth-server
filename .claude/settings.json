@@ -50,7 +50,18 @@
       "Write(src/main/**)",
       "Write(src/test/**)",
       "Write(docs/**)",
-      "Write(.claude/**)"
+      "Write(.claude/**)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git blame:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git stash list:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git describe:*)",
+      "Bash(git shortlog:*)"
     ],
     "ask": [
       "Bash(git *)",
