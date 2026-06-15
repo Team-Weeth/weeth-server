@@ -1,5 +1,6 @@
 package com.weeth.domain.account.domain.entity
 
+import com.weeth.domain.account.domain.enums.AccountRegistrationStep
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionDirection
 import com.weeth.domain.account.domain.vo.BankAccount
@@ -34,19 +35,22 @@ class Account(
     @JoinColumn(name = "club_id", nullable = false)
     val club: Club,
     id: Long = 0,
-    description: String,
+    description: String? = null,
     totalAmount: Int,
     currentAmount: Int,
     cardinal: Int,
     name: String? = null,
     duesAmount: Int = 0,
+    carryOverEnabled: Boolean = false,
     carryOverAmount: Int = 0,
     carryOverMemo: String? = null,
     currentBalance: Int = 0,
     bankAccount: BankAccount? = null,
     bankAccountVisible: Boolean = false, // 계좌 노출 여부
     memberVisible: Boolean = false, // 회비 회원 공개 여부
+    lastModifiedBy: Long? = null, // 마지막 수정자. 추후 수정 로그 기능 확장에 따라 수정될 가능성 존재
     status: AccountStatus = AccountStatus.ACTIVE,
+    registrationStep: AccountRegistrationStep = AccountRegistrationStep.BASIC,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -54,8 +58,8 @@ class Account(
     var id: Long = id
         private set
 
-    @Column(nullable = false)
-    var description: String = description
+    @Column(nullable = true)
+    var description: String? = description
         private set
 
     @Column(nullable = false)
@@ -78,6 +82,10 @@ class Account(
 
     @Column(nullable = false)
     var duesAmount: Int = duesAmount
+        private set
+
+    @Column(nullable = false)
+    var carryOverEnabled: Boolean = carryOverEnabled
         private set
 
     @Column(nullable = false)
@@ -106,9 +114,17 @@ class Account(
     var memberVisible: Boolean = memberVisible
         private set
 
+    var lastModifiedBy: Long? = lastModifiedBy
+        private set
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: AccountStatus = status
+        private set
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    var registrationStep: AccountRegistrationStep = registrationStep
         private set
 
     fun spend(amount: Money) {
@@ -136,16 +152,16 @@ class Account(
     fun updateBasicInfo(
         name: String,
         duesAmount: Money,
-        description: String,
+        description: String? = null,
     ) {
         val normalizedName = name.trim()
-        val normalizedDescription = description.trim()
+        val normalizedDescription = description?.trim()
         require(normalizedName.isNotBlank()) { "회비 이름은 비어 있을 수 없습니다." }
         require(duesAmount.value > 0) { "1인 회비 금액은 0보다 커야 합니다: ${duesAmount.value}" }
-        require(normalizedDescription.isNotBlank()) { "회비 설명은 비어 있을 수 없습니다." }
         this.name = normalizedName
         this.duesAmount = duesAmount.value
         this.description = normalizedDescription
+        advanceRegistrationStep(AccountRegistrationStep.PAYMENT_TARGETS)
     }
 
     fun updateCarryOver(
@@ -155,8 +171,10 @@ class Account(
     ) {
         val carryOver = if (enabled) requireNotNull(amount) { "이월 금액은 필수입니다." } else Money.ZERO
         require(carryOver.value >= 0) { "이월 금액은 0 이상이어야 합니다: ${carryOver.value}" }
+        carryOverEnabled = enabled
         carryOverAmount = carryOver.value
         carryOverMemo = memo?.trim()?.takeIf { it.isNotBlank() }
+        advanceRegistrationStep(AccountRegistrationStep.BANK_ACCOUNT)
     }
 
     fun updateBankAccount(
@@ -168,6 +186,14 @@ class Account(
         }
         this.bankAccount = bankAccount
         bankAccountVisible = visible
+        advanceRegistrationStep(AccountRegistrationStep.REVIEW)
+    }
+
+    fun advanceRegistrationStep(next: AccountRegistrationStep) {
+        if (status != AccountStatus.DRAFT) return
+        if (next.isAfter(registrationStep)) {
+            registrationStep = next
+        }
     }
 
     fun showToMembers() {
@@ -177,6 +203,11 @@ class Account(
 
     fun hideFromMembers() {
         memberVisible = false
+    }
+
+    fun markModifiedBy(adminId: Long) {
+        require(adminId > 0) { "마지막 수정자 ID는 0보다 커야 합니다: $adminId" }
+        lastModifiedBy = adminId
     }
 
     fun activate() {

@@ -11,6 +11,7 @@ object AccountTestFixture {
         description: String = "2024년 2학기 회비",
         totalAmount: Int = 100_000,
         currentAmount: Int = 100_000,
+        currentBalance: Int = currentAmount,
         cardinal: Int = 40,
     ): Account =
         Account(
@@ -19,6 +20,7 @@ object AccountTestFixture {
             description = description,
             totalAmount = totalAmount,
             currentAmount = currentAmount,
+            currentBalance = currentBalance,
             cardinal = cardinal,
         )
 }

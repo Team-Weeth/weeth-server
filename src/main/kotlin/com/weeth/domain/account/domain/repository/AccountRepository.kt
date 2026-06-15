@@ -27,6 +27,18 @@ interface AccountRepository : JpaRepository<Account, Long> {
         status: AccountStatus,
     ): Account?
 
+    fun findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+        clubId: Long,
+        cardinal: Int,
+        status: AccountStatus,
+    ): Account?
+
+    fun findTopByClubIdAndCardinalLessThanAndStatusOrderByCardinalDesc(
+        clubId: Long,
+        cardinal: Int,
+        status: AccountStatus,
+    ): Account?
+
     fun existsByClubIdAndCardinalAndStatus(
         clubId: Long,
         cardinal: Int,

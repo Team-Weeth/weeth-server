@@ -62,7 +62,7 @@ Core rules:
 
 ## Rule Files
 
-Detailed project rules live in `.agents/rules/`. Read the relevant file before making changes in that area:
+Detailed project rules live in `.agents/rules/` (a symlink to `.claude/rules/` — the single source of truth; edit files there). Read the relevant file before making changes in that area:
 
 - API and response codes: `.agents/rules/api-design.md`
 - Package structure and layer rules: `.agents/rules/architecture.md`
@@ -72,6 +72,7 @@ Detailed project rules live in `.agents/rules/`. Read the relevant file before m
 - Mapper and DTO patterns: `.agents/rules/mapper-dto.md`
 - Test style and fixtures: `.agents/rules/testing.md`
 - Transactions and concurrency: `.agents/rules/transaction-concurrency.md`
+- Verification gate (task-file-first, no self-PASS): `.agents/rules/verification.md`
 
 ## Testing
 
@@ -93,5 +94,5 @@ For shared MockK mocks in `DescribeSpec`, clear mocks in `beforeTest` and restub
 
 ## Codex Skills
 
-Project-specific Codex skills are stored in `.agents/skills/`.
-Codex scans `.agents/skills` from the current working directory up to the repository root, so these skills are available without a separate install step when Codex starts in this repository.
+Project-specific skills live in `.claude/skills/` as the single source of truth.
+`.agents/skills` is a symlink to `.claude/skills` so Codex can discover the same skills without a separate install step.

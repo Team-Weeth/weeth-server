@@ -2,37 +2,27 @@
 
 ## Mapper Pattern
 
-Manual `@Component` Mapper pattern (no MapStruct).
+Manual `@Component` Mapper classes — **no MapStruct**. Mappers may inject other mappers.
 
 ```kotlin
 @Component
 class UserMapper {
-    fun toResponse(user: User) = UserResponse(
-        id = user.id,
-        name = user.name,
-        email = user.email,
-    )
-
-    fun toEntity(request: CreateUserRequest) = User(
-        name = request.name.trim(),
-        email = request.email.lowercase(),
-        status = UserStatus.ACTIVE
-    )
+    fun toResponse(user: User) = UserResponse(id = user.id, name = user.name)
+    fun toEntity(request: CreateUserRequest) = User(name = request.name.trim(), ...)
 }
 ```
 
-## Mapper Naming
-
-| Method Pattern | Purpose |
-|---------------|---------|
+| Method | Purpose |
+|--------|---------|
 | `toResponse` | Entity → Response DTO |
 | `toEntity` | Request DTO → Entity |
-| `toDto` | Entity → Generic DTO |
+| `toDto` | Entity → generic DTO |
 | `from{Source}` | Convert from specific source type |
 
-## Request DTO
+## DTO Rules
 
-Located in `application/dto/request/`:
+- Location: `application/dto/request/`, `application/dto/response/`
+- Request DTO: Jakarta validation + `@field:Schema(description, example)` on every field
 
 ```kotlin
 data class CreateUserRequest(
@@ -40,84 +30,8 @@ data class CreateUserRequest(
     @field:NotBlank
     @field:Size(max = 100)
     val name: String,
-
-    @field:Schema(description = "Email address", example = "john@example.com")
-    @field:NotBlank
-    @field:Email
-    val email: String,
 )
 ```
 
-### Validation Annotations
-
-| Annotation | Usage |
-|-----------|-------|
-| `@NotNull` | Field must not be null |
-| `@NotEmpty` | Collection must have elements |
-| `@NotBlank` | String must not be empty/whitespace |
-| `@Size(min, max)` | Length/size constraints |
-| `@Positive` | Number must be > 0 |
-| `@Valid` | Validate nested objects |
-
-## Response DTO
-
-Located in `application/dto/response/`:
-
-```kotlin
-data class UserResponse(
-    @Schema(description = "User ID", example = "1")
-    val id: Long,
-
-    @Schema(description = "User name", example = "John Doe")
-    val name: String,
-)
-```
-
-### Response DTO Rules
-
-- Use `@Schema` for OpenAPI documentation
-- Use non-nullable types for required fields
-- Use nullable types with default `null` for optional fields
-
-## List Response with Pagination (pattern example)
-
-Follow the pattern below when introducing a pagination response DTO.
-
-```kotlin
-data class UserListResponse(
-    @Schema(description = "User list")
-    val users: List<UserResponse>,
-
-    @Schema(description = "Pagination info")
-    val page: PageResponse
-)
-
-data class PageResponse(
-    val pageNumber: Int,
-    val pageSize: Int,
-    val totalElements: Long,
-    val totalPages: Int,
-    val hasNext: Boolean
-) {
-    companion object {
-        fun from(page: Page<*>) = PageResponse(
-            pageNumber = page.number,
-            pageSize = page.size,
-            totalElements = page.totalElements,
-            totalPages = page.totalPages,
-            hasNext = page.hasNext()
-        )
-    }
-}
-```
-
-## Mapper Dependencies
-
-Mappers can inject other mappers when needed:
-
-```kotlin
-@Component
-class PostMapper(
-    private val commentMapper: CommentMapper
-)
-```
+- Response DTO: `@Schema` on every field; non-nullable for required fields, nullable + default `null` for optional
+- Use the `api-contract-update` skill for paginated/list response templates.
