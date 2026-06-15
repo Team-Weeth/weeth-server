@@ -21,4 +21,9 @@ enum class AccountResponseCode(
     ACCOUNT_REGISTRATION_COMPLETE_SUCCESS(10112, HttpStatus.OK, "회비 등록이 완료되었습니다."),
     ACCOUNT_REGISTRATION_STATUS_FIND_SUCCESS(10117, HttpStatus.OK, "회비 등록 현황이 성공적으로 조회되었습니다."),
     ACCOUNT_CARRY_OVER_SOURCE_FIND_SUCCESS(10118, HttpStatus.OK, "이월 재원 정보가 성공적으로 조회되었습니다."),
+    ACCOUNT_TRANSACTION_SAVE_SUCCESS(10120, HttpStatus.OK, "거래 내역이 성공적으로 저장되었습니다."),
+    ACCOUNT_TRANSACTION_FIND_SUCCESS(10121, HttpStatus.OK, "거래 내역이 성공적으로 조회되었습니다."),
+    ACCOUNT_TRANSACTION_DETAIL_FIND_SUCCESS(10122, HttpStatus.OK, "거래 내역 상세가 성공적으로 조회되었습니다."),
+    ACCOUNT_TRANSACTION_UPDATE_SUCCESS(10123, HttpStatus.OK, "거래 내역이 성공적으로 수정되었습니다."),
+    ACCOUNT_TRANSACTION_DELETE_SUCCESS(10124, HttpStatus.OK, "거래 내역이 성공적으로 삭제되었습니다."),
 }
