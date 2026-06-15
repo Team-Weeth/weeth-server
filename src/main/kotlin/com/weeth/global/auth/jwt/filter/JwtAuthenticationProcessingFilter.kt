@@ -65,6 +65,14 @@ class JwtAuthenticationProcessingFilter(
     }
 
     private fun validateAccessTokenBlacklist(userId: Long) {
-        if (accessTokenBlacklistStore.isBlacklisted(userId)) throw UserInActiveException()
+        val isBlacklisted =
+            try {
+                accessTokenBlacklistStore.isBlacklisted(userId)
+            } catch (e: RuntimeException) {
+                log.error("Access token blacklist lookup failed. userId={}", userId, e)
+                throw e
+            }
+
+        if (isBlacklisted) throw UserInActiveException()
     }
 }
