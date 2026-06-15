@@ -8,6 +8,7 @@ import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import java.time.LocalDateTime
 
 class UserTest :
     StringSpec({
@@ -20,8 +21,29 @@ class UserTest :
             user.ban()
             user.status shouldBe Status.BANNED
 
-            user.leave()
+            user.leave(LocalDateTime.of(2026, 6, 12, 12, 0))
             user.status shouldBe Status.LEFT
+        }
+
+        "leave(now)는 탈퇴 상태와 삭제 예정일을 기록한다" {
+            val user = User.create(name = "test", email = "test@test.com", status = Status.ACTIVE)
+            val now = LocalDateTime.of(2026, 6, 12, 12, 0)
+
+            user.leave(now)
+
+            user.status shouldBe Status.LEFT
+            user.leftAt shouldBe now
+            user.hardDeleteAfter shouldBe now.plusDays(30)
+        }
+
+        "이미 LEFT 상태인 사용자가 leave(now)를 호출하면 예외가 발생한다" {
+            val user = User.create(name = "test", email = "test@test.com", status = Status.ACTIVE)
+            val now = LocalDateTime.of(2026, 6, 12, 12, 0)
+            user.leave(now)
+
+            shouldThrow<IllegalStateException> {
+                user.leave(now.plusDays(1))
+            }
         }
 
         "User.create 기본 status는 WAITING이다" {
@@ -128,7 +150,7 @@ class UserTest :
             user.isBannedOrLeft() shouldBe true
 
             user.accept()
-            user.leave()
+            user.leave(LocalDateTime.of(2026, 6, 12, 12, 0))
             user.isBannedOrLeft() shouldBe true
         }
 

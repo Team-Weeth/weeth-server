@@ -15,6 +15,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "users")
@@ -64,6 +65,14 @@ class User(
     var status: Status = status
         private set
 
+    @Column(name = "left_at", nullable = true)
+    var leftAt: LocalDateTime? = null
+        private set
+
+    @Column(name = "hard_delete_after", nullable = true)
+    var hardDeleteAfter: LocalDateTime? = null
+        private set
+
     @Column(nullable = false)
     var termsAgreed: Boolean = false
         private set
@@ -78,8 +87,11 @@ class User(
     val telValue: String?
         get() = tel?.value
 
-    fun leave() {
+    fun leave(now: LocalDateTime) {
+        check(status != Status.LEFT) { "이미 탈퇴한 사용자입니다." }
         status = Status.LEFT
+        leftAt = now
+        hardDeleteAfter = now.plusDays(RETENTION_DAYS)
     }
 
     fun isActive(): Boolean = status == Status.ACTIVE
@@ -146,6 +158,8 @@ class User(
     }
 
     companion object {
+        private const val RETENTION_DAYS = 30L
+
         fun create(
             name: String,
             email: String,

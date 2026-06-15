@@ -3,6 +3,7 @@ package com.weeth.global.config
 import com.weeth.global.auth.authentication.CustomAccessDeniedHandler
 import com.weeth.global.auth.authentication.CustomAuthenticationEntryPoint
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
+import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.jwt.filter.JwtAuthenticationProcessingFilter
 import org.springframework.context.annotation.Bean
@@ -30,7 +31,10 @@ class SecurityConfig(
     private val customAccessDeniedHandler: CustomAccessDeniedHandler,
 ) {
     @Bean
-    fun filterChain(http: HttpSecurity): SecurityFilterChain =
+    fun filterChain(
+        http: HttpSecurity,
+        jwtAuthenticationProcessingFilter: JwtAuthenticationProcessingFilter,
+    ): SecurityFilterChain =
         http
             .formLogin { it.disable() }
             .httpBasic { it.disable() }
@@ -75,7 +79,7 @@ class SecurityConfig(
                 exceptionHandling
                     .authenticationEntryPoint(customAuthenticationEntryPoint)
                     .accessDeniedHandler(customAccessDeniedHandler)
-            }.addFilterBefore(jwtAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter::class.java)
+            }.addFilterBefore(jwtAuthenticationProcessingFilter, UsernamePasswordAuthenticationFilter::class.java)
             .build()
 
     @Bean
@@ -105,6 +109,8 @@ class SecurityConfig(
     }
 
     @Bean
-    fun jwtAuthenticationProcessingFilter(): JwtAuthenticationProcessingFilter =
-        JwtAuthenticationProcessingFilter(jwtTokenProvider, jwtTokenExtractor)
+    fun jwtAuthenticationProcessingFilter(
+        accessTokenBlacklistStore: AccessTokenBlacklistStorePort,
+    ): JwtAuthenticationProcessingFilter =
+        JwtAuthenticationProcessingFilter(jwtTokenProvider, jwtTokenExtractor, accessTokenBlacklistStore)
 }

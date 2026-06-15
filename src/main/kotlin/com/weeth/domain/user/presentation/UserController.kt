@@ -9,6 +9,7 @@ import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.CreateInquiryUseCase
+import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
 import com.weeth.global.auth.annotation.CurrentUser
@@ -25,6 +26,7 @@ import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -41,6 +43,7 @@ class UserController(
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val agreeTermsUseCase: AgreeTermsUseCase,
     private val createInquiryUseCase: CreateInquiryUseCase,
+    private val leaveUserUseCase: LeaveUserUseCase,
     private val tokenCookieProvider: TokenCookieProvider,
 ) {
     @PostMapping("/social/kakao")
@@ -107,6 +110,15 @@ class UserController(
         return CommonResponse.success(UserResponseCode.USER_UPDATE_SUCCESS)
     }
 
+    @DeleteMapping("/me")
+    @Operation(summary = "위드 탈퇴")
+    fun leave(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): ResponseEntity<CommonResponse<Void>> {
+        leaveUserUseCase.execute(userId)
+        return buildExpiredTokenResponse(CommonResponse.success(UserResponseCode.USER_LEFT_SUCCESS))
+    }
+
     @PostMapping("/inquiries")
     @Operation(summary = "문의하기")
     @SecurityRequirements
@@ -126,5 +138,12 @@ class UserController(
             .ok()
             .header(HttpHeaders.SET_COOKIE, tokenCookieProvider.createAccessTokenCookie(accessToken).toString())
             .header(HttpHeaders.SET_COOKIE, tokenCookieProvider.createRefreshTokenCookie(refreshToken).toString())
+            .body(body)
+
+    private fun buildExpiredTokenResponse(body: CommonResponse<Void>): ResponseEntity<CommonResponse<Void>> =
+        ResponseEntity
+            .ok()
+            .header(HttpHeaders.SET_COOKIE, tokenCookieProvider.expireAccessTokenCookie().toString())
+            .header(HttpHeaders.SET_COOKIE, tokenCookieProvider.expireRefreshTokenCookie().toString())
             .body(body)
 }
