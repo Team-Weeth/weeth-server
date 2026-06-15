@@ -565,7 +565,9 @@ class RegisterAccountUseCaseTest :
                         match {
                             it.type == AccountTransactionType.CARRY_OVER &&
                                 it.amount == 240_000 &&
-                                it.account === account
+                                it.account === account &&
+                                // 이월 수입의 거래처는 직전 기수
+                                it.source == "3기 회비"
                         },
                     )
                 }
@@ -574,7 +576,9 @@ class RegisterAccountUseCaseTest :
                         match {
                             it.type == AccountTransactionType.EXPENSE &&
                                 it.amount == 240_000 &&
-                                it.account === previousAccount
+                                it.account === previousAccount &&
+                                // 전출 지출의 거래처는 신규 기수
+                                it.source == "5기 회비"
                         },
                     )
                 }
@@ -616,7 +620,9 @@ class RegisterAccountUseCaseTest :
                         match {
                             it.type == AccountTransactionType.EXPENSE &&
                                 it.amount == 240_000 &&
-                                it.account === previousAccount
+                                it.account === previousAccount &&
+                                // 미이월 정리는 실제 이체처가 없어 거래처를 비운다
+                                it.source == null
                         },
                     )
                 }
