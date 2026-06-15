@@ -1,6 +1,7 @@
 package com.weeth.domain.account.fixture
 
 import com.weeth.domain.account.domain.entity.Account
+import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.fixture.ClubTestFixture
 
@@ -13,6 +14,7 @@ object AccountTestFixture {
         currentAmount: Int = 100_000,
         currentBalance: Int = currentAmount,
         cardinal: Int = 40,
+        status: AccountStatus = AccountStatus.ACTIVE,
     ): Account =
         Account(
             club = club,
@@ -22,5 +24,6 @@ object AccountTestFixture {
             currentAmount = currentAmount,
             currentBalance = currentBalance,
             cardinal = cardinal,
+            status = status,
         )
 }
