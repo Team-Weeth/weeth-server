@@ -35,4 +35,13 @@ enum class AccountErrorCode(
 
     @ExplainError("이월 금액이 완료 시점의 이전 기수 장부 잔액과 다를 때 발생합니다. 이월 재원을 다시 조회한 후 이월 설정을 재저장해야 합니다.")
     ACCOUNT_CARRY_OVER_AMOUNT_MISMATCH(20108, HttpStatus.CONFLICT, "이전 기수 잔액이 변경되었습니다. 이월 금액을 다시 확인해주세요."),
+
+    @ExplainError("요청한 거래 내역이 존재하지 않거나 다른 장부에 속할 때 발생합니다.")
+    ACCOUNT_TRANSACTION_NOT_FOUND(20109, HttpStatus.NOT_FOUND, "존재하지 않는 거래 내역입니다."),
+
+    @ExplainError("수입/지출이 아닌 시스템 거래(납부/이월/환불)를 직접 등록·수정·삭제하려 할 때 발생합니다.")
+    ACCOUNT_TRANSACTION_TYPE_NOT_ALLOWED(20111, HttpStatus.BAD_REQUEST, "직접 등록·수정할 수 없는 거래 유형입니다."),
+
+    @ExplainError("등록이 완료되지 않은(초안 등) 장부에 운영 기능을 요청할 때 발생합니다.")
+    ACCOUNT_NOT_ACTIVE(20112, HttpStatus.BAD_REQUEST, "등록이 완료된 장부에서만 운영할 수 있습니다."),
 }
