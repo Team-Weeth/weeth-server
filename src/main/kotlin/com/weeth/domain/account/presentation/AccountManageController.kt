@@ -2,15 +2,22 @@ package com.weeth.domain.account.presentation
 
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
+import com.weeth.domain.account.application.dto.request.MarkPaymentPaidRequest
+import com.weeth.domain.account.application.dto.request.MarkPaymentUnpaidRequest
+import com.weeth.domain.account.application.dto.request.RefundPaymentRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountTransactionRequest
 import com.weeth.domain.account.application.dto.request.UpdateAccountTransactionRequest
 import com.weeth.domain.account.application.dto.request.UpdateMemberVisibilityRequest
 import com.weeth.domain.account.application.dto.response.AccountTransactionResponse
 import com.weeth.domain.account.application.dto.response.AccountTransactionsResponse
 import com.weeth.domain.account.application.exception.AccountErrorCode
+import com.weeth.domain.account.application.usecase.command.ManageAccountPaymentUseCase
 import com.weeth.domain.account.application.usecase.command.ManageAccountTransactionUseCase
 import com.weeth.domain.account.application.usecase.command.ManageAccountUseCase
 import com.weeth.domain.account.application.usecase.query.GetAccountTransactionQueryService
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_PAID_SUCCESS
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_REFUND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_DELETE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_DETAIL_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_FIND_SUCCESS
@@ -43,6 +50,7 @@ import org.springframework.web.bind.annotation.RestController
 class AccountManageController(
     private val manageAccountUseCase: ManageAccountUseCase,
     private val manageAccountTransactionUseCase: ManageAccountTransactionUseCase,
+    private val manageAccountPaymentUseCase: ManageAccountPaymentUseCase,
     private val getAccountTransactionQueryService: GetAccountTransactionQueryService,
 ) {
     @PatchMapping("/{accountId}/member-visibility")
@@ -142,5 +150,44 @@ class AccountManageController(
     ): CommonResponse<Void> {
         manageAccountTransactionUseCase.delete(clubId, accountId, transactionId, userId)
         return CommonResponse.success(ACCOUNT_TRANSACTION_DELETE_SUCCESS)
+    }
+
+    @PatchMapping("/{accountId}/payment-targets/paid")
+    @Operation(summary = "납부 확인(벌크)", description = "대상들을 납부 완료 처리하고 시스템 회비 수입 거래를 생성합니다.")
+    fun markPaymentPaid(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @RequestBody @Valid request: MarkPaymentPaidRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageAccountPaymentUseCase.markPaid(clubId, accountId, request, userId)
+        return CommonResponse.success(ACCOUNT_PAYMENT_MARK_PAID_SUCCESS)
+    }
+
+    @PatchMapping("/{accountId}/payment-targets/unpaid")
+    @Operation(summary = "납부 정정(벌크)", description = "잘못 확인한 납부를 취소하고 해당 회비 거래를 원복합니다.")
+    fun markPaymentUnpaid(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @RequestBody @Valid request: MarkPaymentUnpaidRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageAccountPaymentUseCase.markUnpaid(clubId, accountId, request, userId)
+        return CommonResponse.success(ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS)
+    }
+
+    @PatchMapping("/{accountId}/payment-targets/refund")
+    @Operation(summary = "환불(벌크)", description = "납부 완료 대상을 환불 처리하고 시스템 환불 지출 거래를 생성합니다. 납부 이력은 보존됩니다.")
+    fun refundPayment(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @RequestBody @Valid request: RefundPaymentRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageAccountPaymentUseCase.refund(clubId, accountId, request, userId)
+        return CommonResponse.success(ACCOUNT_PAYMENT_REFUND_SUCCESS)
     }
 }

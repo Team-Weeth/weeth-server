@@ -42,6 +42,22 @@ interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, L
         @Param("clubMemberIds") clubMemberIds: List<Long>,
     ): List<AccountPaymentTarget>
 
+    /** 납부/환불 벌크 액션 대상. 거래 내용(거래처)에 멤버 이름을 쓰기 위해 user 까지 fetch 한다. */
+    @Query(
+        """
+        select target
+        from AccountPaymentTarget target
+        join fetch target.clubMember clubMember
+        join fetch clubMember.user
+        where target.account.id = :accountId
+        and target.id in :ids
+        """,
+    )
+    fun findAllByAccountIdAndIdIn(
+        @Param("accountId") accountId: Long,
+        @Param("ids") ids: List<Long>,
+    ): List<AccountPaymentTarget>
+
     @Query(
         """
         select count(target)

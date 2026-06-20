@@ -26,4 +26,7 @@ enum class AccountResponseCode(
     ACCOUNT_TRANSACTION_DETAIL_FIND_SUCCESS(10122, HttpStatus.OK, "거래 내역 상세가 성공적으로 조회되었습니다."),
     ACCOUNT_TRANSACTION_UPDATE_SUCCESS(10123, HttpStatus.OK, "거래 내역이 성공적으로 수정되었습니다."),
     ACCOUNT_TRANSACTION_DELETE_SUCCESS(10124, HttpStatus.OK, "거래 내역이 성공적으로 삭제되었습니다."),
+    ACCOUNT_PAYMENT_MARK_PAID_SUCCESS(10125, HttpStatus.OK, "납부가 완료 처리되었습니다."),
+    ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS(10126, HttpStatus.OK, "납부가 취소 처리되었습니다."),
+    ACCOUNT_PAYMENT_REFUND_SUCCESS(10127, HttpStatus.OK, "환불이 처리되었습니다."),
 }

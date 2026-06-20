@@ -15,6 +15,12 @@ interface AccountTransactionRepository : JpaRepository<AccountTransaction, Long>
 
     fun findByIdAndDeletedAtIsNull(id: Long): AccountTransaction?
 
+    /** 납부 정정(unpaid) 시 해당 납부 대상의 활성 시스템 거래(DUES)를 찾아 원복한다. */
+    fun findByPaymentTargetIdAndTypeAndDeletedAtIsNull(
+        paymentTargetId: Long,
+        type: AccountTransactionType,
+    ): AccountTransaction?
+
     // 목록 조회 (소프트 삭제 제외)
     fun findByAccountIdAndDeletedAtIsNull(
         accountId: Long,
