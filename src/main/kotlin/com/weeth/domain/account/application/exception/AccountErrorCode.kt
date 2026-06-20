@@ -44,4 +44,10 @@ enum class AccountErrorCode(
 
     @ExplainError("등록이 완료되지 않은(초안 등) 장부에 운영 기능을 요청할 때 발생합니다.")
     ACCOUNT_NOT_ACTIVE(20112, HttpStatus.BAD_REQUEST, "등록이 완료된 장부에서만 운영할 수 있습니다."),
+
+    @ExplainError("요청한 납부 대상이 존재하지 않거나 다른 장부에 속할 때 발생합니다.")
+    ACCOUNT_PAYMENT_TARGET_NOT_FOUND(20110, HttpStatus.NOT_FOUND, "존재하지 않는 납부 대상입니다."),
+
+    @ExplainError("납부 완료(PAID) 상태가 아닌 대상을 환불 처리하려 할 때 발생합니다.")
+    ACCOUNT_PAYMENT_NOT_REFUNDABLE(20113, HttpStatus.BAD_REQUEST, "납부 완료 상태에서만 환불할 수 있습니다."),
 }
