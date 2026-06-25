@@ -3,6 +3,9 @@ package com.weeth.domain.club.domain.service
 import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.comment.domain.repository.CommentRepository
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -19,8 +22,41 @@ import java.time.LocalDateTime
 class ClubActivityDeletionPolicy(
     private val postLikeRepository: PostLikeRepository,
     private val postRepository: PostRepository,
+    private val commentRepository: CommentRepository,
+    private val fileRepository: FileRepository,
 ) {
     fun markMemberActivitiesDeleted(
+        member: ClubMember,
+        now: LocalDateTime,
+    ) {
+        markMemberFilesDeleted(member, now)
+        markMemberPostLikesDeleted(member, now)
+    }
+
+    private fun markMemberFilesDeleted(
+        member: ClubMember,
+        now: LocalDateTime,
+    ) {
+        val postIds = postRepository.findActiveIdsByClubMemberIdAndClubId(member.id, member.club.id)
+        val commentIds = commentRepository.findActiveIdsByClubMemberIdAndClubId(member.id, member.club.id)
+
+        markFilesDeleted(FileOwnerType.POST, postIds, now)
+        markFilesDeleted(FileOwnerType.COMMENT, commentIds, now)
+    }
+
+    private fun markFilesDeleted(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+        now: LocalDateTime,
+    ) {
+        if (ownerIds.isEmpty()) return
+
+        fileRepository
+            .findAllActiveByOwnerTypeAndOwnerIdIn(ownerType, ownerIds)
+            .forEach { it.markDeleted(now) }
+    }
+
+    private fun markMemberPostLikesDeleted(
         member: ClubMember,
         now: LocalDateTime,
     ) {

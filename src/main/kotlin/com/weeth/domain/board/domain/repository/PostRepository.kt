@@ -217,4 +217,20 @@ interface PostRepository :
     fun countActivePostsByBoardIds(
         @Param("boardIds") boardIds: List<Long>,
     ): List<BoardPostCount>
+
+    @Query(
+        """
+        SELECT p.id
+        FROM Post p
+        WHERE p.clubMember.id = :clubMemberId
+          AND p.board.club.id = :clubId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.id ASC
+        """,
+    )
+    fun findActiveIdsByClubMemberIdAndClubId(
+        @Param("clubMemberId") clubMemberId: Long,
+        @Param("clubId") clubId: Long,
+    ): List<Long>
 }

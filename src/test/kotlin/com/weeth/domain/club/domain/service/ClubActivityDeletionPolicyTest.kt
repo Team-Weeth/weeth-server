@@ -7,6 +7,10 @@ import com.weeth.domain.board.fixture.PostLikeTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
+import com.weeth.domain.comment.domain.repository.CommentRepository
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.file.fixture.FileTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -21,10 +25,12 @@ class ClubActivityDeletionPolicyTest :
     DescribeSpec({
         val postLikeRepository = mockk<PostLikeRepository>()
         val postRepository = mockk<PostRepository>()
-        val policy = ClubActivityDeletionPolicy(postLikeRepository, postRepository)
+        val commentRepository = mockk<CommentRepository>()
+        val fileRepository = mockk<FileRepository>()
+        val policy = ClubActivityDeletionPolicy(postLikeRepository, postRepository, commentRepository, fileRepository)
 
         beforeTest {
-            clearMocks(postLikeRepository, postRepository)
+            clearMocks(postLikeRepository, postRepository, commentRepository, fileRepository)
         }
 
         describe("markMemberActivitiesDeleted") {
@@ -47,6 +53,9 @@ class ClubActivityDeletionPolicyTest :
                 every {
                     postLikeRepository.findActivePostIdsByUserIdAndClubId(member.user.id, club.id)
                 } returns listOf(post.id)
+                every { postRepository.findActiveIdsByClubMemberIdAndClubId(member.id, club.id) } returns emptyList()
+                every { commentRepository.findActiveIdsByClubMemberIdAndClubId(member.id, club.id) } returns emptyList()
+                every { fileRepository.findAllActiveByOwnerTypeAndOwnerIdIn(any(), any()) } returns emptyList()
                 every { postRepository.findAllByIdsWithLock(listOf(post.id)) } returns listOf(post)
                 every {
                     postLikeRepository.findAllActiveByUserIdAndPostIds(member.user.id, listOf(post.id))
@@ -79,11 +88,63 @@ class ClubActivityDeletionPolicyTest :
                 every {
                     postLikeRepository.findActivePostIdsByUserIdAndClubId(member.user.id, club.id)
                 } returns emptyList()
+                every { postRepository.findActiveIdsByClubMemberIdAndClubId(member.id, club.id) } returns emptyList()
+                every { commentRepository.findActiveIdsByClubMemberIdAndClubId(member.id, club.id) } returns emptyList()
+                every { fileRepository.findAllActiveByOwnerTypeAndOwnerIdIn(any(), any()) } returns emptyList()
 
                 policy.markMemberActivitiesDeleted(member, LocalDateTime.of(2026, 5, 19, 12, 0))
 
                 verify(exactly = 0) { postRepository.findAllByIdsWithLock(any()) }
                 verify(exactly = 0) { postLikeRepository.findAllActiveByUserIdAndPostIds(any(), any()) }
+            }
+
+            it("작성한 게시글과 댓글의 파일을 30일 보관 삭제 예약한다") {
+                val club = ClubTestFixture.createClub(id = 1L)
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        id = 10L,
+                        club = club,
+                        user = UserTestFixture.createActiveUser1(id = 20L),
+                    )
+                val now = LocalDateTime.of(2026, 5, 19, 12, 0)
+                val postFile =
+                    FileTestFixture.createFile(
+                        id = 1L,
+                        fileName = "post.png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 100L,
+                    )
+                val commentFile =
+                    FileTestFixture.createFile(
+                        id = 2L,
+                        fileName = "comment.png",
+                        ownerType = FileOwnerType.COMMENT,
+                        ownerId = 200L,
+                    )
+
+                every {
+                    postLikeRepository.findActivePostIdsByUserIdAndClubId(member.user.id, club.id)
+                } returns emptyList()
+                every { postRepository.findActiveIdsByClubMemberIdAndClubId(member.id, club.id) } returns
+                    listOf(100L, 101L)
+                every { commentRepository.findActiveIdsByClubMemberIdAndClubId(member.id, club.id) } returns
+                    listOf(200L)
+                every {
+                    fileRepository.findAllActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.POST, listOf(100L, 101L))
+                } returns listOf(postFile)
+                every {
+                    fileRepository.findAllActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.COMMENT, listOf(200L))
+                } returns listOf(commentFile)
+
+                policy.markMemberActivitiesDeleted(member, now)
+
+                postFile.isDeleted shouldBe true
+                postFile.deletedAt shouldBe now
+                postFile.hardDeleteAfter shouldBe now.plusDays(30)
+                commentFile.isDeleted shouldBe true
+                commentFile.deletedAt shouldBe now
+                commentFile.hardDeleteAfter shouldBe now.plusDays(30)
+                verify(exactly = 0) { postRepository.findAllByIdsWithLock(any()) }
             }
         }
     })
