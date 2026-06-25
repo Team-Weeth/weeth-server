@@ -29,16 +29,26 @@ class ClubActivityDeletionPolicy(
         member: ClubMember,
         now: LocalDateTime,
     ) {
-        markMemberFilesDeleted(member, now)
-        markMemberPostLikesDeleted(member, now)
+        markMembersActivitiesDeleted(listOf(member), now)
     }
 
-    private fun markMemberFilesDeleted(
-        member: ClubMember,
+    fun markMembersActivitiesDeleted(
+        members: List<ClubMember>,
         now: LocalDateTime,
     ) {
-        val postIds = postRepository.findActiveIdsByClubMemberIdAndClubId(member.id, member.club.id)
-        val commentIds = commentRepository.findActiveIdsByClubMemberIdAndClubId(member.id, member.club.id)
+        if (members.isEmpty()) return
+
+        markMembersFilesDeleted(members, now)
+        markMembersPostLikesDeleted(members, now)
+    }
+
+    private fun markMembersFilesDeleted(
+        members: List<ClubMember>,
+        now: LocalDateTime,
+    ) {
+        val memberIds = members.map { it.id }.distinct().sorted()
+        val postIds = postRepository.findActiveIdsByClubMemberIdIn(memberIds)
+        val commentIds = commentRepository.findActiveIdsByClubMemberIdIn(memberIds)
 
         markFilesDeleted(FileOwnerType.POST, postIds, now)
         markFilesDeleted(FileOwnerType.COMMENT, commentIds, now)
@@ -56,30 +66,37 @@ class ClubActivityDeletionPolicy(
             .forEach { it.markDeleted(now) }
     }
 
-    private fun markMemberPostLikesDeleted(
-        member: ClubMember,
+    private fun markMembersPostLikesDeleted(
+        members: List<ClubMember>,
         now: LocalDateTime,
     ) {
-        val postIds =
-            postLikeRepository
-                .findActivePostIdsByUserIdAndClubId(
-                    userId = member.user.id,
-                    clubId = member.club.id,
-                ).distinct()
-                .sorted()
+        members
+            .groupBy { it.user.id }
+            .forEach { (userId, userMembers) ->
+                val clubIds = userMembers.map { it.club.id }.distinct().sorted()
+                val postIds =
+                    postLikeRepository
+                        .findActivePostIdsByUserIdAndClubIdIn(
+                            userId = userId,
+                            clubIds = clubIds,
+                        ).distinct()
+                        .sorted()
 
-        if (postIds.isEmpty()) return
+                if (postIds.isEmpty()) return@forEach
 
-        val postsById = postRepository.findAllByIdsWithLock(postIds).associateBy { it.id }
-        if (postsById.isEmpty()) return
+                val postsById = postRepository.findAllByIdsWithLock(postIds).associateBy { it.id }
+                if (postsById.isEmpty()) return@forEach
 
-        postLikeRepository
-            .findAllActiveByUserIdAndPostIds(
-                userId = member.user.id,
-                postIds = postsById.keys.toList(),
-            ).forEach { like ->
-                if (!like.markDeleted(now)) return@forEach
-                postsById.getValue(like.post.id).decreaseLikeCount()
+                val likes =
+                    postLikeRepository.findAllActiveByUserIdAndPostIds(
+                        userId = userId,
+                        postIds = postsById.keys.toList(),
+                    )
+
+                for (like in likes) {
+                    if (!like.markDeleted(now)) continue
+                    postsById.getValue(like.post.id).decreaseLikeCount()
+                }
             }
     }
 }

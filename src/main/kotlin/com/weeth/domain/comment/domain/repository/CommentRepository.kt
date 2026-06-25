@@ -37,4 +37,19 @@ interface CommentRepository :
         @Param("clubMemberId") clubMemberId: Long,
         @Param("clubId") clubId: Long,
     ): List<Long>
+
+    @Query(
+        """
+        SELECT c.id
+        FROM Comment c
+        WHERE c.clubMember.id IN :clubMemberIds
+          AND c.isDeleted = false
+          AND c.post.isDeleted = false
+          AND c.post.board.isDeleted = false
+        ORDER BY c.id ASC
+        """,
+    )
+    fun findActiveIdsByClubMemberIdIn(
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+    ): List<Long>
 }

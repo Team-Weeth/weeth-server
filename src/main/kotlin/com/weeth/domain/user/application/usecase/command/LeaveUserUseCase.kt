@@ -41,10 +41,10 @@ class LeaveUserUseCase(
             throw UserHasLeadClubException()
         }
 
-        activeMembers.forEach { member ->
-            clubActivityDeletionPolicy.markMemberActivitiesDeleted(member, now)
-            member.leave(now)
+        if (activeMembers.isNotEmpty()) {
+            clubActivityDeletionPolicy.markMembersActivitiesDeleted(activeMembers, now)
         }
+        activeMembers.forEach { it.leave(now) }
 
         markClubMemberProfileFilesDeleted(userId, now)
         user.leave(now)

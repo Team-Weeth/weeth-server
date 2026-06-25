@@ -191,7 +191,7 @@ class LeaveUserUseCaseTest :
                 val now = LocalDateTime.now(clock)
                 every { userReader.getByIdWithLock(1L) } returns user
                 every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns listOf(userMember, adminMember)
-                justRun { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
+                justRun { clubActivityDeletionPolicy.markMembersActivitiesDeleted(any(), any()) }
                 every {
                     fileRepository.findAllActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, 1L)
                 } returns emptyList()
@@ -206,8 +206,10 @@ class LeaveUserUseCaseTest :
                 adminMember.memberStatus shouldBe MemberStatus.LEFT
                 adminMember.leftAt shouldBe now
                 user.status shouldBe Status.LEFT
-                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(userMember, now) }
-                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(adminMember, now) }
+                verify(exactly = 1) {
+                    clubActivityDeletionPolicy.markMembersActivitiesDeleted(listOf(userMember, adminMember), now)
+                }
+                verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
             }
 
             it("위드 탈퇴 시 멤버 프로필 파일을 30일 보관 삭제 예약한다") {
