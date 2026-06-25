@@ -18,6 +18,8 @@ import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.LocalDateTime
 
 @Service
 class ManageReceiptUseCase(
@@ -28,6 +30,7 @@ class ManageReceiptUseCase(
     private val cardinalReader: CardinalReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val fileMapper: FileMapper,
+    private val clock: Clock,
 ) {
     @Transactional
     fun save(
@@ -70,7 +73,7 @@ class ManageReceiptUseCase(
         account.adjustSpend(Money.of(receipt.amount), Money.of(request.amount))
 
         if (request.files != null) {
-            fileRepository.deleteAll(fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null))
+            markReceiptFilesDeleted(receiptId)
             fileRepository.saveAll(fileMapper.toFileList(request.files, FileOwnerType.RECEIPT, receiptId))
         }
 
@@ -90,7 +93,14 @@ class ManageReceiptUseCase(
 
         receipt.account.cancelSpend(Money.of(receipt.amount))
 
-        fileRepository.deleteAll(fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null))
+        markReceiptFilesDeleted(receiptId)
         receiptRepository.delete(receipt)
+    }
+
+    private fun markReceiptFilesDeleted(receiptId: Long) {
+        val now = LocalDateTime.now(clock)
+        fileReader
+            .findAll(FileOwnerType.RECEIPT, receiptId, null)
+            .forEach { it.markDeleted(now) }
     }
 }

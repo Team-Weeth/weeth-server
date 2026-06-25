@@ -29,9 +29,14 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class ManageCommentUseCaseTest :
     DescribeSpec({
+        val clock = Clock.fixed(Instant.parse("2026-06-25T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val commentRepository = mockk<CommentRepository>(relaxUnitFun = true)
         val postRepository = mockk<PostRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
@@ -47,6 +52,7 @@ class ManageCommentUseCaseTest :
                 fileReader,
                 fileRepository,
                 fileMapper,
+                clock,
             )
 
         beforeTest {
@@ -99,7 +105,7 @@ class ManageCommentUseCaseTest :
                 }
             }
 
-            it("files가 있으면 기존 파일은 삭제되고 새 파일이 저장된다") {
+            it("files가 있으면 기존 파일은 삭제 예약되고 새 파일이 저장된다") {
                 val owner = UserTestFixture.createActiveUser1(1L)
                 val ownerMember = ClubMemberTestFixture.createActiveMember(user = owner)
                 val post = PostTestFixture.create()
@@ -143,7 +149,10 @@ class ManageCommentUseCaseTest :
                 useCase.updatePostComment(dto, postId = 10L, commentId = 202L, userId = 1L)
 
                 comment.content shouldBe "new content"
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldFile)) }
+                oldFile.isDeleted shouldBe true
+                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify { fileRepository.saveAll(listOf(newFile)) }
             }
         }

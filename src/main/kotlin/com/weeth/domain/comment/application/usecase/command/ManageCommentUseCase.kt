@@ -19,6 +19,8 @@ import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.LocalDateTime
 
 @Service
 class ManageCommentUseCase(
@@ -28,6 +30,7 @@ class ManageCommentUseCase(
     private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val fileMapper: FileMapper,
+    private val clock: Clock,
 ) : PostCommentUsecase {
     @Transactional
     override fun savePostComment(
@@ -139,9 +142,8 @@ class ManageCommentUseCase(
     private fun deleteCommentFiles(commentId: Long) {
         val files = fileReader.findAll(FileOwnerType.COMMENT, commentId)
 
-        if (files.isNotEmpty()) {
-            fileRepository.deleteAll(files)
-        }
+        val now = LocalDateTime.now(clock)
+        files.forEach { it.markDeleted(now) }
     }
 
     private fun ensureOwner(

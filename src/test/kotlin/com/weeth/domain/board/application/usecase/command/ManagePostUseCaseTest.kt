@@ -37,9 +37,14 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class ManagePostUseCaseTest :
     DescribeSpec({
+        val clock = Clock.fixed(Instant.parse("2026-06-25T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val postRepository = mockk<PostRepository>()
         val boardRepository = mockk<BoardRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
@@ -59,6 +64,7 @@ class ManagePostUseCaseTest :
                 fileReader,
                 fileMapper,
                 postMapper,
+                clock,
             )
 
         fun createUploadedPostFile(
@@ -233,7 +239,10 @@ class ManagePostUseCaseTest :
 
                 post.title shouldBe "수정"
                 post.content shouldBe "수정"
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldFile)) }
+                oldFile.isDeleted shouldBe true
+                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
 
@@ -325,7 +334,7 @@ class ManagePostUseCaseTest :
         }
 
         describe("delete") {
-            it("삭제 시 첨부 파일을 삭제하고 게시글을 soft delete한다") {
+            it("삭제 시 첨부 파일을 삭제 예약하고 게시글을 soft delete한다") {
                 val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
@@ -340,7 +349,10 @@ class ManagePostUseCaseTest :
                 useCase.delete(clubId, board.id, 1L, 1L)
 
                 post.isDeleted shouldBe true
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldFile)) }
+                oldFile.isDeleted shouldBe true
+                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 0) { postRepository.delete(any()) }
             }
 

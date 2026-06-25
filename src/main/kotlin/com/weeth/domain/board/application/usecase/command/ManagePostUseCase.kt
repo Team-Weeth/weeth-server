@@ -22,6 +22,8 @@ import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Clock
+import java.time.LocalDateTime
 
 @Service
 class ManagePostUseCase(
@@ -33,6 +35,7 @@ class ManagePostUseCase(
     private val fileReader: FileReader,
     private val fileMapper: FileMapper,
     private val postMapper: PostMapper,
+    private val clock: Clock,
 ) {
     @Transactional
     fun save(
@@ -156,9 +159,7 @@ class ManagePostUseCase(
     private fun deletePostFiles(postId: Long) {
         val files = fileReader.findAll(FileOwnerType.POST, postId)
 
-        if (files.isNotEmpty()) {
-            fileRepository.deleteAll(files)
-            fileRepository.flush()
-        }
+        val now = LocalDateTime.now(clock)
+        files.forEach { it.markDeleted(now) }
     }
 }

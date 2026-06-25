@@ -20,15 +20,22 @@ import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.Optional
+import java.util.UUID
 
 class ManageReceiptUseCaseTest :
     DescribeSpec({
+        val clock = Clock.fixed(Instant.parse("2026-06-25T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val receiptRepository = mockk<ReceiptRepository>(relaxUnitFun = true)
         val accountRepository = mockk<AccountRepository>()
         val fileReader = mockk<FileReader>()
@@ -45,6 +52,7 @@ class ManageReceiptUseCaseTest :
                 cardinalReader,
                 clubPermissionPolicy,
                 fileMapper,
+                clock,
             )
 
         val userId = 10L
@@ -68,6 +76,19 @@ class ManageReceiptUseCaseTest :
             every { cardinalReader.findByClubIdAndCardinalNumber(clubId, cardinalNumber) } returns
                 CardinalTestFixture.createCardinal(cardinalNumber = cardinalNumber)
         }
+
+        fun createReceiptFile(
+            fileName: String,
+            receiptId: Long,
+        ): File =
+            File.createUploaded(
+                fileName = fileName,
+                storageKey = "RECEIPT/2026-02/${UUID.randomUUID()}_$fileName",
+                fileSize = 100L,
+                contentType = "image/png",
+                ownerType = FileOwnerType.RECEIPT,
+                ownerId = receiptId,
+            )
 
         describe("save") {
             context("파일이 있는 경우") {
@@ -147,7 +168,8 @@ class ManageReceiptUseCaseTest :
                         40,
                         listOf(FileSaveRequest("new.png", "TEMP/2026-02/new.png", 100L, "image/png")),
                     )
-                val oldFiles = listOf(mockk<File>())
+                val oldFile = createReceiptFile("old.png", receiptId)
+                val oldFiles = listOf(oldFile)
                 val newFiles = listOf(mockk<File>())
 
                 stubExistingCardinal(clubId, request.cardinal)
@@ -158,7 +180,10 @@ class ManageReceiptUseCaseTest :
 
                 useCase.update(clubId, userId, receiptId, request)
 
-                verify(exactly = 1) { fileRepository.deleteAll(oldFiles) }
+                oldFile.isDeleted shouldBe true
+                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
 
@@ -192,7 +217,8 @@ class ManageReceiptUseCaseTest :
                         40,
                         emptyList(),
                     )
-                val oldFiles = listOf(mockk<File>())
+                val oldFile = createReceiptFile("old.png", receiptId)
+                val oldFiles = listOf(oldFile)
 
                 stubExistingCardinal(clubId, request.cardinal)
                 every { accountRepository.findByClubIdAndCardinal(clubId, request.cardinal) } returns account
@@ -202,26 +228,33 @@ class ManageReceiptUseCaseTest :
 
                 useCase.update(clubId, userId, receiptId, request)
 
-                verify(exactly = 1) { fileRepository.deleteAll(oldFiles) }
+                oldFile.isDeleted shouldBe true
+                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(emptyList()) }
             }
         }
 
         describe("delete") {
-            it("관련 파일 삭제 후 cancelSpend가 호출되고 영수증이 삭제된다") {
+            it("관련 파일 삭제 예약 후 cancelSpend가 호출되고 영수증이 삭제된다") {
                 val receiptId = 5L
                 val account = AccountTestFixture.createAccount(currentAmount = 100_000)
                 val clubId = account.club.id
                 val receipt = ReceiptTestFixture.createReceipt(id = receiptId, amount = 10_000, account = account)
                 account.spend(Money.of(receipt.amount))
-                val files = listOf(mockk<File>())
+                val oldFile = createReceiptFile("old.png", receiptId)
+                val files = listOf(oldFile)
 
                 every { receiptRepository.findById(receiptId) } returns Optional.of(receipt)
                 every { fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null) } returns files
 
                 useCase.delete(clubId, userId, receiptId)
 
-                verify(exactly = 1) { fileRepository.deleteAll(files) }
+                oldFile.isDeleted shouldBe true
+                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { receiptRepository.delete(receipt) }
             }
         }
