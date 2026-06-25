@@ -160,4 +160,25 @@ class FileTest :
                 file.hardDeleteAfter shouldBe firstDeletedAt.plusDays(30)
             }
         }
+
+        describe("markDeletedForImmediateCleanup") {
+            it("즉시 정리 대상 파일은 hardDeleteAfter를 현재 시각으로 설정한다") {
+                val now = LocalDateTime.of(2026, 6, 25, 12, 0)
+                val file =
+                    File.createUploaded(
+                        fileName = "image.png",
+                        storageKey = "POST/2026-02/550e8400-e29b-41d4-a716-446655440000_image.png",
+                        fileSize = 1024,
+                        contentType = "image/png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 1L,
+                    )
+
+                file.markDeletedForImmediateCleanup(now)
+
+                file.isDeleted shouldBe true
+                file.deletedAt shouldBe now
+                file.hardDeleteAfter shouldBe now
+            }
+        }
     })

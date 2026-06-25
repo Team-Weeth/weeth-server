@@ -22,9 +22,8 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
-import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.file.fixture.FileTestFixture
 import com.weeth.domain.user.application.exception.UserInActiveException
@@ -55,7 +54,6 @@ class ManageClubMemberUseCaseTest :
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
         val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
         val fileRepository = mockk<FileRepository>()
-        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val clock = Clock.fixed(Instant.parse("2026-06-08T03:00:00Z"), ZoneId.of("Asia/Seoul"))
 
         val useCase =
@@ -70,7 +68,6 @@ class ManageClubMemberUseCaseTest :
                 clubJoinPolicy = clubJoinPolicy,
                 clubActivityDeletionPolicy = clubActivityDeletionPolicy,
                 fileRepository = fileRepository,
-                fileAccessUrlPort = fileAccessUrlPort,
                 clock = clock,
             )
 
@@ -86,7 +83,6 @@ class ManageClubMemberUseCaseTest :
                 clubJoinPolicy,
                 clubActivityDeletionPolicy,
                 fileRepository,
-                fileAccessUrlPort,
             )
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { fileRepository.save(any()) } answers { firstArg() }
@@ -103,7 +99,7 @@ class ManageClubMemberUseCaseTest :
                 )
 
             context("프로필 사진만 변경할 때") {
-                it("모든 활성 ClubMember의 기존 파일을 삭제하고 새 파일로 URL을 업데이트한다") {
+                it("모든 활성 ClubMember의 기존 파일을 삭제 예약하고 새 파일로 URL을 업데이트한다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
                     val existingFile =
@@ -115,19 +111,19 @@ class ManageClubMemberUseCaseTest :
                         )
                     every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
                     every {
-                        fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+                        fileRepository.findAllActiveByOwnerTypeAndOwnerId(
                             FileOwnerType.CLUB_MEMBER_PROFILE,
                             userId,
-                            FileStatus.UPLOADED,
                         )
                     } returns listOf(existingFile)
-                    every { fileRepository.deleteAll(any<List<com.weeth.domain.file.domain.entity.File>>()) } returns
-                        Unit
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(profileImage = profileImageRequest))
 
                     member1.profileImageStorageKey shouldBe profileImageRequest.storageKey
                     member2.profileImageStorageKey shouldBe profileImageRequest.storageKey
-                    verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
+                    existingFile.isDeleted shouldBe true
+                    existingFile.deletedAt shouldBe LocalDateTime.now(clock)
+                    existingFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                    verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                     verify(exactly = 1) { fileRepository.save(any()) }
                 }
             }
@@ -143,7 +139,7 @@ class ManageClubMemberUseCaseTest :
 
                     member1.bio shouldBe "안녕하세요!"
                     member2.bio shouldBe "안녕하세요!"
-                    verify(exactly = 0) { fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any()) }
+                    verify(exactly = 0) { fileRepository.findAllActiveByOwnerTypeAndOwnerId(any(), any()) }
                     verify(exactly = 0) { fileRepository.save(any()) }
                 }
             }
@@ -177,7 +173,7 @@ class ManageClubMemberUseCaseTest :
             val userId = 10L
 
             context("활성 멤버가 프로필 사진을 삭제할 때") {
-                it("모든 활성 ClubMember의 파일을 삭제하고 URL을 null로 만든다") {
+                it("모든 활성 ClubMember의 파일을 삭제 예약하고 URL을 null로 만든다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
                     member1.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
@@ -192,18 +188,18 @@ class ManageClubMemberUseCaseTest :
 
                     every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
                     every {
-                        fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+                        fileRepository.findAllActiveByOwnerTypeAndOwnerId(
                             FileOwnerType.CLUB_MEMBER_PROFILE,
                             userId,
-                            FileStatus.UPLOADED,
                         )
                     } returns listOf(existingFile)
-                    every { fileRepository.deleteAll(any<List<com.weeth.domain.file.domain.entity.File>>()) } returns
-                        Unit
 
                     useCase.deleteProfileImage(userId)
 
-                    verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
+                    existingFile.isDeleted shouldBe true
+                    existingFile.deletedAt shouldBe LocalDateTime.now(clock)
+                    existingFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                    verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                     member1.profileImageStorageKey shouldBe null
                     member2.profileImageStorageKey shouldBe null
                 }

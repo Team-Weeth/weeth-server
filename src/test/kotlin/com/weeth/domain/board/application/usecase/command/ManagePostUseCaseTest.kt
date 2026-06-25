@@ -241,7 +241,7 @@ class ManagePostUseCaseTest :
                 post.content shouldBe "수정"
                 oldFile.isDeleted shouldBe true
                 oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
@@ -351,7 +351,7 @@ class ManagePostUseCaseTest :
                 post.isDeleted shouldBe true
                 oldFile.isDeleted shouldBe true
                 oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 0) { postRepository.delete(any()) }
             }

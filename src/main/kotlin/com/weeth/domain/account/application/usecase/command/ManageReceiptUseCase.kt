@@ -97,10 +97,12 @@ class ManageReceiptUseCase(
         receiptRepository.delete(receipt)
     }
 
+    /**
+     * 영수증 파일 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
+     */
     private fun markReceiptFilesDeleted(receiptId: Long) {
         val now = LocalDateTime.now(clock)
-        fileReader
-            .findAll(FileOwnerType.RECEIPT, receiptId, null)
-            .forEach { it.markDeleted(now) }
+        val files = fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null)
+        files.forEach { it.markDeletedForImmediateCleanup(now) }
     }
 }

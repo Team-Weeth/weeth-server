@@ -67,15 +67,27 @@ class File(
     }
 
     fun markDeleted(now: LocalDateTime) {
+        markDeleted(now, RETENTION_DAYS)
+    }
+
+    fun markDeletedForImmediateCleanup(now: LocalDateTime) {
+        markDeleted(now, IMMEDIATE_CLEANUP_DAYS)
+    }
+
+    private fun markDeleted(
+        now: LocalDateTime,
+        retentionDays: Long,
+    ) {
         if (isDeleted) return
 
         isDeleted = true
         deletedAt = now
-        hardDeleteAfter = now.plusDays(RETENTION_DAYS)
+        hardDeleteAfter = now.plusDays(retentionDays)
     }
 
     companion object {
         private const val RETENTION_DAYS = 30L
+        private const val IMMEDIATE_CLEANUP_DAYS = 0L
 
         fun createUploaded(
             fileName: String,

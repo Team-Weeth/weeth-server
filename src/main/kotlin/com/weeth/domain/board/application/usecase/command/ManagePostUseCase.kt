@@ -156,10 +156,13 @@ class ManagePostUseCase(
         }
     }
 
+    /**
+     * 게시글 파일 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
+     */
     private fun deletePostFiles(postId: Long) {
         val files = fileReader.findAll(FileOwnerType.POST, postId)
 
         val now = LocalDateTime.now(clock)
-        files.forEach { it.markDeleted(now) }
+        files.forEach { it.markDeletedForImmediateCleanup(now) }
     }
 }

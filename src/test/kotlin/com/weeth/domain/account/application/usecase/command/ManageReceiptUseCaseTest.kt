@@ -182,7 +182,7 @@ class ManageReceiptUseCaseTest :
 
                 oldFile.isDeleted shouldBe true
                 oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
@@ -230,7 +230,7 @@ class ManageReceiptUseCaseTest :
 
                 oldFile.isDeleted shouldBe true
                 oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(emptyList()) }
             }
@@ -253,7 +253,7 @@ class ManageReceiptUseCaseTest :
 
                 oldFile.isDeleted shouldBe true
                 oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock).plusDays(30)
+                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { receiptRepository.delete(receipt) }
             }

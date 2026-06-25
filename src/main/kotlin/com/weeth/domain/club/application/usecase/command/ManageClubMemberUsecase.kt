@@ -22,8 +22,6 @@ import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
-import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
@@ -47,7 +45,6 @@ class ManageClubMemberUsecase(
     private val clubJoinPolicy: ClubJoinPolicy,
     private val clubActivityDeletionPolicy: ClubActivityDeletionPolicy,
     private val fileRepository: FileRepository,
-    private val fileAccessUrlPort: FileAccessUrlPort,
     private val clock: Clock,
 ) {
     /**
@@ -97,14 +94,11 @@ class ManageClubMemberUsecase(
 
         request.profileImage?.let { profileImage ->
             val existingFiles =
-                fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+                fileRepository.findAllActiveByOwnerTypeAndOwnerId(
                     FileOwnerType.CLUB_MEMBER_PROFILE,
                     userId,
-                    FileStatus.UPLOADED,
                 )
-            if (existingFiles.isNotEmpty()) {
-                fileRepository.deleteAll(existingFiles)
-            }
+            markFilesDeleted(existingFiles)
 
             val file =
                 File.createUploaded(
@@ -129,14 +123,11 @@ class ManageClubMemberUsecase(
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         val existingFiles =
-            fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
+            fileRepository.findAllActiveByOwnerTypeAndOwnerId(
                 FileOwnerType.CLUB_MEMBER_PROFILE,
                 userId,
-                FileStatus.UPLOADED,
             )
-        if (existingFiles.isNotEmpty()) {
-            fileRepository.deleteAll(existingFiles)
-        }
+        markFilesDeleted(existingFiles)
 
         members.forEach { it.removeProfileImage() }
     }
@@ -185,5 +176,13 @@ class ManageClubMemberUsecase(
         val now = LocalDateTime.now(clock)
         clubActivityDeletionPolicy.markMemberActivitiesDeleted(member, now)
         member.leave(now)
+    }
+
+    /**
+     * 프로필 이미지 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
+     */
+    private fun markFilesDeleted(files: List<File>) {
+        val now = LocalDateTime.now(clock)
+        files.forEach { it.markDeletedForImmediateCleanup(now) }
     }
 }
