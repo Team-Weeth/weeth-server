@@ -15,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.test.util.ReflectionTestUtils
+import java.time.LocalDateTime
 import java.util.UUID
 
 @DataJpaTest
@@ -46,12 +47,30 @@ class FileRepositoryTest(
         }
 
         describe("findAll/exists") {
-            it("ownerType + ownerId + status 조건에 맞는 데이터만 조회한다") {
+            it("ownerType + ownerId + status 조건에 맞고 삭제 예약되지 않은 데이터만 조회한다") {
                 fileRepository.save(createTestFile("target-1.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
                 fileRepository.save(createTestFile("target-2.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
                 fileRepository.save(createTestFile("deleted.png", FileOwnerType.POST, 77L, FileStatus.DELETED))
+                fileRepository.save(
+                    createTestFile(
+                        fileName = "soft-deleted.png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 77L,
+                        status = FileStatus.UPLOADED,
+                        isDeleted = true,
+                    ),
+                )
                 fileRepository.save(createTestFile("other-owner.png", FileOwnerType.POST, 78L, FileStatus.UPLOADED))
                 fileRepository.save(createTestFile("other-type.png", FileOwnerType.RECEIPT, 77L, FileStatus.UPLOADED))
+                fileRepository.save(
+                    createTestFile(
+                        fileName = "only-soft-deleted.png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 99L,
+                        status = FileStatus.UPLOADED,
+                        isDeleted = true,
+                    ),
+                )
 
                 val uploaded = fileRepository.findAll(FileOwnerType.POST, 77L, FileStatus.UPLOADED)
                 val allStatus = fileRepository.findAll(FileOwnerType.POST, 77L, null)
@@ -63,6 +82,24 @@ class FileRepositoryTest(
                 fileRepository.exists(FileOwnerType.POST, 77L, FileStatus.UPLOADED).shouldBeTrue()
                 fileRepository.exists(FileOwnerType.POST, 77L, FileStatus.DELETED).shouldBeTrue()
                 fileRepository.exists(FileOwnerType.POST, 99L, FileStatus.UPLOADED).shouldBeFalse()
+            }
+
+            it("ownerId 목록 조회에서도 삭제 예약 파일은 제외한다") {
+                fileRepository.save(createTestFile("target-1.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
+                fileRepository.save(createTestFile("target-2.png", FileOwnerType.POST, 78L, FileStatus.UPLOADED))
+                fileRepository.save(
+                    createTestFile(
+                        fileName = "soft-deleted.png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 78L,
+                        status = FileStatus.UPLOADED,
+                        isDeleted = true,
+                    ),
+                )
+
+                val files = fileRepository.findAll(FileOwnerType.POST, listOf(77L, 78L), FileStatus.UPLOADED)
+
+                files.map { it.fileName }.sorted() shouldContainExactly listOf("target-1.png", "target-2.png")
             }
         }
 
@@ -92,6 +129,7 @@ private fun createTestFile(
     ownerType: FileOwnerType,
     ownerId: Long,
     status: FileStatus,
+    isDeleted: Boolean = false,
 ): File =
     File
         .createUploaded(
@@ -104,6 +142,9 @@ private fun createTestFile(
         ).also {
             if (status == FileStatus.DELETED) {
                 ReflectionTestUtils.setField(it, "status", FileStatus.DELETED)
+            }
+            if (isDeleted) {
+                it.markDeleted(LocalDateTime.of(2026, 6, 25, 12, 0))
             }
         }
 

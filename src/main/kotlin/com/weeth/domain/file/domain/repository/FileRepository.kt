@@ -19,12 +19,34 @@ interface FileRepository :
         status: FileStatus,
     ): List<File>
 
+    fun findAllByOwnerTypeAndOwnerIdAndIsDeletedFalse(
+        ownerType: FileOwnerType,
+        ownerId: Long,
+    ): List<File>
+
+    fun findAllByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(
+        ownerType: FileOwnerType,
+        ownerId: Long,
+        status: FileStatus,
+    ): List<File>
+
     fun findAllByOwnerTypeAndOwnerIdIn(
         ownerType: FileOwnerType,
         ownerIds: List<Long>,
     ): List<File>
 
     fun findAllByOwnerTypeAndOwnerIdInAndStatus(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+        status: FileStatus,
+    ): List<File>
+
+    fun findAllByOwnerTypeAndOwnerIdInAndIsDeletedFalse(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+    ): List<File>
+
+    fun findAllByOwnerTypeAndOwnerIdInAndStatusAndIsDeletedFalse(
         ownerType: FileOwnerType,
         ownerIds: List<Long>,
         status: FileStatus,
@@ -41,13 +63,39 @@ interface FileRepository :
         status: FileStatus,
     ): Boolean
 
+    fun existsByOwnerTypeAndOwnerIdAndIsDeletedFalse(
+        ownerType: FileOwnerType,
+        ownerId: Long,
+    ): Boolean
+
+    fun existsByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(
+        ownerType: FileOwnerType,
+        ownerId: Long,
+        status: FileStatus,
+    ): Boolean
+
+    fun findAllActiveByOwnerTypeAndOwnerId(
+        ownerType: FileOwnerType,
+        ownerId: Long,
+    ): List<File> = findAllByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(ownerType, ownerId, FileStatus.UPLOADED)
+
+    fun findAllActiveByOwnerTypeAndOwnerIdIn(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+    ): List<File> =
+        if (ownerIds.isEmpty()) {
+            emptyList()
+        } else {
+            findAllByOwnerTypeAndOwnerIdInAndStatusAndIsDeletedFalse(ownerType, ownerIds, FileStatus.UPLOADED)
+        }
+
     override fun findAll(
         ownerType: FileOwnerType,
         ownerId: Long,
         status: FileStatus?,
     ): List<File> =
-        status?.let { findAllByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, it) }
-            ?: findAllByOwnerTypeAndOwnerId(ownerType, ownerId)
+        status?.let { findAllByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(ownerType, ownerId, it) }
+            ?: findAllByOwnerTypeAndOwnerIdAndIsDeletedFalse(ownerType, ownerId)
 
     override fun findAll(
         ownerType: FileOwnerType,
@@ -57,8 +105,8 @@ interface FileRepository :
         if (ownerIds.isEmpty()) {
             return emptyList()
         }
-        return status?.let { findAllByOwnerTypeAndOwnerIdInAndStatus(ownerType, ownerIds, it) }
-            ?: findAllByOwnerTypeAndOwnerIdIn(ownerType, ownerIds)
+        return status?.let { findAllByOwnerTypeAndOwnerIdInAndStatusAndIsDeletedFalse(ownerType, ownerIds, it) }
+            ?: findAllByOwnerTypeAndOwnerIdInAndIsDeletedFalse(ownerType, ownerIds)
     }
 
     override fun exists(
@@ -66,6 +114,6 @@ interface FileRepository :
         ownerId: Long,
         status: FileStatus?,
     ): Boolean =
-        status?.let { existsByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, it) }
-            ?: existsByOwnerTypeAndOwnerId(ownerType, ownerId)
+        status?.let { existsByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(ownerType, ownerId, it) }
+            ?: existsByOwnerTypeAndOwnerIdAndIsDeletedFalse(ownerType, ownerId)
 }
