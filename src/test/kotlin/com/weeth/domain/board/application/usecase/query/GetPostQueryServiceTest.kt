@@ -155,7 +155,7 @@ class GetPostQueryServiceTest :
                 every { postRepository.findByIdAndIsDeletedFalse(1L) } returns post
                 every { commentReader.findAllByPostId(any<Long>()) } returns emptyList()
                 every { getCommentQueryService.toCommentTreeResponses(any()) } returns comments
-                every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns files
+                every { fileReader.findAll(FileOwnerType.POST, post.id, FileStatus.UPLOADED) } returns files
                 every {
                     postLikeRepository.existsByPostAndUserIdAndIsActiveTrueAndDeletedAtIsNull(
                         post,
@@ -173,6 +173,7 @@ class GetPostQueryServiceTest :
                 result.id shouldBe 1L
                 result.comments.size shouldBe 1
                 result.fileUrls.size shouldBe 1
+                verify(exactly = 1) { fileReader.findAll(FileOwnerType.POST, post.id, FileStatus.UPLOADED) }
             }
 
             it("비공개 게시판 게시글은 일반 멤버에게 노출하지 않는다") {
@@ -304,7 +305,8 @@ class GetPostQueryServiceTest :
                 every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns
                     listOf(board)
                 every { postRepository.findAllActiveByBoardIds(any(), any()) } returns postSlice
-                every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
+                every { fileReader.findAll(FileOwnerType.POST, listOf(post.id), FileStatus.UPLOADED) } returns
+                    emptyList()
                 every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
                 every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
 
@@ -355,14 +357,15 @@ class GetPostQueryServiceTest :
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
                 every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(1L, clubId) } returns board
                 every { postRepository.findAllActiveByBoardId(1L, any()) } returns postSlice
-                every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
+                every { fileReader.findAll(FileOwnerType.POST, listOf(post.id), FileStatus.UPLOADED) } returns
+                    emptyList()
                 every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
                 every { postMapper.toListResponse(any(), any(), any(), any(), any()) } returns response
 
                 val result = queryService.findPosts(clubId, userId, 1L, 0, 10)
 
                 result.content.size shouldBe 1
-                verify(exactly = 1) { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) }
+                verify(exactly = 1) { fileReader.findAll(FileOwnerType.POST, listOf(post.id), FileStatus.UPLOADED) }
             }
         }
     })

@@ -47,6 +47,45 @@ class FileRepositoryTest(
         }
 
         describe("findAll/exists") {
+            it("기본 단건 owner 조회는 업로드 상태이고 삭제 예약되지 않은 파일만 반환한다") {
+                fileRepository.save(createTestFile("target.png", FileOwnerType.COMMENT, 77L, FileStatus.UPLOADED))
+                fileRepository.save(
+                    createTestFile("status-deleted.png", FileOwnerType.COMMENT, 77L, FileStatus.DELETED),
+                )
+                fileRepository.save(
+                    createTestFile(
+                        fileName = "soft-deleted.png",
+                        ownerType = FileOwnerType.COMMENT,
+                        ownerId = 77L,
+                        status = FileStatus.UPLOADED,
+                        isDeleted = true,
+                    ),
+                )
+
+                val files = fileRepository.findAll(FileOwnerType.COMMENT, 77L)
+
+                files.map { it.fileName } shouldContainExactly listOf("target.png")
+            }
+
+            it("기본 ownerId 목록 조회는 업로드 상태이고 삭제 예약되지 않은 파일만 반환한다") {
+                fileRepository.save(createTestFile("target-1.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
+                fileRepository.save(createTestFile("target-2.png", FileOwnerType.POST, 78L, FileStatus.UPLOADED))
+                fileRepository.save(createTestFile("status-deleted.png", FileOwnerType.POST, 78L, FileStatus.DELETED))
+                fileRepository.save(
+                    createTestFile(
+                        fileName = "soft-deleted.png",
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 78L,
+                        status = FileStatus.UPLOADED,
+                        isDeleted = true,
+                    ),
+                )
+
+                val files = fileRepository.findAll(FileOwnerType.POST, listOf(77L, 78L))
+
+                files.map { it.fileName }.sorted() shouldContainExactly listOf("target-1.png", "target-2.png")
+            }
+
             it("ownerType + ownerId + status 조건에 맞고 삭제 예약되지 않은 데이터만 조회한다") {
                 fileRepository.save(createTestFile("target-1.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
                 fileRepository.save(createTestFile("target-2.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
