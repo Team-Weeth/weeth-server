@@ -46,7 +46,7 @@ interface FileRepository :
     ): Boolean
 
     // Bulk update는 JPA auditing을 우회하여 modifiedAt을 명시적으로 갱신
-    @Modifying(flushAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
         """
         UPDATE File f
@@ -68,7 +68,7 @@ interface FileRepository :
     ): Int
 
     // Bulk update는 JPA auditing을 우회하여 modifiedAt을 명시적으로 갱신
-    @Modifying(flushAutomatically = true)
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
         """
         UPDATE File f

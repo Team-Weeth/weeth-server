@@ -4,6 +4,7 @@ import com.weeth.config.TestContainersConfig
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.enums.FileStatus
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.booleans.shouldBeFalse
 import io.kotest.matchers.booleans.shouldBeTrue
@@ -189,6 +190,25 @@ class FileRepositoryTest(
                 row(otherOwner.id).booleanBy("is_deleted").shouldBeFalse()
             }
 
+            it("단건 bulk 삭제 후 같은 트랜잭션의 재조회에서도 갱신 상태를 반환한다") {
+                val deletedAt = LocalDateTime.of(2026, 6, 25, 12, 0)
+                val target =
+                    fileRepository.save(createTestFile("target.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
+
+                fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                    ownerType = FileOwnerType.POST,
+                    ownerId = 77L,
+                    deletedAt = deletedAt,
+                    hardDeleteAfter = deletedAt.plusDays(30),
+                )
+
+                fileRepository
+                    .findById(target.id)
+                    .orElseThrow()
+                    .isDeleted
+                    .shouldBeTrue()
+            }
+
             it("ownerId 목록의 활성 파일을 한 번에 삭제 예약한다") {
                 val deletedAt = LocalDateTime.of(2026, 6, 25, 12, 0)
                 val hardDeleteAfter = deletedAt.plusDays(30)
@@ -239,6 +259,14 @@ class FileRepositoryTest(
                 selectedKey shouldBe "idx_file_owner_type_owner_id"
             }
         }
+
+        describe("jdbc row helpers") {
+            it("지원하지 않는 boolean 값은 실패시킨다") {
+                shouldThrow<IllegalStateException> {
+                    mapOf("is_deleted" to "Y").booleanBy("is_deleted")
+                }
+            }
+        }
     })
 
 private fun createTestFile(
@@ -276,7 +304,7 @@ private fun Map<String, Any?>.booleanBy(key: String): Boolean =
     when (val value = entries.first { it.key.equals(key, ignoreCase = true) }.value) {
         is Boolean -> value
         is Number -> value.toInt() != 0
-        else -> value.toString().toBoolean()
+        else -> error("Unsupported Boolean value: $value")
     }
 
 private fun Map<String, Any?>.localDateTimeBy(key: String): LocalDateTime =
