@@ -89,17 +89,16 @@ class ClubActivityDeletionPolicy(
                 if (postIds.isEmpty()) return@forEach
 
                 val postsById = postRepository.findAllByIdsWithLock(postIds).associateBy { it.id }
-                if (postsById.isEmpty()) return@forEach
 
                 val likes =
                     postLikeRepository.findAllActiveByUserIdAndPostIds(
                         userId = userId,
-                        postIds = postsById.keys.toList(),
+                        postIds = postIds,
                     )
 
                 for (like in likes) {
                     if (!like.markDeleted(now)) continue
-                    postsById.getValue(like.post.id).decreaseLikeCount()
+                    postsById[like.post.id]?.decreaseLikeCount()
                 }
             }
     }

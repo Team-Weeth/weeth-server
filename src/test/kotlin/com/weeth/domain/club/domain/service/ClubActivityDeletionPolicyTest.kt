@@ -97,6 +97,45 @@ class ClubActivityDeletionPolicyTest :
                 verify(exactly = 0) { postLikeRepository.findAllActiveByUserIdAndPostIds(any(), any()) }
             }
 
+            it("삭제된 게시글에 남은 활성 좋아요도 삭제 마킹한다") {
+                val club = ClubTestFixture.createClub(id = 1L)
+                val member =
+                    ClubMemberTestFixture.createActiveMember(
+                        club = club,
+                        user = UserTestFixture.createActiveUser1(id = 10L),
+                    )
+                val post =
+                    PostTestFixture.create(
+                        board = BoardTestFixture.create(club = club),
+                        initialLikeCount = 1,
+                    )
+                ReflectionTestUtils.setField(post, "id", 100L)
+                post.markDeleted()
+                val like = PostLikeTestFixture.createActive(post = post, userId = member.user.id)
+                val now = LocalDateTime.of(2026, 5, 19, 12, 0)
+
+                every {
+                    postLikeRepository.findActivePostIdsByUserIdAndClubIdIn(member.user.id, listOf(club.id))
+                } returns listOf(post.id)
+                every { postRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
+                every { commentRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
+                every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(any(), any(), any(), any()) } returns 0
+                every { postRepository.findAllByIdsWithLock(listOf(post.id)) } returns emptyList()
+                every {
+                    postLikeRepository.findAllActiveByUserIdAndPostIds(member.user.id, listOf(post.id))
+                } returns listOf(like)
+
+                policy.markMemberActivitiesDeleted(member, now)
+
+                like.isActive shouldBe false
+                like.deletedAt shouldBe now
+                post.likeCount shouldBe 1
+                verify(exactly = 1) { postRepository.findAllByIdsWithLock(listOf(post.id)) }
+                verify(exactly = 1) {
+                    postLikeRepository.findAllActiveByUserIdAndPostIds(member.user.id, listOf(post.id))
+                }
+            }
+
             it("작성한 게시글과 댓글의 파일을 30일 보관 삭제 예약한다") {
                 val club = ClubTestFixture.createClub(id = 1L)
                 val member =
