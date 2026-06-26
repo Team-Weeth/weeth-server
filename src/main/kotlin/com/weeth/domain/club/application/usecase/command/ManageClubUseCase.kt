@@ -249,7 +249,7 @@ class ManageClubUseCase(
             ownerType = ownerType,
             ownerId = ownerId,
             deletedAt = now,
-            hardDeleteAfter = now,
+            hardDeleteAfter = File.immediateHardDeleteAfter(now),
         )
     }
 

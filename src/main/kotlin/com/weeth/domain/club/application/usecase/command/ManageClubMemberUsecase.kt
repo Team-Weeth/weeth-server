@@ -177,7 +177,7 @@ class ManageClubMemberUsecase(
             ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
             ownerId = userId,
             deletedAt = now,
-            hardDeleteAfter = now,
+            hardDeleteAfter = File.immediateHardDeleteAfter(now),
         )
     }
 }

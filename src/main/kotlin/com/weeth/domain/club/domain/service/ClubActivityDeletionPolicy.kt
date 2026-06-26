@@ -66,7 +66,7 @@ class ClubActivityDeletionPolicy(
             ownerType = ownerType,
             ownerIds = ownerIds,
             deletedAt = now,
-            hardDeleteAfter = now.plusDays(File.RETENTION_DAYS),
+            hardDeleteAfter = File.retainedHardDeleteAfter(now),
         )
     }
 

@@ -63,7 +63,7 @@ class LeaveUserUseCase(
             ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
             ownerId = userId,
             deletedAt = now,
-            hardDeleteAfter = now.plusDays(File.RETENTION_DAYS),
+            hardDeleteAfter = File.retainedHardDeleteAfter(now),
         )
     }
 

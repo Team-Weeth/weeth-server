@@ -86,8 +86,12 @@ class File(
     }
 
     companion object {
-        const val RETENTION_DAYS = 30L
+        private const val RETENTION_DAYS = 30L
         private const val IMMEDIATE_CLEANUP_DAYS = 0L
+
+        fun retainedHardDeleteAfter(now: LocalDateTime): LocalDateTime = now.plusDays(RETENTION_DAYS)
+
+        fun immediateHardDeleteAfter(now: LocalDateTime): LocalDateTime = now.plusDays(IMMEDIATE_CLEANUP_DAYS)
 
         fun createUploaded(
             fileName: String,

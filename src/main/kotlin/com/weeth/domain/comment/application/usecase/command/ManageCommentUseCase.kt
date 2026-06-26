@@ -14,6 +14,7 @@ import com.weeth.domain.comment.domain.entity.Comment
 import com.weeth.domain.comment.domain.repository.CommentRepository
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
@@ -146,7 +147,7 @@ class ManageCommentUseCase(
             ownerType = FileOwnerType.COMMENT,
             ownerId = commentId,
             deletedAt = now,
-            hardDeleteAfter = now,
+            hardDeleteAfter = File.immediateHardDeleteAfter(now),
         )
     }
 

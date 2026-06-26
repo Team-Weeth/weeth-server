@@ -12,6 +12,7 @@ import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -104,7 +105,7 @@ class ManageReceiptUseCase(
             ownerType = FileOwnerType.RECEIPT,
             ownerId = receiptId,
             deletedAt = now,
-            hardDeleteAfter = now,
+            hardDeleteAfter = File.immediateHardDeleteAfter(now),
         )
     }
 }

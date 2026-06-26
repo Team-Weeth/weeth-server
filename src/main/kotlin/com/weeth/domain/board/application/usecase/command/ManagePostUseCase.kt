@@ -17,6 +17,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
@@ -163,7 +164,7 @@ class ManagePostUseCase(
             ownerType = FileOwnerType.POST,
             ownerId = postId,
             deletedAt = now,
-            hardDeleteAfter = now,
+            hardDeleteAfter = File.immediateHardDeleteAfter(now),
         )
     }
 }
