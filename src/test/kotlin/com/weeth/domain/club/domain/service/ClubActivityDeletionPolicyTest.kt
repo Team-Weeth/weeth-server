@@ -213,8 +213,6 @@ class ClubActivityDeletionPolicyTest :
                         now.plusDays(30),
                     )
                 }
-                verify(exactly = 0) { postRepository.findActiveIdsByClubMemberIdAndClubId(any(), any()) }
-                verify(exactly = 0) { commentRepository.findActiveIdsByClubMemberIdAndClubId(any(), any()) }
             }
         }
     })

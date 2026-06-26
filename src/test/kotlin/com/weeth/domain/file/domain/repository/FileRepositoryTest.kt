@@ -27,7 +27,7 @@ class FileRepositoryTest(
 ) : DescribeSpec({
         fun row(fileId: Long): Map<String, Any?> =
             jdbcTemplate.queryForMap(
-                "SELECT is_deleted, deleted_at, hard_delete_after FROM `file` WHERE id = ?",
+                "SELECT is_deleted, deleted_at, hard_delete_after, modified_at FROM `file` WHERE id = ?",
                 fileId,
             )
 
@@ -183,6 +183,7 @@ class FileRepositoryTest(
                 row(target.id).booleanBy("is_deleted").shouldBeTrue()
                 row(target.id).localDateTimeBy("deleted_at") shouldBe deletedAt
                 row(target.id).localDateTimeBy("hard_delete_after") shouldBe hardDeleteAfter
+                row(target.id).localDateTimeBy("modified_at") shouldBe deletedAt
                 row(statusDeleted.id).booleanBy("is_deleted").shouldBeFalse()
                 row(alreadyDeleted.id).localDateTimeBy("deleted_at") shouldBe LocalDateTime.of(2026, 6, 25, 12, 0)
                 row(otherOwner.id).booleanBy("is_deleted").shouldBeFalse()
@@ -211,8 +212,10 @@ class FileRepositoryTest(
                 updatedCount shouldBe 2
                 row(first.id).booleanBy("is_deleted").shouldBeTrue()
                 row(first.id).localDateTimeBy("hard_delete_after") shouldBe hardDeleteAfter
+                row(first.id).localDateTimeBy("modified_at") shouldBe deletedAt
                 row(second.id).booleanBy("is_deleted").shouldBeTrue()
                 row(second.id).localDateTimeBy("hard_delete_after") shouldBe hardDeleteAfter
+                row(second.id).localDateTimeBy("modified_at") shouldBe deletedAt
                 row(otherOwner.id).booleanBy("is_deleted").shouldBeFalse()
             }
         }

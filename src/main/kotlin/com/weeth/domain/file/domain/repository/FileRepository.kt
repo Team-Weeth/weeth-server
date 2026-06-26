@@ -51,7 +51,8 @@ interface FileRepository :
         UPDATE File f
         SET f.isDeleted = true,
             f.deletedAt = :deletedAt,
-            f.hardDeleteAfter = :hardDeleteAfter
+            f.hardDeleteAfter = :hardDeleteAfter,
+            f.modifiedAt = :deletedAt
         WHERE f.ownerType = :ownerType
           AND f.ownerId = :ownerId
           AND f.status = com.weeth.domain.file.domain.enums.FileStatus.UPLOADED
@@ -71,7 +72,8 @@ interface FileRepository :
         UPDATE File f
         SET f.isDeleted = true,
             f.deletedAt = :deletedAt,
-            f.hardDeleteAfter = :hardDeleteAfter
+            f.hardDeleteAfter = :hardDeleteAfter,
+            f.modifiedAt = :deletedAt
         WHERE f.ownerType = :ownerType
           AND f.ownerId IN :ownerIds
           AND f.status = com.weeth.domain.file.domain.enums.FileStatus.UPLOADED
