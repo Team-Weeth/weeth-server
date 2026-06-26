@@ -16,8 +16,6 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -40,7 +38,6 @@ class ManageCommentUseCaseTest :
         val commentRepository = mockk<CommentRepository>(relaxUnitFun = true)
         val postRepository = mockk<PostRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
-        val fileReader = mockk<FileReader>()
         val fileRepository = mockk<FileRepository>(relaxed = true)
         val fileMapper = mockk<FileMapper>()
 
@@ -49,17 +46,15 @@ class ManageCommentUseCaseTest :
                 commentRepository,
                 postRepository,
                 clubMemberPolicy,
-                fileReader,
                 fileRepository,
                 fileMapper,
                 clock,
             )
 
         beforeTest {
-            clearMocks(commentRepository, postRepository, clubMemberPolicy, fileReader, fileRepository, fileMapper)
+            clearMocks(commentRepository, postRepository, clubMemberPolicy, fileRepository, fileMapper)
             every { fileMapper.toFileList(any(), FileOwnerType.COMMENT, any()) } returns emptyList()
             every { commentRepository.save(any()) } answers { firstArg() }
-            every { fileReader.findAll(FileOwnerType.COMMENT, any<Long>(), any<FileStatus>()) } returns emptyList()
             every { commentRepository.delete(any()) } just runs
         }
 
@@ -123,15 +118,6 @@ class ManageCommentUseCaseTest :
                                 ),
                             ),
                     )
-                val oldFile =
-                    File.createUploaded(
-                        fileName = "old.png",
-                        storageKey = "COMMENT/2026-02/123e4567-e89b-12d3-a456-426614174002_old.png",
-                        fileSize = 200L,
-                        contentType = "image/png",
-                        ownerType = FileOwnerType.COMMENT,
-                        ownerId = comment.id,
-                    )
                 val newFile =
                     File.createUploaded(
                         fileName = "new.png",
@@ -143,15 +129,19 @@ class ManageCommentUseCaseTest :
                     )
 
                 every { commentRepository.findByIdAndPostId(202L, 10L) } returns comment
-                every { fileReader.findAll(FileOwnerType.COMMENT, 202L, any()) } returns listOf(oldFile)
                 every { fileMapper.toFileList(dto.files, FileOwnerType.COMMENT, 202L) } returns listOf(newFile)
 
                 useCase.updatePostComment(dto, postId = 10L, commentId = 202L, userId = 1L)
 
                 comment.content shouldBe "new content"
-                oldFile.isDeleted shouldBe true
-                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.COMMENT,
+                        comment.id,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify { fileRepository.saveAll(listOf(newFile)) }
             }

@@ -245,8 +245,12 @@ class ManageClubUseCase(
         ownerId: Long,
     ) {
         val now = LocalDateTime.now(clock)
-        val files = fileRepository.findAllActiveByOwnerTypeAndOwnerId(ownerType, ownerId)
-        files.forEach { it.markDeletedForImmediateCleanup(now) }
+        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+            ownerType = ownerType,
+            ownerId = ownerId,
+            deletedAt = now,
+            hardDeleteAfter = now,
+        )
     }
 
     private fun validatePrimaryContactEmail(

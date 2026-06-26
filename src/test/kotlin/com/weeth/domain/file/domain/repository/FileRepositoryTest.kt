@@ -25,6 +25,12 @@ class FileRepositoryTest(
     private val fileRepository: FileRepository,
     private val jdbcTemplate: JdbcTemplate,
 ) : DescribeSpec({
+        fun row(fileId: Long): Map<String, Any?> =
+            jdbcTemplate.queryForMap(
+                "SELECT is_deleted, deleted_at, hard_delete_after FROM `file` WHERE id = ?",
+                fileId,
+            )
+
         describe("save") {
             it("파일 정보를 저장하고 조회한다") {
                 val saved =
@@ -142,6 +148,75 @@ class FileRepositoryTest(
             }
         }
 
+        describe("bulk mark deleted") {
+            it("단건 owner의 활성 파일만 삭제 예약한다") {
+                val deletedAt = LocalDateTime.of(2026, 6, 25, 12, 0)
+                val hardDeleteAfter = deletedAt
+                val target =
+                    fileRepository.save(createTestFile("target.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
+                val statusDeleted =
+                    fileRepository.save(
+                        createTestFile("status-deleted.png", FileOwnerType.POST, 77L, FileStatus.DELETED),
+                    )
+                val alreadyDeleted =
+                    fileRepository.save(
+                        createTestFile(
+                            fileName = "already-deleted.png",
+                            ownerType = FileOwnerType.POST,
+                            ownerId = 77L,
+                            status = FileStatus.UPLOADED,
+                            isDeleted = true,
+                        ),
+                    )
+                val otherOwner =
+                    fileRepository.save(createTestFile("other-owner.png", FileOwnerType.POST, 78L, FileStatus.UPLOADED))
+
+                val updatedCount =
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        ownerType = FileOwnerType.POST,
+                        ownerId = 77L,
+                        deletedAt = deletedAt,
+                        hardDeleteAfter = hardDeleteAfter,
+                    )
+
+                updatedCount shouldBe 1
+                row(target.id).booleanBy("is_deleted").shouldBeTrue()
+                row(target.id).localDateTimeBy("deleted_at") shouldBe deletedAt
+                row(target.id).localDateTimeBy("hard_delete_after") shouldBe hardDeleteAfter
+                row(statusDeleted.id).booleanBy("is_deleted").shouldBeFalse()
+                row(alreadyDeleted.id).localDateTimeBy("deleted_at") shouldBe LocalDateTime.of(2026, 6, 25, 12, 0)
+                row(otherOwner.id).booleanBy("is_deleted").shouldBeFalse()
+            }
+
+            it("ownerId 목록의 활성 파일을 한 번에 삭제 예약한다") {
+                val deletedAt = LocalDateTime.of(2026, 6, 25, 12, 0)
+                val hardDeleteAfter = deletedAt.plusDays(30)
+                val first =
+                    fileRepository.save(createTestFile("first.png", FileOwnerType.COMMENT, 77L, FileStatus.UPLOADED))
+                val second =
+                    fileRepository.save(createTestFile("second.png", FileOwnerType.COMMENT, 78L, FileStatus.UPLOADED))
+                val otherOwner =
+                    fileRepository.save(
+                        createTestFile("other-owner.png", FileOwnerType.COMMENT, 79L, FileStatus.UPLOADED),
+                    )
+
+                val updatedCount =
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
+                        ownerType = FileOwnerType.COMMENT,
+                        ownerIds = listOf(77L, 78L),
+                        deletedAt = deletedAt,
+                        hardDeleteAfter = hardDeleteAfter,
+                    )
+
+                updatedCount shouldBe 2
+                row(first.id).booleanBy("is_deleted").shouldBeTrue()
+                row(first.id).localDateTimeBy("hard_delete_after") shouldBe hardDeleteAfter
+                row(second.id).booleanBy("is_deleted").shouldBeTrue()
+                row(second.id).localDateTimeBy("hard_delete_after") shouldBe hardDeleteAfter
+                row(otherOwner.id).booleanBy("is_deleted").shouldBeFalse()
+            }
+        }
+
         describe("index usage") {
             it("owner_type + owner_id 조건 조회 시 복합 인덱스를 사용한다") {
                 fileRepository.save(createTestFile("index-target.png", FileOwnerType.RECEIPT, 55L, FileStatus.UPLOADED))
@@ -193,3 +268,17 @@ private fun Map<String, Any?>.valueBy(key: String): String =
             it.key.equals(key, ignoreCase = true)
         }.value
         .toString()
+
+private fun Map<String, Any?>.booleanBy(key: String): Boolean =
+    when (val value = entries.first { it.key.equals(key, ignoreCase = true) }.value) {
+        is Boolean -> value
+        is Number -> value.toInt() != 0
+        else -> value.toString().toBoolean()
+    }
+
+private fun Map<String, Any?>.localDateTimeBy(key: String): LocalDateTime =
+    when (val value = entries.first { it.key.equals(key, ignoreCase = true) }.value) {
+        is java.sql.Timestamp -> value.toLocalDateTime()
+        is LocalDateTime -> value
+        else -> error("Unsupported LocalDateTime value: $value")
+    }

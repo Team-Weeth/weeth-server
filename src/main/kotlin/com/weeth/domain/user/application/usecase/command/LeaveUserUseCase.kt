@@ -3,6 +3,7 @@ package com.weeth.domain.user.application.usecase.command
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserHasLeadClubException
@@ -58,9 +59,12 @@ class LeaveUserUseCase(
         userId: Long,
         now: LocalDateTime,
     ) {
-        fileRepository
-            .findAllActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
-            .forEach { it.markDeleted(now) }
+        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+            ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
+            ownerId = userId,
+            deletedAt = now,
+            hardDeleteAfter = now.plusDays(File.RETENTION_DAYS),
+        )
     }
 
     private fun revokeTokensAfterCommit(userId: Long) {

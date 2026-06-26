@@ -4,6 +4,7 @@ import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.comment.domain.repository.CommentRepository
+import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
@@ -61,9 +62,12 @@ class ClubActivityDeletionPolicy(
     ) {
         if (ownerIds.isEmpty()) return
 
-        fileRepository
-            .findAllActiveByOwnerTypeAndOwnerIdIn(ownerType, ownerIds)
-            .forEach { it.markDeleted(now) }
+        fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
+            ownerType = ownerType,
+            ownerIds = ownerIds,
+            deletedAt = now,
+            hardDeleteAfter = now.plusDays(File.RETENTION_DAYS),
+        )
     }
 
     private fun markMembersPostLikesDeleted(

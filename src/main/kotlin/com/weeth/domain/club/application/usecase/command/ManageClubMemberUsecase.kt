@@ -93,12 +93,7 @@ class ManageClubMemberUsecase(
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         request.profileImage?.let { profileImage ->
-            val existingFiles =
-                fileRepository.findAllActiveByOwnerTypeAndOwnerId(
-                    FileOwnerType.CLUB_MEMBER_PROFILE,
-                    userId,
-                )
-            markFilesDeleted(existingFiles)
+            markFilesDeleted(userId)
 
             val file =
                 File.createUploaded(
@@ -122,12 +117,7 @@ class ManageClubMemberUsecase(
         val members = clubMemberRepository.findAllActiveByUserIdWithLock(userId)
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
-        val existingFiles =
-            fileRepository.findAllActiveByOwnerTypeAndOwnerId(
-                FileOwnerType.CLUB_MEMBER_PROFILE,
-                userId,
-            )
-        markFilesDeleted(existingFiles)
+        markFilesDeleted(userId)
 
         members.forEach { it.removeProfileImage() }
     }
@@ -181,8 +171,13 @@ class ManageClubMemberUsecase(
     /**
      * 프로필 이미지 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
      */
-    private fun markFilesDeleted(files: List<File>) {
+    private fun markFilesDeleted(userId: Long) {
         val now = LocalDateTime.now(clock)
-        files.forEach { it.markDeletedForImmediateCleanup(now) }
+        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+            ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
+            ownerId = userId,
+            deletedAt = now,
+            hardDeleteAfter = now,
+        )
     }
 }

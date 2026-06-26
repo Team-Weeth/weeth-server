@@ -16,7 +16,6 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -38,7 +37,6 @@ class ManageReceiptUseCaseTest :
         val clock = Clock.fixed(Instant.parse("2026-06-25T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val receiptRepository = mockk<ReceiptRepository>(relaxUnitFun = true)
         val accountRepository = mockk<AccountRepository>()
-        val fileReader = mockk<FileReader>()
         val fileRepository = mockk<FileRepository>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>(relaxed = true)
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
@@ -47,7 +45,6 @@ class ManageReceiptUseCaseTest :
             ManageReceiptUseCase(
                 receiptRepository,
                 accountRepository,
-                fileReader,
                 fileRepository,
                 cardinalReader,
                 clubPermissionPolicy,
@@ -61,7 +58,6 @@ class ManageReceiptUseCaseTest :
             clearMocks(
                 receiptRepository,
                 accountRepository,
-                fileReader,
                 fileRepository,
                 cardinalReader,
                 clubPermissionPolicy,
@@ -168,21 +164,23 @@ class ManageReceiptUseCaseTest :
                         40,
                         listOf(FileSaveRequest("new.png", "TEMP/2026-02/new.png", 100L, "image/png")),
                     )
-                val oldFile = createReceiptFile("old.png", receiptId)
-                val oldFiles = listOf(oldFile)
                 val newFiles = listOf(mockk<File>())
 
                 stubExistingCardinal(clubId, request.cardinal)
                 every { accountRepository.findByClubIdAndCardinal(clubId, request.cardinal) } returns account
                 every { receiptRepository.findById(receiptId) } returns Optional.of(receipt)
-                every { fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null) } returns oldFiles
                 every { fileMapper.toFileList(request.files, FileOwnerType.RECEIPT, receiptId) } returns newFiles
 
                 useCase.update(clubId, userId, receiptId, request)
 
-                oldFile.isDeleted shouldBe true
-                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.RECEIPT,
+                        receiptId,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
@@ -217,20 +215,21 @@ class ManageReceiptUseCaseTest :
                         40,
                         emptyList(),
                     )
-                val oldFile = createReceiptFile("old.png", receiptId)
-                val oldFiles = listOf(oldFile)
-
                 stubExistingCardinal(clubId, request.cardinal)
                 every { accountRepository.findByClubIdAndCardinal(clubId, request.cardinal) } returns account
                 every { receiptRepository.findById(receiptId) } returns Optional.of(receipt)
-                every { fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null) } returns oldFiles
                 every { fileMapper.toFileList(emptyList(), FileOwnerType.RECEIPT, receiptId) } returns emptyList()
 
                 useCase.update(clubId, userId, receiptId, request)
 
-                oldFile.isDeleted shouldBe true
-                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.RECEIPT,
+                        receiptId,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(emptyList()) }
             }
@@ -243,17 +242,18 @@ class ManageReceiptUseCaseTest :
                 val clubId = account.club.id
                 val receipt = ReceiptTestFixture.createReceipt(id = receiptId, amount = 10_000, account = account)
                 account.spend(Money.of(receipt.amount))
-                val oldFile = createReceiptFile("old.png", receiptId)
-                val files = listOf(oldFile)
-
                 every { receiptRepository.findById(receiptId) } returns Optional.of(receipt)
-                every { fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null) } returns files
 
                 useCase.delete(clubId, userId, receiptId)
 
-                oldFile.isDeleted shouldBe true
-                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.RECEIPT,
+                        receiptId,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { receiptRepository.delete(receipt) }
             }

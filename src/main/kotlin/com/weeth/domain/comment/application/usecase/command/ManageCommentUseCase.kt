@@ -15,7 +15,6 @@ import com.weeth.domain.comment.domain.repository.CommentRepository
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,7 +26,6 @@ class ManageCommentUseCase(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository, // 타 도메인 이므로 Reader 사용 검토
     private val clubMemberPolicy: ClubMemberPolicy,
-    private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val fileMapper: FileMapper,
     private val clock: Clock,
@@ -143,10 +141,13 @@ class ManageCommentUseCase(
      * 댓글 파일 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
      */
     private fun deleteCommentFiles(commentId: Long) {
-        val files = fileReader.findAll(FileOwnerType.COMMENT, commentId)
-
         val now = LocalDateTime.now(clock)
-        files.forEach { it.markDeletedForImmediateCleanup(now) }
+        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+            ownerType = FileOwnerType.COMMENT,
+            ownerId = commentId,
+            deletedAt = now,
+            hardDeleteAfter = now,
+        )
     }
 
     private fun ensureOwner(

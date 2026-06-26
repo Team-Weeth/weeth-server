@@ -18,7 +18,6 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -32,7 +31,6 @@ class ManagePostUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val fileRepository: FileRepository,
-    private val fileReader: FileReader,
     private val fileMapper: FileMapper,
     private val postMapper: PostMapper,
     private val clock: Clock,
@@ -160,9 +158,12 @@ class ManagePostUseCase(
      * 게시글 파일 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
      */
     private fun deletePostFiles(postId: Long) {
-        val files = fileReader.findAll(FileOwnerType.POST, postId)
-
         val now = LocalDateTime.now(clock)
-        files.forEach { it.markDeletedForImmediateCleanup(now) }
+        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+            ownerType = FileOwnerType.POST,
+            ownerId = postId,
+            deletedAt = now,
+            hardDeleteAfter = now,
+        )
     }
 }

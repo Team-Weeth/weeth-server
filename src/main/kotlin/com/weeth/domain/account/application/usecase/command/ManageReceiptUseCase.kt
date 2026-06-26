@@ -13,7 +13,6 @@ import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -25,7 +24,6 @@ import java.time.LocalDateTime
 class ManageReceiptUseCase(
     private val receiptRepository: ReceiptRepository,
     private val accountRepository: AccountRepository,
-    private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val cardinalReader: CardinalReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
@@ -102,7 +100,11 @@ class ManageReceiptUseCase(
      */
     private fun markReceiptFilesDeleted(receiptId: Long) {
         val now = LocalDateTime.now(clock)
-        val files = fileReader.findAll(FileOwnerType.RECEIPT, receiptId, null)
-        files.forEach { it.markDeletedForImmediateCleanup(now) }
+        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+            ownerType = FileOwnerType.RECEIPT,
+            ownerId = receiptId,
+            deletedAt = now,
+            hardDeleteAfter = now,
+        )
     }
 }

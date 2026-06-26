@@ -96,9 +96,7 @@ class ManageClubUseCaseTest :
             every { clubRepository.existsBySchoolNameAndName(any(), any()) } returns false
             every { clubMapper.toCreateResponse(any()) } returns ClubCreateResponse(clubId = "testId", clubName = "테스트")
             every { fileRepository.save(any<File>()) } answers { firstArg() }
-            every {
-                fileRepository.findAllActiveByOwnerTypeAndOwnerId(any(), any())
-            } returns emptyList()
+            every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any()) } returns 0
         }
 
         fun createClubFile(
@@ -388,7 +386,6 @@ class ManageClubUseCaseTest :
             }
 
             it("프로필 이미지를 변경하면 기존 File이 삭제 예약되고 새 File이 생성된다") {
-                val existingFile = createClubFile(FileOwnerType.CLUB_PROFILE, "old_profile.png")
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -401,12 +398,6 @@ class ManageClubUseCaseTest :
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
-                every {
-                    fileRepository.findAllActiveByOwnerTypeAndOwnerId(
-                        FileOwnerType.CLUB_PROFILE,
-                        1L,
-                    )
-                } returns listOf(existingFile)
 
                 useCase.update(
                     1L,
@@ -422,9 +413,14 @@ class ManageClubUseCaseTest :
                     ),
                 )
 
-                existingFile.isDeleted shouldBe true
-                existingFile.deletedAt shouldBe LocalDateTime.now(clock)
-                existingFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.CLUB_PROFILE,
+                        1L,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.save(any<File>()) }
                 club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440002_new.png"
@@ -446,7 +442,7 @@ class ManageClubUseCaseTest :
                 useCase.update(1L, 10L, ClubUpdateRequest(name = "새 이름"))
 
                 verify(exactly = 0) {
-                    fileRepository.findAllActiveByOwnerTypeAndOwnerId(any(), any())
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any())
                 }
                 verify(exactly = 0) { fileRepository.save(any<File>()) }
             }
@@ -507,7 +503,6 @@ class ManageClubUseCaseTest :
             }
 
             it("기존 File 레코드가 삭제 예약된다") {
-                val existingFile = createClubFile(FileOwnerType.CLUB_PROFILE, "old_profile.png")
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -520,18 +515,17 @@ class ManageClubUseCaseTest :
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
-                every {
-                    fileRepository.findAllActiveByOwnerTypeAndOwnerId(
-                        FileOwnerType.CLUB_PROFILE,
-                        1L,
-                    )
-                } returns listOf(existingFile)
 
                 useCase.deleteProfileImage(1L, 10L)
 
-                existingFile.isDeleted shouldBe true
-                existingFile.deletedAt shouldBe LocalDateTime.now(clock)
-                existingFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.CLUB_PROFILE,
+                        1L,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
             }
         }
@@ -568,7 +562,6 @@ class ManageClubUseCaseTest :
             }
 
             it("기존 File 레코드가 삭제 예약된다") {
-                val existingFile = createClubFile(FileOwnerType.CLUB_BACKGROUND, "old_background.png")
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -581,18 +574,17 @@ class ManageClubUseCaseTest :
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
-                every {
-                    fileRepository.findAllActiveByOwnerTypeAndOwnerId(
-                        FileOwnerType.CLUB_BACKGROUND,
-                        1L,
-                    )
-                } returns listOf(existingFile)
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
-                existingFile.isDeleted shouldBe true
-                existingFile.deletedAt shouldBe LocalDateTime.now(clock)
-                existingFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.CLUB_BACKGROUND,
+                        1L,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
             }
         }

@@ -86,7 +86,7 @@ class File(
     }
 
     companion object {
-        private const val RETENTION_DAYS = 30L
+        const val RETENTION_DAYS = 30L
         private const val IMMEDIATE_CLEANUP_DAYS = 0L
 
         fun createUploaded(

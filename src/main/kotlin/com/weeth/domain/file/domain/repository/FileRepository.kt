@@ -4,21 +4,14 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.enums.FileStatus
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
 
 interface FileRepository :
     JpaRepository<File, Long>,
     FileReader {
-    fun findAllByOwnerTypeAndOwnerId(
-        ownerType: FileOwnerType,
-        ownerId: Long,
-    ): List<File>
-
-    fun findAllByOwnerTypeAndOwnerIdAndStatus(
-        ownerType: FileOwnerType,
-        ownerId: Long,
-        status: FileStatus,
-    ): List<File>
-
     fun findAllByOwnerTypeAndOwnerIdAndIsDeletedFalse(
         ownerType: FileOwnerType,
         ownerId: Long,
@@ -27,17 +20,6 @@ interface FileRepository :
     fun findAllByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(
         ownerType: FileOwnerType,
         ownerId: Long,
-        status: FileStatus,
-    ): List<File>
-
-    fun findAllByOwnerTypeAndOwnerIdIn(
-        ownerType: FileOwnerType,
-        ownerIds: List<Long>,
-    ): List<File>
-
-    fun findAllByOwnerTypeAndOwnerIdInAndStatus(
-        ownerType: FileOwnerType,
-        ownerIds: List<Long>,
         status: FileStatus,
     ): List<File>
 
@@ -52,17 +34,6 @@ interface FileRepository :
         status: FileStatus,
     ): List<File>
 
-    fun existsByOwnerTypeAndOwnerId(
-        ownerType: FileOwnerType,
-        ownerId: Long,
-    ): Boolean
-
-    fun existsByOwnerTypeAndOwnerIdAndStatus(
-        ownerType: FileOwnerType,
-        ownerId: Long,
-        status: FileStatus,
-    ): Boolean
-
     fun existsByOwnerTypeAndOwnerIdAndIsDeletedFalse(
         ownerType: FileOwnerType,
         ownerId: Long,
@@ -73,6 +44,46 @@ interface FileRepository :
         ownerId: Long,
         status: FileStatus,
     ): Boolean
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+        """
+        UPDATE File f
+        SET f.isDeleted = true,
+            f.deletedAt = :deletedAt,
+            f.hardDeleteAfter = :hardDeleteAfter
+        WHERE f.ownerType = :ownerType
+          AND f.ownerId = :ownerId
+          AND f.status = com.weeth.domain.file.domain.enums.FileStatus.UPLOADED
+          AND f.isDeleted = false
+        """,
+    )
+    fun markActiveDeletedByOwnerTypeAndOwnerId(
+        @Param("ownerType") ownerType: FileOwnerType,
+        @Param("ownerId") ownerId: Long,
+        @Param("deletedAt") deletedAt: LocalDateTime,
+        @Param("hardDeleteAfter") hardDeleteAfter: LocalDateTime,
+    ): Int
+
+    @Modifying(flushAutomatically = true)
+    @Query(
+        """
+        UPDATE File f
+        SET f.isDeleted = true,
+            f.deletedAt = :deletedAt,
+            f.hardDeleteAfter = :hardDeleteAfter
+        WHERE f.ownerType = :ownerType
+          AND f.ownerId IN :ownerIds
+          AND f.status = com.weeth.domain.file.domain.enums.FileStatus.UPLOADED
+          AND f.isDeleted = false
+        """,
+    )
+    fun markActiveDeletedByOwnerTypeAndOwnerIdIn(
+        @Param("ownerType") ownerType: FileOwnerType,
+        @Param("ownerIds") ownerIds: List<Long>,
+        @Param("deletedAt") deletedAt: LocalDateTime,
+        @Param("hardDeleteAfter") hardDeleteAfter: LocalDateTime,
+    ): Int
 
     fun findAllActiveByOwnerTypeAndOwnerId(
         ownerType: FileOwnerType,

@@ -25,7 +25,6 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -50,7 +49,6 @@ class ManagePostUseCaseTest :
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
         val fileRepository = mockk<FileRepository>()
-        val fileReader = mockk<FileReader>()
         val fileMapper = mockk<FileMapper>()
         val postMapper = mockk<PostMapper>()
 
@@ -61,7 +59,6 @@ class ManagePostUseCaseTest :
                 clubMemberPolicy,
                 clubMemberCardinalReader,
                 fileRepository,
-                fileReader,
                 fileMapper,
                 postMapper,
                 clock,
@@ -87,14 +84,15 @@ class ManagePostUseCaseTest :
                 clubMemberPolicy,
                 clubMemberCardinalReader,
                 fileRepository,
-                fileReader,
                 fileMapper,
                 postMapper,
             )
             every { postRepository.save(any()) } answers { firstArg() }
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
             every { fileRepository.saveAll(any<List<File>>()) } returns emptyList()
-            every { fileReader.findAll(any(), any<Long>(), any()) } returns emptyList()
+            every {
+                fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any())
+            } returns 0
             every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(id = 1L, boardId = 1L)
             every { fileRepository.delete(any()) } just runs
             every { fileRepository.flush() } just runs
@@ -202,7 +200,9 @@ class ManagePostUseCaseTest :
 
                 useCase.update(clubId, board.id, 1L, request, 1L)
 
-                verify(exactly = 0) { fileReader.findAll(any(), any<Long>(), any()) }
+                verify(
+                    exactly = 0,
+                ) { fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
 
@@ -212,7 +212,6 @@ class ManagePostUseCaseTest :
                 val clubId = board.club.id
                 val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
                 val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = ownerMember, board = board)
-                val oldFile = createUploadedPostFile("old.png")
                 val newFiles = listOf(createUploadedPostFile("new.png"))
                 val request =
                     UpdatePostRequest(
@@ -230,7 +229,6 @@ class ManagePostUseCaseTest :
                     )
 
                 every { postRepository.findActivePostById(1L) } returns post
-                every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
                 every { fileRepository.deleteAll(any<List<File>>()) } just runs
                 every { fileMapper.toFileList(request.files, FileOwnerType.POST, any<Long>()) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
@@ -239,9 +237,14 @@ class ManagePostUseCaseTest :
 
                 post.title shouldBe "수정"
                 post.content shouldBe "수정"
-                oldFile.isDeleted shouldBe true
-                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.POST,
+                        post.id,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
@@ -340,18 +343,21 @@ class ManagePostUseCaseTest :
                 val clubId = board.club.id
                 val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
                 val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = ownerMember, board = board)
-                val oldFile = createUploadedPostFile("old.png")
 
                 every { postRepository.findActivePostById(1L) } returns post
-                every { fileReader.findAll(FileOwnerType.POST, any<Long>(), any()) } returns listOf(oldFile)
                 every { fileRepository.deleteAll(any<List<File>>()) } just runs
 
                 useCase.delete(clubId, board.id, 1L, 1L)
 
                 post.isDeleted shouldBe true
-                oldFile.isDeleted shouldBe true
-                oldFile.deletedAt shouldBe LocalDateTime.now(clock)
-                oldFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
+                verify(exactly = 1) {
+                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
+                        FileOwnerType.POST,
+                        post.id,
+                        LocalDateTime.now(clock),
+                        LocalDateTime.now(clock),
+                    )
+                }
                 verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 0) { postRepository.delete(any()) }
             }
