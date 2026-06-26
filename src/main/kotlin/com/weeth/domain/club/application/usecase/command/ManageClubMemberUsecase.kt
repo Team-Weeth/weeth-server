@@ -89,7 +89,7 @@ class ManageClubMemberUsecase(
         userId: Long,
         request: UpdateMemberProfileRequest,
     ) {
-        val members = clubMemberRepository.findActiveByUserId(userId)
+        val members = clubMemberRepository.findAllActiveByUserIdWithLock(userId)
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         request.profileImage?.let { profileImage ->
@@ -119,7 +119,7 @@ class ManageClubMemberUsecase(
 
     @Transactional
     fun deleteProfileImage(userId: Long) {
-        val members = clubMemberRepository.findActiveByUserId(userId)
+        val members = clubMemberRepository.findAllActiveByUserIdWithLock(userId)
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         val existingFiles =

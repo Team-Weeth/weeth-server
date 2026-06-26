@@ -109,7 +109,8 @@ class ManageClubMemberUseCaseTest :
                             ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
                             ownerId = userId,
                         )
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
                     every {
                         fileRepository.findAllActiveByOwnerTypeAndOwnerId(
                             FileOwnerType.CLUB_MEMBER_PROFILE,
@@ -125,6 +126,8 @@ class ManageClubMemberUseCaseTest :
                     existingFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
                     verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                     verify(exactly = 1) { fileRepository.save(any()) }
+                    verify(exactly = 1) { clubMemberRepository.findAllActiveByUserIdWithLock(userId) }
+                    verify(exactly = 0) { clubMemberRepository.findActiveByUserId(userId) }
                 }
             }
 
@@ -133,7 +136,8 @@ class ManageClubMemberUseCaseTest :
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
 
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
 
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(bio = "안녕하세요!"))
 
@@ -149,7 +153,8 @@ class ManageClubMemberUseCaseTest :
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
 
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
 
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(bio = ""))
 
@@ -160,7 +165,7 @@ class ManageClubMemberUseCaseTest :
 
             context("활성 동아리 멤버십이 없을 때") {
                 it("ClubMemberNotFoundException을 던진다") {
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns emptyList()
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns emptyList()
 
                     shouldThrow<ClubMemberNotFoundException> {
                         useCase.updateProfile(userId, UpdateMemberProfileRequest(bio = "안녕하세요!"))
@@ -186,7 +191,8 @@ class ManageClubMemberUseCaseTest :
                             ownerId = userId,
                         )
 
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
                     every {
                         fileRepository.findAllActiveByOwnerTypeAndOwnerId(
                             FileOwnerType.CLUB_MEMBER_PROFILE,
@@ -200,6 +206,8 @@ class ManageClubMemberUseCaseTest :
                     existingFile.deletedAt shouldBe LocalDateTime.now(clock)
                     existingFile.hardDeleteAfter shouldBe LocalDateTime.now(clock)
                     verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
+                    verify(exactly = 1) { clubMemberRepository.findAllActiveByUserIdWithLock(userId) }
+                    verify(exactly = 0) { clubMemberRepository.findActiveByUserId(userId) }
                     member1.profileImageStorageKey shouldBe null
                     member2.profileImageStorageKey shouldBe null
                 }
@@ -207,7 +215,7 @@ class ManageClubMemberUseCaseTest :
 
             context("활성 동아리 멤버십이 없을 때") {
                 it("ClubMemberNotFoundException을 던진다") {
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns emptyList()
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns emptyList()
 
                     shouldThrow<ClubMemberNotFoundException> {
                         useCase.deleteProfileImage(userId)
