@@ -39,14 +39,14 @@ enum class AccountErrorCode(
     @ExplainError("요청한 거래 내역이 존재하지 않거나 다른 장부에 속할 때 발생합니다.")
     ACCOUNT_TRANSACTION_NOT_FOUND(20109, HttpStatus.NOT_FOUND, "존재하지 않는 거래 내역입니다."),
 
+    @ExplainError("요청한 납부 대상이 존재하지 않거나 다른 장부에 속할 때 발생합니다.")
+    ACCOUNT_PAYMENT_TARGET_NOT_FOUND(20110, HttpStatus.NOT_FOUND, "존재하지 않는 납부 대상입니다."),
+
     @ExplainError("수입/지출이 아닌 시스템 거래(납부/이월/환불)를 직접 등록·수정·삭제하려 할 때 발생합니다.")
     ACCOUNT_TRANSACTION_TYPE_NOT_ALLOWED(20111, HttpStatus.BAD_REQUEST, "직접 등록·수정할 수 없는 거래 유형입니다."),
 
     @ExplainError("등록이 완료되지 않은(초안 등) 장부에 운영 기능을 요청할 때 발생합니다.")
     ACCOUNT_NOT_ACTIVE(20112, HttpStatus.BAD_REQUEST, "등록이 완료된 장부에서만 운영할 수 있습니다."),
-
-    @ExplainError("요청한 납부 대상이 존재하지 않거나 다른 장부에 속할 때 발생합니다.")
-    ACCOUNT_PAYMENT_TARGET_NOT_FOUND(20110, HttpStatus.NOT_FOUND, "존재하지 않는 납부 대상입니다."),
 
     @ExplainError("납부 완료(PAID) 상태가 아닌 대상을 환불 처리하려 할 때 발생합니다.")
     ACCOUNT_PAYMENT_NOT_REFUNDABLE(20113, HttpStatus.BAD_REQUEST, "납부 완료 상태에서만 환불할 수 있습니다."),
