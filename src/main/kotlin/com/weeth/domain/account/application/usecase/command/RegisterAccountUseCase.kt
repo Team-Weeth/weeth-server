@@ -193,7 +193,8 @@ class RegisterAccountUseCase(
                     account = account,
                     type = AccountTransactionType.CARRY_OVER,
                     title = "이월 금액",
-                    source = null,
+                    // 이월금이 들어온 출처는 직전 기수 장부다.
+                    source = previousAccount?.let { "${it.cardinal}기 회비" },
                     amount = Money.of(account.carryOverAmount),
                     transactedAt = LocalDateTime.now(),
                     memo = account.carryOverMemo,
@@ -234,11 +235,20 @@ class RegisterAccountUseCase(
     ) {
         if (previousAccount == null || previousAccount.currentBalance <= 0) return
 
-        val (title, memo) =
+        // 이월 전출은 신규 기수 장부가 거래처가 되고, 미이월 정리는 실제 이체처가 없어 거래처를 비운다.
+        val (title, memo, source) =
             if (account.carryOverAmount > 0) {
-                "이월 잔액 전출" to "${account.cardinal}기 회비로 이월되어 자동 지출 처리되었습니다."
+                Triple(
+                    "이월 잔액 전출",
+                    "${account.cardinal}기 회비로 이월되어 자동 지출 처리되었습니다.",
+                    "${account.cardinal}기 회비",
+                )
             } else {
-                "미이월 잔액 정리" to "${account.cardinal}기 회비 등록 시 이월하지 않기를 선택하여 자동 지출 처리되었습니다."
+                Triple(
+                    "미이월 잔액 정리",
+                    "${account.cardinal}기 회비 등록 시 이월하지 않기를 선택하여 자동 지출 처리되었습니다.",
+                    null,
+                )
             }
 
         val expense =
@@ -246,7 +256,7 @@ class RegisterAccountUseCase(
                 account = previousAccount,
                 type = AccountTransactionType.EXPENSE,
                 title = title,
-                source = null,
+                source = source,
                 amount = Money.of(previousAccount.currentBalance),
                 transactedAt = LocalDateTime.now(),
                 memo = memo,
@@ -265,7 +275,7 @@ class RegisterAccountUseCase(
      * - excludedClubMemberIds: 제외 처리(납부 완료된 대상은 제외 불가), 행이 없으면 이미 제외 상태이므로 건너뜀
      */
     @Transactional
-    fun savePaymentTargets(
+    fun savePaymentTargets( // TODO: 납부 대상만 입력 받고, 제외된 인원은 자동 처리해도 될지 확인해보기
         clubId: Long,
         accountId: Long,
         request: SavePaymentTargetsRequest,

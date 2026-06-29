@@ -77,6 +77,12 @@ class AccountPaymentTarget(
     var confirmedBy: Long? = null
         private set
 
+    var refundedAt: LocalDateTime? = null
+        private set
+
+    var refundedBy: Long? = null
+        private set
+
     @Column(length = 200)
     var memo: String? = normalizeOptional(memo)
         private set
@@ -95,6 +101,7 @@ class AccountPaymentTarget(
         paidAmount = 0
         paidAt = null
         confirmedBy = null
+        clearRefundInfo()
     }
 
     fun exclude() {
@@ -104,6 +111,13 @@ class AccountPaymentTarget(
         paidAmount = 0
         paidAt = null
         confirmedBy = null
+        clearRefundInfo()
+    }
+
+    // 환불 상태(REFUNDED)를 벗어나는 전이에서 환불 이력이 남지 않도록 함께 초기화한다.
+    private fun clearRefundInfo() {
+        refundedAt = null
+        refundedBy = null
     }
 
     fun markPaid(
@@ -130,6 +144,20 @@ class AccountPaymentTarget(
         paidAmount = 0
         paidAt = null
         confirmedBy = null
+    }
+
+    /**
+     * 환불 처리: 납부 완료(PAID) 대상만 환불할 수 있다.
+     * paidAmount/DUES 이력은 보존하고 상태만 REFUNDED 로 전이하며 환불 시각·처리자를 기록한다.
+     */
+    fun markRefunded(
+        refundedBy: Long,
+        refundedAt: LocalDateTime,
+    ) {
+        check(paymentStatus == AccountPaymentStatus.PAID) { "납부 완료된 대상만 환불할 수 있습니다." }
+        paymentStatus = AccountPaymentStatus.REFUNDED
+        this.refundedBy = refundedBy
+        this.refundedAt = refundedAt
     }
 
     companion object {

@@ -122,4 +122,30 @@ class AccountPaymentTargetTest :
                 target.markUnpaid()
             }
         }
+
+        "markRefunded는 납부 완료 대상을 환불 상태로 전이하고 환불 정보를 기록한다" {
+            val account = AccountTestFixture.createAccount()
+            val clubMember = ClubMemberTestFixture.createActiveMember(club = account.club)
+            val target = AccountPaymentTarget.createTargeted(account, clubMember, Money.of(50_000))
+            target.markPaid(Money.of(50_000), confirmedBy = 1L, paidAt = LocalDateTime.of(2026, 3, 13, 10, 0))
+            val refundedAt = LocalDateTime.of(2026, 4, 1, 9, 0)
+
+            target.markRefunded(refundedBy = 7L, refundedAt = refundedAt)
+
+            target.paymentStatus shouldBe AccountPaymentStatus.REFUNDED
+            target.refundedBy shouldBe 7L
+            target.refundedAt shouldBe refundedAt
+            // 납부 이력(paidAmount)은 보존된다
+            target.paidAmount shouldBe 50_000
+        }
+
+        "납부 완료가 아닌 대상은 환불할 수 없다" {
+            val account = AccountTestFixture.createAccount()
+            val clubMember = ClubMemberTestFixture.createActiveMember(club = account.club)
+            val target = AccountPaymentTarget.createTargeted(account, clubMember, Money.of(50_000))
+
+            shouldThrow<IllegalStateException> {
+                target.markRefunded(refundedBy = 7L, refundedAt = LocalDateTime.now())
+            }
+        }
     })
