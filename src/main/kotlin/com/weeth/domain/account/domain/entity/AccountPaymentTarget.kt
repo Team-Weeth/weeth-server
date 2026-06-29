@@ -101,6 +101,7 @@ class AccountPaymentTarget(
         paidAmount = 0
         paidAt = null
         confirmedBy = null
+        clearRefundInfo()
     }
 
     fun exclude() {
@@ -110,6 +111,13 @@ class AccountPaymentTarget(
         paidAmount = 0
         paidAt = null
         confirmedBy = null
+        clearRefundInfo()
+    }
+
+    // 환불 상태(REFUNDED)를 벗어나는 전이에서 환불 이력이 남지 않도록 함께 초기화한다.
+    private fun clearRefundInfo() {
+        refundedAt = null
+        refundedBy = null
     }
 
     fun markPaid(

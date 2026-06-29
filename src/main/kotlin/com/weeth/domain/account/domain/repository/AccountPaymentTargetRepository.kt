@@ -121,7 +121,8 @@ interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, L
         order by
             case when target.paymentStatus = com.weeth.domain.account.domain.enums.AccountPaymentStatus.UNPAID
                 then 0 else 1 end asc,
-            user.name asc
+            user.name asc,
+            target.id asc
         """,
         countQuery = """
         select count(target)
