@@ -64,7 +64,16 @@
       "Bash(git shortlog:*)"
     ],
     "ask": [
-      "Bash(git *)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git reset:*)",
+      "Bash(git rebase:*)",
+      "Bash(git merge:*)",
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)",
+      "Bash(git clean:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git add:*)",
       "Bash(gh *)",
       "Edit(src/main/resources/application-prod*)",
       "Edit(src/main/resources/application-dev*)",
