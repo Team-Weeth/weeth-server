@@ -24,6 +24,13 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
 
+/**
+ * TODO: 관리자가 납부 현황을 관리하는 경우 해당 거래 내역을 자동으로 생성한다. -> 환불/납부는 돈이 실제로 거래가 되므로 대시보드에서 확인이 가능해야함
+ * TODO: 대신 환불/납부 거래내역은 관리자만 볼 수 있어야한다.
+ * TODO: 유저 사이드에서 납부 거래내역은 하나의 "회비" 거래내역에 누적이 되어야한다.
+ * 즉 현황을 업데이트할 때 해당 인원만큼 개별로 거래 내역이 생성되며, 이는 관리자만 확인이 가능하고, 유저사이드에서는 하나의 거래 내역에 금액이 +- 되는 방식으로 동작한다.
+ * 환불의 경우는 유저사이드에서도 확인이 가능하되, 이름은 가린다.
+ */
 @Service
 class ManageAccountPaymentUseCase(
     private val accountRepository: AccountRepository,

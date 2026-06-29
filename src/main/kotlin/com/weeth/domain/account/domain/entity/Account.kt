@@ -62,6 +62,9 @@ class Account(
     var description: String? = description
         private set
 
+    // TODO(legacy): 레거시 Account.create 만 채우는 죽은 필드. 신규 위저드 플로우에선 0으로 방치된다.
+    //  목표 회비 총액은 sum(targetTarget.dueAmount) 로 live 계산하므로(대시보드/납부현황 요약),
+    //  Receipt 흐름 제거와 함께 이 필드도 정리 예정. cancelSpend 의 총액 가드도 그때 함께 제거.
     @Column(nullable = false)
     var totalAmount: Int = totalAmount
         private set

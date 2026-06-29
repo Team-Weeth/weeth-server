@@ -171,7 +171,7 @@ class AccountRegisterController(
             ),
         )
 
-    @PatchMapping("/{accountId}/payment-targets")
+    @PatchMapping("/{accountId}/payment-targets") // TODO: registration 추가하기
     @Operation(
         summary = "[3단계] 회비 납부 대상 저장",
         description =
