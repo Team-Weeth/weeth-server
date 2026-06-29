@@ -275,7 +275,7 @@ class RegisterAccountUseCase(
      * - excludedClubMemberIds: 제외 처리(납부 완료된 대상은 제외 불가), 행이 없으면 이미 제외 상태이므로 건너뜀
      */
     @Transactional
-    fun savePaymentTargets(
+    fun savePaymentTargets( // TODO: 납부 대상만 입력 받고, 제외된 인원은 자동 처리해도 될지 확인해보기
         clubId: Long,
         accountId: Long,
         request: SavePaymentTargetsRequest,

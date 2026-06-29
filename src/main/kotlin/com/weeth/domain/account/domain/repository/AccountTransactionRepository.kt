@@ -15,6 +15,12 @@ interface AccountTransactionRepository : JpaRepository<AccountTransaction, Long>
 
     fun findByIdAndDeletedAtIsNull(id: Long): AccountTransaction?
 
+    /** 대시보드 월별 집계용. 삭제 제외 전체 거래를 거래일 오름차순으로 조회한다. */
+    fun findByAccountIdAndDeletedAtIsNullOrderByTransactedAtAsc(accountId: Long): List<AccountTransaction>
+
+    /** 대시보드 period 종료월 계산용. 다음 기수 장부의 활동 시작(가장 이른 거래)을 찾는다. */
+    fun findTopByAccountIdAndDeletedAtIsNullOrderByTransactedAtAsc(accountId: Long): AccountTransaction?
+
     /** 납부 정정(unpaid) 시 해당 납부 대상의 활성 시스템 거래(DUES)를 찾아 원복한다. */
     fun findByPaymentTargetIdAndTypeAndDeletedAtIsNull(
         paymentTargetId: Long,

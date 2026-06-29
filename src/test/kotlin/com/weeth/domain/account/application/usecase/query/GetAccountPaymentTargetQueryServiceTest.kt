@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.usecase.query
 
+import com.weeth.domain.account.application.dto.request.AccountPaymentStatusFilter
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.AccountPaymentTargetMapper
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
@@ -187,6 +188,184 @@ class GetAccountPaymentTargetQueryServiceTest :
                 verify(exactly = 0) { clubMemberReader.countActiveByClubIdAndCardinalNumber(any(), any()) }
                 verify(exactly = 0) {
                     paymentTargetRepository.countActiveClubMemberTargetsByAccountIdAndTargetStatus(any(), any())
+                }
+            }
+        }
+
+        describe("findPaymentStatus") {
+            val clubId = 1L
+            val accountId = 10L
+            val userId = 100L
+
+            fun stubSummary() {
+                every { paymentTargetRepository.sumPaidAmountByAccountId(accountId) } returns 30_000L
+                every { paymentTargetRepository.sumDueAmountByAccountId(accountId) } returns 60_000L
+                every {
+                    paymentTargetRepository.countByAccountIdAndTargetStatus(accountId, AccountTargetStatus.TARGETED)
+                } returns 2L
+                every {
+                    paymentTargetRepository.countByAccountIdAndTargetStatusAndPaymentStatus(
+                        accountId,
+                        AccountTargetStatus.TARGETED,
+                        AccountPaymentStatus.PAID,
+                    )
+                } returns 1L
+                every {
+                    paymentTargetRepository.countByAccountIdAndTargetStatusAndPaymentStatus(
+                        accountId,
+                        AccountTargetStatus.TARGETED,
+                        AccountPaymentStatus.UNPAID,
+                    )
+                } returns 1L
+                every {
+                    paymentTargetRepository.countByAccountIdAndTargetStatusAndPaymentStatus(
+                        accountId,
+                        AccountTargetStatus.TARGETED,
+                        AccountPaymentStatus.REFUNDED,
+                    )
+                } returns 1L
+                // 제외 카운트 = 활성 명부(5) − 활성 TARGETED(2) = 3
+                every {
+                    paymentTargetRepository.countActiveClubMemberTargetsByAccountIdAndTargetStatus(
+                        accountId = accountId,
+                        targetStatus = AccountTargetStatus.TARGETED,
+                    )
+                } returns 2L
+                every { clubMemberReader.countActiveByClubIdAndCardinalNumber(clubId, 40) } returns 5L
+            }
+
+            it("납부 대상 목록과 상단 요약(수납액/목표/납부율/카운트)을 함께 반환한다") {
+                val club = ClubTestFixture.createClub(id = clubId)
+                val account = AccountTestFixture.createAccount(id = accountId, club = club)
+                val unpaidMember = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                val paidMember = ClubMemberTestFixture.createActiveMember(id = 21L, club = club)
+                val unpaidTarget = AccountPaymentTarget.createTargeted(account, unpaidMember, Money.of(30_000))
+                val paidTarget =
+                    AccountPaymentTarget.createTargeted(account, paidMember, Money.of(30_000)).apply {
+                        markPaid(Money.of(30_000), confirmedBy = userId, paidAt = LocalDateTime.of(2026, 3, 1, 10, 0))
+                    }
+                val pageable = PageRequest.of(0, 20)
+
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                stubSummary()
+                // 미납 우선 정렬은 리포지토리가 담당하므로, 목록 순서는 그대로 통과시킨다.
+                every {
+                    paymentTargetRepository.findActiveTargetsByPaymentStatusOrderByUnpaidFirst(
+                        accountId = accountId,
+                        paymentStatus = null,
+                        keyword = null,
+                        pageable = pageable,
+                    )
+                } returns PageImpl(listOf(unpaidTarget, paidTarget), pageable, 2)
+
+                val result =
+                    service.findPaymentStatus(
+                        clubId = clubId,
+                        accountId = accountId,
+                        userId = userId,
+                        paymentStatusFilter = AccountPaymentStatusFilter.ALL,
+                        keyword = null,
+                        page = 0,
+                        size = 20,
+                    )
+
+                result.summary.collectedAmount shouldBe 30_000
+                result.summary.targetAmount shouldBe 60_000
+                result.summary.paymentRate shouldBe 0.5
+                result.summary.targetCount shouldBe 2
+                result.summary.paidCount shouldBe 1
+                result.summary.unpaidCount shouldBe 1
+                result.summary.refundedCount shouldBe 1
+                result.summary.excludedCount shouldBe 3
+                result.summary.bankAccountPublic shouldBe false
+                result.summary.bankAccount shouldBe null
+                result.members.totalElements shouldBe 2
+                result.members.content
+                    .first()
+                    .paymentStatus shouldBe AccountPaymentStatus.UNPAID
+            }
+
+            it("미납 필터는 UNPAID 도메인 상태로 변환해 조회한다") {
+                val club = ClubTestFixture.createClub(id = clubId)
+                val account = AccountTestFixture.createAccount(id = accountId, club = club)
+                val pageable = PageRequest.of(0, 20)
+
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                stubSummary()
+                every {
+                    paymentTargetRepository.findActiveTargetsByPaymentStatusOrderByUnpaidFirst(
+                        accountId = accountId,
+                        paymentStatus = AccountPaymentStatus.UNPAID,
+                        keyword = null,
+                        pageable = pageable,
+                    )
+                } returns PageImpl(emptyList(), pageable, 0)
+
+                service.findPaymentStatus(
+                    clubId = clubId,
+                    accountId = accountId,
+                    userId = userId,
+                    paymentStatusFilter = AccountPaymentStatusFilter.UNPAID,
+                    keyword = null,
+                    page = 0,
+                    size = 20,
+                )
+
+                verify(exactly = 1) {
+                    paymentTargetRepository.findActiveTargetsByPaymentStatusOrderByUnpaidFirst(
+                        accountId = accountId,
+                        paymentStatus = AccountPaymentStatus.UNPAID,
+                        keyword = null,
+                        pageable = pageable,
+                    )
+                }
+            }
+
+            it("제외 필터는 납부 대상 쿼리 대신 명부 기반 제외 후보를 조회한다") {
+                val club = ClubTestFixture.createClub(id = clubId)
+                val account = AccountTestFixture.createAccount(id = accountId, club = club)
+                val excludedMember = ClubMemberTestFixture.createActiveMember(id = 30L, club = club)
+                val pageable = PageRequest.of(0, 20)
+
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                stubSummary()
+                every {
+                    clubMemberReader.findExcludedPaymentTargetCandidatesByCardinal(
+                        clubId = clubId,
+                        cardinalNumber = 40,
+                        accountId = accountId,
+                        keyword = null,
+                        pageable = pageable,
+                    )
+                } returns PageImpl(listOf(excludedMember), pageable, 1)
+                // 제외 후보는 행이 없을 수 있으므로 저장된 대상과 합치는 단계에서 빈 결과를 반환한다.
+                every {
+                    paymentTargetRepository.findAllByAccountIdAndClubMemberIdIn(accountId, listOf(30L))
+                } returns emptyList()
+
+                val result =
+                    service.findPaymentStatus(
+                        clubId = clubId,
+                        accountId = accountId,
+                        userId = userId,
+                        paymentStatusFilter = AccountPaymentStatusFilter.EXCLUDED,
+                        keyword = null,
+                        page = 0,
+                        size = 20,
+                    )
+
+                result.members.totalElements shouldBe 1
+                result.members.content
+                    .first()
+                    .targetStatus shouldBe AccountTargetStatus.EXCLUDED
+                result.summary.excludedCount shouldBe 3
+                verify(exactly = 0) {
+                    paymentTargetRepository.findActiveTargetsByPaymentStatusOrderByUnpaidFirst(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                    )
                 }
             }
         }

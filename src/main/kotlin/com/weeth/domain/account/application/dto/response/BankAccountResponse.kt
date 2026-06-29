@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.dto.response
 
+import com.weeth.domain.account.domain.vo.BankAccount
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class BankAccountResponse(
@@ -11,4 +12,12 @@ data class BankAccountResponse(
     val holder: String,
     @field:Schema(description = "입금 안내 메모", example = "이름_회비 형식으로 입금해 주세요.", nullable = true)
     val guide: String?,
-)
+) {
+    companion object {
+        /** 계좌가 등록되지 않았으면(null) 응답도 null. */
+        fun from(bankAccount: BankAccount?): BankAccountResponse? =
+            bankAccount?.let {
+                BankAccountResponse(it.bankName, it.accountNumber, it.holder, it.guide)
+            }
+    }
+}

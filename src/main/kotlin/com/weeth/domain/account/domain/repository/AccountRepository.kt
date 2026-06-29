@@ -39,6 +39,13 @@ interface AccountRepository : JpaRepository<Account, Long> {
         status: AccountStatus,
     ): Account?
 
+    /** 대시보드 period 종료월 계산용. 현재 기수의 "다음 회비 장부"(가장 가까운 상위 기수)를 찾는다. */
+    fun findTopByClubIdAndCardinalGreaterThanAndStatusOrderByCardinalAsc(
+        clubId: Long,
+        cardinal: Int,
+        status: AccountStatus,
+    ): Account?
+
     fun existsByClubIdAndCardinalAndStatus(
         clubId: Long,
         cardinal: Int,

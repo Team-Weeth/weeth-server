@@ -48,10 +48,7 @@ class AccountRegistrationMapper {
                 if (step.isAtLeast(AccountRegistrationStep.REVIEW)) {
                     AccountRegistrationStatusResponse.BankAccountRegistrationResponse(
                         bankAccountVisible = account.bankAccountVisible,
-                        bankAccount =
-                            account.bankAccount?.let { ba ->
-                                BankAccountResponse(ba.bankName, ba.accountNumber, ba.holder, ba.guide)
-                            },
+                        bankAccount = BankAccountResponse.from(account.bankAccount),
                     )
                 } else {
                     null

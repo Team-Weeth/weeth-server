@@ -1,5 +1,6 @@
 package com.weeth.domain.account.presentation
 
+import com.weeth.domain.account.application.dto.request.AccountPaymentStatusFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
 import com.weeth.domain.account.application.dto.request.MarkPaymentPaidRequest
@@ -8,16 +9,22 @@ import com.weeth.domain.account.application.dto.request.RefundPaymentRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountTransactionRequest
 import com.weeth.domain.account.application.dto.request.UpdateAccountTransactionRequest
 import com.weeth.domain.account.application.dto.request.UpdateMemberVisibilityRequest
+import com.weeth.domain.account.application.dto.response.AccountDashboardResponse
+import com.weeth.domain.account.application.dto.response.AccountPaymentStatusResponse
 import com.weeth.domain.account.application.dto.response.AccountTransactionResponse
 import com.weeth.domain.account.application.dto.response.AccountTransactionsResponse
 import com.weeth.domain.account.application.exception.AccountErrorCode
 import com.weeth.domain.account.application.usecase.command.ManageAccountPaymentUseCase
 import com.weeth.domain.account.application.usecase.command.ManageAccountTransactionUseCase
 import com.weeth.domain.account.application.usecase.command.ManageAccountUseCase
+import com.weeth.domain.account.application.usecase.query.GetAccountDashboardQueryService
+import com.weeth.domain.account.application.usecase.query.GetAccountPaymentTargetQueryService
 import com.weeth.domain.account.application.usecase.query.GetAccountTransactionQueryService
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_DASHBOARD_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_PAID_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_REFUND_SUCCESS
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_STATUS_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_DELETE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_DETAIL_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_FIND_SUCCESS
@@ -52,7 +59,50 @@ class AccountManageController(
     private val manageAccountTransactionUseCase: ManageAccountTransactionUseCase,
     private val manageAccountPaymentUseCase: ManageAccountPaymentUseCase,
     private val getAccountTransactionQueryService: GetAccountTransactionQueryService,
+    private val getAccountDashboardQueryService: GetAccountDashboardQueryService,
+    private val getAccountPaymentTargetQueryService: GetAccountPaymentTargetQueryService,
 ) {
+    @GetMapping("/{accountId}/dashboard")
+    @Operation(summary = "회비 대시보드 조회", description = "잔액/총액, 납부 현황, 계좌, 월별 잔액 추이, 마지막 수정 정보를 집계해 반환합니다.")
+    fun getDashboard(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<AccountDashboardResponse> =
+        CommonResponse.success(
+            ACCOUNT_DASHBOARD_FIND_SUCCESS,
+            getAccountDashboardQueryService.getDashboard(clubId, accountId, userId),
+        )
+
+    @GetMapping("/{accountId}/payment-status")
+    @Operation(
+        summary = "부원별 납부현황 조회",
+        description = "회비관리 페이지의 상단 요약(수납액/목표/납부율/카운트/계좌)과 납부 대상 부원 목록(미납 순)을 조회합니다.",
+    )
+    fun findPaymentStatus(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @RequestParam(defaultValue = "ALL") paymentStatus: AccountPaymentStatusFilter,
+        @RequestParam(required = false) keyword: String?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<AccountPaymentStatusResponse> =
+        CommonResponse.success(
+            ACCOUNT_PAYMENT_STATUS_FIND_SUCCESS,
+            getAccountPaymentTargetQueryService.findPaymentStatus(
+                clubId = clubId,
+                accountId = accountId,
+                userId = userId,
+                paymentStatusFilter = paymentStatus,
+                keyword = keyword,
+                page = page,
+                size = size,
+            ),
+        )
+
     @PatchMapping("/{accountId}/member-visibility")
     @Operation(summary = "부원 거래 내역 공개 여부 수정")
     fun updateMemberVisibility(
