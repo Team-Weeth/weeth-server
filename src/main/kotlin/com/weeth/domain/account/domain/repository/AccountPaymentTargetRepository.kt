@@ -13,6 +13,11 @@ import org.springframework.data.repository.query.Param
 interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, Long> {
     fun findAllByAccountId(accountId: Long): List<AccountPaymentTarget>
 
+    fun findByAccountIdAndClubMemberId(
+        accountId: Long,
+        clubMemberId: Long,
+    ): AccountPaymentTarget?
+
     @Query(
         """
         select target
