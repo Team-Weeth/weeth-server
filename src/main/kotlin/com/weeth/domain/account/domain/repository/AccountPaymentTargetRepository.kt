@@ -193,6 +193,11 @@ interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, L
         @Param("accountId") accountId: Long,
     ): List<AccountPaymentTarget>
 
+    /**
+     * 주의: `EXCLUDED`를 넘겨 "전체 제외 수"로 쓰지 말 것. EXCLUDED 행만 세므로
+     * **행이 없는 미선택 부원이 빠져 과소 집계**된다. 제외 수는 `활성 명부 − 활성 TARGETED`로 파생하라
+     * (예: [countActiveClubMemberTargetsByAccountIdAndTargetStatus] + 명부 수). 자세한 불변식은 [AccountTargetStatus].
+     */
     fun countByAccountIdAndTargetStatus(
         accountId: Long,
         targetStatus: AccountTargetStatus,
