@@ -24,13 +24,6 @@ import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
 
-/**
- * TODO: 관리자가 납부 현황을 관리하는 경우 해당 거래 내역을 자동으로 생성한다. -> 환불/납부는 돈이 실제로 거래가 되므로 대시보드에서 확인이 가능해야함
- * TODO: 대신 환불/납부 거래내역은 관리자만 볼 수 있어야한다.
- * TODO: 유저 사이드에서 납부 거래내역은 하나의 "회비" 거래내역에 누적이 되어야한다.
- * 즉 현황을 업데이트할 때 해당 인원만큼 개별로 거래 내역이 생성되며, 이는 관리자만 확인이 가능하고, 유저사이드에서는 하나의 거래 내역에 금액이 +- 되는 방식으로 동작한다.
- * 환불의 경우는 유저사이드에서도 확인이 가능하되, 이름은 가린다.
- */
 @Service
 class ManageAccountPaymentUseCase(
     private val accountRepository: AccountRepository,
@@ -47,7 +40,8 @@ class ManageAccountPaymentUseCase(
         request: MarkPaymentPaidRequest,
         userId: Long,
     ) {
-        val account = getActiveAccountWithLock(clubId, accountId, userId)
+        val admin = clubPermissionPolicy.requireAdmin(clubId, userId)
+        val account = getActiveAccountWithLock(clubId, accountId)
         val targets = getTargets(accountId, request.targetIds)
         val paidAt = request.paidAt ?: LocalDateTime.now(clock)
 
@@ -64,6 +58,7 @@ class ManageAccountPaymentUseCase(
                         amount = Money.of(target.dueAmount),
                         transactedAt = paidAt,
                         memo = request.memo,
+                        registeredByName = admin.user.name,
                         paymentTarget = target,
                     ).also { account.applyTransaction(it) }
             }
@@ -79,7 +74,8 @@ class ManageAccountPaymentUseCase(
         request: MarkPaymentUnpaidRequest,
         userId: Long,
     ) {
-        val account = getActiveAccountWithLock(clubId, accountId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val account = getActiveAccountWithLock(clubId, accountId)
         val targets = getTargets(accountId, request.targetIds)
 
         targets.forEach { target ->
@@ -102,7 +98,8 @@ class ManageAccountPaymentUseCase(
         request: RefundPaymentRequest,
         userId: Long,
     ) {
-        val account = getActiveAccountWithLock(clubId, accountId, userId)
+        val admin = clubPermissionPolicy.requireAdmin(clubId, userId)
+        val account = getActiveAccountWithLock(clubId, accountId)
         val targets = getTargets(accountId, request.targetIds)
         val refundedAt = LocalDateTime.now(clock)
 
@@ -118,6 +115,7 @@ class ManageAccountPaymentUseCase(
                         amount = Money.of(target.paidAmount),
                         transactedAt = refundedAt,
                         memo = request.memo,
+                        registeredByName = admin.user.name,
                         paymentTarget = target,
                     ).also {
                         account.applyTransaction(it)
@@ -131,9 +129,7 @@ class ManageAccountPaymentUseCase(
     private fun getActiveAccountWithLock(
         clubId: Long,
         accountId: Long,
-        userId: Long,
     ): Account {
-        clubPermissionPolicy.requireAdmin(clubId, userId)
         val account = accountRepository.findByIdWithLock(accountId) ?: throw AccountNotFoundException()
         account.validateOwnedBy(clubId)
         if (account.status != AccountStatus.ACTIVE) throw AccountNotActiveException()

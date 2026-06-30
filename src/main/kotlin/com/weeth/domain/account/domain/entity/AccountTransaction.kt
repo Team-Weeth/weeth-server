@@ -43,6 +43,7 @@ class AccountTransaction(
     transactedAt: LocalDateTime,
     category: String? = null,
     memo: String? = null,
+    registeredByName: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_payment_target_id")
     val paymentTarget: AccountPaymentTarget? = null,
@@ -88,6 +89,10 @@ class AccountTransaction(
 
     @Column(length = 200)
     var memo: String? = normalizeOptional(memo, "메모", MAX_MEMO_LENGTH)
+        private set
+
+    @Column(name = "registered_by_name", length = 50)
+    var registeredByName: String? = normalizeOptional(registeredByName, "등록자 이름", MAX_REGISTERED_BY_NAME_LENGTH)
         private set
 
     var deletedAt: LocalDateTime? = null
@@ -153,6 +158,7 @@ class AccountTransaction(
         private const val MAX_SOURCE_LENGTH = 50
         private const val MAX_CATEGORY_LENGTH = 30
         private const val MAX_MEMO_LENGTH = 200
+        private const val MAX_REGISTERED_BY_NAME_LENGTH = 50
 
         fun create(
             account: Account,
@@ -163,6 +169,7 @@ class AccountTransaction(
             transactedAt: LocalDateTime,
             category: String? = null,
             memo: String? = null,
+            registeredByName: String? = null,
             paymentTarget: AccountPaymentTarget? = null,
         ): AccountTransaction =
             AccountTransaction(
@@ -174,6 +181,7 @@ class AccountTransaction(
                 transactedAt = transactedAt,
                 category = category,
                 memo = memo,
+                registeredByName = registeredByName,
                 paymentTarget = paymentTarget,
             )
 

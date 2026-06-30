@@ -405,6 +405,33 @@ class MembershipFeeRegistrationIntegrationTest(
                     )
                 }.errorCode.code shouldBe AccountErrorCode.ACCOUNT_NOT_FOUND.code
             }
+
+            it("S12. 회비 순합계는 환불을 차감하고 회비 외 거래는 무시한다") {
+                val context = createContext("S12", previousBalance = 0)
+                val account = context.previousAccount.shouldNotBeNull()
+
+                fun save(
+                    type: AccountTransactionType,
+                    amount: Int,
+                ) = transactionRepository.save(
+                    AccountTransaction.create(
+                        account = account,
+                        type = type,
+                        title = "거래",
+                        source = null,
+                        amount = Money.of(amount),
+                        transactedAt = LocalDateTime.now(),
+                    ),
+                )
+
+                save(AccountTransactionType.DUES, 35_000)
+                save(AccountTransactionType.DUES, 35_000)
+                save(AccountTransactionType.REFUND, 35_000)
+                save(AccountTransactionType.EXPENSE, 10_000)
+
+                // 70_000(DUES) - 35_000(REFUND) = 35_000, EXPENSE 는 집계 제외
+                transactionRepository.sumNetDuesAmountByAccountId(account.id) shouldBe 35_000L
+            }
         }
     }
 

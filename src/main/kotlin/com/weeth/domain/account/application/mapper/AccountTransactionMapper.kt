@@ -13,6 +13,7 @@ class AccountTransactionMapper {
     fun toEntity(
         account: Account,
         request: SaveAccountTransactionRequest,
+        registeredByName: String? = null,
     ): AccountTransaction =
         AccountTransaction.create(
             account = account,
@@ -22,6 +23,7 @@ class AccountTransactionMapper {
             amount = Money.of(request.amount),
             transactedAt = request.transactedAt.atStartOfDay(),
             memo = request.memo,
+            registeredByName = registeredByName,
         )
 
     fun toResponse(

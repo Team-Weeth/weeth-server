@@ -16,6 +16,7 @@ import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.application.mapper.FileMapper
@@ -26,6 +27,7 @@ import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.file.domain.vo.StorageKey
 import com.weeth.domain.file.fixture.FileTestFixture
+import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -62,6 +64,7 @@ class ManageAccountTransactionUseCaseTest :
         val accountId = 1L
         val transactionId = 100L
         val date = LocalDate.of(2026, 7, 20)
+        val adminMember = ClubMemberTestFixture.createAdminMember(user = UserTestFixture.createAdmin(id = userId))
         val receiptRequest =
             FileSaveRequest(
                 fileName = "receipt.png",
@@ -115,6 +118,7 @@ class ManageAccountTransactionUseCaseTest :
             every { fileRepository.deleteAll(any<List<File>>()) } just runs
             every { fileRepository.flush() } just runs
             every { fileReader.findAll(any(), any<Long>(), any()) } returns emptyList()
+            every { clubPermissionPolicy.requireAdmin(any(), userId) } returns adminMember
         }
 
         fun appliedTransaction(
@@ -145,7 +149,7 @@ class ManageAccountTransactionUseCaseTest :
                 response.type shouldBe AccountTransactionType.EXPENSE
                 account.currentBalance shouldBe 70_000
                 account.lastModifiedBy shouldBe userId
-                verify(exactly = 1) { transactionRepository.save(any()) }
+                verify(exactly = 1) { transactionRepository.save(match { it.registeredByName == "적순" }) }
             }
 
             it("영수증 파일이 있으면 거래 ID를 ownerId로 파일 메타데이터를 저장하고 응답에 포함한다") {
