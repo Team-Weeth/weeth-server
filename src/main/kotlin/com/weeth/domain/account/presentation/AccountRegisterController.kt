@@ -116,7 +116,7 @@ class AccountRegisterController(
         return CommonResponse.success(ACCOUNT_UPDATE_SUCCESS)
     }
 
-    @GetMapping("/{accountId}/payment-targets")
+    @GetMapping("/{accountId}/registration/payment-targets")
     @Operation(
         summary = "회비 납부 대상 목록 조회",
         description =
@@ -171,7 +171,7 @@ class AccountRegisterController(
             ),
         )
 
-    @PatchMapping("/{accountId}/payment-targets") // TODO: registration 추가하기
+    @PatchMapping("/{accountId}/registration/payment-targets")
     @Operation(
         summary = "[3단계] 회비 납부 대상 저장",
         description =
