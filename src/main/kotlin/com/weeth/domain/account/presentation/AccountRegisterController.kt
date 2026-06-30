@@ -1,6 +1,5 @@
 package com.weeth.domain.account.presentation
 
-import com.weeth.domain.account.application.dto.request.AccountSaveRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountBankAccountRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountBasicRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountCarryOverRequest
@@ -10,7 +9,6 @@ import com.weeth.domain.account.application.dto.response.AccountPaymentTargetsRe
 import com.weeth.domain.account.application.dto.response.AccountRegistrationStatusResponse
 import com.weeth.domain.account.application.dto.response.CreateAccountDraftResponse
 import com.weeth.domain.account.application.exception.AccountErrorCode
-import com.weeth.domain.account.application.usecase.command.ManageAccountUseCase
 import com.weeth.domain.account.application.usecase.command.RegisterAccountUseCase
 import com.weeth.domain.account.application.usecase.query.GetAccountPaymentTargetQueryService
 import com.weeth.domain.account.application.usecase.query.GetAccountRegistrationQueryService
@@ -21,7 +19,6 @@ import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_DRAFT_S
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_TARGET_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_TARGET_UPDATE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_REGISTRATION_COMPLETE_SUCCESS
-import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_SAVE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_UPDATE_SUCCESS
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
@@ -48,7 +45,6 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v4/admin/clubs/{clubId}/accounts")
 @ApiErrorCodeExample(AccountErrorCode::class)
 class AccountRegisterController(
-    private val manageAccountUseCase: ManageAccountUseCase,
     private val registerAccountUseCase: RegisterAccountUseCase,
     private val getAccountRegistrationQueryService: GetAccountRegistrationQueryService,
     private val getAccountPaymentTargetQueryService: GetAccountPaymentTargetQueryService,
@@ -250,17 +246,5 @@ class AccountRegisterController(
     ): CommonResponse<Void> {
         registerAccountUseCase.completeRegistration(clubId = clubId, accountId = accountId, userId = userId)
         return CommonResponse.success(ACCOUNT_REGISTRATION_COMPLETE_SUCCESS)
-    }
-
-    @PostMapping
-    @Operation(summary = "회비 총 금액 기입", hidden = true)
-    fun save(
-        @TsidParam
-        @TsidPathVariable clubId: Long,
-        @RequestBody @Valid dto: AccountSaveRequest,
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<Void> {
-        manageAccountUseCase.save(clubId, dto, userId)
-        return CommonResponse.success(ACCOUNT_SAVE_SUCCESS)
     }
 }

@@ -62,15 +62,15 @@ class Account(
     var description: String? = description
         private set
 
-    // TODO(legacy): 레거시 Account.create 만 채우는 죽은 필드. 신규 위저드 플로우에선 0으로 방치된다.
-    //  목표 회비 총액은 sum(targetTarget.dueAmount) 로 live 계산하므로(대시보드/납부현황 요약),
-    //  Receipt 흐름 제거와 함께 이 필드도 정리 예정. cancelSpend 의 총액 가드도 그때 함께 제거.
+    // TODO(legacy): 신규 위저드 플로우에선 항상 0으로 방치되는 죽은 필드. 목표 회비 총액은
+    //  sum(TARGETED.dueAmount) 로 live 계산한다(대시보드/납부현황 요약). V5 마이그레이션(DROP COLUMN)과
+    //  함께 제거 예정 — prod ddl-auto=validate 라 컬럼 제거 전엔 필드를 남겨둔다.
     @Column(nullable = false)
     var totalAmount: Int = totalAmount
         private set
 
-    // 레거시 Receipt 흐름의 잔액. currentBalance 와 같은 값을 가지며,
-    // Receipt → AccountTransaction 마이그레이션 완료 시 currentBalance 로 통합 후 제거 예정.
+    // 레거시 Receipt 흐름의 잔액. currentBalance 와 항상 같은 값을 유지하며,
+    // V5 마이그레이션(DROP COLUMN)과 함께 currentBalance 로 통합 후 제거 예정.
     @Column(nullable = false)
     var currentAmount: Int = currentAmount
         private set
@@ -129,28 +129,6 @@ class Account(
     @Column(nullable = false, length = 20)
     var registrationStep: AccountRegistrationStep = registrationStep
         private set
-
-    fun spend(amount: Money) {
-        require(amount.value > 0) { "사용 금액은 0보다 커야 합니다: ${amount.value}" }
-        check(currentAmount >= amount.value) { "잔액이 부족합니다. 현재: $currentAmount, 요청: ${amount.value}" }
-        currentAmount -= amount.value
-        currentBalance -= amount.value
-    }
-
-    fun cancelSpend(amount: Money) {
-        require(amount.value > 0) { "취소 금액은 0보다 커야 합니다: ${amount.value}" }
-        check(currentAmount + amount.value <= totalAmount) { "총액을 초과할 수 없습니다. 총액: $totalAmount" }
-        currentAmount += amount.value
-        currentBalance += amount.value
-    }
-
-    fun adjustSpend(
-        oldAmount: Money,
-        newAmount: Money,
-    ) {
-        cancelSpend(oldAmount)
-        spend(newAmount)
-    }
 
     fun updateBasicInfo(
         name: String,
@@ -272,30 +250,6 @@ class Account(
     }
 
     companion object {
-        @Deprecated(
-            "레거시 데이터 호환용 팩토리입니다. 신규 회비 장부는 createDraft + updateBasicInfo 흐름을 사용하세요.",
-            ReplaceWith("Account.createDraft(club, cardinal)"),
-        )
-        fun create(
-            club: Club,
-            description: String,
-            totalAmount: Int,
-            cardinal: Int,
-        ): Account {
-            require(totalAmount > 0) { "총액은 0보다 커야 합니다: $totalAmount" }
-            return Account(
-                club = club,
-                description = description,
-                totalAmount = totalAmount,
-                currentAmount = totalAmount,
-                cardinal = cardinal,
-                name = description,
-                duesAmount = totalAmount,
-                currentBalance = totalAmount,
-                status = AccountStatus.ACTIVE,
-            )
-        }
-
         fun createDraft(
             club: Club,
             cardinal: Int,

@@ -4,7 +4,6 @@ import com.weeth.config.TestContainersConfig
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.entity.AccountTransaction
-import com.weeth.domain.account.domain.entity.Receipt
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTargetStatus
@@ -44,7 +43,6 @@ class AccountRepositoryTest(
     private val accountRepository: AccountRepository,
     private val accountTransactionRepository: AccountTransactionRepository,
     private val accountPaymentTargetRepository: AccountPaymentTargetRepository,
-    private val receiptRepository: ReceiptRepository,
     private val clubRepository: ClubRepository,
     private val clubMemberRepository: ClubMemberRepository,
     private val cardinalRepository: CardinalRepository,
@@ -268,59 +266,6 @@ class AccountRepositoryTest(
                     accountId = account.id,
                     types = listOf(AccountTransactionType.DUES),
                 ) shouldBe 1
-            }
-        }
-
-        describe("ReceiptRepository") {
-            it("영수증을 장부별로 분리해 생성일 내림차순으로 조회한다") {
-                val club = clubRepository.save(ClubTestFixture.createClub(code = "ACCOUNT-REPO-RECEIPT"))
-                val account = accountRepository.save(Account.createDraft(club = club, cardinal = 5))
-                val otherAccount = accountRepository.save(Account.createDraft(club = club, cardinal = 6))
-                val older =
-                    receiptRepository.save(
-                        Receipt.create(
-                            description = "오래된 영수증",
-                            source = "편의점",
-                            amount = 10_000,
-                            date = LocalDate.of(2026, 3, 1),
-                            account = account,
-                        ),
-                    )
-                val newer =
-                    receiptRepository.save(
-                        Receipt.create(
-                            description = "최신 영수증",
-                            source = "문구점",
-                            amount = 20_000,
-                            date = LocalDate.of(2026, 3, 2),
-                            account = account,
-                        ),
-                    )
-                receiptRepository.save(
-                    Receipt.create(
-                        description = "다른 장부 영수증",
-                        source = "식당",
-                        amount = 30_000,
-                        date = LocalDate.of(2026, 3, 3),
-                        account = otherAccount,
-                    ),
-                )
-                entityManager.flush()
-                entityManager.entityManager
-                    .createNativeQuery("update receipt set created_at = ? where receipt_id = ?")
-                    .setParameter(1, LocalDateTime.of(2026, 3, 1, 10, 0))
-                    .setParameter(2, older.id)
-                    .executeUpdate()
-                entityManager.entityManager
-                    .createNativeQuery("update receipt set created_at = ? where receipt_id = ?")
-                    .setParameter(1, LocalDateTime.of(2026, 3, 2, 10, 0))
-                    .setParameter(2, newer.id)
-                    .executeUpdate()
-                entityManager.clear()
-
-                val result = receiptRepository.findAllByAccountIdOrderByCreatedAtDesc(account.id)
-
-                result.map { it.id } shouldContainExactly listOf(newer.id, older.id)
             }
         }
 
