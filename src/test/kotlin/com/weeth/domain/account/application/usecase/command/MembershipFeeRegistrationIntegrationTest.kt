@@ -438,8 +438,6 @@ class MembershipFeeRegistrationIntegrationTest(
                 accountRepository.save(
                     Account(
                         club = club,
-                        totalAmount = it,
-                        currentAmount = it,
                         currentBalance = it,
                         cardinal = previousCardinal.cardinalNumber,
                         name = "3기 회비",

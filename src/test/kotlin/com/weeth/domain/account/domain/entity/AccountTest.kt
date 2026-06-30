@@ -85,7 +85,6 @@ class AccountTest :
                 account.applyTransaction(transaction)
             }
             account.currentBalance shouldBe 23
-            account.currentAmount shouldBe 23
             transaction.isApplied shouldBe true
         }
 
@@ -105,7 +104,6 @@ class AccountTest :
             account.revertTransaction(transaction)
 
             account.currentBalance shouldBe 0
-            account.currentAmount shouldBe 0
             transaction.isApplied shouldBe false
             shouldThrow<IllegalStateException> {
                 account.revertTransaction(transaction)

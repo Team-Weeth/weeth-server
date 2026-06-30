@@ -36,8 +36,6 @@ class Account(
     val club: Club,
     id: Long = 0,
     description: String? = null,
-    totalAmount: Int,
-    currentAmount: Int,
     cardinal: Int,
     name: String? = null,
     duesAmount: Int = 0,
@@ -60,19 +58,6 @@ class Account(
 
     @Column(nullable = true)
     var description: String? = description
-        private set
-
-    // TODO(legacy): 신규 위저드 플로우에선 항상 0으로 방치되는 죽은 필드. 목표 회비 총액은
-    //  sum(TARGETED.dueAmount) 로 live 계산한다(대시보드/납부현황 요약). V5 마이그레이션(DROP COLUMN)과
-    //  함께 제거 예정 — prod ddl-auto=validate 라 컬럼 제거 전엔 필드를 남겨둔다.
-    @Column(nullable = false)
-    var totalAmount: Int = totalAmount
-        private set
-
-    // 레거시 Receipt 흐름의 잔액. currentBalance 와 항상 같은 값을 유지하며,
-    // V5 마이그레이션(DROP COLUMN)과 함께 currentBalance 로 통합 후 제거 예정.
-    @Column(nullable = false)
-    var currentAmount: Int = currentAmount
         private set
 
     @Column(nullable = false)
@@ -99,8 +84,7 @@ class Account(
     var carryOverMemo: String? = carryOverMemo
         private set
 
-    // 신규 AccountTransaction 흐름의 실제 통장 잔액. currentAmount 와 같은 값을 유지하며,
-    // Receipt 제거 이후 단일 잔액 필드로 남길 예정.
+    // AccountTransaction 흐름의 실제 통장 잔액. 레거시 Receipt 잔액 필드를 대체하는 단일 잔액 필드.
     @Column(nullable = false)
     var currentBalance: Int = currentBalance
         private set
@@ -201,9 +185,6 @@ class Account(
     /**
      * 잔액을 갱신하므로 동시성 보호가 필요합니다.
      * 호출 측은 AccountRepository.findByIdWithLock 으로 조회한 인스턴스에 적용해야 합니다.
-     *
-     * currentBalance(신규)와 currentAmount(레거시 영수증 흐름)는 동일한 잔액을 의미하므로
-     * 한 경로에서 다른 경로의 필드가 어긋나지 않도록 함께 갱신합니다.
      */
     fun applyTransaction(transaction: AccountTransaction) {
         check(transaction.belongsTo()) { "거래가 해당 장부에 속하지 않습니다." }
@@ -212,7 +193,6 @@ class Account(
         when (transaction.direction) {
             AccountTransactionDirection.INCOME -> {
                 currentBalance += transaction.amount
-                currentAmount += transaction.amount
             }
 
             AccountTransactionDirection.EXPENSE -> {
@@ -220,7 +200,6 @@ class Account(
                     "잔액이 부족합니다. 현재: $currentBalance, 요청: ${transaction.amount}"
                 }
                 currentBalance -= transaction.amount
-                currentAmount -= transaction.amount
             }
         }
         transaction.markApplied()
@@ -238,12 +217,10 @@ class Account(
                     "잔액이 부족합니다. 현재: $currentBalance, 요청: ${transaction.amount}"
                 }
                 currentBalance -= transaction.amount
-                currentAmount -= transaction.amount
             }
 
             AccountTransactionDirection.EXPENSE -> {
                 currentBalance += transaction.amount
-                currentAmount += transaction.amount
             }
         }
         transaction.markReverted()
@@ -258,8 +235,6 @@ class Account(
             return Account(
                 club = club,
                 description = "",
-                totalAmount = 0,
-                currentAmount = 0,
                 cardinal = cardinal,
                 status = AccountStatus.DRAFT,
             )

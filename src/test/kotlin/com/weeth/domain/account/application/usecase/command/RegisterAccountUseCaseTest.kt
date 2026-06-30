@@ -484,7 +484,6 @@ class RegisterAccountUseCaseTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 200_000,
                         currentBalance = 200_000,
                     )
 
@@ -516,7 +515,6 @@ class RegisterAccountUseCaseTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 240_000,
                         currentBalance = 240_000,
                     )
 
@@ -572,7 +570,6 @@ class RegisterAccountUseCaseTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 240_000,
                         currentBalance = 240_000,
                     )
 

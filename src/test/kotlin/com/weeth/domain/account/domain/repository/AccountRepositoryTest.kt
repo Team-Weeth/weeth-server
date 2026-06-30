@@ -87,8 +87,6 @@ class AccountRepositoryTest(
             val account =
                 Account(
                     club = club,
-                    totalAmount = currentBalance,
-                    currentAmount = currentBalance,
                     currentBalance = currentBalance,
                     cardinal = cardinal,
                     name = "${cardinal}기 회비",

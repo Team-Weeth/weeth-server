@@ -55,7 +55,6 @@ class GetAccountRegistrationQueryServiceTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 240_000,
                         currentBalance = 240_000,
                     )
 
@@ -143,7 +142,6 @@ class GetAccountRegistrationQueryServiceTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 240_000,
                         currentBalance = 240_000,
                     )
 
