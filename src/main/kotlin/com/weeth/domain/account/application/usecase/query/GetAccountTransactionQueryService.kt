@@ -14,6 +14,9 @@ import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.global.common.response.PageResponse
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -26,6 +29,8 @@ class GetAccountTransactionQueryService(
     private val accountRepository: AccountRepository,
     private val transactionRepository: AccountTransactionRepository,
     private val clubPermissionPolicy: ClubPermissionPolicy,
+    private val fileReader: FileReader,
+    private val fileMapper: FileMapper,
     private val accountTransactionMapper: AccountTransactionMapper,
 ) {
     fun findTransactions(
@@ -71,9 +76,24 @@ class GetAccountTransactionQueryService(
                 }
             }
 
+        val transactionIds = transactions.content.map { it.id }
+        val transactionIdsWithReceipt =
+            fileReader
+                .findAll(FileOwnerType.ACCOUNT_TRANSACTION, transactionIds)
+                .map { it.ownerId }
+                .toSet()
+
         return AccountTransactionsResponse(
             counts = countByFilter(accountId),
-            transactions = PageResponse.from(transactions.map { accountTransactionMapper.toResponse(it) }),
+            transactions =
+                PageResponse.from(
+                    transactions.map {
+                        accountTransactionMapper.toResponse(
+                            transaction = it,
+                            hasReceipt = it.id in transactionIdsWithReceipt,
+                        )
+                    },
+                ),
         )
     }
 
@@ -91,7 +111,12 @@ class GetAccountTransactionQueryService(
 
         if (transaction.account.id != accountId) throw AccountTransactionNotFoundException()
 
-        return accountTransactionMapper.toResponse(transaction)
+        val receipts =
+            fileReader
+                .findAll(FileOwnerType.ACCOUNT_TRANSACTION, transaction.id)
+                .map(fileMapper::toFileResponse)
+
+        return accountTransactionMapper.toResponse(transaction, receipts)
     }
 
     private fun requireAdminAccess(

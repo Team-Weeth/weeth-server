@@ -1,7 +1,10 @@
 package com.weeth.domain.account.application.dto.request
 
 import com.weeth.domain.account.domain.enums.AccountTransactionType
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
@@ -28,4 +31,8 @@ data class UpdateAccountTransactionRequest(
     @field:Schema(description = "메모. null=변경 안 함", nullable = true)
     @field:Size(max = 200)
     val memo: String? = null,
+    @field:Schema(description = "첨부 파일 변경 규약: null=변경 안 함, []=전체 삭제, 배열 전달=해당 목록으로 교체", nullable = true)
+    @field:Valid
+    @field:Size(max = 1)
+    val files: List<@NotNull FileSaveRequest>? = null,
 )

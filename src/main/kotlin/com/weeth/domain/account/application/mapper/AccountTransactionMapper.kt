@@ -5,6 +5,7 @@ import com.weeth.domain.account.application.dto.response.AccountTransactionRespo
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.vo.Money
+import com.weeth.domain.file.application.dto.response.FileResponse
 import org.springframework.stereotype.Component
 
 @Component
@@ -23,7 +24,11 @@ class AccountTransactionMapper {
             memo = request.memo,
         )
 
-    fun toResponse(transaction: AccountTransaction): AccountTransactionResponse =
+    fun toResponse(
+        transaction: AccountTransaction,
+        receipts: List<FileResponse> = emptyList(),
+        hasReceipt: Boolean = receipts.isNotEmpty(),
+    ): AccountTransactionResponse =
         AccountTransactionResponse(
             transactionId = transaction.id,
             type = transaction.type,
@@ -33,5 +38,7 @@ class AccountTransactionMapper {
             amount = transaction.amount,
             transactedAt = transaction.transactedAt,
             memo = transaction.memo,
+            hasReceipt = hasReceipt,
+            receipts = receipts,
         )
 }

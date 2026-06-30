@@ -17,6 +17,12 @@ import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
+import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.entity.File
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,6 +31,9 @@ class ManageAccountTransactionUseCase(
     private val accountRepository: AccountRepository,
     private val transactionRepository: AccountTransactionRepository,
     private val clubPermissionPolicy: ClubPermissionPolicy,
+    private val fileRepository: FileRepository,
+    private val fileReader: FileReader,
+    private val fileMapper: FileMapper,
     private val accountTransactionMapper: AccountTransactionMapper,
 ) {
     @Transactional
@@ -40,11 +49,12 @@ class ManageAccountTransactionUseCase(
 
         val transaction = accountTransactionMapper.toEntity(account, request)
 
-        transactionRepository.save(transaction)
-        account.applyTransaction(transaction)
+        val savedTransaction = transactionRepository.save(transaction)
+        account.applyTransaction(savedTransaction)
         account.markModifiedBy(userId)
+        val receipts = saveTransactionReceipts(savedTransaction, request.files)
 
-        return accountTransactionMapper.toResponse(transaction)
+        return accountTransactionMapper.toResponse(savedTransaction, receipts.map(fileMapper::toFileResponse))
     }
 
     @Transactional
@@ -74,8 +84,9 @@ class ManageAccountTransactionUseCase(
 
         account.applyTransaction(transaction)
         account.markModifiedBy(userId)
+        val receipts = replaceTransactionReceipts(transaction, request.files)
 
-        return accountTransactionMapper.toResponse(transaction)
+        return accountTransactionMapper.toResponse(transaction, receipts.map(fileMapper::toFileResponse))
     }
 
     @Transactional
@@ -125,6 +136,40 @@ class ManageAccountTransactionUseCase(
     private fun requireManualType(type: AccountTransactionType) {
         if (type !in MANUAL_TYPES) throw AccountTransactionTypeNotAllowedException()
     }
+
+    private fun replaceTransactionReceipts(
+        transaction: AccountTransaction,
+        files: List<FileSaveRequest>?,
+    ): List<File> {
+        if (files == null) {
+            return findTransactionReceipts(transaction.id)
+        }
+
+        deleteTransactionReceipts(transaction.id)
+        return saveTransactionReceipts(transaction, files)
+    }
+
+    private fun saveTransactionReceipts(
+        transaction: AccountTransaction,
+        files: List<FileSaveRequest>?,
+    ): List<File> {
+        val mappedFiles = fileMapper.toFileList(files, FileOwnerType.ACCOUNT_TRANSACTION, transaction.id)
+        if (mappedFiles.isEmpty()) {
+            return emptyList()
+        }
+        return fileRepository.saveAll(mappedFiles).toList()
+    }
+
+    private fun deleteTransactionReceipts(transactionId: Long) {
+        val receipts = findTransactionReceipts(transactionId)
+        if (receipts.isNotEmpty()) {
+            fileRepository.deleteAll(receipts)
+            fileRepository.flush()
+        }
+    }
+
+    private fun findTransactionReceipts(transactionId: Long): List<File> =
+        fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, transactionId)
 
     companion object {
         private val MANUAL_TYPES = setOf(AccountTransactionType.INCOME, AccountTransactionType.EXPENSE)

@@ -2,6 +2,7 @@ package com.weeth.domain.account.application.dto.response
 
 import com.weeth.domain.account.domain.enums.AccountTransactionDirection
 import com.weeth.domain.account.domain.enums.AccountTransactionType
+import com.weeth.domain.file.application.dto.response.FileResponse
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
@@ -22,5 +23,8 @@ data class AccountTransactionResponse(
     val transactedAt: LocalDateTime,
     @field:Schema(description = "메모", nullable = true)
     val memo: String?,
-    // TODO: 영수증 추가
+    @field:Schema(description = "영수증 존재 여부", example = "true")
+    val hasReceipt: Boolean = false,
+    @field:Schema(description = "영수증 파일 목록. 목록 조회에서는 빈 배열로 반환될 수 있음")
+    val receipts: List<FileResponse> = emptyList(),
 )

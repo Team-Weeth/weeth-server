@@ -1,8 +1,11 @@
 package com.weeth.domain.account.application.dto.request
 
 import com.weeth.domain.account.domain.enums.AccountTransactionType
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
@@ -29,5 +32,8 @@ data class SaveAccountTransactionRequest(
     @field:Schema(description = "메모", nullable = true)
     @field:Size(max = 200)
     val memo: String? = null,
-    // TODO: 영수증 추가
+    @field:Schema(description = "영수증 파일 목록. 최대 1개", nullable = true)
+    @field:Valid
+    @field:Size(max = 1)
+    val files: List<@NotNull FileSaveRequest>? = null,
 )
