@@ -17,6 +17,7 @@ import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.nulls.shouldNotBeNull
@@ -49,9 +50,11 @@ class ManageAccountPaymentUseCaseTest :
 
         val userId = 10L
         val accountId = 1L
+        val adminMember = ClubMemberTestFixture.createAdminMember(user = UserTestFixture.createAdmin(id = userId))
 
         beforeTest {
             clearMocks(accountRepository, paymentTargetRepository, transactionRepository, clubPermissionPolicy)
+            every { clubPermissionPolicy.requireAdmin(any(), userId) } returns adminMember
         }
 
         fun target(
@@ -84,7 +87,8 @@ class ManageAccountPaymentUseCaseTest :
                     transactionRepository.saveAll(
                         match<List<AccountTransaction>> {
                             it.size == 1 && it.first().type == AccountTransactionType.DUES &&
-                                it.first().amount == 30_000
+                                it.first().amount == 30_000 &&
+                                it.first().registeredByName == "적순"
                         },
                     )
                 }
@@ -153,7 +157,8 @@ class ManageAccountPaymentUseCaseTest :
                     transactionRepository.saveAll(
                         match<List<AccountTransaction>> {
                             it.size == 1 && it.first().type == AccountTransactionType.REFUND &&
-                                it.first().amount == 30_000
+                                it.first().amount == 30_000 &&
+                                it.first().registeredByName == "적순"
                         },
                     )
                 }

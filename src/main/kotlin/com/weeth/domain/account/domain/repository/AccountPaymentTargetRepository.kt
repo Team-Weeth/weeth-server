@@ -13,6 +13,11 @@ import org.springframework.data.repository.query.Param
 interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, Long> {
     fun findAllByAccountId(accountId: Long): List<AccountPaymentTarget>
 
+    fun findByAccountIdAndClubMemberId(
+        accountId: Long,
+        clubMemberId: Long,
+    ): AccountPaymentTarget?
+
     /**
      * 납부 대상 스냅샷 저장에 필요한 행만 조회한다: 현재 TARGETED이거나 이번에 선택된 멤버의 행.
      * 선택되지 않은 EXCLUDED/REFUNDED 행은 스냅샷 계산에 쓰이지 않으므로 로드하지 않는다.
@@ -217,7 +222,7 @@ interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, L
     /**
      * 주의: `EXCLUDED`를 넘겨 "전체 제외 수"로 쓰지 말 것. EXCLUDED 행만 세므로
      * **행이 없는 미선택 부원이 빠져 과소 집계**된다. 제외 수는 `활성 명부 − 활성 TARGETED`로 파생하라
-     * (예: [countActiveClubMemberTargetsByAccountIdAndTargetStatus] + 명부 수). 자세한 불변식은 [AccountTargetStatus].
+     * (예: 명부 수 − [countActiveClubMemberTargetsByAccountIdAndTargetStatus]). 자세한 불변식은 [AccountTargetStatus].
      */
     fun countByAccountIdAndTargetStatus(
         accountId: Long,

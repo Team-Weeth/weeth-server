@@ -26,4 +26,6 @@ enum class AccountResponseCode(
     ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS(10126, HttpStatus.OK, "납부가 취소 처리되었습니다."),
     ACCOUNT_PAYMENT_REFUND_SUCCESS(10127, HttpStatus.OK, "환불이 처리되었습니다."),
     ACCOUNT_PAYMENT_STATUS_FIND_SUCCESS(10128, HttpStatus.OK, "부원별 납부현황이 성공적으로 조회되었습니다."),
+    ACCOUNT_MY_SUMMARY_FIND_SUCCESS(10129, HttpStatus.OK, "나의 회비 정보가 성공적으로 조회되었습니다."),
+    ACCOUNT_CARDINAL_LIST_FIND_SUCCESS(10130, HttpStatus.OK, "회비 기수 목록이 성공적으로 조회되었습니다."),
 }

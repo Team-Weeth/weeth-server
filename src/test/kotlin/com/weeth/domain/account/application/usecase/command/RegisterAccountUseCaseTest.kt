@@ -324,7 +324,7 @@ class RegisterAccountUseCaseTest :
                 useCase.savePaymentTargets(
                     clubId = clubId,
                     accountId = accountId,
-                    request = SavePaymentTargetsRequest(),
+                    request = SavePaymentTargetsRequest(targetedClubMemberIds = emptyList()),
                     userId = userId,
                 )
 
@@ -357,7 +357,7 @@ class RegisterAccountUseCaseTest :
                     useCase.savePaymentTargets(
                         clubId = clubId,
                         accountId = accountId,
-                        request = SavePaymentTargetsRequest(),
+                        request = SavePaymentTargetsRequest(targetedClubMemberIds = emptyList()),
                         userId = userId,
                     )
                 }

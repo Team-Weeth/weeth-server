@@ -43,11 +43,11 @@ class ManageAccountTransactionUseCase(
         request: SaveAccountTransactionRequest,
         userId: Long,
     ): AccountTransactionResponse {
-        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val admin = clubPermissionPolicy.requireAdmin(clubId, userId)
         val account = getActiveAccountWithLock(clubId, accountId)
         requireManualType(request.type)
 
-        val transaction = accountTransactionMapper.toEntity(account, request)
+        val transaction = accountTransactionMapper.toEntity(account, request, registeredByName = admin.user.name)
 
         val savedTransaction = transactionRepository.save(transaction)
         account.applyTransaction(savedTransaction)
