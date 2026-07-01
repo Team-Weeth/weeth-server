@@ -363,6 +363,26 @@ class RegisterAccountUseCaseTest :
                 }
             }
 
+            it("활성 장부에 스냅샷 갱신을 요청하면 AccountInvalidDraftStateException을 던진다") {
+                val account = Account.createDraft(club = club, cardinal = 5)
+                account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
+                account.activate()
+
+                every { accountRepository.findByIdWithLock(accountId) } returns account
+
+                shouldThrow<AccountInvalidDraftStateException> {
+                    useCase.savePaymentTargets(
+                        clubId = clubId,
+                        accountId = accountId,
+                        request = SavePaymentTargetsRequest(targetedClubMemberIds = listOf(1L)),
+                        userId = userId,
+                    )
+                }
+                // 상태 검증 실패 시 어떤 조회·변경도 일어나지 않아야 한다(이력 유실 방지).
+                verify(exactly = 0) { paymentTargetRepository.findAllForSnapshotByAccountId(any(), any()) }
+                verify(exactly = 0) { paymentTargetRepository.saveAll(any<Iterable<AccountPaymentTarget>>()) }
+            }
+
             it("기수 명부에 없는 멤버가 포함되면 AccountPaymentTargetMemberInvalidException을 던진다") {
                 val account = Account.createDraft(club = club, cardinal = 5)
                 account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
