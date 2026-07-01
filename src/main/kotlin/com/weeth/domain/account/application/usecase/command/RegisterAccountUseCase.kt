@@ -285,6 +285,7 @@ class RegisterAccountUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val account = getAccountWithLock(clubId, accountId)
+        if (account.status != AccountStatus.DRAFT) throw AccountInvalidDraftStateException()
         val targetedMemberIds = request.targetedClubMemberIds.distinct()
         val targetedMemberIdSet = targetedMemberIds.toSet()
 
@@ -305,7 +306,7 @@ class RegisterAccountUseCase(
 
         val existingByMemberId =
             paymentTargetRepository
-                .findAllByAccountId(accountId)
+                .findAllForSnapshotByAccountId(accountId, targetedMemberIdSet)
                 .associateBy { it.clubMember.id }
         val dueAmount = Money.of(account.duesAmount)
 

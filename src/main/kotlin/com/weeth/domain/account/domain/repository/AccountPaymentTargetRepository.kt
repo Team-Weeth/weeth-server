@@ -18,6 +18,27 @@ interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, L
         clubMemberId: Long,
     ): AccountPaymentTarget?
 
+    /**
+     * 납부 대상 스냅샷 저장에 필요한 행만 조회한다: 현재 TARGETED이거나 이번에 선택된 멤버의 행.
+     * 선택되지 않은 EXCLUDED/REFUNDED 행은 스냅샷 계산에 쓰이지 않으므로 로드하지 않는다.
+     * clubMemberIds가 비면 IN 절은 아무 행도 매칭하지 않고 현재 TARGETED 행만 반환한다.
+     */
+    @Query(
+        """
+        select target
+        from AccountPaymentTarget target
+        where target.account.id = :accountId
+        and (
+            target.targetStatus = com.weeth.domain.account.domain.enums.AccountTargetStatus.TARGETED
+            or target.clubMember.id in :clubMemberIds
+        )
+        """,
+    )
+    fun findAllForSnapshotByAccountId(
+        @Param("accountId") accountId: Long,
+        @Param("clubMemberIds") clubMemberIds: Collection<Long>,
+    ): List<AccountPaymentTarget>
+
     @Query(
         """
         select target
