@@ -88,7 +88,7 @@ class ManageCommentUseCaseTest :
                 val comment = CommentTestFixture.createPostComment(id = 200L, post = post, clubMember = ownerMember)
                 val dto = CommentUpdateRequest(content = "new", files = null)
 
-                every { commentRepository.findByIdAndPostId(200L, 10L) } returns comment
+                every { commentRepository.findByIdAndPostIdWithLock(200L, 10L) } returns comment
 
                 shouldThrow<CommentNotOwnedException> {
                     useCase.updatePostComment(dto, postId = 10L, commentId = 200L, userId = 2L)
@@ -123,7 +123,7 @@ class ManageCommentUseCaseTest :
                         ownerId = comment.id,
                     )
 
-                every { commentRepository.findByIdAndPostId(202L, 10L) } returns comment
+                every { commentRepository.findByIdAndPostIdWithLock(202L, 10L) } returns comment
                 every { fileMapper.toFileList(dto.files, FileOwnerType.COMMENT, 202L) } returns listOf(newFile)
 
                 useCase.updatePostComment(dto, postId = 10L, commentId = 202L, userId = 1L)
@@ -147,7 +147,7 @@ class ManageCommentUseCaseTest :
                 val comment = CommentTestFixture.createPostComment(id = 310L, post = post, clubMember = ownerMember)
 
                 every { postRepository.findByIdWithLock(10L) } returns post
-                every { commentRepository.findByIdAndPostId(310L, 10L) } returns comment
+                every { commentRepository.findByIdAndPostIdWithLock(310L, 10L) } returns comment
 
                 useCase.deletePostComment(postId = 10L, commentId = 310L, userId = 1L)
 
@@ -175,7 +175,7 @@ class ManageCommentUseCaseTest :
                 comment.children.add(child)
 
                 every { postRepository.findByIdWithLock(10L) } returns post
-                every { commentRepository.findByIdAndPostId(300L, 10L) } returns comment
+                every { commentRepository.findByIdAndPostIdWithLock(300L, 10L) } returns comment
 
                 useCase.deletePostComment(postId = 10L, commentId = 300L, userId = 1L)
 
@@ -198,7 +198,7 @@ class ManageCommentUseCaseTest :
                     )
 
                 every { postRepository.findByIdWithLock(10L) } returns post
-                every { commentRepository.findByIdAndPostId(320L, 10L) } returns comment
+                every { commentRepository.findByIdAndPostIdWithLock(320L, 10L) } returns comment
 
                 shouldThrow<CommentAlreadyDeletedException> {
                     useCase.deletePostComment(postId = 10L, commentId = 320L, userId = 1L)

@@ -62,7 +62,7 @@ class ManageCommentUseCase(
         commentId: Long,
         userId: Long,
     ) {
-        val comment = commentRepository.findByIdAndPostId(commentId, postId) ?: throw CommentNotFoundException()
+        val comment = findCommentWithLock(commentId, postId)
         ensureOwner(comment, userId)
         ensureNotDeleted(comment)
 
@@ -77,7 +77,7 @@ class ManageCommentUseCase(
         userId: Long,
     ) {
         val post = findPostWithLock(postId)
-        val comment = commentRepository.findByIdAndPostId(commentId, postId) ?: throw CommentNotFoundException()
+        val comment = findCommentWithLock(commentId, postId)
         ensureOwner(comment, userId)
 
         deleteComment(comment)
@@ -161,4 +161,9 @@ class ManageCommentUseCase(
 
     private fun findPostWithLock(postId: Long): Post =
         postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
+
+    private fun findCommentWithLock(
+        commentId: Long,
+        postId: Long,
+    ): Comment = commentRepository.findByIdAndPostIdWithLock(commentId, postId) ?: throw CommentNotFoundException()
 }

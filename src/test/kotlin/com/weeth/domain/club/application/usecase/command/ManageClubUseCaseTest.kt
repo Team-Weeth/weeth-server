@@ -346,7 +346,7 @@ class ManageClubUseCaseTest :
                 )
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(
                     1L,
@@ -377,7 +377,7 @@ class ManageClubUseCaseTest :
                             ),
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(
                     1L,
@@ -411,7 +411,7 @@ class ManageClubUseCaseTest :
                             ),
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(1L, 10L, ClubUpdateRequest(name = "새 이름"))
 
@@ -431,7 +431,7 @@ class ManageClubUseCaseTest :
                             ),
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(1L, 10L, ClubUpdateRequest())
 
@@ -466,7 +466,7 @@ class ManageClubUseCaseTest :
                 )
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteProfileImage(1L, 10L)
 
@@ -485,7 +485,7 @@ class ManageClubUseCaseTest :
                             ),
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteProfileImage(1L, 10L)
 
@@ -518,7 +518,7 @@ class ManageClubUseCaseTest :
                 )
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
@@ -537,7 +537,7 @@ class ManageClubUseCaseTest :
                             ),
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteBackgroundImage(1L, 10L)
 

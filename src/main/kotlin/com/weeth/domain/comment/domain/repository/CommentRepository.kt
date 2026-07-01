@@ -1,9 +1,13 @@
 package com.weeth.domain.comment.domain.repository
 
 import com.weeth.domain.comment.domain.entity.Comment
+import jakarta.persistence.LockModeType
+import jakarta.persistence.QueryHint
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
+import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
 
 interface CommentRepository :
@@ -13,6 +17,22 @@ interface CommentRepository :
     fun findByIdAndPostId(
         id: Long,
         postId: Long,
+    ): Comment?
+
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        """
+        SELECT c
+        FROM Comment c
+        WHERE c.id = :id
+          AND c.post.id = :postId
+        """,
+    )
+    fun findByIdAndPostIdWithLock(
+        @Param("id") id: Long,
+        @Param("postId") postId: Long,
     ): Comment?
 
     @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])

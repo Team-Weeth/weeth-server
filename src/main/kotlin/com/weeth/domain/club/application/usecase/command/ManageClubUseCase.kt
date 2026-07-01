@@ -142,7 +142,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
 
         if (request.primaryContact == PrimaryContact.EMAIL) {
             val resolvedEmail = request.contactEmail ?: club.clubContact.email
@@ -180,7 +180,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
         val newCode = ClubCodePolicy.generateCode()
         club.regenerateCode(newCode)
     }
@@ -192,7 +192,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
         deleteExistingFiles(FileOwnerType.CLUB_PROFILE, clubId)
         club.removeProfileImage()
     }
@@ -204,7 +204,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
         deleteExistingFiles(FileOwnerType.CLUB_BACKGROUND, clubId)
         club.removeBackgroundImage()
     }

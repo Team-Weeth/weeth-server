@@ -109,8 +109,7 @@ class ManagePostUseCase(
         clubId: Long,
     ): Board = boardRepository.findByIdAndClubIdAndIsDeletedFalse(boardId, clubId) ?: throw BoardNotFoundException()
 
-    private fun findPost(postId: Long): Post =
-        postRepository.findActivePostById(postId) ?: throw PostNotFoundException()
+    private fun findPost(postId: Long): Post = postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
 
     private fun validateOwner(
         post: Post,
