@@ -13,6 +13,27 @@ import org.springframework.data.repository.query.Param
 interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, Long> {
     fun findAllByAccountId(accountId: Long): List<AccountPaymentTarget>
 
+    /**
+     * 납부 대상 스냅샷 저장에 필요한 행만 조회한다: 현재 TARGETED이거나 이번에 선택된 멤버의 행.
+     * 선택되지 않은 EXCLUDED/REFUNDED 행은 스냅샷 계산에 쓰이지 않으므로 로드하지 않는다.
+     * clubMemberIds가 비면 IN 절은 아무 행도 매칭하지 않고 현재 TARGETED 행만 반환한다.
+     */
+    @Query(
+        """
+        select target
+        from AccountPaymentTarget target
+        where target.account.id = :accountId
+        and (
+            target.targetStatus = com.weeth.domain.account.domain.enums.AccountTargetStatus.TARGETED
+            or target.clubMember.id in :clubMemberIds
+        )
+        """,
+    )
+    fun findAllForSnapshotByAccountId(
+        @Param("accountId") accountId: Long,
+        @Param("clubMemberIds") clubMemberIds: Collection<Long>,
+    ): List<AccountPaymentTarget>
+
     @Query(
         """
         select target
@@ -193,6 +214,11 @@ interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, L
         @Param("accountId") accountId: Long,
     ): List<AccountPaymentTarget>
 
+    /**
+     * 주의: `EXCLUDED`를 넘겨 "전체 제외 수"로 쓰지 말 것. EXCLUDED 행만 세므로
+     * **행이 없는 미선택 부원이 빠져 과소 집계**된다. 제외 수는 `활성 명부 − 활성 TARGETED`로 파생하라
+     * (예: [countActiveClubMemberTargetsByAccountIdAndTargetStatus] + 명부 수). 자세한 불변식은 [AccountTargetStatus].
+     */
     fun countByAccountIdAndTargetStatus(
         accountId: Long,
         targetStatus: AccountTargetStatus,

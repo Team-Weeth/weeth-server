@@ -267,15 +267,17 @@ class RegisterAccountUseCase(
     }
 
     /**
-     * 회비 납부 대상을 델타 방식으로 저장한다. 요청에 포함된 멤버만 갱신하며,
-     * 두 목록에 모두 없는 멤버(비활성 멤버 포함)의 기존 상태는 건드리지 않는다.
+     * 회비 납부 대상을 targets-only 스냅샷 방식으로 저장한다.
+     * 클라이언트는 선택한 대상 ID만 보내고, 명부 중 미선택 회원은 서버가 제외로 처리한다.
+     * 디자인상 "전체 = 선택 + 제외"이며 untouched 상태가 없으므로 전체 교체(PUT) 의미를 따른다.
      *
      * 후보는 동아리 전체가 아니라 해당 장부의 기수 활성 명부로 한정한다.
-     * - targetedClubMemberIds: 납부 대상으로 갱신(이미 납부 완료된 대상은 유지), 행이 없으면 신규 생성
-     * - excludedClubMemberIds: 제외 처리(납부 완료된 대상은 제외 불가), 행이 없으면 이미 제외 상태이므로 건너뜀
+     * - targetedClubMemberIds: 납부 대상으로 보장(이미 납부 완료된 대상은 유지), 행이 없으면 신규 생성
+     * - 이전 TARGETED였으나 이번 선택에 빠진 멤버: 제외(exclude)로 전환
+     * - 그 외(행 없는 미선택 멤버): 행을 만들지 않는다(행 부재 = 제외로 읽힘)
      */
     @Transactional
-    fun savePaymentTargets( // TODO: 납부 대상만 입력 받고, 제외된 인원은 자동 처리해도 될지 확인해보기
+    fun savePaymentTargets(
         clubId: Long,
         accountId: Long,
         request: SavePaymentTargetsRequest,
@@ -283,49 +285,56 @@ class RegisterAccountUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val account = getAccountWithLock(clubId, accountId)
-        val targetedMemberIds = request.targetedClubMemberIds.distinct().sorted()
-        val excludedMemberIds = request.excludedClubMemberIds.distinct().sorted()
-        if (targetedMemberIds.intersect(excludedMemberIds.toSet()).isNotEmpty()) {
-            throw AccountPaymentTargetMemberInvalidException()
-        }
+        if (account.status != AccountStatus.DRAFT) throw AccountInvalidDraftStateException()
+        val targetedMemberIds = request.targetedClubMemberIds.distinct()
+        val targetedMemberIdSet = targetedMemberIds.toSet()
 
-        val requestedMemberIds = targetedMemberIds + excludedMemberIds
-        if (requestedMemberIds.isNotEmpty()) {
-            val rosterById =
+        // 선택 멤버는 활성 명부 안에 있어야 한다. 어떤 변경도 일어나기 전에 검증을 끝낸다.
+        val rosterById =
+            if (targetedMemberIds.isEmpty()) {
+                emptyMap()
+            } else {
                 clubMemberCardinalReader
                     .findAllByClubIdAndCardinalNumber(clubId, account.cardinal, MemberStatus.ACTIVE)
                     .associate { it.clubMember.id to it.clubMember }
-            if (!rosterById.keys.containsAll(requestedMemberIds)) throw AccountPaymentTargetMemberInvalidException()
+                    .also {
+                        if (!it.keys.containsAll(targetedMemberIdSet)) {
+                            throw AccountPaymentTargetMemberInvalidException()
+                        }
+                    }
+            }
 
-            val dueAmount = Money.of(account.duesAmount)
-            val existingByMemberId =
-                paymentTargetRepository
-                    .findAllByAccountIdAndClubMemberIdIn(accountId, requestedMemberIds)
-                    .associateBy { it.clubMember.id }
+        val existingByMemberId =
+            paymentTargetRepository
+                .findAllForSnapshotByAccountId(accountId, targetedMemberIdSet)
+                .associateBy { it.clubMember.id }
+        val dueAmount = Money.of(account.duesAmount)
 
-            excludedMemberIds.mapNotNull { existingByMemberId[it] }.forEach { target ->
+        // 선택된 멤버: 납부 대상으로 보장(이미 납부 완료면 유지), 행이 없으면 신규 생성한다.
+        targetedMemberIds.mapNotNull { existingByMemberId[it] }.forEach { target ->
+            val alreadyPaid =
+                target.targetStatus == AccountTargetStatus.TARGETED &&
+                    target.paymentStatus == AccountPaymentStatus.PAID
+            if (!alreadyPaid) {
+                target.target(dueAmount)
+            }
+        }
+        val newTargets =
+            targetedMemberIds
+                .filterNot { existingByMemberId.containsKey(it) }
+                .map { AccountPaymentTarget.createTargeted(account, rosterById.getValue(it), dueAmount) }
+        if (newTargets.isNotEmpty()) {
+            paymentTargetRepository.saveAll(newTargets)
+        }
+
+        // 스냅샷: 이전엔 대상이었으나 이번 선택에서 빠진 멤버를 제외로 전환한다.
+        existingByMemberId.values
+            .filter { it.targetStatus == AccountTargetStatus.TARGETED && it.clubMember.id !in targetedMemberIdSet }
+            .forEach { target ->
+                // DRAFT 단계라 납부 완료자가 없지만, 활성 장부 오용 시 납부 이력 유실을 막는 방어 가드.
                 if (target.paymentStatus != AccountPaymentStatus.UNPAID) throw AccountPaymentTargetPaidException()
                 target.exclude()
             }
-
-            targetedMemberIds.mapNotNull { existingByMemberId[it] }.forEach { target ->
-                val alreadyPaid =
-                    target.targetStatus == AccountTargetStatus.TARGETED &&
-                        target.paymentStatus == AccountPaymentStatus.PAID
-                if (!alreadyPaid) {
-                    target.target(dueAmount)
-                }
-            }
-
-            val newTargets =
-                targetedMemberIds
-                    .filterNot { existingByMemberId.containsKey(it) }
-                    .map { AccountPaymentTarget.createTargeted(account, rosterById.getValue(it), dueAmount) }
-
-            if (newTargets.isNotEmpty()) {
-                paymentTargetRepository.saveAll(newTargets)
-            }
-        }
 
         account.advanceRegistrationStep(AccountRegistrationStep.CARRY_OVER)
         account.markModifiedBy(userId)

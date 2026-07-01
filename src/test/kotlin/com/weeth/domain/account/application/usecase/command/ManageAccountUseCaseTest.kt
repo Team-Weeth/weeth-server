@@ -1,15 +1,10 @@
 package com.weeth.domain.account.application.usecase.command
 
-import com.weeth.domain.account.application.dto.request.AccountSaveRequest
-import com.weeth.domain.account.application.exception.AccountExistsException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.vo.Money
-import com.weeth.domain.cardinal.domain.repository.CardinalReader
-import com.weeth.domain.cardinal.fixture.CardinalTestFixture
-import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -18,19 +13,14 @@ import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 
 class ManageAccountUseCaseTest :
     DescribeSpec({
         val accountRepository = mockk<AccountRepository>(relaxed = true)
-        val cardinalReader = mockk<CardinalReader>(relaxed = true)
-        val clubReader = mockk<ClubReader>(relaxed = true)
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val useCase =
             ManageAccountUseCase(
                 accountRepository = accountRepository,
-                cardinalReader = cardinalReader,
-                clubReader = clubReader,
                 clubPermissionPolicy = clubPermissionPolicy,
             )
 
@@ -39,34 +29,7 @@ class ManageAccountUseCaseTest :
         val club = ClubTestFixture.createClub(id = clubId)
 
         beforeTest {
-            clearMocks(accountRepository, cardinalReader, clubReader, clubPermissionPolicy)
-            every { clubReader.getClubById(clubId) } returns club
-        }
-
-        describe("save") {
-            context("이미 존재하는 기수로 저장 시") {
-                it("AccountExistsException을 던진다") {
-                    val request = AccountSaveRequest("설명", 100_000, 40)
-                    every { accountRepository.existsByClubIdAndCardinal(clubId, 40) } returns true
-
-                    shouldThrow<AccountExistsException> { useCase.save(clubId, request, userId) }
-                }
-            }
-
-            context("정상 저장 시") {
-                it("기수 존재를 보장하고 account를 저장한다") {
-                    val request = AccountSaveRequest("설명", 100_000, 40)
-                    every { accountRepository.existsByClubIdAndCardinal(clubId, 40) } returns false
-                    every { cardinalReader.findByClubIdAndCardinalNumber(clubId, 40) } returns
-                        CardinalTestFixture.createCardinal(cardinalNumber = 40)
-                    every { accountRepository.save(any()) } answers { firstArg() }
-
-                    useCase.save(clubId, request, userId)
-
-                    verify(exactly = 1) { clubPermissionPolicy.requireAdmin(clubId, userId) }
-                    verify(exactly = 1) { accountRepository.save(any()) }
-                }
-            }
+            clearMocks(accountRepository, clubPermissionPolicy)
         }
 
         describe("updateMemberVisibility") {

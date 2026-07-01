@@ -13,6 +13,13 @@ import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.file.application.dto.response.FileResponse
+import com.weeth.domain.file.application.mapper.FileMapper
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
+import com.weeth.domain.file.domain.repository.FileReader
+import com.weeth.domain.file.domain.vo.StorageKey
+import com.weeth.domain.file.fixture.FileTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -31,16 +38,39 @@ class GetAccountTransactionQueryServiceTest :
         val accountRepository = mockk<AccountRepository>()
         val transactionRepository = mockk<AccountTransactionRepository>(relaxed = true)
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
+        val fileReader = mockk<FileReader>()
+        val fileMapper = mockk<FileMapper>()
         val queryService =
             GetAccountTransactionQueryService(
                 accountRepository,
                 transactionRepository,
                 clubPermissionPolicy,
+                fileReader,
+                fileMapper,
                 AccountTransactionMapper(),
             )
 
         val userId = 10L
         val accountId = 1L
+        val receiptResponse =
+            FileResponse(
+                fileId = 200L,
+                fileName = "receipt.png",
+                fileUrl = "https://cdn.weeth/receipt.png",
+                storageKey = "ACCOUNT_TRANSACTION/2026-07/550e8400-e29b-41d4-a716-446655440200_receipt.png",
+                fileSize = 1024,
+                contentType = "image/png",
+                status = FileStatus.UPLOADED,
+            )
+
+        fun receiptFile(ownerId: Long) =
+            FileTestFixture.createFile(
+                id = 200L,
+                fileName = "receipt.png",
+                storageKey = StorageKey(receiptResponse.storageKey),
+                ownerType = FileOwnerType.ACCOUNT_TRANSACTION,
+                ownerId = ownerId,
+            )
 
         fun transaction(
             account: Account,
@@ -59,7 +89,7 @@ class GetAccountTransactionQueryServiceTest :
                 ).also { ReflectionTestUtils.setField(it, "id", id) }
 
         beforeTest {
-            clearMocks(accountRepository, transactionRepository, clubPermissionPolicy)
+            clearMocks(accountRepository, transactionRepository, clubPermissionPolicy, fileReader, fileMapper)
             every { transactionRepository.countByAccountIdAndDeletedAtIsNull(accountId) } returns 18
             every {
                 transactionRepository.countByAccountIdAndTypeAndDeletedAtIsNull(
@@ -80,6 +110,10 @@ class GetAccountTransactionQueryServiceTest :
                     AccountTransactionDirection.EXPENSE,
                 )
             } returns 10
+            every { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, any<List<Long>>(), any()) } returns
+                emptyList()
+            every { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, any<Long>(), any()) } returns emptyList()
+            every { fileMapper.toFileResponse(any()) } returns receiptResponse
         }
 
         describe("findTransactions") {
@@ -109,6 +143,42 @@ class GetAccountTransactionQueryServiceTest :
                 result.counts.expense shouldBe 10
                 result.counts.dues shouldBe 3
                 verify(exactly = 1) { transactionRepository.findByAccountIdAndDeletedAtIsNull(accountId, any()) }
+            }
+
+            it("목록 거래의 영수증 여부를 배치 조회로 채운다") {
+                val account = AccountTestFixture.createAccount(id = accountId)
+                val transactions =
+                    listOf(
+                        transaction(account, 100L, AccountTransactionType.EXPENSE, 5_000),
+                        transaction(account, 101L, AccountTransactionType.INCOME, 10_000),
+                    )
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                every { transactionRepository.findByAccountIdAndDeletedAtIsNull(accountId, any()) } returns
+                    PageImpl(transactions)
+                every {
+                    fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, listOf(100L, 101L), any())
+                } returns listOf(receiptFile(ownerId = 100L))
+
+                val result =
+                    queryService.findTransactions(
+                        account.club.id,
+                        accountId,
+                        AccountTransactionFilter.ALL,
+                        AccountTransactionSort.LATEST,
+                        0,
+                        20,
+                        userId,
+                    )
+
+                result.transactions.content[0].hasReceipt shouldBe true
+                result.transactions.content[0].receipts shouldBe emptyList()
+                result.transactions.content[1].hasReceipt shouldBe false
+                result.transactions.content[1].receipts shouldBe emptyList()
+                verify(exactly = 1) {
+                    fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, listOf(100L, 101L), any())
+                }
+                verify(exactly = 0) { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, 100L, any()) }
+                verify(exactly = 0) { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, 101L, any()) }
             }
 
             it("EXPENSE 필터는 지출 방향 조회를 호출한다") {
@@ -153,6 +223,20 @@ class GetAccountTransactionQueryServiceTest :
 
                 result.transactionId shouldBe 100L
                 result.amount shouldBe 5_000
+            }
+
+            it("단건 상세에 영수증 파일 응답을 포함한다") {
+                val account = AccountTestFixture.createAccount(id = accountId)
+                val receipt = receiptFile(ownerId = 100L)
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                every { transactionRepository.findByIdAndDeletedAtIsNull(100L) } returns
+                    transaction(account, 100L, AccountTransactionType.EXPENSE, 5_000)
+                every { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, 100L, any()) } returns listOf(receipt)
+
+                val result = queryService.findTransaction(account.club.id, accountId, 100L, userId)
+
+                result.hasReceipt shouldBe true
+                result.receipts shouldBe listOf(receiptResponse)
             }
 
             it("없는 거래면 NotFound를 던진다") {

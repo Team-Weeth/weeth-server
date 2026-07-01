@@ -15,16 +15,10 @@ enum class AccountErrorCode(
     @ExplainError("이미 존재하는 장부를 중복 생성하려고 할 때 발생합니다.")
     ACCOUNT_EXISTS(20101, HttpStatus.BAD_REQUEST, "이미 생성된 장부입니다."),
 
-    @ExplainError("요청한 영수증 내역이 존재하지 않을 때 발생합니다.")
-    RECEIPT_NOT_FOUND(20102, HttpStatus.NOT_FOUND, "존재하지 않는 내역입니다."),
-
-    @ExplainError("영수증이 요청한 기수의 장부에 속하지 않거나 동아리에 속하지 않는 경우에 발생합니다.")
-    RECEIPT_ACCOUNT_MISMATCH(20103, HttpStatus.BAD_REQUEST, "영수증이 해당 기수의 장부에 속하지 않습니다."),
-
     @ExplainError("초안 상태가 아닌 회비 장부를 등록 플로우에서 수정하거나 폐기하려고 할 때 발생합니다.")
     ACCOUNT_INVALID_DRAFT_STATE(20104, HttpStatus.BAD_REQUEST, "초안 상태의 회비 장부만 처리할 수 있습니다."),
 
-    @ExplainError("납부 대상 멤버가 기수 명부에 없거나, 대상/제외 목록에 같은 멤버가 동시에 포함될 때 발생합니다.")
+    @ExplainError("납부 대상으로 선택한 멤버가 기수 활성 명부에 없을 때 발생합니다.")
     ACCOUNT_PAYMENT_TARGET_MEMBER_INVALID(20105, HttpStatus.BAD_REQUEST, "유효하지 않은 납부 대상 멤버입니다."),
 
     @ExplainError("이미 납부 완료된 대상을 제외하려고 할 때 발생합니다.")

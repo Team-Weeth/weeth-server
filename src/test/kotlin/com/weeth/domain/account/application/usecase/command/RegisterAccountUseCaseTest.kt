@@ -39,6 +39,7 @@ import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
@@ -227,9 +228,7 @@ class RegisterAccountUseCaseTest :
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 stubRoster(member1, member2)
-                every {
-                    paymentTargetRepository.findAllByAccountIdAndClubMemberIdIn(accountId, any())
-                } returns emptyList()
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns emptyList()
                 every { paymentTargetRepository.saveAll(capture(saveAllSlot)) } answers
                     { firstArg<Iterable<AccountPaymentTarget>>().toList() }
 
@@ -240,18 +239,19 @@ class RegisterAccountUseCaseTest :
                     userId = userId,
                 )
 
-                saveAllSlot.captured.map { it.clubMember.id } shouldContainExactly listOf(1L, 2L)
+                saveAllSlot.captured.map { it.clubMember.id } shouldContainExactlyInAnyOrder listOf(1L, 2L)
                 saveAllSlot.captured.map { it.dueAmount } shouldContainExactly listOf(30_000, 30_000)
                 account.registrationStep shouldBe AccountRegistrationStep.CARRY_OVER
                 account.lastModifiedBy shouldBe userId
             }
 
-            it("재설정 - 대상 목록 멤버는 납부 대상으로, 제외 목록의 기존 멤버는 제외 대상으로 갱신한다") {
+            it("스냅샷 - 이전 대상이었으나 이번 선택에서 빠진 멤버는 제외로 전환하고, 선택 멤버는 유지/신규 생성한다") {
                 val account = Account.createDraft(club = club, cardinal = 5)
                 account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
                 val member1 = ClubMemberTestFixture.createActiveMember(id = 1L, club = club)
                 val member2 = ClubMemberTestFixture.createActiveMember(id = 2L, club = club)
                 val member3 = ClubMemberTestFixture.createActiveMember(id = 3L, club = club)
+                // member1: 기존 납부 완료 대상(선택 유지) / member2: 기존 대상이나 이번 선택에서 빠짐(제외 전환 대상)
                 val existingTarget = AccountPaymentTarget.createTargeted(account, member1, Money.of(30_000))
                 existingTarget.markPaid(
                     Money.of(30_000),
@@ -264,7 +264,7 @@ class RegisterAccountUseCaseTest :
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 stubRoster(member1, member2, member3)
                 every {
-                    paymentTargetRepository.findAllByAccountIdAndClubMemberIdIn(accountId, listOf(1L, 3L, 2L))
+                    paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any())
                 } returns listOf(existingTarget, existingTargeted2)
                 every { paymentTargetRepository.saveAll(capture(saveAllSlot)) } answers
                     { firstArg<Iterable<AccountPaymentTarget>>().toList() }
@@ -272,36 +272,32 @@ class RegisterAccountUseCaseTest :
                 useCase.savePaymentTargets(
                     clubId = clubId,
                     accountId = accountId,
-                    request =
-                        SavePaymentTargetsRequest(
-                            targetedClubMemberIds = listOf(3L, 1L),
-                            excludedClubMemberIds = listOf(2L),
-                        ),
+                    request = SavePaymentTargetsRequest(targetedClubMemberIds = listOf(3L, 1L)),
                     userId = userId,
                 )
 
+                // 선택 유지 + 이미 PAID → 그대로 보존
                 existingTarget.targetStatus shouldBe AccountTargetStatus.TARGETED
                 existingTarget.paymentStatus shouldBe AccountPaymentStatus.PAID
+                // 선택에서 빠짐 → 자동 제외
                 existingTargeted2.targetStatus shouldBe AccountTargetStatus.EXCLUDED
+                // 신규 선택 멤버만 생성
                 saveAllSlot.captured.map { it.clubMember.id } shouldContainExactly listOf(3L)
                 saveAllSlot.captured.first().dueAmount shouldBe 30_000
                 account.lastModifiedBy shouldBe userId
                 verify(exactly = 1) { clubPermissionPolicy.requireAdmin(clubId, userId) }
             }
 
-            it("델타 - 두 목록에 모두 없는 멤버의 기존 행은 조회하지도 갱신하지도 않는다") {
+            it("기존 제외 행의 멤버를 다시 선택하면 납부 대상으로 되돌린다") {
                 val account = Account.createDraft(club = club, cardinal = 5)
                 account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
                 val member1 = ClubMemberTestFixture.createActiveMember(id = 1L, club = club)
-                val saveAllSlot = slot<Iterable<AccountPaymentTarget>>()
+                val excludedRow = AccountPaymentTarget.createExcluded(account, member1)
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 stubRoster(member1)
-                every {
-                    paymentTargetRepository.findAllByAccountIdAndClubMemberIdIn(accountId, listOf(1L))
-                } returns emptyList()
-                every { paymentTargetRepository.saveAll(capture(saveAllSlot)) } answers
-                    { firstArg<Iterable<AccountPaymentTarget>>().toList() }
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns
+                    listOf(excludedRow)
 
                 useCase.savePaymentTargets(
                     clubId = clubId,
@@ -310,18 +306,20 @@ class RegisterAccountUseCaseTest :
                     userId = userId,
                 )
 
-                saveAllSlot.captured.map { it.clubMember.id } shouldContainExactly listOf(1L)
-                verify(exactly = 1) {
-                    paymentTargetRepository.findAllByAccountIdAndClubMemberIdIn(accountId, listOf(1L))
-                }
-                verify(exactly = 0) { paymentTargetRepository.findAllByAccountId(any()) }
+                excludedRow.targetStatus shouldBe AccountTargetStatus.TARGETED
+                excludedRow.dueAmount shouldBe 30_000
+                verify(exactly = 0) { paymentTargetRepository.saveAll(any<Iterable<AccountPaymentTarget>>()) }
             }
 
-            it("빈 요청이면 대상 갱신 없이 다음 단계로만 이동한다") {
+            it("빈 요청이면 기존 납부 대상을 전원 제외하고 다음 단계로 이동한다") {
                 val account = Account.createDraft(club = club, cardinal = 5)
                 account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 1L, club = club)
+                val existingTarget = AccountPaymentTarget.createTargeted(account, member1, Money.of(30_000))
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns
+                    listOf(existingTarget)
 
                 useCase.savePaymentTargets(
                     clubId = clubId,
@@ -330,13 +328,17 @@ class RegisterAccountUseCaseTest :
                     userId = userId,
                 )
 
+                existingTarget.targetStatus shouldBe AccountTargetStatus.EXCLUDED
                 account.registrationStep shouldBe AccountRegistrationStep.CARRY_OVER
                 account.lastModifiedBy shouldBe userId
-                verify(exactly = 0) { paymentTargetRepository.findAllByAccountIdAndClubMemberIdIn(any(), any()) }
+                // 선택이 비어 있으면 명부 조회·신규 저장은 일어나지 않는다.
+                verify(exactly = 0) {
+                    clubMemberCardinalReader.findAllByClubIdAndCardinalNumber(any(), any(), any())
+                }
                 verify(exactly = 0) { paymentTargetRepository.saveAll(any<Iterable<AccountPaymentTarget>>()) }
             }
 
-            it("납부 완료된 기존 대상은 제외할 수 없다") {
+            it("선택에서 빠진 기존 대상이 이미 납부 완료면 AccountPaymentTargetPaidException을 던진다(방어 가드)") {
                 val account = Account.createDraft(club = club, cardinal = 5)
                 account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
                 val member = ClubMemberTestFixture.createActiveMember(id = 1L, club = club)
@@ -348,19 +350,37 @@ class RegisterAccountUseCaseTest :
                 )
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
-                stubRoster(member)
-                every {
-                    paymentTargetRepository.findAllByAccountIdAndClubMemberIdIn(accountId, listOf(1L))
-                } returns listOf(existingTarget)
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns
+                    listOf(existingTarget)
 
                 shouldThrow<AccountPaymentTargetPaidException> {
                     useCase.savePaymentTargets(
                         clubId = clubId,
                         accountId = accountId,
-                        request = SavePaymentTargetsRequest(excludedClubMemberIds = listOf(1L)),
+                        request = SavePaymentTargetsRequest(),
                         userId = userId,
                     )
                 }
+            }
+
+            it("활성 장부에 스냅샷 갱신을 요청하면 AccountInvalidDraftStateException을 던진다") {
+                val account = Account.createDraft(club = club, cardinal = 5)
+                account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
+                account.activate()
+
+                every { accountRepository.findByIdWithLock(accountId) } returns account
+
+                shouldThrow<AccountInvalidDraftStateException> {
+                    useCase.savePaymentTargets(
+                        clubId = clubId,
+                        accountId = accountId,
+                        request = SavePaymentTargetsRequest(targetedClubMemberIds = listOf(1L)),
+                        userId = userId,
+                    )
+                }
+                // 상태 검증 실패 시 어떤 조회·변경도 일어나지 않아야 한다(이력 유실 방지).
+                verify(exactly = 0) { paymentTargetRepository.findAllForSnapshotByAccountId(any(), any()) }
+                verify(exactly = 0) { paymentTargetRepository.saveAll(any<Iterable<AccountPaymentTarget>>()) }
             }
 
             it("기수 명부에 없는 멤버가 포함되면 AccountPaymentTargetMemberInvalidException을 던진다") {
@@ -369,6 +389,7 @@ class RegisterAccountUseCaseTest :
                 val member = ClubMemberTestFixture.createActiveMember(id = 1L, club = club)
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns emptyList()
                 stubRoster(member)
 
                 shouldThrow<AccountPaymentTargetMemberInvalidException> {
@@ -376,26 +397,6 @@ class RegisterAccountUseCaseTest :
                         clubId = clubId,
                         accountId = accountId,
                         request = SavePaymentTargetsRequest(targetedClubMemberIds = listOf(1L, 2L)),
-                        userId = userId,
-                    )
-                }
-            }
-
-            it("같은 멤버가 대상/제외 목록에 동시에 포함되면 AccountPaymentTargetMemberInvalidException을 던진다") {
-                val account = Account.createDraft(club = club, cardinal = 5)
-                account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
-
-                every { accountRepository.findByIdWithLock(accountId) } returns account
-
-                shouldThrow<AccountPaymentTargetMemberInvalidException> {
-                    useCase.savePaymentTargets(
-                        clubId = clubId,
-                        accountId = accountId,
-                        request =
-                            SavePaymentTargetsRequest(
-                                targetedClubMemberIds = listOf(1L, 2L),
-                                excludedClubMemberIds = listOf(2L),
-                            ),
                         userId = userId,
                     )
                 }
@@ -506,7 +507,6 @@ class RegisterAccountUseCaseTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 200_000,
                         currentBalance = 200_000,
                     )
 
@@ -538,7 +538,6 @@ class RegisterAccountUseCaseTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 240_000,
                         currentBalance = 240_000,
                     )
 
@@ -594,7 +593,6 @@ class RegisterAccountUseCaseTest :
                         id = 9L,
                         club = club,
                         cardinal = 3,
-                        currentAmount = 240_000,
                         currentBalance = 240_000,
                     )
 

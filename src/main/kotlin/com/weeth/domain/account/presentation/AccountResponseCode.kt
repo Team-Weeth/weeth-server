@@ -8,11 +8,6 @@ enum class AccountResponseCode(
     override val status: HttpStatus,
     override val message: String,
 ) : ResponseCodeInterface {
-    ACCOUNT_SAVE_SUCCESS(10100, HttpStatus.OK, "회비가 성공적으로 저장되었습니다."),
-    ACCOUNT_FIND_SUCCESS(10101, HttpStatus.OK, "회비가 성공적으로 조회되었습니다."),
-    RECEIPT_SAVE_SUCCESS(10102, HttpStatus.OK, "영수증이 성공적으로 저장되었습니다."),
-    RECEIPT_DELETE_SUCCESS(10103, HttpStatus.OK, "영수증이 성공적으로 삭제되었습니다."),
-    RECEIPT_UPDATE_SUCCESS(10104, HttpStatus.OK, "영수증이 성공적으로 업데이트 되었습니다."),
     ACCOUNT_DRAFT_SAVE_SUCCESS(10105, HttpStatus.OK, "회비 초안이 성공적으로 저장되었습니다."),
     ACCOUNT_UPDATE_SUCCESS(10106, HttpStatus.OK, "회비 설정이 성공적으로 수정되었습니다."),
     ACCOUNT_DRAFT_DELETE_SUCCESS(10107, HttpStatus.OK, "회비 초안이 성공적으로 폐기되었습니다."),
