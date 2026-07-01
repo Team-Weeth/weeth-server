@@ -260,7 +260,7 @@ class MembershipFeeRegistrationIntegrationTest(
                 registerAccountUseCase.savePaymentTargets(
                     context.club.id,
                     accountId,
-                    SavePaymentTargetsRequest(),
+                    SavePaymentTargetsRequest(targetedClubMemberIds = emptyList()),
                     context.adminUser.id,
                 )
                 findTargets(context, accountId, targetStatus = null).summary.targetedCount shouldBe 0
