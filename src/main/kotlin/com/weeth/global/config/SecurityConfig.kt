@@ -97,7 +97,7 @@ class SecurityConfig(
                         "https://www.weeth.kr",
                         "https://appleid.apple.com",
                     )
-                allowedMethods = listOf("GET", "POST", "PATCH", "DELETE", "OPTIONS")
+                allowedMethods = listOf("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS")
                 allowedHeaders = listOf("*")
                 exposedHeaders = listOf("Authorization", "Authorization_refresh")
                 allowCredentials = true
