@@ -107,7 +107,7 @@ class FileRepositoryTest(
                     ),
                 )
                 fileRepository.save(createTestFile("other-owner.png", FileOwnerType.POST, 78L, FileStatus.UPLOADED))
-                fileRepository.save(createTestFile("other-type.png", FileOwnerType.RECEIPT, 77L, FileStatus.UPLOADED))
+                fileRepository.save(createTestFile("other-type.png", FileOwnerType.COMMENT, 77L, FileStatus.UPLOADED))
                 fileRepository.save(
                     createTestFile(
                         fileName = "only-soft-deleted.png",
@@ -242,13 +242,13 @@ class FileRepositoryTest(
 
         describe("index usage") {
             it("owner_type + owner_id 조건 조회 시 복합 인덱스를 사용한다") {
-                fileRepository.save(createTestFile("index-target.png", FileOwnerType.RECEIPT, 55L, FileStatus.UPLOADED))
+                fileRepository.save(createTestFile("index-target.png", FileOwnerType.COMMENT, 55L, FileStatus.UPLOADED))
 
                 val explain =
                     jdbcTemplate
                         .queryForList(
                             "EXPLAIN SELECT id FROM `file` WHERE owner_type = ? AND owner_id = ?",
-                            FileOwnerType.RECEIPT.name,
+                            FileOwnerType.COMMENT.name,
                             55L,
                         ).first()
 

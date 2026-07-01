@@ -1,6 +1,5 @@
 package com.weeth.domain.account.presentation
 
-import com.weeth.domain.account.application.dto.request.AccountSaveRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountBankAccountRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountBasicRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountCarryOverRequest
@@ -10,7 +9,6 @@ import com.weeth.domain.account.application.dto.response.AccountPaymentTargetsRe
 import com.weeth.domain.account.application.dto.response.AccountRegistrationStatusResponse
 import com.weeth.domain.account.application.dto.response.CreateAccountDraftResponse
 import com.weeth.domain.account.application.exception.AccountErrorCode
-import com.weeth.domain.account.application.usecase.command.ManageAccountUseCase
 import com.weeth.domain.account.application.usecase.command.RegisterAccountUseCase
 import com.weeth.domain.account.application.usecase.query.GetAccountPaymentTargetQueryService
 import com.weeth.domain.account.application.usecase.query.GetAccountRegistrationQueryService
@@ -21,7 +19,6 @@ import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_DRAFT_S
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_TARGET_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_TARGET_UPDATE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_REGISTRATION_COMPLETE_SUCCESS
-import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_SAVE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_UPDATE_SUCCESS
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
@@ -37,6 +34,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -47,7 +45,6 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/v4/admin/clubs/{clubId}/accounts")
 @ApiErrorCodeExample(AccountErrorCode::class)
 class AccountRegisterController(
-    private val manageAccountUseCase: ManageAccountUseCase,
     private val registerAccountUseCase: RegisterAccountUseCase,
     private val getAccountRegistrationQueryService: GetAccountRegistrationQueryService,
     private val getAccountPaymentTargetQueryService: GetAccountPaymentTargetQueryService,
@@ -116,13 +113,14 @@ class AccountRegisterController(
         return CommonResponse.success(ACCOUNT_UPDATE_SUCCESS)
     }
 
-    @GetMapping("/{accountId}/payment-targets")
+    @GetMapping("/{accountId}/registration/payment-targets")
     @Operation(
         summary = "회비 납부 대상 목록 조회",
         description =
             "등록 플로우 복원과 최종 확인에서 납부 대상/제외 대상 목록을 조회합니다. " +
                 "각 행의 targetStatus(TARGETED/EXCLUDED)가 체크박스 초기 상태이며, " +
-                "이후 사용자가 변경한 멤버만 모아 납부 대상 저장 API에 델타로 전달해주세요. " +
+                "이후 사용자가 최종 선택한 대상 전체를 납부 대상 저장 API에 스냅샷으로 전달해주세요" +
+                "(전송 목록에 없는 명부 회원은 자동 제외 처리됩니다). " +
                 "키워드와 상태 필터링도 가능하도록 했으나, 되도록 프론트에서 캐싱된 데이터로 필터링해주시면 감사하겠습니다.",
     )
     fun findPaymentTargets(
@@ -171,13 +169,13 @@ class AccountRegisterController(
             ),
         )
 
-    @PatchMapping("/{accountId}/payment-targets")
+    @PutMapping("/{accountId}/registration/payment-targets")
     @Operation(
         summary = "[3단계] 회비 납부 대상 저장",
         description =
-            "해당 기수 명부 기준으로 납부 대상을 델타 방식으로 저장합니다. " +
-                "targetedClubMemberIds는 대상으로, excludedClubMemberIds는 제외로 갱신하며 " +
-                "두 목록에 모두 없는 회원의 기존 상태는 유지됩니다. 초기 등록과 재설정 모두 동일하게 동작합니다.",
+            "해당 기수 명부 기준으로 납부 대상을 스냅샷 방식으로 저장합니다(전체 교체). " +
+                "선택한 대상 ID(targetedClubMemberIds)만 보내면 명부 중 미선택 회원은 자동으로 제외 처리됩니다. " +
+                "빈 목록은 전원 제외를 의미합니다. 초기 등록과 재설정 모두 동일하게 동작합니다.",
     )
     fun savePaymentTargets(
         @TsidParam
@@ -249,17 +247,5 @@ class AccountRegisterController(
     ): CommonResponse<Void> {
         registerAccountUseCase.completeRegistration(clubId = clubId, accountId = accountId, userId = userId)
         return CommonResponse.success(ACCOUNT_REGISTRATION_COMPLETE_SUCCESS)
-    }
-
-    @PostMapping
-    @Operation(summary = "회비 총 금액 기입", hidden = true)
-    fun save(
-        @TsidParam
-        @TsidPathVariable clubId: Long,
-        @RequestBody @Valid dto: AccountSaveRequest,
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<Void> {
-        manageAccountUseCase.save(clubId, dto, userId)
-        return CommonResponse.success(ACCOUNT_SAVE_SUCCESS)
     }
 }

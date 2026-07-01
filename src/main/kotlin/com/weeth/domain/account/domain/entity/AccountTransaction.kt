@@ -43,6 +43,7 @@ class AccountTransaction(
     transactedAt: LocalDateTime,
     category: String? = null,
     memo: String? = null,
+    registeredByName: String? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_payment_target_id")
     val paymentTarget: AccountPaymentTarget? = null,
@@ -90,6 +91,10 @@ class AccountTransaction(
     var memo: String? = normalizeOptional(memo, "메모", MAX_MEMO_LENGTH)
         private set
 
+    @Column(name = "registered_by_name", length = 50)
+    var registeredByName: String? = normalizeOptional(registeredByName, "등록자 이름", MAX_REGISTERED_BY_NAME_LENGTH)
+        private set
+
     var deletedAt: LocalDateTime? = null
         private set
 
@@ -111,25 +116,29 @@ class AccountTransaction(
     }
 
     fun update(
-        type: AccountTransactionType,
-        title: String,
-        source: String?,
-        amount: Money,
-        transactedAt: LocalDateTime,
-        category: String?,
-        memo: String?,
+        type: AccountTransactionType? = null,
+        title: String? = null,
+        source: String? = null,
+        amount: Money? = null,
+        transactedAt: LocalDateTime? = null,
+        category: String? = null,
+        memo: String? = null,
     ) {
         check(!isApplied) { "반영된 거래는 되돌린 뒤 수정할 수 있습니다." }
         check(deletedAt == null) { "삭제된 거래는 수정할 수 없습니다." }
-        require(amount.value > 0) { "거래 금액은 0보다 커야 합니다: ${amount.value}" }
-        this.type = type
-        this.direction = type.direction
-        this.title = normalizeRequired(title, "거래 내용", MAX_TITLE_LENGTH)
-        this.source = normalizeOptional(source, "거래 출처", MAX_SOURCE_LENGTH)
-        this.amount = amount.value
-        this.transactedAt = transactedAt
-        this.category = normalizeOptional(category, "카테고리", MAX_CATEGORY_LENGTH)
-        this.memo = normalizeOptional(memo, "메모", MAX_MEMO_LENGTH)
+        type?.let {
+            this.type = it
+            this.direction = it.direction
+        }
+        title?.let { this.title = normalizeRequired(it, "거래 내용", MAX_TITLE_LENGTH) }
+        source?.let { this.source = normalizeOptional(it, "거래 출처", MAX_SOURCE_LENGTH) }
+        amount?.let {
+            require(it.value > 0) { "거래 금액은 0보다 커야 합니다: ${it.value}" }
+            this.amount = it.value
+        }
+        transactedAt?.let { this.transactedAt = it }
+        category?.let { this.category = normalizeOptional(it, "카테고리", MAX_CATEGORY_LENGTH) }
+        memo?.let { this.memo = normalizeOptional(it, "메모", MAX_MEMO_LENGTH) }
     }
 
     internal fun markApplied() {
@@ -149,6 +158,7 @@ class AccountTransaction(
         private const val MAX_SOURCE_LENGTH = 50
         private const val MAX_CATEGORY_LENGTH = 30
         private const val MAX_MEMO_LENGTH = 200
+        private const val MAX_REGISTERED_BY_NAME_LENGTH = 50
 
         fun create(
             account: Account,
@@ -159,6 +169,7 @@ class AccountTransaction(
             transactedAt: LocalDateTime,
             category: String? = null,
             memo: String? = null,
+            registeredByName: String? = null,
             paymentTarget: AccountPaymentTarget? = null,
         ): AccountTransaction =
             AccountTransaction(
@@ -170,6 +181,7 @@ class AccountTransaction(
                 transactedAt = transactedAt,
                 category = category,
                 memo = memo,
+                registeredByName = registeredByName,
                 paymentTarget = paymentTarget,
             )
 

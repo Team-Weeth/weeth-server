@@ -86,7 +86,6 @@ class MembershipFeeRegistrationIntegrationTest(
                 context.saveBasicAndTargets(
                     accountId,
                     targeted = context.memberIds(0, 1),
-                    excluded = context.memberIds(2),
                 )
 
                 registrationQueryService
@@ -129,7 +128,6 @@ class MembershipFeeRegistrationIntegrationTest(
                 first.saveBasicAndTargets(
                     firstAccountId,
                     targeted = first.memberIds(0, 1),
-                    excluded = first.memberIds(2),
                 )
                 registrationQueryService.findCarryOverSource(first.club.id, firstAccountId, first.adminUser.id).let {
                     it.hasPreviousAccount shouldBe false
@@ -143,7 +141,7 @@ class MembershipFeeRegistrationIntegrationTest(
 
                 val noCarry = createContext("S3", previousBalance = 240_000)
                 val noCarryAccountId = noCarry.createDraft()
-                noCarry.saveBasicAndTargets(noCarryAccountId, targeted = noCarry.memberIds(0), excluded = emptyList())
+                noCarry.saveBasicAndTargets(noCarryAccountId, targeted = noCarry.memberIds(0))
                 noCarry.saveCarryOverAndBank(noCarryAccountId, enabled = false, amount = null)
                 registerAccountUseCase.completeRegistration(noCarry.club.id, noCarryAccountId, noCarry.adminUser.id)
                 accountRepository.findById(noCarryAccountId).orElseThrow().currentBalance shouldBe 0
@@ -159,7 +157,6 @@ class MembershipFeeRegistrationIntegrationTest(
                 context.saveBasicAndTargets(
                     accountId,
                     targeted = context.memberIds(0, 1),
-                    excluded = context.memberIds(2),
                 )
 
                 val resumed =
@@ -188,7 +185,7 @@ class MembershipFeeRegistrationIntegrationTest(
             it("S5. 납부 대상이 있는 초안을 폐기하고 같은 기수를 새 초안으로 다시 생성한다") {
                 val context = createContext("S5", previousBalance = null)
                 val oldAccountId = context.createDraft()
-                context.saveBasicAndTargets(oldAccountId, targeted = context.memberIds(0, 1), excluded = emptyList())
+                context.saveBasicAndTargets(oldAccountId, targeted = context.memberIds(0, 1))
                 paymentTargetRepository.findAllByAccountId(oldAccountId).size shouldBe 2
 
                 registerAccountUseCase.discardDraft(context.club.id, oldAccountId, context.adminUser.id)
@@ -204,7 +201,7 @@ class MembershipFeeRegistrationIntegrationTest(
                 newDraft.isNew shouldBe true
                 newDraft.accountId shouldNotBe oldAccountId
 
-                context.saveBasicAndTargets(newDraft.accountId, targeted = context.memberIds(0), excluded = emptyList())
+                context.saveBasicAndTargets(newDraft.accountId, targeted = context.memberIds(0))
                 context.saveCarryOverAndBank(newDraft.accountId, enabled = false, amount = null)
                 registerAccountUseCase.completeRegistration(context.club.id, newDraft.accountId, context.adminUser.id)
                 shouldThrow<AccountInvalidDraftStateException> {
@@ -212,7 +209,7 @@ class MembershipFeeRegistrationIntegrationTest(
                 }.errorCode.code shouldBe AccountErrorCode.ACCOUNT_INVALID_DRAFT_STATE.code
             }
 
-            it("S6/S10. 납부 대상 델타 재설정과 조회 카운트 정합성을 검증한다") {
+            it("S6/S10. 납부 대상 스냅샷 재설정과 조회 카운트 정합성을 검증한다") {
                 val context = createContext("S6-S10", previousBalance = null, activeMemberCount = 18)
                 val accountId = context.createDraft()
                 registerAccountUseCase.saveBasic(context.club.id, accountId, basicRequest(), context.adminUser.id)
@@ -222,13 +219,13 @@ class MembershipFeeRegistrationIntegrationTest(
                     SavePaymentTargetsRequest(targetedClubMemberIds = context.members.take(12).map { it.id }),
                     context.adminUser.id,
                 )
+                // 스냅샷 재설정: 1번은 선택에서 빼고(제외 전환) 12번을 새로 선택해 최종 선택을 {0, 2..12}로 만든다.
+                val secondSelection =
+                    context.members.filterIndexed { index, _ -> index != 1 && index <= 12 }.map { it.id }
                 registerAccountUseCase.savePaymentTargets(
                     context.club.id,
                     accountId,
-                    SavePaymentTargetsRequest(
-                        targetedClubMemberIds = context.memberIds(12),
-                        excludedClubMemberIds = context.memberIds(1),
-                    ),
+                    SavePaymentTargetsRequest(targetedClubMemberIds = secondSelection),
                     context.adminUser.id,
                 )
 
@@ -259,19 +256,20 @@ class MembershipFeeRegistrationIntegrationTest(
                     .shouldNotBeNull()
                     .targetCount shouldBe 12
 
+                // 스냅샷: 빈 선택은 전원 제외를 의미하므로 납부 대상이 0이 된다.
                 registerAccountUseCase.savePaymentTargets(
                     context.club.id,
                     accountId,
-                    SavePaymentTargetsRequest(),
+                    SavePaymentTargetsRequest(targetedClubMemberIds = emptyList()),
                     context.adminUser.id,
                 )
-                findTargets(context, accountId, targetStatus = null).summary.targetedCount shouldBe 12
+                findTargets(context, accountId, targetStatus = null).summary.targetedCount shouldBe 0
             }
 
             it("S7. 납부 대상 검증 실패는 기존 행 상태를 보존한다") {
                 val context = createContext("S7", previousBalance = null)
                 val accountId = context.createDraft()
-                context.saveBasicAndTargets(accountId, targeted = context.memberIds(0, 1), excluded = emptyList())
+                context.saveBasicAndTargets(accountId, targeted = context.memberIds(0, 1))
                 val other = createContext("S7-OTHER", previousBalance = null)
 
                 shouldThrow<AccountPaymentTargetMemberInvalidException> {
@@ -282,26 +280,16 @@ class MembershipFeeRegistrationIntegrationTest(
                         context.adminUser.id,
                     )
                 }.errorCode.code shouldBe AccountErrorCode.ACCOUNT_PAYMENT_TARGET_MEMBER_INVALID.code
-                shouldThrow<AccountPaymentTargetMemberInvalidException> {
-                    registerAccountUseCase.savePaymentTargets(
-                        context.club.id,
-                        accountId,
-                        SavePaymentTargetsRequest(
-                            targetedClubMemberIds = context.memberIds(2),
-                            excludedClubMemberIds = context.memberIds(2),
-                        ),
-                        context.adminUser.id,
-                    )
-                }.errorCode.code shouldBe AccountErrorCode.ACCOUNT_PAYMENT_TARGET_MEMBER_INVALID.code
 
                 val paidTarget = paymentTargets(accountId, context.memberIds(0)).single()
                 paidTarget.markPaid(Money.of(30_000), confirmedBy = context.adminUser.id, paidAt = LocalDateTime.now())
                 paymentTargetRepository.save(paidTarget)
+                // 스냅샷에서 납부 완료 멤버를 선택에서 빼면 제외 전환이 막힌다(방어 가드).
                 shouldThrow<AccountPaymentTargetPaidException> {
                     registerAccountUseCase.savePaymentTargets(
                         context.club.id,
                         accountId,
-                        SavePaymentTargetsRequest(excludedClubMemberIds = context.memberIds(0)),
+                        SavePaymentTargetsRequest(targetedClubMemberIds = context.memberIds(1)),
                         context.adminUser.id,
                     )
                 }.errorCode.code shouldBe AccountErrorCode.ACCOUNT_PAYMENT_TARGET_ALREADY_PAID.code
@@ -316,7 +304,7 @@ class MembershipFeeRegistrationIntegrationTest(
             it("S8. 작성 중 비활성화된 멤버는 조회에서 빠지고 완료 시 제외 처리된다") {
                 val context = createContext("S8", previousBalance = null)
                 val accountId = context.createDraft()
-                context.saveBasicAndTargets(accountId, targeted = context.memberIds(0, 1), excluded = emptyList())
+                context.saveBasicAndTargets(accountId, targeted = context.memberIds(0, 1))
                 context.members[1].ban()
                 clubMemberRepository.save(context.members[1])
 
@@ -362,7 +350,7 @@ class MembershipFeeRegistrationIntegrationTest(
 
                 val mismatch = createContext("S9-MISMATCH", previousBalance = 240_000)
                 val accountId = mismatch.createDraft()
-                mismatch.saveBasicAndTargets(accountId, targeted = mismatch.memberIds(0), excluded = emptyList())
+                mismatch.saveBasicAndTargets(accountId, targeted = mismatch.memberIds(0))
                 mismatch.saveCarryOverAndBank(accountId, enabled = true, amount = 240_000)
                 spendPreviousAccount(mismatch.previousAccount!!.id, amount = 40_000)
 
@@ -417,6 +405,33 @@ class MembershipFeeRegistrationIntegrationTest(
                     )
                 }.errorCode.code shouldBe AccountErrorCode.ACCOUNT_NOT_FOUND.code
             }
+
+            it("S12. 회비 순합계는 환불을 차감하고 회비 외 거래는 무시한다") {
+                val context = createContext("S12", previousBalance = 0)
+                val account = context.previousAccount.shouldNotBeNull()
+
+                fun save(
+                    type: AccountTransactionType,
+                    amount: Int,
+                ) = transactionRepository.save(
+                    AccountTransaction.create(
+                        account = account,
+                        type = type,
+                        title = "거래",
+                        source = null,
+                        amount = Money.of(amount),
+                        transactedAt = LocalDateTime.now(),
+                    ),
+                )
+
+                save(AccountTransactionType.DUES, 35_000)
+                save(AccountTransactionType.DUES, 35_000)
+                save(AccountTransactionType.REFUND, 35_000)
+                save(AccountTransactionType.EXPENSE, 10_000)
+
+                // 70_000(DUES) - 35_000(REFUND) = 35_000, EXPENSE 는 집계 제외
+                transactionRepository.sumNetDuesAmountByAccountId(account.id) shouldBe 35_000L
+            }
         }
     }
 
@@ -450,8 +465,6 @@ class MembershipFeeRegistrationIntegrationTest(
                 accountRepository.save(
                     Account(
                         club = club,
-                        totalAmount = it,
-                        currentAmount = it,
                         currentBalance = it,
                         cardinal = previousCardinal.cardinalNumber,
                         name = "3기 회비",
@@ -477,7 +490,6 @@ class MembershipFeeRegistrationIntegrationTest(
     fun RegistrationContext.saveBasicAndTargets(
         accountId: Long,
         targeted: List<Long>,
-        excluded: List<Long>,
     ) {
         registerAccountUseCase.saveBasic(club.id, accountId, basicRequest(), adminUser.id)
         accountRepository.findById(accountId).orElseThrow().registrationStep shouldBe
@@ -485,7 +497,7 @@ class MembershipFeeRegistrationIntegrationTest(
         registerAccountUseCase.savePaymentTargets(
             club.id,
             accountId,
-            SavePaymentTargetsRequest(targetedClubMemberIds = targeted, excludedClubMemberIds = excluded),
+            SavePaymentTargetsRequest(targetedClubMemberIds = targeted),
             adminUser.id,
         )
         accountRepository.findById(accountId).orElseThrow().registrationStep shouldBe AccountRegistrationStep.CARRY_OVER

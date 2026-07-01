@@ -14,7 +14,7 @@ data class AccountPaymentTargetResponse(
     val paymentTargetInfo: PaymentTargetInfoResponse,
     @field:Schema(description = "납부 대상 상태 (TARGETED: 대상, EXCLUDED: 제외)", example = "TARGETED")
     val targetStatus: AccountTargetStatus,
-    @field:Schema(description = "납부 상태 (PAID: 납부 완료, UNPAID: 미납)", example = "UNPAID")
+    @field:Schema(description = "납부 상태 (PAID: 납부 완료, UNPAID: 미납, REFUNDED: 환불)", example = "UNPAID")
     val paymentStatus: AccountPaymentStatus,
     @field:Schema(description = "납부 금액 (원)", example = "50000")
     val dueAmount: Int,
