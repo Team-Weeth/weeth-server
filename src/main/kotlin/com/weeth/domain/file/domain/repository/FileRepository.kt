@@ -44,7 +44,7 @@ interface FileRepository :
         status: FileStatus,
     ): Boolean
 
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Modifying(flushAutomatically = true)
     @Query(
         """
         DELETE FROM File f
@@ -58,7 +58,15 @@ interface FileRepository :
         @Param("ownerId") ownerId: Long,
     ): Int
 
-    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    fun hardDeleteActiveByOwnerTypeAndOwnerIdIn(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+    ): Int {
+        if (ownerIds.isEmpty()) return 0
+        return hardDeleteActiveByOwnerTypeAndOwnerIdInInternal(ownerType, ownerIds)
+    }
+
+    @Modifying(flushAutomatically = true)
     @Query(
         """
         DELETE FROM File f
@@ -67,7 +75,7 @@ interface FileRepository :
           AND f.status = com.weeth.domain.file.domain.enums.FileStatus.UPLOADED
         """,
     )
-    fun hardDeleteActiveByOwnerTypeAndOwnerIdIn(
+    fun hardDeleteActiveByOwnerTypeAndOwnerIdInInternal(
         @Param("ownerType") ownerType: FileOwnerType,
         @Param("ownerIds") ownerIds: List<Long>,
     ): Int

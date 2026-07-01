@@ -10,6 +10,7 @@ import io.kotest.matchers.booleans.shouldBeTrue
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import jakarta.persistence.EntityManager
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
@@ -23,6 +24,7 @@ import java.util.UUID
 class FileRepositoryTest(
     private val fileRepository: FileRepository,
     private val jdbcTemplate: JdbcTemplate,
+    private val entityManager: EntityManager,
 ) : DescribeSpec({
         describe("save") {
             it("파일 정보를 저장하고 조회한다") {
@@ -143,6 +145,29 @@ class FileRepositoryTest(
                 fileRepository.exists(FileOwnerType.POST, 78L, FileStatus.UPLOADED).shouldBeFalse()
                 fileRepository.exists(FileOwnerType.POST, 78L, FileStatus.DELETED).shouldBeTrue()
                 fileRepository.exists(FileOwnerType.POST, 79L, FileStatus.UPLOADED).shouldBeTrue()
+            }
+
+            it("bulk 삭제 후 영속성 컨텍스트의 다른 엔티티를 clear하지 않는다") {
+                val retained =
+                    fileRepository.saveAndFlush(
+                        createTestFile("retained.png", FileOwnerType.POST, 79L, FileStatus.UPLOADED),
+                    )
+                fileRepository.saveAndFlush(createTestFile("target.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
+                val managedRetained = fileRepository.findById(retained.id).orElseThrow()
+
+                fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.POST, 77L)
+
+                entityManager.contains(managedRetained).shouldBeTrue()
+            }
+
+            it("ownerId 목록이 비어 있으면 쿼리를 실행하지 않고 0을 반환한다") {
+                val deletedCount =
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(
+                        FileOwnerType.POST,
+                        emptyList(),
+                    )
+
+                deletedCount shouldBe 0
             }
         }
 
