@@ -39,6 +39,24 @@ interface PostLikeRepository :
 
     @Query(
         """
+        SELECT p.id
+        FROM PostLike pl
+        JOIN pl.post p
+        JOIN p.board b
+        WHERE pl.userId = :userId
+          AND b.club.id IN :clubIds
+          AND pl.isActive = true
+          AND pl.deletedAt IS NULL
+        ORDER BY p.id ASC
+        """,
+    )
+    fun findActivePostIdsByUserIdAndClubIdIn(
+        @Param("userId") userId: Long,
+        @Param("clubIds") clubIds: List<Long>,
+    ): List<Long>
+
+    @Query(
+        """
         SELECT pl
         FROM PostLike pl
         JOIN FETCH pl.post p

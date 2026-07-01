@@ -3,6 +3,9 @@ package com.weeth.domain.club.domain.service
 import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.comment.domain.repository.CommentRepository
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -19,31 +22,74 @@ import java.time.LocalDateTime
 class ClubActivityDeletionPolicy(
     private val postLikeRepository: PostLikeRepository,
     private val postRepository: PostRepository,
+    private val commentRepository: CommentRepository,
+    private val fileRepository: FileRepository,
 ) {
     fun markMemberActivitiesDeleted(
         member: ClubMember,
         now: LocalDateTime,
     ) {
-        val postIds =
-            postLikeRepository
-                .findActivePostIdsByUserIdAndClubId(
-                    userId = member.user.id,
-                    clubId = member.club.id,
-                ).distinct()
-                .sorted()
+        markMembersActivitiesDeleted(listOf(member), now)
+    }
 
-        if (postIds.isEmpty()) return
+    fun markMembersActivitiesDeleted(
+        members: List<ClubMember>,
+        now: LocalDateTime,
+    ) {
+        if (members.isEmpty()) return
 
-        val postsById = postRepository.findAllByIdsWithLock(postIds).associateBy { it.id }
-        if (postsById.isEmpty()) return
+        deleteMembersFiles(members)
+        markMembersPostLikesDeleted(members, now)
+    }
 
-        postLikeRepository
-            .findAllActiveByUserIdAndPostIds(
-                userId = member.user.id,
-                postIds = postsById.keys.toList(),
-            ).forEach { like ->
-                if (!like.markDeleted(now)) return@forEach
-                postsById.getValue(like.post.id).decreaseLikeCount()
+    private fun deleteMembersFiles(members: List<ClubMember>) {
+        val memberIds = members.map { it.id }.distinct().sorted()
+        val postIds = postRepository.findActiveIdsByClubMemberIdIn(memberIds)
+        val commentIds = commentRepository.findActiveIdsByClubMemberIdIn(memberIds)
+
+        deleteFiles(FileOwnerType.POST, postIds)
+        deleteFiles(FileOwnerType.COMMENT, commentIds)
+    }
+
+    private fun deleteFiles(
+        ownerType: FileOwnerType,
+        ownerIds: List<Long>,
+    ) {
+        if (ownerIds.isEmpty()) return
+
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(ownerType, ownerIds)
+    }
+
+    private fun markMembersPostLikesDeleted(
+        members: List<ClubMember>,
+        now: LocalDateTime,
+    ) {
+        members
+            .groupBy { it.user.id }
+            .forEach { (userId, userMembers) ->
+                val clubIds = userMembers.map { it.club.id }.distinct().sorted()
+                val postIds =
+                    postLikeRepository
+                        .findActivePostIdsByUserIdAndClubIdIn(
+                            userId = userId,
+                            clubIds = clubIds,
+                        ).distinct()
+                        .sorted()
+
+                if (postIds.isEmpty()) return@forEach
+
+                val postsById = postRepository.findAllByIdsWithLock(postIds).associateBy { it.id }
+
+                val likes =
+                    postLikeRepository.findAllActiveByUserIdAndPostIds(
+                        userId = userId,
+                        postIds = postIds,
+                    )
+
+                for (like in likes) {
+                    if (!like.markDeleted(now)) continue
+                    postsById[like.post.id]?.decreaseLikeCount()
+                }
             }
     }
 }

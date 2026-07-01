@@ -3,6 +3,8 @@ package com.weeth.domain.user.application.usecase.command
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserHasLeadClubException
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
@@ -21,6 +23,7 @@ class LeaveUserUseCase(
     private val userReader: UserReader,
     private val clubMemberRepository: ClubMemberRepository,
     private val clubActivityDeletionPolicy: ClubActivityDeletionPolicy,
+    private val fileRepository: FileRepository,
     private val jwtManageUseCase: JwtManageUseCase,
     private val accessTokenBlacklistStore: AccessTokenBlacklistStorePort,
     private val meterRegistry: MeterRegistry,
@@ -38,13 +41,18 @@ class LeaveUserUseCase(
             throw UserHasLeadClubException()
         }
 
-        activeMembers.forEach { member ->
-            clubActivityDeletionPolicy.markMemberActivitiesDeleted(member, now)
-            member.leave(now)
+        if (activeMembers.isNotEmpty()) {
+            clubActivityDeletionPolicy.markMembersActivitiesDeleted(activeMembers, now)
         }
+        activeMembers.forEach { it.leave(now) }
 
+        deleteClubMemberProfileFiles(userId)
         user.leave(now)
         revokeTokensAfterCommit(userId)
+    }
+
+    private fun deleteClubMemberProfileFiles(userId: Long) {
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
     }
 
     private fun revokeTokensAfterCommit(userId: Long) {

@@ -115,8 +115,7 @@ class ManageAccountTransactionUseCaseTest :
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
             every { fileMapper.toFileResponse(any()) } returns receiptResponse
             every { fileRepository.saveAll(any<List<File>>()) } answers { firstArg() }
-            every { fileRepository.deleteAll(any<List<File>>()) } just runs
-            every { fileRepository.flush() } just runs
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
             every { fileReader.findAll(any(), any<Long>(), any()) } returns emptyList()
             every { clubPermissionPolicy.requireAdmin(any(), userId) } returns adminMember
         }
@@ -261,7 +260,7 @@ class ManageAccountTransactionUseCaseTest :
 
                 response.hasReceipt shouldBe true
                 response.receipts shouldBe listOf(receiptResponse)
-                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
+                verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
 
@@ -269,18 +268,20 @@ class ManageAccountTransactionUseCaseTest :
                 val account = AccountTestFixture.createAccount(id = accountId, currentBalance = 100_000)
                 val transaction = appliedTransaction(account, AccountTransactionType.EXPENSE, 30_000)
                 ReflectionTestUtils.setField(transaction, "id", transactionId)
-                val oldReceipt = receiptFile(ownerId = transactionId)
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 every { transactionRepository.findByIdAndDeletedAtIsNull(transactionId) } returns transaction
-                every { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, transactionId, any()) } returns
-                    listOf(oldReceipt)
                 val request = UpdateAccountTransactionRequest(files = emptyList())
 
                 val response = useCase.update(account.club.id, accountId, transactionId, request, userId)
 
                 response.hasReceipt shouldBe false
                 response.receipts shouldBe emptyList()
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldReceipt)) }
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(
+                        FileOwnerType.ACCOUNT_TRANSACTION,
+                        transactionId,
+                    )
+                }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
 
@@ -288,12 +289,9 @@ class ManageAccountTransactionUseCaseTest :
                 val account = AccountTestFixture.createAccount(id = accountId, currentBalance = 100_000)
                 val transaction = appliedTransaction(account, AccountTransactionType.EXPENSE, 30_000)
                 ReflectionTestUtils.setField(transaction, "id", transactionId)
-                val oldReceipt = receiptFile(id = 199L, ownerId = transactionId, fileName = "old.png")
                 val newReceipt = receiptFile(id = 200L, ownerId = transactionId, fileName = "receipt.png")
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 every { transactionRepository.findByIdAndDeletedAtIsNull(transactionId) } returns transaction
-                every { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, transactionId, any()) } returns
-                    listOf(oldReceipt)
                 every {
                     fileMapper.toFileList(listOf(receiptRequest), FileOwnerType.ACCOUNT_TRANSACTION, transactionId)
                 } returns listOf(newReceipt)
@@ -304,7 +302,12 @@ class ManageAccountTransactionUseCaseTest :
 
                 response.hasReceipt shouldBe true
                 response.receipts shouldBe listOf(receiptResponse)
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(oldReceipt)) }
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(
+                        FileOwnerType.ACCOUNT_TRANSACTION,
+                        transactionId,
+                    )
+                }
                 verify(exactly = 1) { fileRepository.saveAll(listOf(newReceipt)) }
             }
 
@@ -346,7 +349,7 @@ class ManageAccountTransactionUseCaseTest :
 
                 account.currentBalance shouldBe 100_000
                 transaction.deletedAt.shouldNotBeNull()
-                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
+                verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
             }
 
             it("시스템 거래(CARRY_OVER) 삭제 요청은 거부한다") {

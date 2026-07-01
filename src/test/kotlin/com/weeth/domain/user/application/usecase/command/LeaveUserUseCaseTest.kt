@@ -5,6 +5,8 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserHasLeadClubException
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserReader
@@ -31,6 +33,7 @@ class LeaveUserUseCaseTest :
         val userReader = mockk<UserReader>()
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
+        val fileRepository = mockk<FileRepository>()
         val jwtManageUseCase = mockk<JwtManageUseCase>()
         val accessTokenBlacklistStore = mockk<AccessTokenBlacklistStorePort>()
         val meterRegistry = SimpleMeterRegistry()
@@ -40,6 +43,7 @@ class LeaveUserUseCaseTest :
                 userReader = userReader,
                 clubMemberRepository = clubMemberRepository,
                 clubActivityDeletionPolicy = clubActivityDeletionPolicy,
+                fileRepository = fileRepository,
                 jwtManageUseCase = jwtManageUseCase,
                 accessTokenBlacklistStore = accessTokenBlacklistStore,
                 meterRegistry = meterRegistry,
@@ -51,9 +55,11 @@ class LeaveUserUseCaseTest :
                 userReader,
                 clubMemberRepository,
                 clubActivityDeletionPolicy,
+                fileRepository,
                 jwtManageUseCase,
                 accessTokenBlacklistStore,
             )
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.clearSynchronization()
             }
@@ -173,7 +179,7 @@ class LeaveUserUseCaseTest :
                 val now = LocalDateTime.now(clock)
                 every { userReader.getByIdWithLock(1L) } returns user
                 every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns listOf(userMember, adminMember)
-                justRun { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
+                justRun { clubActivityDeletionPolicy.markMembersActivitiesDeleted(any(), any()) }
                 justRun { jwtManageUseCase.deleteRefreshToken(1L) }
                 justRun { accessTokenBlacklistStore.blacklist(1L) }
                 TransactionSynchronizationManager.initSynchronization()
@@ -185,8 +191,25 @@ class LeaveUserUseCaseTest :
                 adminMember.memberStatus shouldBe MemberStatus.LEFT
                 adminMember.leftAt shouldBe now
                 user.status shouldBe Status.LEFT
-                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(userMember, now) }
-                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(adminMember, now) }
+                verify(exactly = 1) {
+                    clubActivityDeletionPolicy.markMembersActivitiesDeleted(listOf(userMember, adminMember), now)
+                }
+                verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
+            }
+
+            it("위드 탈퇴 시 멤버 프로필 파일을 하드 딜리트한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                every { userReader.getByIdWithLock(1L) } returns user
+                every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns emptyList()
+                justRun { jwtManageUseCase.deleteRefreshToken(1L) }
+                justRun { accessTokenBlacklistStore.blacklist(1L) }
+                TransactionSynchronizationManager.initSynchronization()
+
+                useCase.execute(1L)
+
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, 1L)
+                }
             }
 
             it("ACTIVE LEAD 멤버십이 있으면 탈퇴를 차단하고 상태를 변경하지 않는다") {
@@ -207,6 +230,9 @@ class LeaveUserUseCaseTest :
                 user.status shouldBe Status.ACTIVE
                 leadMember.memberStatus shouldBe MemberStatus.ACTIVE
                 verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
+                verify(
+                    exactly = 0,
+                ) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                 verify(exactly = 0) { jwtManageUseCase.deleteRefreshToken(any()) }
             }
         }

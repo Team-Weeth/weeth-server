@@ -161,11 +161,7 @@ class ManageAccountTransactionUseCase(
     }
 
     private fun deleteTransactionReceipts(transactionId: Long) {
-        val receipts = findTransactionReceipts(transactionId)
-        if (receipts.isNotEmpty()) {
-            fileRepository.deleteAll(receipts)
-            fileRepository.flush()
-        }
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.ACCOUNT_TRANSACTION, transactionId)
     }
 
     private fun findTransactionReceipts(transactionId: Long): List<File> =

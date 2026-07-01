@@ -23,7 +23,6 @@ import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
@@ -91,9 +90,7 @@ class ManageClubUseCaseTest :
             every { clubRepository.existsBySchoolNameAndName(any(), any()) } returns false
             every { clubMapper.toCreateResponse(any()) } returns ClubCreateResponse(clubId = "testId", clubName = "테스트")
             every { fileRepository.save(any<File>()) } answers { firstArg() }
-            every {
-                fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any())
-            } returns emptyList()
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
         }
 
         describe("create") {
@@ -349,7 +346,7 @@ class ManageClubUseCaseTest :
                 )
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(
                     1L,
@@ -369,8 +366,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
-            it("프로필 이미지를 변경하면 기존 File이 삭제되고 새 File이 생성된다") {
-                val existingFile = mockk<File>(relaxed = true)
+            it("프로필 이미지를 변경하면 기존 File이 하드 딜리트되고 새 File이 생성된다") {
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -380,17 +376,8 @@ class ManageClubUseCaseTest :
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
-
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
-                every {
-                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
-                        FileOwnerType.CLUB_PROFILE,
-                        1L,
-                        FileStatus.UPLOADED,
-                    )
-                } returns listOf(existingFile)
-                every { fileRepository.deleteAll(any<List<File>>()) } just Runs
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(
                     1L,
@@ -406,7 +393,9 @@ class ManageClubUseCaseTest :
                     ),
                 )
 
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_PROFILE, 1L)
+                }
                 verify(exactly = 1) { fileRepository.save(any<File>()) }
                 club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440002_new.png"
             }
@@ -422,13 +411,11 @@ class ManageClubUseCaseTest :
                             ),
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(1L, 10L, ClubUpdateRequest(name = "새 이름"))
 
-                verify(exactly = 0) {
-                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any())
-                }
+                verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                 verify(exactly = 0) { fileRepository.save(any<File>()) }
             }
 
@@ -444,7 +431,7 @@ class ManageClubUseCaseTest :
                             ),
                     )
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.update(1L, 10L, ClubUpdateRequest())
 
@@ -479,7 +466,7 @@ class ManageClubUseCaseTest :
                 )
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteProfileImage(1L, 10L)
 
@@ -487,8 +474,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
-            it("기존 File 레코드가 삭제된다") {
-                val existingFile = mockk<File>(relaxed = true)
+            it("기존 File 레코드가 하드 딜리트된다") {
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -498,21 +484,14 @@ class ManageClubUseCaseTest :
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
-
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
-                every {
-                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
-                        FileOwnerType.CLUB_PROFILE,
-                        1L,
-                        FileStatus.UPLOADED,
-                    )
-                } returns listOf(existingFile)
-                every { fileRepository.deleteAll(any<List<File>>()) } just Runs
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteProfileImage(1L, 10L)
 
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_PROFILE, 1L)
+                }
             }
         }
 
@@ -539,7 +518,7 @@ class ManageClubUseCaseTest :
                 )
 
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
@@ -547,8 +526,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe null
             }
 
-            it("기존 File 레코드가 삭제된다") {
-                val existingFile = mockk<File>(relaxed = true)
+            it("기존 File 레코드가 하드 딜리트된다") {
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -558,21 +536,14 @@ class ManageClubUseCaseTest :
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
-
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
-                every { clubRepository.getClubById(1L) } returns club
-                every {
-                    fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
-                        FileOwnerType.CLUB_BACKGROUND,
-                        1L,
-                        FileStatus.UPLOADED,
-                    )
-                } returns listOf(existingFile)
-                every { fileRepository.deleteAll(any<List<File>>()) } just Runs
+                every { clubRepository.getClubByIdForUpdate(1L) } returns club
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
-                verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_BACKGROUND, 1L)
+                }
             }
         }
     })

@@ -18,7 +18,6 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -30,7 +29,6 @@ class ManagePostUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val fileRepository: FileRepository,
-    private val fileReader: FileReader,
     private val fileMapper: FileMapper,
     private val postMapper: PostMapper,
 ) {
@@ -111,8 +109,7 @@ class ManagePostUseCase(
         clubId: Long,
     ): Board = boardRepository.findByIdAndClubIdAndIsDeletedFalse(boardId, clubId) ?: throw BoardNotFoundException()
 
-    private fun findPost(postId: Long): Post =
-        postRepository.findActivePostById(postId) ?: throw PostNotFoundException()
+    private fun findPost(postId: Long): Post = postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
 
     private fun validateOwner(
         post: Post,
@@ -154,11 +151,6 @@ class ManagePostUseCase(
     }
 
     private fun deletePostFiles(postId: Long) {
-        val files = fileReader.findAll(FileOwnerType.POST, postId)
-
-        if (files.isNotEmpty()) {
-            fileRepository.deleteAll(files)
-            fileRepository.flush()
-        }
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.POST, postId)
     }
 }

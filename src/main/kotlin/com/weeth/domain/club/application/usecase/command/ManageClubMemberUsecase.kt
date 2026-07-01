@@ -22,8 +22,6 @@ import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
-import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
@@ -47,7 +45,6 @@ class ManageClubMemberUsecase(
     private val clubJoinPolicy: ClubJoinPolicy,
     private val clubActivityDeletionPolicy: ClubActivityDeletionPolicy,
     private val fileRepository: FileRepository,
-    private val fileAccessUrlPort: FileAccessUrlPort,
     private val clock: Clock,
 ) {
     /**
@@ -92,19 +89,11 @@ class ManageClubMemberUsecase(
         userId: Long,
         request: UpdateMemberProfileRequest,
     ) {
-        val members = clubMemberRepository.findActiveByUserId(userId)
+        val members = clubMemberRepository.findAllActiveByUserIdWithLock(userId)
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
         request.profileImage?.let { profileImage ->
-            val existingFiles =
-                fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
-                    FileOwnerType.CLUB_MEMBER_PROFILE,
-                    userId,
-                    FileStatus.UPLOADED,
-                )
-            if (existingFiles.isNotEmpty()) {
-                fileRepository.deleteAll(existingFiles)
-            }
+            markFilesDeleted(userId)
 
             val file =
                 File.createUploaded(
@@ -125,18 +114,10 @@ class ManageClubMemberUsecase(
 
     @Transactional
     fun deleteProfileImage(userId: Long) {
-        val members = clubMemberRepository.findActiveByUserId(userId)
+        val members = clubMemberRepository.findAllActiveByUserIdWithLock(userId)
         if (members.isEmpty()) throw ClubMemberNotFoundException()
 
-        val existingFiles =
-            fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
-                FileOwnerType.CLUB_MEMBER_PROFILE,
-                userId,
-                FileStatus.UPLOADED,
-            )
-        if (existingFiles.isNotEmpty()) {
-            fileRepository.deleteAll(existingFiles)
-        }
+        markFilesDeleted(userId)
 
         members.forEach { it.removeProfileImage() }
     }
@@ -185,5 +166,9 @@ class ManageClubMemberUsecase(
         val now = LocalDateTime.now(clock)
         clubActivityDeletionPolicy.markMemberActivitiesDeleted(member, now)
         member.leave(now)
+    }
+
+    private fun markFilesDeleted(userId: Long) {
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
     }
 }

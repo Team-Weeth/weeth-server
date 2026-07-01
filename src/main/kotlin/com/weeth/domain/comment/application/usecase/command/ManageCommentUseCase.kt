@@ -15,7 +15,6 @@ import com.weeth.domain.comment.domain.repository.CommentRepository
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -25,7 +24,6 @@ class ManageCommentUseCase(
     private val commentRepository: CommentRepository,
     private val postRepository: PostRepository, // 타 도메인 이므로 Reader 사용 검토
     private val clubMemberPolicy: ClubMemberPolicy,
-    private val fileReader: FileReader,
     private val fileRepository: FileRepository,
     private val fileMapper: FileMapper,
 ) : PostCommentUsecase {
@@ -64,7 +62,7 @@ class ManageCommentUseCase(
         commentId: Long,
         userId: Long,
     ) {
-        val comment = commentRepository.findByIdAndPostId(commentId, postId) ?: throw CommentNotFoundException()
+        val comment = findCommentWithLock(commentId, postId)
         ensureOwner(comment, userId)
         ensureNotDeleted(comment)
 
@@ -79,7 +77,7 @@ class ManageCommentUseCase(
         userId: Long,
     ) {
         val post = findPostWithLock(postId)
-        val comment = commentRepository.findByIdAndPostId(commentId, postId) ?: throw CommentNotFoundException()
+        val comment = findCommentWithLock(commentId, postId)
         ensureOwner(comment, userId)
 
         deleteComment(comment)
@@ -137,11 +135,7 @@ class ManageCommentUseCase(
     }
 
     private fun deleteCommentFiles(commentId: Long) {
-        val files = fileReader.findAll(FileOwnerType.COMMENT, commentId)
-
-        if (files.isNotEmpty()) {
-            fileRepository.deleteAll(files)
-        }
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.COMMENT, commentId)
     }
 
     private fun ensureOwner(
@@ -167,4 +161,9 @@ class ManageCommentUseCase(
 
     private fun findPostWithLock(postId: Long): Post =
         postRepository.findByIdWithLock(postId) ?: throw PostNotFoundException()
+
+    private fun findCommentWithLock(
+        commentId: Long,
+        postId: Long,
+    ): Comment = commentRepository.findByIdAndPostIdWithLock(commentId, postId) ?: throw CommentNotFoundException()
 }
