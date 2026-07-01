@@ -22,7 +22,6 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
-import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserInActiveException
@@ -85,7 +84,7 @@ class ManageClubMemberUseCaseTest :
             )
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { fileRepository.save(any()) } answers { firstArg() }
-            every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any()) } returns 0
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
         }
 
         describe("updateProfile") {
@@ -99,7 +98,7 @@ class ManageClubMemberUseCaseTest :
                 )
 
             context("프로필 사진만 변경할 때") {
-                it("모든 활성 ClubMember의 기존 파일을 삭제 예약하고 새 파일로 URL을 업데이트한다") {
+                it("모든 활성 ClubMember의 기존 파일을 하드 딜리트하고 새 파일로 URL을 업데이트한다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
                     every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
@@ -110,14 +109,8 @@ class ManageClubMemberUseCaseTest :
                     member1.profileImageStorageKey shouldBe profileImageRequest.storageKey
                     member2.profileImageStorageKey shouldBe profileImageRequest.storageKey
                     verify(exactly = 1) {
-                        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                            FileOwnerType.CLUB_MEMBER_PROFILE,
-                            userId,
-                            LocalDateTime.now(clock),
-                            LocalDateTime.now(clock),
-                        )
+                        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
                     }
-                    verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                     verify(exactly = 1) { fileRepository.save(any()) }
                     verify(exactly = 1) { clubMemberRepository.findAllActiveByUserIdWithLock(userId) }
                     verify(exactly = 0) { clubMemberRepository.findActiveByUserId(userId) }
@@ -136,9 +129,7 @@ class ManageClubMemberUseCaseTest :
 
                     member1.bio shouldBe "안녕하세요!"
                     member2.bio shouldBe "안녕하세요!"
-                    verify(exactly = 0) {
-                        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any())
-                    }
+                    verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                     verify(exactly = 0) { fileRepository.save(any()) }
                 }
             }
@@ -173,7 +164,7 @@ class ManageClubMemberUseCaseTest :
             val userId = 10L
 
             context("활성 멤버가 프로필 사진을 삭제할 때") {
-                it("모든 활성 ClubMember의 파일을 삭제 예약하고 URL을 null로 만든다") {
+                it("모든 활성 ClubMember의 파일을 하드 딜리트하고 URL을 null로 만든다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
                     member1.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
@@ -185,14 +176,8 @@ class ManageClubMemberUseCaseTest :
                     useCase.deleteProfileImage(userId)
 
                     verify(exactly = 1) {
-                        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                            FileOwnerType.CLUB_MEMBER_PROFILE,
-                            userId,
-                            LocalDateTime.now(clock),
-                            LocalDateTime.now(clock),
-                        )
+                        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
                     }
-                    verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                     verify(exactly = 1) { clubMemberRepository.findAllActiveByUserIdWithLock(userId) }
                     verify(exactly = 0) { clubMemberRepository.findActiveByUserId(userId) }
                     member1.profileImageStorageKey shouldBe null

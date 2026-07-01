@@ -33,8 +33,6 @@ import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.Clock
-import java.time.LocalDateTime
 
 /**
  * 동아리 관리 유스케이스
@@ -52,7 +50,6 @@ class ManageClubUseCase(
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val fileRepository: FileRepository,
     private val clubMapper: ClubMapper,
-    private val clock: Clock,
 ) {
     /**
      * 새로운 동아리를 생성
@@ -237,20 +234,11 @@ class ManageClubUseCase(
         fileRepository.save(file)
     }
 
-    /**
-     * 동아리 이미지 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
-     */
     private fun deleteExistingFiles(
         ownerType: FileOwnerType,
         ownerId: Long,
     ) {
-        val now = LocalDateTime.now(clock)
-        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-            ownerType = ownerType,
-            ownerId = ownerId,
-            deletedAt = now,
-            hardDeleteAfter = File.immediateHardDeleteAfter(now),
-        )
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(ownerType, ownerId)
     }
 
     private fun validatePrimaryContactEmail(

@@ -3,7 +3,6 @@ package com.weeth.domain.user.application.usecase.command
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
-import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserHasLeadClubException
@@ -47,24 +46,13 @@ class LeaveUserUseCase(
         }
         activeMembers.forEach { it.leave(now) }
 
-        markClubMemberProfileFilesDeleted(userId, now)
+        deleteClubMemberProfileFiles(userId)
         user.leave(now)
         revokeTokensAfterCommit(userId)
     }
 
-    /**
-     * 위드 탈퇴는 서비스 전체 탈퇴이므로 user-scope 멤버 프로필 파일을 30일 보관 삭제 예약
-     */
-    private fun markClubMemberProfileFilesDeleted(
-        userId: Long,
-        now: LocalDateTime,
-    ) {
-        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-            ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
-            ownerId = userId,
-            deletedAt = now,
-            hardDeleteAfter = File.retainedHardDeleteAfter(now),
-        )
+    private fun deleteClubMemberProfileFiles(userId: Long) {
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
     }
 
     private fun revokeTokensAfterCommit(userId: Long) {

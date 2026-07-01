@@ -7,110 +7,78 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import java.time.LocalDateTime
 
 interface FileRepository :
     JpaRepository<File, Long>,
     FileReader {
-    fun findAllByOwnerTypeAndOwnerIdAndIsDeletedFalse(
+    fun findAllByOwnerTypeAndOwnerId(
         ownerType: FileOwnerType,
         ownerId: Long,
     ): List<File>
 
-    fun findAllByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(
+    fun findAllByOwnerTypeAndOwnerIdAndStatus(
         ownerType: FileOwnerType,
         ownerId: Long,
         status: FileStatus,
     ): List<File>
 
-    fun findAllByOwnerTypeAndOwnerIdInAndIsDeletedFalse(
+    fun findAllByOwnerTypeAndOwnerIdIn(
         ownerType: FileOwnerType,
         ownerIds: List<Long>,
     ): List<File>
 
-    fun findAllByOwnerTypeAndOwnerIdInAndStatusAndIsDeletedFalse(
+    fun findAllByOwnerTypeAndOwnerIdInAndStatus(
         ownerType: FileOwnerType,
         ownerIds: List<Long>,
         status: FileStatus,
     ): List<File>
 
-    fun existsByOwnerTypeAndOwnerIdAndIsDeletedFalse(
+    fun existsByOwnerTypeAndOwnerId(
         ownerType: FileOwnerType,
         ownerId: Long,
     ): Boolean
 
-    fun existsByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(
+    fun existsByOwnerTypeAndOwnerIdAndStatus(
         ownerType: FileOwnerType,
         ownerId: Long,
         status: FileStatus,
     ): Boolean
 
-    // Bulk update는 JPA auditing을 우회하여 modifiedAt을 명시적으로 갱신
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
         """
-        UPDATE File f
-        SET f.isDeleted = true,
-            f.deletedAt = :deletedAt,
-            f.hardDeleteAfter = :hardDeleteAfter,
-            f.modifiedAt = :deletedAt
+        DELETE FROM File f
         WHERE f.ownerType = :ownerType
           AND f.ownerId = :ownerId
           AND f.status = com.weeth.domain.file.domain.enums.FileStatus.UPLOADED
-          AND f.isDeleted = false
         """,
     )
-    fun markActiveDeletedByOwnerTypeAndOwnerId(
+    fun hardDeleteActiveByOwnerTypeAndOwnerId(
         @Param("ownerType") ownerType: FileOwnerType,
         @Param("ownerId") ownerId: Long,
-        @Param("deletedAt") deletedAt: LocalDateTime,
-        @Param("hardDeleteAfter") hardDeleteAfter: LocalDateTime,
     ): Int
 
-    // Bulk update는 JPA auditing을 우회하여 modifiedAt을 명시적으로 갱신
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query(
         """
-        UPDATE File f
-        SET f.isDeleted = true,
-            f.deletedAt = :deletedAt,
-            f.hardDeleteAfter = :hardDeleteAfter,
-            f.modifiedAt = :deletedAt
+        DELETE FROM File f
         WHERE f.ownerType = :ownerType
           AND f.ownerId IN :ownerIds
           AND f.status = com.weeth.domain.file.domain.enums.FileStatus.UPLOADED
-          AND f.isDeleted = false
         """,
     )
-    fun markActiveDeletedByOwnerTypeAndOwnerIdIn(
+    fun hardDeleteActiveByOwnerTypeAndOwnerIdIn(
         @Param("ownerType") ownerType: FileOwnerType,
         @Param("ownerIds") ownerIds: List<Long>,
-        @Param("deletedAt") deletedAt: LocalDateTime,
-        @Param("hardDeleteAfter") hardDeleteAfter: LocalDateTime,
     ): Int
-
-    fun findAllActiveByOwnerTypeAndOwnerId(
-        ownerType: FileOwnerType,
-        ownerId: Long,
-    ): List<File> = findAllByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(ownerType, ownerId, FileStatus.UPLOADED)
-
-    fun findAllActiveByOwnerTypeAndOwnerIdIn(
-        ownerType: FileOwnerType,
-        ownerIds: List<Long>,
-    ): List<File> =
-        if (ownerIds.isEmpty()) {
-            emptyList()
-        } else {
-            findAllByOwnerTypeAndOwnerIdInAndStatusAndIsDeletedFalse(ownerType, ownerIds, FileStatus.UPLOADED)
-        }
 
     override fun findAll(
         ownerType: FileOwnerType,
         ownerId: Long,
         status: FileStatus?,
     ): List<File> =
-        status?.let { findAllByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(ownerType, ownerId, it) }
-            ?: findAllByOwnerTypeAndOwnerIdAndIsDeletedFalse(ownerType, ownerId)
+        status?.let { findAllByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, it) }
+            ?: findAllByOwnerTypeAndOwnerId(ownerType, ownerId)
 
     override fun findAll(
         ownerType: FileOwnerType,
@@ -120,8 +88,8 @@ interface FileRepository :
         if (ownerIds.isEmpty()) {
             return emptyList()
         }
-        return status?.let { findAllByOwnerTypeAndOwnerIdInAndStatusAndIsDeletedFalse(ownerType, ownerIds, it) }
-            ?: findAllByOwnerTypeAndOwnerIdInAndIsDeletedFalse(ownerType, ownerIds)
+        return status?.let { findAllByOwnerTypeAndOwnerIdInAndStatus(ownerType, ownerIds, it) }
+            ?: findAllByOwnerTypeAndOwnerIdIn(ownerType, ownerIds)
     }
 
     override fun exists(
@@ -129,6 +97,6 @@ interface FileRepository :
         ownerId: Long,
         status: FileStatus?,
     ): Boolean =
-        status?.let { existsByOwnerTypeAndOwnerIdAndStatusAndIsDeletedFalse(ownerType, ownerId, it) }
-            ?: existsByOwnerTypeAndOwnerIdAndIsDeletedFalse(ownerType, ownerId)
+        status?.let { existsByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, it) }
+            ?: existsByOwnerTypeAndOwnerId(ownerType, ownerId)
 }

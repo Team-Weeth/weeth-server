@@ -168,16 +168,7 @@ class ManageClubMemberUsecase(
         member.leave(now)
     }
 
-    /**
-     * 프로필 이미지 교체/명시 삭제는 복구 대상이 아니므로 즉시 정리 대상으로 표시
-     */
     private fun markFilesDeleted(userId: Long) {
-        val now = LocalDateTime.now(clock)
-        fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-            ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
-            ownerId = userId,
-            deletedAt = now,
-            hardDeleteAfter = File.immediateHardDeleteAfter(now),
-        )
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
     }
 }

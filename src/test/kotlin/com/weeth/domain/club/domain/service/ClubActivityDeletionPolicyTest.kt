@@ -54,7 +54,6 @@ class ClubActivityDeletionPolicyTest :
                 } returns listOf(post.id)
                 every { postRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
                 every { commentRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
-                every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(any(), any(), any(), any()) } returns 0
                 every { postRepository.findAllByIdsWithLock(listOf(post.id)) } returns listOf(post)
                 every {
                     postLikeRepository.findAllActiveByUserIdAndPostIds(member.user.id, listOf(post.id))
@@ -89,7 +88,6 @@ class ClubActivityDeletionPolicyTest :
                 } returns emptyList()
                 every { postRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
                 every { commentRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
-                every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(any(), any(), any(), any()) } returns 0
 
                 policy.markMemberActivitiesDeleted(member, LocalDateTime.of(2026, 5, 19, 12, 0))
 
@@ -119,7 +117,6 @@ class ClubActivityDeletionPolicyTest :
                 } returns listOf(post.id)
                 every { postRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
                 every { commentRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns emptyList()
-                every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(any(), any(), any(), any()) } returns 0
                 every { postRepository.findAllByIdsWithLock(listOf(post.id)) } returns emptyList()
                 every {
                     postLikeRepository.findAllActiveByUserIdAndPostIds(member.user.id, listOf(post.id))
@@ -136,7 +133,7 @@ class ClubActivityDeletionPolicyTest :
                 }
             }
 
-            it("작성한 게시글과 댓글의 파일을 30일 보관 삭제 예약한다") {
+            it("작성한 게시글과 댓글의 파일을 하드 딜리트한다") {
                 val club = ClubTestFixture.createClub(id = 1L)
                 val member =
                     ClubMemberTestFixture.createActiveMember(
@@ -154,46 +151,26 @@ class ClubActivityDeletionPolicyTest :
                 every { commentRepository.findActiveIdsByClubMemberIdIn(listOf(member.id)) } returns
                     listOf(200L)
                 every {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.POST,
-                        listOf(100L, 101L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.POST, listOf(100L, 101L))
                 } returns 1
                 every {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.COMMENT,
-                        listOf(200L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.COMMENT, listOf(200L))
                 } returns 1
 
                 policy.markMemberActivitiesDeleted(member, now)
 
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.POST,
-                        listOf(100L, 101L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.POST, listOf(100L, 101L))
                 }
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.COMMENT,
-                        listOf(200L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.COMMENT, listOf(200L))
                 }
                 verify(exactly = 0) { postRepository.findAllByIdsWithLock(any()) }
             }
         }
 
         describe("markMembersActivitiesDeleted") {
-            it("여러 멤버의 게시글과 댓글 파일을 ownerType별 한 번씩 삭제 예약한다") {
+            it("여러 멤버의 게시글과 댓글 파일을 ownerType별 한 번씩 하드 딜리트한다") {
                 val club = ClubTestFixture.createClub(id = 1L)
                 val user = UserTestFixture.createActiveUser1(id = 20L)
                 val firstMember =
@@ -213,20 +190,10 @@ class ClubActivityDeletionPolicyTest :
                 every { postRepository.findActiveIdsByClubMemberIdIn(listOf(10L, 11L)) } returns listOf(100L, 101L)
                 every { commentRepository.findActiveIdsByClubMemberIdIn(listOf(10L, 11L)) } returns listOf(200L)
                 every {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.POST,
-                        listOf(100L, 101L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.POST, listOf(100L, 101L))
                 } returns 1
                 every {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.COMMENT,
-                        listOf(200L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.COMMENT, listOf(200L))
                 } returns 1
                 every {
                     postLikeRepository.findActivePostIdsByUserIdAndClubIdIn(user.id, listOf(1L, 2L))
@@ -237,20 +204,10 @@ class ClubActivityDeletionPolicyTest :
                 verify(exactly = 1) { postRepository.findActiveIdsByClubMemberIdIn(listOf(10L, 11L)) }
                 verify(exactly = 1) { commentRepository.findActiveIdsByClubMemberIdIn(listOf(10L, 11L)) }
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.POST,
-                        listOf(100L, 101L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.POST, listOf(100L, 101L))
                 }
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-                        FileOwnerType.COMMENT,
-                        listOf(200L),
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(FileOwnerType.COMMENT, listOf(200L))
                 }
             }
         }

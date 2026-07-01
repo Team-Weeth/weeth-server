@@ -14,7 +14,6 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
-import java.time.LocalDateTime
 
 @Entity
 @Table(
@@ -45,54 +44,8 @@ class File(
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var status: FileStatus = FileStatus.UPLOADED,
-    isDeleted: Boolean = false,
-    deletedAt: LocalDateTime? = null,
-    hardDeleteAfter: LocalDateTime? = null,
 ) : BaseEntity() {
-    @Column(nullable = false)
-    var isDeleted: Boolean = isDeleted
-        private set
-
-    @Column(name = "deleted_at", nullable = true)
-    var deletedAt: LocalDateTime? = deletedAt
-        private set
-
-    @Column(name = "hard_delete_after", nullable = true)
-    var hardDeleteAfter: LocalDateTime? = hardDeleteAfter
-        private set
-
-    init {
-        require(!isDeleted || deletedAt != null) { "삭제된 파일은 deletedAt이 필요합니다." }
-        require(!isDeleted || hardDeleteAfter != null) { "삭제된 파일은 hardDeleteAfter가 필요합니다." }
-    }
-
-    fun markDeleted(now: LocalDateTime) {
-        markDeleted(now, RETENTION_DAYS)
-    }
-
-    fun markDeletedForImmediateCleanup(now: LocalDateTime) {
-        markDeleted(now, IMMEDIATE_CLEANUP_DAYS)
-    }
-
-    private fun markDeleted(
-        now: LocalDateTime,
-        retentionDays: Long,
-    ) {
-        if (isDeleted) return
-
-        isDeleted = true
-        deletedAt = now
-        hardDeleteAfter = now.plusDays(retentionDays)
-    }
-
     companion object {
-        private const val RETENTION_DAYS = 30L
-        private const val IMMEDIATE_CLEANUP_DAYS = 0L
-
-        fun retainedHardDeleteAfter(now: LocalDateTime): LocalDateTime = now.plusDays(RETENTION_DAYS)
-
-        fun immediateHardDeleteAfter(now: LocalDateTime): LocalDateTime = now.plusDays(IMMEDIATE_CLEANUP_DAYS)
-
         fun createUploaded(
             fileName: String,
             storageKey: String,

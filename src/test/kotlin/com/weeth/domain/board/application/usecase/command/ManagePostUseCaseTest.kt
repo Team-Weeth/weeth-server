@@ -36,14 +36,9 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
-import java.time.Clock
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
 
 class ManagePostUseCaseTest :
     DescribeSpec({
-        val clock = Clock.fixed(Instant.parse("2026-06-25T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val postRepository = mockk<PostRepository>()
         val boardRepository = mockk<BoardRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
@@ -61,7 +56,6 @@ class ManagePostUseCaseTest :
                 fileRepository,
                 fileMapper,
                 postMapper,
-                clock,
             )
 
         fun createUploadedPostFile(
@@ -90,12 +84,9 @@ class ManagePostUseCaseTest :
             every { postRepository.save(any()) } answers { firstArg() }
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
             every { fileRepository.saveAll(any<List<File>>()) } returns emptyList()
-            every {
-                fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any())
-            } returns 0
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
             every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(id = 1L, boardId = 1L)
             every { fileRepository.delete(any()) } just runs
-            every { fileRepository.flush() } just runs
             every { clubMemberCardinalReader.findLatestCardinalByClubMember(any()) } returns null
         }
 
@@ -200,14 +191,11 @@ class ManagePostUseCaseTest :
 
                 useCase.update(clubId, board.id, 1L, request, 1L)
 
-                verify(
-                    exactly = 0,
-                ) { fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any()) }
+                verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                 verify(exactly = 0) { fileRepository.saveAll(any<List<File>>()) }
             }
 
             it("files가 있으면 기존 파일을 삭제 후 교체한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
@@ -229,7 +217,6 @@ class ManagePostUseCaseTest :
                     )
 
                 every { postRepository.findActivePostById(1L) } returns post
-                every { fileRepository.deleteAll(any<List<File>>()) } just runs
                 every { fileMapper.toFileList(request.files, FileOwnerType.POST, any<Long>()) } returns newFiles
                 every { fileRepository.saveAll(newFiles) } returns newFiles
 
@@ -237,15 +224,9 @@ class ManagePostUseCaseTest :
 
                 post.title shouldBe "수정"
                 post.content shouldBe "수정"
-                verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                        FileOwnerType.POST,
-                        post.id,
-                        LocalDateTime.now(clock),
-                        LocalDateTime.now(clock),
-                    )
-                }
-                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
+                verify(
+                    exactly = 1,
+                ) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.POST, post.id) }
                 verify(exactly = 1) { fileRepository.saveAll(newFiles) }
             }
 
@@ -337,28 +318,20 @@ class ManagePostUseCaseTest :
         }
 
         describe("delete") {
-            it("삭제 시 첨부 파일을 삭제 예약하고 게시글을 soft delete한다") {
-                val user = UserTestFixture.createActiveUser1(1L)
+            it("삭제 시 첨부 파일을 하드 딜리트하고 게시글을 soft delete한다") {
                 val board = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val clubId = board.club.id
                 val ownerMember = ClubMemberTestFixture.createActiveMember(user = UserTestFixture.createActiveUser1(1L))
                 val post = PostTestFixture.create(title = "제목", content = "내용", clubMember = ownerMember, board = board)
 
                 every { postRepository.findActivePostById(1L) } returns post
-                every { fileRepository.deleteAll(any<List<File>>()) } just runs
 
                 useCase.delete(clubId, board.id, 1L, 1L)
 
                 post.isDeleted shouldBe true
-                verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                        FileOwnerType.POST,
-                        post.id,
-                        LocalDateTime.now(clock),
-                        LocalDateTime.now(clock),
-                    )
-                }
-                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
+                verify(
+                    exactly = 1,
+                ) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.POST, post.id) }
                 verify(exactly = 0) { postRepository.delete(any()) }
             }
 

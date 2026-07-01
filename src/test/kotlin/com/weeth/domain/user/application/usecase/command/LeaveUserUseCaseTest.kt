@@ -59,7 +59,7 @@ class LeaveUserUseCaseTest :
                 jwtManageUseCase,
                 accessTokenBlacklistStore,
             )
-            every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any()) } returns 0
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.clearSynchronization()
             }
@@ -197,9 +197,8 @@ class LeaveUserUseCaseTest :
                 verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
             }
 
-            it("위드 탈퇴 시 멤버 프로필 파일을 30일 보관 삭제 예약한다") {
+            it("위드 탈퇴 시 멤버 프로필 파일을 하드 딜리트한다") {
                 val user = UserTestFixture.createRegisteredUser(1L)
-                val now = LocalDateTime.now(clock)
                 every { userReader.getByIdWithLock(1L) } returns user
                 every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns emptyList()
                 justRun { jwtManageUseCase.deleteRefreshToken(1L) }
@@ -209,12 +208,7 @@ class LeaveUserUseCaseTest :
                 useCase.execute(1L)
 
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                        FileOwnerType.CLUB_MEMBER_PROFILE,
-                        1L,
-                        now,
-                        now.plusDays(30),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, 1L)
                 }
             }
 
@@ -238,7 +232,7 @@ class LeaveUserUseCaseTest :
                 verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
                 verify(
                     exactly = 0,
-                ) { fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any()) }
+                ) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                 verify(exactly = 0) { jwtManageUseCase.deleteRefreshToken(any()) }
             }
         }

@@ -4,7 +4,6 @@ import com.weeth.domain.board.domain.repository.PostLikeRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.comment.domain.repository.CommentRepository
-import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import org.springframework.stereotype.Service
@@ -39,35 +38,26 @@ class ClubActivityDeletionPolicy(
     ) {
         if (members.isEmpty()) return
 
-        markMembersFilesDeleted(members, now)
+        deleteMembersFiles(members)
         markMembersPostLikesDeleted(members, now)
     }
 
-    private fun markMembersFilesDeleted(
-        members: List<ClubMember>,
-        now: LocalDateTime,
-    ) {
+    private fun deleteMembersFiles(members: List<ClubMember>) {
         val memberIds = members.map { it.id }.distinct().sorted()
         val postIds = postRepository.findActiveIdsByClubMemberIdIn(memberIds)
         val commentIds = commentRepository.findActiveIdsByClubMemberIdIn(memberIds)
 
-        markFilesDeleted(FileOwnerType.POST, postIds, now)
-        markFilesDeleted(FileOwnerType.COMMENT, commentIds, now)
+        deleteFiles(FileOwnerType.POST, postIds)
+        deleteFiles(FileOwnerType.COMMENT, commentIds)
     }
 
-    private fun markFilesDeleted(
+    private fun deleteFiles(
         ownerType: FileOwnerType,
         ownerIds: List<Long>,
-        now: LocalDateTime,
     ) {
         if (ownerIds.isEmpty()) return
 
-        fileRepository.markActiveDeletedByOwnerTypeAndOwnerIdIn(
-            ownerType = ownerType,
-            ownerIds = ownerIds,
-            deletedAt = now,
-            hardDeleteAfter = File.retainedHardDeleteAfter(now),
-        )
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(ownerType, ownerIds)
     }
 
     private fun markMembersPostLikesDeleted(

@@ -23,7 +23,6 @@ import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
@@ -38,14 +37,10 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
-import java.time.Clock
-import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneId
 
 class ManageClubUseCaseTest :
     DescribeSpec({
-        val clock = Clock.fixed(Instant.parse("2026-06-25T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val clubRepository = mockk<ClubRepository>()
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val cardinalRepository = mockk<CardinalRepository>()
@@ -68,7 +63,6 @@ class ManageClubUseCaseTest :
                 clubPermissionPolicy,
                 fileRepository,
                 clubMapper,
-                clock,
             )
         val adminMember =
             com.weeth.domain.club.fixture.ClubMemberTestFixture
@@ -96,21 +90,8 @@ class ManageClubUseCaseTest :
             every { clubRepository.existsBySchoolNameAndName(any(), any()) } returns false
             every { clubMapper.toCreateResponse(any()) } returns ClubCreateResponse(clubId = "testId", clubName = "테스트")
             every { fileRepository.save(any<File>()) } answers { firstArg() }
-            every { fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any()) } returns 0
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
         }
-
-        fun createClubFile(
-            ownerType: FileOwnerType,
-            fileName: String,
-        ): File =
-            File.createUploaded(
-                fileName = fileName,
-                storageKey = "${ownerType.name}/2026-02/550e8400-e29b-41d4-a716-446655440000_$fileName",
-                fileSize = 1024L,
-                contentType = "image/png",
-                ownerType = ownerType,
-                ownerId = 1L,
-            )
 
         describe("create") {
             val user = UserTestFixture.createRegisteredUser()
@@ -385,7 +366,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
-            it("프로필 이미지를 변경하면 기존 File이 삭제 예약되고 새 File이 생성된다") {
+            it("프로필 이미지를 변경하면 기존 File이 하드 딜리트되고 새 File이 생성된다") {
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -395,7 +376,6 @@ class ManageClubUseCaseTest :
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
-
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
@@ -414,14 +394,8 @@ class ManageClubUseCaseTest :
                 )
 
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                        FileOwnerType.CLUB_PROFILE,
-                        1L,
-                        LocalDateTime.now(clock),
-                        LocalDateTime.now(clock),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_PROFILE, 1L)
                 }
-                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
                 verify(exactly = 1) { fileRepository.save(any<File>()) }
                 club.profileImageStorageKey shouldBe "CLUB_PROFILE/2026-03/550e8400-e29b-41d4-a716-446655440002_new.png"
             }
@@ -441,9 +415,7 @@ class ManageClubUseCaseTest :
 
                 useCase.update(1L, 10L, ClubUpdateRequest(name = "새 이름"))
 
-                verify(exactly = 0) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(any(), any(), any(), any())
-                }
+                verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                 verify(exactly = 0) { fileRepository.save(any<File>()) }
             }
 
@@ -502,7 +474,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe "CLUB_BACKGROUND/2026-02/uuid_background.png"
             }
 
-            it("기존 File 레코드가 삭제 예약된다") {
+            it("기존 File 레코드가 하드 딜리트된다") {
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -512,21 +484,14 @@ class ManageClubUseCaseTest :
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
-
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.deleteProfileImage(1L, 10L)
 
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                        FileOwnerType.CLUB_PROFILE,
-                        1L,
-                        LocalDateTime.now(clock),
-                        LocalDateTime.now(clock),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_PROFILE, 1L)
                 }
-                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
             }
         }
 
@@ -561,7 +526,7 @@ class ManageClubUseCaseTest :
                 club.backgroundImageStorageKey shouldBe null
             }
 
-            it("기존 File 레코드가 삭제 예약된다") {
+            it("기존 File 레코드가 하드 딜리트된다") {
                 val club =
                     ClubTestFixture.createClub(
                         clubContact =
@@ -571,21 +536,14 @@ class ManageClubUseCaseTest :
                                 primaryContact = PrimaryContact.PHONE,
                             ),
                     )
-
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubRepository.getClubById(1L) } returns club
 
                 useCase.deleteBackgroundImage(1L, 10L)
 
                 verify(exactly = 1) {
-                    fileRepository.markActiveDeletedByOwnerTypeAndOwnerId(
-                        FileOwnerType.CLUB_BACKGROUND,
-                        1L,
-                        LocalDateTime.now(clock),
-                        LocalDateTime.now(clock),
-                    )
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_BACKGROUND, 1L)
                 }
-                verify(exactly = 0) { fileRepository.deleteAll(any<List<File>>()) }
             }
         }
     })
