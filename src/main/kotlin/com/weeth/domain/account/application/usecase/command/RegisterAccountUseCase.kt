@@ -285,6 +285,7 @@ class RegisterAccountUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val account = getAccountWithLock(clubId, accountId)
+        if (account.status != AccountStatus.DRAFT) throw AccountInvalidDraftStateException()
         val targetedMemberIds = request.targetedClubMemberIds.distinct()
         val targetedMemberIdSet = targetedMemberIds.toSet()
 
