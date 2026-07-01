@@ -305,7 +305,7 @@ class RegisterAccountUseCase(
 
         val existingByMemberId =
             paymentTargetRepository
-                .findAllByAccountId(accountId)
+                .findAllForSnapshotByAccountId(accountId, targetedMemberIdSet)
                 .associateBy { it.clubMember.id }
         val dueAmount = Money.of(account.duesAmount)
 

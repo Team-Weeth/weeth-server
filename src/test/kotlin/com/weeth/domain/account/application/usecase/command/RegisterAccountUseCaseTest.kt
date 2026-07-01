@@ -228,7 +228,7 @@ class RegisterAccountUseCaseTest :
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 stubRoster(member1, member2)
-                every { paymentTargetRepository.findAllByAccountId(accountId) } returns emptyList()
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns emptyList()
                 every { paymentTargetRepository.saveAll(capture(saveAllSlot)) } answers
                     { firstArg<Iterable<AccountPaymentTarget>>().toList() }
 
@@ -264,7 +264,7 @@ class RegisterAccountUseCaseTest :
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 stubRoster(member1, member2, member3)
                 every {
-                    paymentTargetRepository.findAllByAccountId(accountId)
+                    paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any())
                 } returns listOf(existingTarget, existingTargeted2)
                 every { paymentTargetRepository.saveAll(capture(saveAllSlot)) } answers
                     { firstArg<Iterable<AccountPaymentTarget>>().toList() }
@@ -296,7 +296,8 @@ class RegisterAccountUseCaseTest :
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 stubRoster(member1)
-                every { paymentTargetRepository.findAllByAccountId(accountId) } returns listOf(excludedRow)
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns
+                    listOf(excludedRow)
 
                 useCase.savePaymentTargets(
                     clubId = clubId,
@@ -317,7 +318,8 @@ class RegisterAccountUseCaseTest :
                 val existingTarget = AccountPaymentTarget.createTargeted(account, member1, Money.of(30_000))
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
-                every { paymentTargetRepository.findAllByAccountId(accountId) } returns listOf(existingTarget)
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns
+                    listOf(existingTarget)
 
                 useCase.savePaymentTargets(
                     clubId = clubId,
@@ -348,7 +350,8 @@ class RegisterAccountUseCaseTest :
                 )
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
-                every { paymentTargetRepository.findAllByAccountId(accountId) } returns listOf(existingTarget)
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns
+                    listOf(existingTarget)
 
                 shouldThrow<AccountPaymentTargetPaidException> {
                     useCase.savePaymentTargets(
@@ -366,7 +369,7 @@ class RegisterAccountUseCaseTest :
                 val member = ClubMemberTestFixture.createActiveMember(id = 1L, club = club)
 
                 every { accountRepository.findByIdWithLock(accountId) } returns account
-                every { paymentTargetRepository.findAllByAccountId(accountId) } returns emptyList()
+                every { paymentTargetRepository.findAllForSnapshotByAccountId(accountId, any()) } returns emptyList()
                 stubRoster(member)
 
                 shouldThrow<AccountPaymentTargetMemberInvalidException> {
