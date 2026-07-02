@@ -109,6 +109,9 @@ class Account(
     var status: AccountStatus = status
         private set
 
+    val isActive: Boolean
+        get() = status == AccountStatus.ACTIVE
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     var registrationStep: AccountRegistrationStep = registrationStep
@@ -162,7 +165,7 @@ class Account(
     }
 
     fun showToMembers() {
-        check(status == AccountStatus.ACTIVE) { "활성화된 회비 장부만 회원에게 공개할 수 있습니다." }
+        check(isActive) { "활성화된 회비 장부만 회원에게 공개할 수 있습니다." }
         memberVisible = true
     }
 

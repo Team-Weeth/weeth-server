@@ -2,10 +2,12 @@ package com.weeth.domain.account.application.usecase.query
 
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountTransactionNotFoundException
 import com.weeth.domain.account.application.mapper.AccountTransactionMapper
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountTransaction
+import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionDirection
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountRepository
@@ -181,6 +183,23 @@ class GetAccountTransactionQueryServiceTest :
                 verify(exactly = 0) { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, 101L, any()) }
             }
 
+            it("DRAFT 장부면 AccountNotActiveException 을 던진다") {
+                val account = AccountTestFixture.createAccount(id = accountId, status = AccountStatus.DRAFT)
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+
+                shouldThrow<AccountNotActiveException> {
+                    queryService.findTransactions(
+                        account.club.id,
+                        accountId,
+                        AccountTransactionFilter.ALL,
+                        AccountTransactionSort.LATEST,
+                        0,
+                        20,
+                        userId,
+                    )
+                }
+            }
+
             it("EXPENSE 필터는 지출 방향 조회를 호출한다") {
                 val account = AccountTestFixture.createAccount(id = accountId)
                 every { accountRepository.findById(accountId) } returns Optional.of(account)
@@ -246,6 +265,15 @@ class GetAccountTransactionQueryServiceTest :
 
                 shouldThrow<AccountTransactionNotFoundException> {
                     queryService.findTransaction(account.club.id, accountId, 999L, userId)
+                }
+            }
+
+            it("DRAFT 장부면 AccountNotActiveException 을 던진다") {
+                val account = AccountTestFixture.createAccount(id = accountId, status = AccountStatus.DRAFT)
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+
+                shouldThrow<AccountNotActiveException> {
+                    queryService.findTransaction(account.club.id, accountId, 100L, userId)
                 }
             }
 

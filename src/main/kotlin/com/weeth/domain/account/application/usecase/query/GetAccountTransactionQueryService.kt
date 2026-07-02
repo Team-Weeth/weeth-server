@@ -4,6 +4,7 @@ import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
 import com.weeth.domain.account.application.dto.response.AccountTransactionResponse
 import com.weeth.domain.account.application.dto.response.AccountTransactionsResponse
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.exception.AccountTransactionNotFoundException
 import com.weeth.domain.account.application.mapper.AccountTransactionMapper
@@ -128,6 +129,7 @@ class GetAccountTransactionQueryService(
 
         val account = accountRepository.findById(accountId).orElseThrow { AccountNotFoundException() }
         account.validateOwnedBy(clubId)
+        if (!account.isActive) throw AccountNotActiveException()
     }
 
     private fun countByFilter(accountId: Long): AccountTransactionsResponse.TransactionCountsResponse =

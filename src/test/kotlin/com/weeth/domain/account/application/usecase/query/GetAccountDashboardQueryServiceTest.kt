@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.usecase.query
 
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.AccountDashboardMapper
 import com.weeth.domain.account.domain.entity.Account
@@ -185,6 +186,20 @@ class GetAccountDashboardQueryServiceTest :
 
                 shouldThrow<AccountNotFoundException> {
                     queryService.getDashboard(clubId, cardinal, userId)
+                }
+            }
+
+            it("장부가 DRAFT 상태면 AccountNotActiveException 을 던진다") {
+                val account =
+                    AccountTestFixture.createAccount(
+                        id = accountId,
+                        cardinal = cardinal,
+                        status = AccountStatus.DRAFT,
+                    )
+                every { accountRepository.findByClubIdAndCardinal(account.club.id, cardinal) } returns account
+
+                shouldThrow<AccountNotActiveException> {
+                    queryService.getDashboard(account.club.id, cardinal, userId)
                 }
             }
         }
