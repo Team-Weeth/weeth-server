@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
 data class AccountDashboardResponse(
+    @field:Schema(description = "회비 장부 ID. 다른 회비 어드민 API 호출에 사용", example = "1")
+    val accountId: Long,
     @field:Schema(description = "잔액/총액 요약")
     val summary: SummaryResponse,
     @field:Schema(description = "납부 현황 요약 (예: 3 / 24)")

@@ -62,17 +62,17 @@ class AccountManageController(
     private val getAccountDashboardQueryService: GetAccountDashboardQueryService,
     private val getAccountPaymentTargetQueryService: GetAccountPaymentTargetQueryService,
 ) {
-    @GetMapping("/{accountId}/dashboard")
+    @GetMapping("/{cardinal}/dashboard")
     @Operation(summary = "회비 대시보드 조회", description = "잔액/총액, 납부 현황, 계좌, 월별 잔액 추이, 마지막 수정 정보를 집계해 반환합니다.")
     fun getDashboard(
         @TsidParam
         @TsidPathVariable clubId: Long,
-        @PathVariable accountId: Long,
+        @PathVariable cardinal: Int,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<AccountDashboardResponse> =
         CommonResponse.success(
             ACCOUNT_DASHBOARD_FIND_SUCCESS,
-            getAccountDashboardQueryService.getDashboard(clubId, accountId, userId),
+            getAccountDashboardQueryService.getDashboard(clubId, cardinal, userId),
         )
 
     @GetMapping("/{accountId}/payment-status")
