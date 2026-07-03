@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.usecase.command
 
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.enums.AccountStatus
@@ -44,6 +45,18 @@ class ManageAccountUseCaseTest :
                 account.status shouldBe AccountStatus.ACTIVE
                 account.memberVisible shouldBe true
                 account.lastModifiedBy shouldBe userId
+            }
+
+            it("DRAFT 장부면 AccountNotActiveException을 던지고 공개 상태를 바꾸지 않는다") {
+                val account = Account.createDraft(club = club, cardinal = 5)
+                every { accountRepository.findByIdWithLock(1L) } returns account
+
+                shouldThrow<AccountNotActiveException> {
+                    useCase.updateMemberVisibility(clubId = clubId, accountId = 1L, visible = true, userId = userId)
+                }
+
+                account.memberVisible shouldBe false
+                account.lastModifiedBy shouldBe null
             }
 
             it("다른 동아리 장부이면 AccountNotFoundException을 던지고 공개 상태를 바꾸지 않는다") {

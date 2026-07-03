@@ -5,6 +5,7 @@ import com.weeth.domain.account.application.dto.response.AccountPaymentStatusRes
 import com.weeth.domain.account.application.dto.response.AccountPaymentTargetResponse
 import com.weeth.domain.account.application.dto.response.AccountPaymentTargetsResponse
 import com.weeth.domain.account.application.dto.response.BankAccountResponse
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.AccountPaymentTargetMapper
 import com.weeth.domain.account.application.usecase.validateOwnedBy
@@ -113,6 +114,7 @@ class GetAccountPaymentTargetQueryService(
         size: Int,
     ): AccountPaymentStatusResponse {
         val account = requireAdminAndGetAccount(clubId, accountId, userId)
+        if (!account.isActive) throw AccountNotActiveException()
 
         val pageable = PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, 100))
         val normalizedKeyword = keyword?.trim()?.takeIf { it.isNotBlank() }

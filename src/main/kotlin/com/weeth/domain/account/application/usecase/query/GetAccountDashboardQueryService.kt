@@ -2,6 +2,7 @@ package com.weeth.domain.account.application.usecase.query
 
 import com.weeth.domain.account.application.dto.response.AccountDashboardResponse
 import com.weeth.domain.account.application.dto.response.MonthlyBalanceResponse
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.AccountDashboardMapper
 import com.weeth.domain.account.application.usecase.validateOwnedBy
@@ -34,12 +35,16 @@ class GetAccountDashboardQueryService(
 ) {
     fun getDashboard(
         clubId: Long,
-        accountId: Long,
+        cardinal: Int,
         userId: Long,
     ): AccountDashboardResponse {
         clubPermissionPolicy.requireAdmin(clubId, userId)
-        val account = accountRepository.findById(accountId).orElseThrow { AccountNotFoundException() }
+        val account =
+            accountRepository.findByClubIdAndCardinal(clubId, cardinal)
+                ?: throw AccountNotFoundException()
         account.validateOwnedBy(clubId)
+        if (!account.isActive) throw AccountNotActiveException()
+        val accountId = account.id
 
         // 총 회비(목표액)는 레거시 account.totalAmount 가 아니라 납부 대상 dueAmount 합으로 live 계산한다.
         val totalAmount = paymentTargetRepository.sumDueAmountByAccountId(accountId).toInt()

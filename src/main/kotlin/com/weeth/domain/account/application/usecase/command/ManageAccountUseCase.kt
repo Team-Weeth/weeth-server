@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.usecase.command
 
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.usecase.validateOwnedBy
 import com.weeth.domain.account.domain.entity.Account
@@ -22,6 +23,7 @@ class ManageAccountUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         val account = getAccountWithLock(clubId, accountId)
+        if (!account.isActive) throw AccountNotActiveException()
 
         if (visible) {
             account.showToMembers()

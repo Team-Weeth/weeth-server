@@ -12,7 +12,6 @@ import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
-import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
@@ -132,7 +131,7 @@ class ManageAccountPaymentUseCase(
     ): Account {
         val account = accountRepository.findByIdWithLock(accountId) ?: throw AccountNotFoundException()
         account.validateOwnedBy(clubId)
-        if (account.status != AccountStatus.ACTIVE) throw AccountNotActiveException()
+        if (!account.isActive) throw AccountNotActiveException()
         return account
     }
 
