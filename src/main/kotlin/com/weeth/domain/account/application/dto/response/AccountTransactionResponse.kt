@@ -21,6 +21,11 @@ data class AccountTransactionResponse(
     val amount: Int,
     @field:Schema(description = "거래 일시", example = "2026-07-20T00:00:00")
     val transactedAt: LocalDateTime,
+    @field:Schema(
+        description = "해당 거래 직후의 실제 통장 잔액 (원)",
+        example = "1520000",
+    )
+    val balanceAfter: Int,
     @field:Schema(description = "메모", nullable = true)
     val memo: String?,
     @field:Schema(description = "영수증 존재 여부", example = "true")

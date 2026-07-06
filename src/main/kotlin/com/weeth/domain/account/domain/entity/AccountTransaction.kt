@@ -81,6 +81,12 @@ class AccountTransaction(
     var transactedAt: LocalDateTime = transactedAt
         private set
 
+    // 거래가 적용된 시점의 장부 총잔액 스냅샷(은행 거래내역의 잔액 열).
+    // Account.applyTransaction 이 잔액 갱신 직후 기록한다. 이후 거래의 수정/삭제로는 재계산하지 않는다.
+    @Column(name = "balance_after", nullable = false)
+    var balanceAfter: Int = 0
+        private set
+
     // MVP UI에서는 노출하지 않지만 분류/통계 확장을 위해 선반영해두는 자유 입력 카테고리.
     // 추후 카테고리 테이블로 승격될 수 있다 (membership-fee-domain-plan.md 참조).
     @Column(length = 30)
@@ -145,6 +151,11 @@ class AccountTransaction(
         check(!isApplied) { "이미 반영된 거래입니다." }
         check(deletedAt == null) { "삭제된 거래는 반영할 수 없습니다." }
         isApplied = true
+    }
+
+    /** 거래 적용 시점의 장부 총잔액을 기록한다. [Account.applyTransaction] 에서만 호출한다. */
+    internal fun recordBalanceAfter(balance: Int) {
+        balanceAfter = balance
     }
 
     internal fun markReverted() {

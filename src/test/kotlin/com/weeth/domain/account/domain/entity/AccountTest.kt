@@ -66,6 +66,8 @@ class AccountTest :
 
             account.currentBalance shouldBe 23
             transaction.isApplied shouldBe true
+            // 적용 시점의 총잔액이 거래에 스냅샷으로 기록된다.
+            transaction.balanceAfter shouldBe 23
         }
 
         "applyTransaction은 같은 거래를 중복 반영할 수 없다" {

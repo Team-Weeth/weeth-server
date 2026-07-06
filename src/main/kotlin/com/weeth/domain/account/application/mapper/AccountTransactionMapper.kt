@@ -39,6 +39,7 @@ class AccountTransactionMapper {
             source = transaction.source,
             amount = transaction.amount,
             transactedAt = transaction.transactedAt,
+            balanceAfter = transaction.balanceAfter,
             memo = transaction.memo,
             hasReceipt = hasReceipt,
             receipts = receipts,

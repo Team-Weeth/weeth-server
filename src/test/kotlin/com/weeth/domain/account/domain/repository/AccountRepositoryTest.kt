@@ -265,6 +265,37 @@ class AccountRepositoryTest(
                     types = listOf(AccountTransactionType.DUES),
                 ) shouldBe 1
             }
+
+            it("적용된 거래에 그 시점의 총잔액(balanceAfter)이 저장된다") {
+                val club = clubRepository.save(ClubTestFixture.createClub(code = "ACCOUNT-REPO-BALANCE-AFTER"))
+                val account = accountRepository.save(Account.createDraft(club = club, cardinal = 9))
+
+                fun applyAndSave(
+                    type: AccountTransactionType,
+                    amount: Int,
+                    at: LocalDateTime,
+                ): AccountTransaction {
+                    val tx =
+                        AccountTransaction.create(
+                            account = account,
+                            type = type,
+                            title = "거래",
+                            source = null,
+                            amount = Money.of(amount),
+                            transactedAt = at,
+                        )
+                    account.applyTransaction(tx)
+                    return accountTransactionRepository.save(tx)
+                }
+
+                val tx1 = applyAndSave(AccountTransactionType.INCOME, 100_000, LocalDateTime.of(2026, 3, 1, 10, 0))
+                val tx2 = applyAndSave(AccountTransactionType.EXPENSE, 30_000, LocalDateTime.of(2026, 3, 2, 10, 0))
+                accountRepository.save(account)
+
+                accountTransactionRepository.findByIdAndDeletedAtIsNull(tx1.id)?.balanceAfter shouldBe 100_000
+                accountTransactionRepository.findByIdAndDeletedAtIsNull(tx2.id)?.balanceAfter shouldBe 70_000
+                account.currentBalance shouldBe 70_000
+            }
         }
 
         describe("AccountPaymentTargetRepository") {
