@@ -10,6 +10,8 @@ data class AccountDashboardResponse(
     val summary: SummaryResponse,
     @field:Schema(description = "납부 현황 요약 (예: 3 / 24)")
     val paymentSummary: PaymentSummaryResponse,
+    @field:Schema(description = "부원에게 회비 공개 여부", example = "true")
+    val memberVisible: Boolean,
     @field:Schema(description = "부원에게 계좌 공개 여부", example = "true")
     val bankAccountPublic: Boolean,
     @field:Schema(description = "입금 계좌 정보. 등록되지 않았으면 null", nullable = true)
