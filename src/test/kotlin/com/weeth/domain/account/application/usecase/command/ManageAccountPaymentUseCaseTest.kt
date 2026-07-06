@@ -1,14 +1,17 @@
 package com.weeth.domain.account.application.usecase.command
 
+import com.weeth.domain.account.application.dto.request.ExcludePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentPaidRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentUnpaidRequest
 import com.weeth.domain.account.application.dto.request.RefundPaymentRequest
 import com.weeth.domain.account.application.exception.AccountPaymentNotRefundableException
 import com.weeth.domain.account.application.exception.AccountPaymentTargetNotFoundException
+import com.weeth.domain.account.application.exception.AccountPaymentTargetPaidException
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
+import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
@@ -173,6 +176,61 @@ class ManageAccountPaymentUseCaseTest :
 
                 shouldThrow<AccountPaymentNotRefundableException> {
                     useCase.refund(account.club.id, accountId, RefundPaymentRequest(listOf(100L)), userId)
+                }
+            }
+        }
+
+        describe("exclude") {
+            it("선택한 미납 대상들을 EXCLUDED로 전이하고 마지막 수정자를 기록한다") {
+                val account = AccountTestFixture.createAccount(id = accountId, currentBalance = 100_000)
+                val target1 = target(account, id = 100L, due = 30_000, paid = false)
+                val target2 = target(account, id = 200L, due = 30_000, paid = false)
+                every { accountRepository.findByIdWithLock(accountId) } returns account
+                every { paymentTargetRepository.findAllByAccountIdAndIdIn(accountId, listOf(100L, 200L)) } returns
+                    listOf(target1, target2)
+
+                useCase.exclude(account.club.id, accountId, ExcludePaymentTargetsRequest(listOf(100L, 200L)), userId)
+
+                target1.targetStatus shouldBe AccountTargetStatus.EXCLUDED
+                target2.targetStatus shouldBe AccountTargetStatus.EXCLUDED
+                target1.dueAmount shouldBe 0
+                account.lastModifiedBy shouldBe userId
+            }
+
+            it("납부 완료(PAID) 대상이 포함되면 예외를 던지고 아무 대상도 변경하지 않는다") {
+                val account = AccountTestFixture.createAccount(id = accountId, currentBalance = 100_000)
+                val unpaid = target(account, id = 100L, due = 30_000, paid = false)
+                val paid = target(account, id = 200L, due = 30_000, paid = true)
+                every { accountRepository.findByIdWithLock(accountId) } returns account
+                every { paymentTargetRepository.findAllByAccountIdAndIdIn(accountId, listOf(100L, 200L)) } returns
+                    listOf(unpaid, paid)
+
+                shouldThrow<AccountPaymentTargetPaidException> {
+                    useCase.exclude(
+                        account.club.id,
+                        accountId,
+                        ExcludePaymentTargetsRequest(listOf(100L, 200L)),
+                        userId,
+                    )
+                }
+
+                unpaid.targetStatus shouldBe AccountTargetStatus.TARGETED
+                paid.targetStatus shouldBe AccountTargetStatus.TARGETED
+            }
+
+            it("존재하지 않는 대상이 포함되면 NotFound를 던진다") {
+                val account = AccountTestFixture.createAccount(id = accountId)
+                every { accountRepository.findByIdWithLock(accountId) } returns account
+                every { paymentTargetRepository.findAllByAccountIdAndIdIn(accountId, listOf(100L, 200L)) } returns
+                    listOf(target(account, id = 100L, due = 30_000, paid = false))
+
+                shouldThrow<AccountPaymentTargetNotFoundException> {
+                    useCase.exclude(
+                        account.club.id,
+                        accountId,
+                        ExcludePaymentTargetsRequest(listOf(100L, 200L)),
+                        userId,
+                    )
                 }
             }
         }
