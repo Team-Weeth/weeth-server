@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Positive
 import jakarta.validation.constraints.Size
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 data class SaveAccountTransactionRequest(
     @field:Schema(
@@ -28,7 +28,7 @@ data class SaveAccountTransactionRequest(
     @field:Size(max = 30)
     val source: String,
     @field:Schema(description = "거래 일자", example = "2026-07-20")
-    val transactedAt: LocalDate,
+    val transactedAt: LocalDateTime,
     @field:Schema(description = "메모", nullable = true)
     @field:Size(max = 200)
     val memo: String? = null,

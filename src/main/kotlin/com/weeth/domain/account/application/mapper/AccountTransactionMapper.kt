@@ -21,7 +21,7 @@ class AccountTransactionMapper {
             title = request.title,
             source = request.source,
             amount = Money.of(request.amount),
-            transactedAt = request.transactedAt.atStartOfDay(),
+            transactedAt = request.transactedAt,
             memo = request.memo,
             registeredByName = registeredByName,
         )
