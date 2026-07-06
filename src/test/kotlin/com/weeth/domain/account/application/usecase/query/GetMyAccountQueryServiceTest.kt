@@ -11,13 +11,17 @@ import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.vo.BankAccount
 import com.weeth.domain.account.domain.vo.Money
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
@@ -31,12 +35,15 @@ class GetMyAccountQueryServiceTest :
         val accountRepository = mockk<AccountRepository>()
         val paymentTargetRepository = mockk<AccountPaymentTargetRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
         val queryService =
             GetMyAccountQueryService(
                 accountRepository = accountRepository,
                 paymentTargetRepository = paymentTargetRepository,
                 clubMemberPolicy = clubMemberPolicy,
-                memberAccountAccessResolver = MemberAccountAccessResolver(accountRepository, clubMemberPolicy),
+                clubMemberCardinalReader = clubMemberCardinalReader,
+                memberAccountAccessResolver =
+                    MemberAccountAccessResolver(accountRepository, clubMemberPolicy, clubMemberCardinalReader),
                 myAccountMapper = MyAccountMapper(),
             )
 
@@ -86,9 +93,18 @@ class GetMyAccountQueryServiceTest :
                     }
                 }
 
+        fun participatedIn(vararg cardinalNumbers: Int) =
+            cardinalNumbers.map {
+                ClubMemberCardinalTestFixture.create(
+                    clubMember = member,
+                    cardinal = CardinalTestFixture.createCardinal(cardinalNumber = it),
+                )
+            }
+
         beforeTest {
-            clearMocks(accountRepository, paymentTargetRepository, clubMemberPolicy)
+            clearMocks(accountRepository, paymentTargetRepository, clubMemberPolicy, clubMemberCardinalReader)
             every { clubMemberPolicy.getActiveMember(club.id, userId) } returns member
+            every { clubMemberCardinalReader.findAllByClubMember(member) } returns participatedIn(6, 7)
         }
 
         describe("findCardinals") {
@@ -106,6 +122,33 @@ class GetMyAccountQueryServiceTest :
                 result[0].isLatest shouldBe true
                 result[1].isLatest shouldBe false
                 verify(exactly = 1) { clubMemberPolicy.getActiveMember(club.id, userId) }
+            }
+
+            it("내가 참여하지 않은 기수의 장부는 목록에서 제외한다") {
+                every { clubMemberCardinalReader.findAllByClubMember(member) } returns participatedIn(7)
+                every {
+                    accountRepository.findAllByClubIdAndStatusAndMemberVisibleTrueOrderByCardinalDesc(
+                        club.id,
+                        AccountStatus.ACTIVE,
+                    )
+                } returns listOf(account(id = 7L, cardinal = 7), account(id = 6L, cardinal = 6))
+
+                val result = queryService.findCardinals(club.id, userId)
+
+                result.map { it.cardinal } shouldBe listOf(7)
+                result[0].isLatest shouldBe true
+            }
+
+            it("참여한 기수가 없으면 빈 목록을 반환한다") {
+                every { clubMemberCardinalReader.findAllByClubMember(member) } returns emptyList()
+                every {
+                    accountRepository.findAllByClubIdAndStatusAndMemberVisibleTrueOrderByCardinalDesc(
+                        club.id,
+                        AccountStatus.ACTIVE,
+                    )
+                } returns listOf(account(id = 7L, cardinal = 7), account(id = 6L, cardinal = 6))
+
+                queryService.findCardinals(club.id, userId).shouldBeEmpty()
             }
         }
 
@@ -184,6 +227,21 @@ class GetMyAccountQueryServiceTest :
                         AccountStatus.ACTIVE,
                     )
                 } returns null
+
+                shouldThrow<AccountNotFoundException> {
+                    queryService.findMyAccount(club.id, cardinal = 7, userId = userId)
+                }
+            }
+
+            it("내가 참여하지 않은 기수의 장부는 AccountNotFound로 은닉한다") {
+                every { clubMemberCardinalReader.findAllByClubMember(member) } returns participatedIn(6)
+                every {
+                    accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+                        club.id,
+                        7,
+                        AccountStatus.ACTIVE,
+                    )
+                } returns account(id = 12L, cardinal = 7)
 
                 shouldThrow<AccountNotFoundException> {
                     queryService.findMyAccount(club.id, cardinal = 7, userId = userId)
