@@ -14,6 +14,7 @@ import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
+import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
@@ -108,7 +109,11 @@ class ManageAccountPaymentUseCase(
         val targets = getTargets(accountId, request.targetIds)
 
         // 전부-또는-전무: 부분 적용을 막기 위해 전이 전에 먼저 전량 검증한다.
-        if (targets.any { it.paymentStatus != AccountPaymentStatus.UNPAID }) {
+        if (targets.any {
+                it.targetStatus != AccountTargetStatus.TARGETED ||
+                    it.paymentStatus != AccountPaymentStatus.UNPAID
+            }
+        ) {
             throw AccountPaymentTargetPaidException()
         }
 

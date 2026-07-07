@@ -1,6 +1,8 @@
 ALTER TABLE account_transaction
     ADD COLUMN balance_after INT NULL AFTER transacted_at;
 
+-- 적용 순서를 복원할 별도 컬럼이 없어 백필은 거래일(transacted_at)을 source of truth 로 삼는다.
+-- 소급 등록으로 실제 적용 순서와 거래일 순서가 달랐던 과거 데이터는 거래일 순 누적 잔액으로 보정된다.
 UPDATE account_transaction target
 JOIN (
     SELECT

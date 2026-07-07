@@ -218,6 +218,34 @@ class ManageAccountPaymentUseCaseTest :
                 paid.targetStatus shouldBe AccountTargetStatus.TARGETED
             }
 
+            it("이미 제외된 대상이 포함되면 예외를 던지고 아무 대상도 변경하지 않는다") {
+                val account = AccountTestFixture.createAccount(id = accountId, currentBalance = 100_000)
+                val unpaid = target(account, id = 100L, due = 30_000, paid = false)
+                val excluded =
+                    AccountPaymentTarget
+                        .createExcluded(
+                            account = account,
+                            clubMember = ClubMemberTestFixture.createActiveMember(club = account.club),
+                        ).also {
+                            ReflectionTestUtils.setField(it, "id", 200L)
+                        }
+                every { accountRepository.findByIdWithLock(accountId) } returns account
+                every { paymentTargetRepository.findAllByAccountIdAndIdIn(accountId, listOf(100L, 200L)) } returns
+                    listOf(unpaid, excluded)
+
+                shouldThrow<AccountPaymentTargetPaidException> {
+                    useCase.exclude(
+                        account.club.id,
+                        accountId,
+                        ExcludePaymentTargetsRequest(listOf(100L, 200L)),
+                        userId,
+                    )
+                }
+
+                unpaid.targetStatus shouldBe AccountTargetStatus.TARGETED
+                excluded.targetStatus shouldBe AccountTargetStatus.EXCLUDED
+            }
+
             it("존재하지 않는 대상이 포함되면 NotFound를 던진다") {
                 val account = AccountTestFixture.createAccount(id = accountId)
                 every { accountRepository.findByIdWithLock(accountId) } returns account
