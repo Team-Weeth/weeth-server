@@ -4,7 +4,7 @@ import com.weeth.domain.account.domain.enums.AccountTransactionDirection
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.file.application.dto.response.FileResponse
 import io.swagger.v3.oas.annotations.media.Schema
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 data class AccountTransactionResponse(
     @field:Schema(description = "거래 ID", example = "1")
@@ -19,8 +19,8 @@ data class AccountTransactionResponse(
     val source: String?,
     @field:Schema(description = "거래 금액 (원, 부호 없는 양수). 부호는 direction 으로 표기", example = "50000")
     val amount: Int,
-    @field:Schema(description = "거래 일시", example = "2026-07-20T00:00:00")
-    val transactedAt: LocalDateTime,
+    @field:Schema(description = "거래 일자", example = "2026-07-20")
+    val transactedAt: LocalDate,
     @field:Schema(
         description = "해당 거래 직후의 실제 통장 잔액 (원)",
         example = "1520000",

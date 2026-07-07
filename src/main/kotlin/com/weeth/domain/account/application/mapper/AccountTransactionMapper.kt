@@ -38,7 +38,7 @@ class AccountTransactionMapper {
             title = transaction.title,
             source = transaction.source,
             amount = transaction.amount,
-            transactedAt = transaction.transactedAt,
+            transactedAt = transaction.transactedAt.toLocalDate(),
             balanceAfter = transaction.balanceAfter,
             memo = transaction.memo,
             hasReceipt = hasReceipt,
