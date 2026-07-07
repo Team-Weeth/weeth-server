@@ -31,6 +31,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.test.util.ReflectionTestUtils
 import java.time.LocalDate
 import java.util.Optional
@@ -79,6 +80,7 @@ class GetAccountTransactionQueryServiceTest :
             id: Long,
             type: AccountTransactionType,
             amount: Int,
+            balanceAfter: Int = 0,
         ): AccountTransaction =
             AccountTransaction
                 .create(
@@ -88,7 +90,10 @@ class GetAccountTransactionQueryServiceTest :
                     source = null,
                     amount = Money.of(amount),
                     transactedAt = LocalDate.of(2026, 7, 20).atStartOfDay(),
-                ).also { ReflectionTestUtils.setField(it, "id", id) }
+                ).also {
+                    ReflectionTestUtils.setField(it, "id", id)
+                    ReflectionTestUtils.setField(it, "balanceAfter", balanceAfter)
+                }
 
         beforeTest {
             clearMocks(accountRepository, transactionRepository, clubPermissionPolicy, fileReader, fileMapper)
@@ -183,6 +188,81 @@ class GetAccountTransactionQueryServiceTest :
                 verify(exactly = 0) { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, 101L, any()) }
             }
 
+            it("각 거래에 저장된 시점 총잔액(balanceAfter)을 그대로 반환한다") {
+                val account = AccountTestFixture.createAccount(id = accountId)
+                val transactions =
+                    listOf(
+                        transaction(account, 100L, AccountTransactionType.EXPENSE, 5_000, balanceAfter = 15_000),
+                        transaction(account, 101L, AccountTransactionType.INCOME, 10_000, balanceAfter = 25_000),
+                    )
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                every { transactionRepository.findByAccountIdAndDeletedAtIsNull(accountId, any()) } returns
+                    PageImpl(transactions)
+
+                val result =
+                    queryService.findTransactions(
+                        account.club.id,
+                        accountId,
+                        AccountTransactionFilter.ALL,
+                        AccountTransactionSort.LATEST,
+                        0,
+                        20,
+                        userId,
+                    )
+
+                result.transactions.content[0].balanceAfter shouldBe 15_000
+                result.transactions.content[1].balanceAfter shouldBe 25_000
+            }
+
+            it("거래 일시는 날짜만 반환한다") {
+                val account = AccountTestFixture.createAccount(id = accountId)
+                val tx = transaction(account, 100L, AccountTransactionType.EXPENSE, 5_000)
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                every { transactionRepository.findByAccountIdAndDeletedAtIsNull(accountId, any()) } returns
+                    PageImpl(listOf(tx))
+
+                val result =
+                    queryService.findTransactions(
+                        account.club.id,
+                        accountId,
+                        AccountTransactionFilter.ALL,
+                        AccountTransactionSort.LATEST,
+                        0,
+                        20,
+                        userId,
+                    )
+
+                result.transactions.content
+                    .first()
+                    .transactedAt shouldBe LocalDate.of(2026, 7, 20)
+            }
+
+            it("LATEST 정렬은 거래 일자가 같을 때 생성일 최신순으로 조회한다") {
+                val account = AccountTestFixture.createAccount(id = accountId)
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+                every { transactionRepository.findByAccountIdAndDeletedAtIsNull(accountId, any()) } answers {
+                    val pageable = secondArg<Pageable>()
+                    val orders = pageable.sort.toList()
+
+                    orders[0].property shouldBe "transactedAt"
+                    orders[0].direction shouldBe Sort.Direction.DESC
+                    orders[1].property shouldBe "createdAt"
+                    orders[1].direction shouldBe Sort.Direction.DESC
+
+                    PageImpl(emptyList(), pageable, 0)
+                }
+
+                queryService.findTransactions(
+                    account.club.id,
+                    accountId,
+                    AccountTransactionFilter.ALL,
+                    AccountTransactionSort.LATEST,
+                    0,
+                    20,
+                    userId,
+                )
+            }
+
             it("DRAFT 장부면 AccountNotActiveException 을 던진다") {
                 val account = AccountTestFixture.createAccount(id = accountId, status = AccountStatus.DRAFT)
                 every { accountRepository.findById(accountId) } returns Optional.of(account)
@@ -236,12 +316,13 @@ class GetAccountTransactionQueryServiceTest :
                 val account = AccountTestFixture.createAccount(id = accountId)
                 every { accountRepository.findById(accountId) } returns Optional.of(account)
                 every { transactionRepository.findByIdAndDeletedAtIsNull(100L) } returns
-                    transaction(account, 100L, AccountTransactionType.EXPENSE, 5_000)
+                    transaction(account, 100L, AccountTransactionType.EXPENSE, 5_000, balanceAfter = 15_000)
 
                 val result = queryService.findTransaction(account.club.id, accountId, 100L, userId)
 
                 result.transactionId shouldBe 100L
                 result.amount shouldBe 5_000
+                result.balanceAfter shouldBe 15_000
             }
 
             it("단건 상세에 영수증 파일 응답을 포함한다") {

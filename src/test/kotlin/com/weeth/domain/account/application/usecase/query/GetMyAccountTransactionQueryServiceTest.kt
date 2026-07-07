@@ -13,8 +13,11 @@ import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountRepository
 import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.account.domain.vo.Money
+import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.application.dto.response.FileResponse
@@ -44,12 +47,14 @@ class GetMyAccountTransactionQueryServiceTest :
         val accountRepository = mockk<AccountRepository>()
         val transactionRepository = mockk<AccountTransactionRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
         val fileReader = mockk<FileReader>()
         val fileMapper = mockk<FileMapper>()
         val queryService =
             GetMyAccountTransactionQueryService(
                 transactionRepository = transactionRepository,
-                memberAccountAccessResolver = MemberAccountAccessResolver(accountRepository, clubMemberPolicy),
+                memberAccountAccessResolver =
+                    MemberAccountAccessResolver(accountRepository, clubMemberPolicy, clubMemberCardinalReader),
                 fileReader = fileReader,
                 fileMapper = fileMapper,
                 memberTransactionMapper = MemberTransactionMapper(),
@@ -130,8 +135,22 @@ class GetMyAccountTransactionQueryServiceTest :
             )
 
         beforeTest {
-            clearMocks(accountRepository, transactionRepository, clubMemberPolicy, fileReader, fileMapper)
+            clearMocks(
+                accountRepository,
+                transactionRepository,
+                clubMemberPolicy,
+                clubMemberCardinalReader,
+                fileReader,
+                fileMapper,
+            )
             every { clubMemberPolicy.getActiveMember(club.id, userId) } returns member
+            every { clubMemberCardinalReader.findAllByClubMember(member) } returns
+                listOf(
+                    ClubMemberCardinalTestFixture.create(
+                        clubMember = member,
+                        cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 7),
+                    ),
+                )
             every {
                 accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
                     club.id,

@@ -39,7 +39,7 @@ import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
 import org.springframework.test.util.ReflectionTestUtils
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 class ManageAccountTransactionUseCaseTest :
     DescribeSpec({
@@ -63,7 +63,7 @@ class ManageAccountTransactionUseCaseTest :
         val userId = 10L
         val accountId = 1L
         val transactionId = 100L
-        val date = LocalDate.of(2026, 7, 20)
+        val date = LocalDateTime.of(2026, 7, 20, 0, 0)
         val adminMember = ClubMemberTestFixture.createAdminMember(user = UserTestFixture.createAdmin(id = userId))
         val receiptRequest =
             FileSaveRequest(
@@ -132,7 +132,7 @@ class ManageAccountTransactionUseCaseTest :
                     title = "기존 거래",
                     source = null,
                     amount = Money.of(amount),
-                    transactedAt = date.atStartOfDay(),
+                    transactedAt = date,
                 ).also { account.applyTransaction(it) }
 
         describe("save") {
@@ -221,7 +221,14 @@ class ManageAccountTransactionUseCaseTest :
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 every { transactionRepository.findByIdAndDeletedAtIsNull(transactionId) } returns transaction
                 val request =
-                    UpdateAccountTransactionRequest(AccountTransactionType.EXPENSE, 50_000, "수정", null, date, null)
+                    UpdateAccountTransactionRequest(
+                        AccountTransactionType.EXPENSE,
+                        50_000,
+                        "수정",
+                        null,
+                        date.toLocalDate(),
+                        null,
+                    )
 
                 val response = useCase.update(account.club.id, accountId, transactionId, request, userId)
 
@@ -317,7 +324,14 @@ class ManageAccountTransactionUseCaseTest :
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 every { transactionRepository.findByIdAndDeletedAtIsNull(transactionId) } returns transaction
                 val request =
-                    UpdateAccountTransactionRequest(AccountTransactionType.EXPENSE, 1_000, "수정", null, date, null)
+                    UpdateAccountTransactionRequest(
+                        AccountTransactionType.EXPENSE,
+                        1_000,
+                        "수정",
+                        null,
+                        date.toLocalDate(),
+                        null,
+                    )
 
                 shouldThrow<AccountTransactionTypeNotAllowedException> {
                     useCase.update(account.club.id, accountId, transactionId, request, userId)
@@ -329,7 +343,14 @@ class ManageAccountTransactionUseCaseTest :
                 every { accountRepository.findByIdWithLock(accountId) } returns account
                 every { transactionRepository.findByIdAndDeletedAtIsNull(transactionId) } returns null
                 val request =
-                    UpdateAccountTransactionRequest(AccountTransactionType.EXPENSE, 1_000, "수정", null, date, null)
+                    UpdateAccountTransactionRequest(
+                        AccountTransactionType.EXPENSE,
+                        1_000,
+                        "수정",
+                        null,
+                        date.toLocalDate(),
+                        null,
+                    )
 
                 shouldThrow<AccountTransactionNotFoundException> {
                     useCase.update(account.club.id, accountId, transactionId, request, userId)

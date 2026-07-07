@@ -36,6 +36,7 @@ class AccountDashboardMapper(
                     paidCount = paidCount,
                     totalTargetCount = totalTargetCount,
                 ),
+            memberVisible = account.memberVisible,
             bankAccountPublic = account.bankAccountVisible,
             bankAccount = BankAccountResponse.from(account.bankAccount),
             lastModified =

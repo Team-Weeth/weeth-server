@@ -3,6 +3,7 @@ package com.weeth.domain.account.presentation
 import com.weeth.domain.account.application.dto.request.AccountPaymentStatusFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
+import com.weeth.domain.account.application.dto.request.ExcludePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentPaidRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentUnpaidRequest
 import com.weeth.domain.account.application.dto.request.RefundPaymentRequest
@@ -21,6 +22,7 @@ import com.weeth.domain.account.application.usecase.query.GetAccountDashboardQue
 import com.weeth.domain.account.application.usecase.query.GetAccountPaymentTargetQueryService
 import com.weeth.domain.account.application.usecase.query.GetAccountTransactionQueryService
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_DASHBOARD_FIND_SUCCESS
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_EXCLUDE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_PAID_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_REFUND_SUCCESS
@@ -226,6 +228,22 @@ class AccountManageController(
     ): CommonResponse<Void> {
         manageAccountPaymentUseCase.markUnpaid(clubId, accountId, request, userId)
         return CommonResponse.success(ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS)
+    }
+
+    @PatchMapping("/{accountId}/payment-targets/excluded")
+    @Operation(
+        summary = "납부 대상 제외(벌크)",
+        description = "선택한 부원들을 납부 대상에서 제외합니다. 미납 대상만 제외할 수 있으며, 납부 완료·환불 이력이 있으면 제외할 수 없습니다.",
+    )
+    fun excludePaymentTargets(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @RequestBody @Valid request: ExcludePaymentTargetsRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageAccountPaymentUseCase.exclude(clubId, accountId, request, userId)
+        return CommonResponse.success(ACCOUNT_PAYMENT_EXCLUDE_SUCCESS)
     }
 
     @PatchMapping("/{accountId}/payment-targets/refund")

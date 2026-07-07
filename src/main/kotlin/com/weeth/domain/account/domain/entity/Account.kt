@@ -205,6 +205,8 @@ class Account(
                 currentBalance -= transaction.amount
             }
         }
+        // 은행 거래내역처럼 적용 시점의 총잔액을 거래에 스냅샷으로 남긴다.
+        transaction.recordBalanceAfter(currentBalance)
         transaction.markApplied()
     }
 

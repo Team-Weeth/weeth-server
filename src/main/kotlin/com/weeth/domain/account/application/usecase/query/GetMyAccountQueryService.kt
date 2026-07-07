@@ -7,6 +7,7 @@ import com.weeth.domain.account.application.usecase.MemberAccountAccessResolver
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +18,7 @@ class GetMyAccountQueryService(
     private val accountRepository: AccountRepository,
     private val paymentTargetRepository: AccountPaymentTargetRepository,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val memberAccountAccessResolver: MemberAccountAccessResolver,
     private val myAccountMapper: MyAccountMapper,
 ) {
@@ -24,12 +26,18 @@ class GetMyAccountQueryService(
         clubId: Long,
         userId: Long,
     ): List<AccountCardinalResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        val member = clubMemberPolicy.getActiveMember(clubId, userId)
+        val participatedCardinals =
+            clubMemberCardinalReader
+                .findAllByClubMember(member)
+                .map { it.cardinal.cardinalNumber }
+                .toSet()
         val accounts =
-            accountRepository.findAllByClubIdAndStatusAndMemberVisibleTrueOrderByCardinalDesc(
-                clubId,
-                AccountStatus.ACTIVE,
-            )
+            accountRepository
+                .findAllByClubIdAndStatusAndMemberVisibleTrueOrderByCardinalDesc(
+                    clubId,
+                    AccountStatus.ACTIVE,
+                ).filter { it.cardinal in participatedCardinals }
         val latestCardinal = accounts.firstOrNull()?.cardinal
 
         return accounts.map { myAccountMapper.toCardinalResponse(it, isLatest = it.cardinal == latestCardinal) }
