@@ -8,6 +8,8 @@ data class DashboardHomeResponse(
     val club: DashboardClubInfoResponse,
     @field:Schema(description = "내 활동 정보")
     val myInfo: DashboardMyInfoResponse,
+    @field:Schema(description = "회비 기능 부원 공개 여부. false면 프론트에서 회비 탭을 숨긴다.", example = "true")
+    val accountVisible: Boolean,
     // MVP 제외 (이후 개발 시 @field:Schema(description = "오늘의 일정") 추가)
     @JsonIgnore
     val todaySchedules: List<DashboardScheduleResponse>,

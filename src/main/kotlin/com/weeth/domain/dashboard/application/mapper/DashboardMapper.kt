@@ -57,11 +57,13 @@ class DashboardMapper(
         club: Club,
         memberCount: Long,
         myInfo: DashboardMyInfoResponse,
+        accountVisible: Boolean,
         todaySchedules: List<DashboardScheduleResponse>,
         myClubs: List<DashboardMyClubResponse>,
     ) = DashboardHomeResponse(
         club = toClubInfoResponse(club, memberCount),
         myInfo = myInfo,
+        accountVisible = accountVisible,
         todaySchedules = todaySchedules,
         myClubs = myClubs,
     )
