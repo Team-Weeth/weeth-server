@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.usecase.query
 
+import com.weeth.domain.account.application.exception.AccountFeatureNotPublicException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.MyAccountMapper
 import com.weeth.domain.account.application.usecase.MemberAccountAccessResolver
@@ -138,10 +139,12 @@ class GetMyAccountQueryServiceTest :
                 verify(exactly = 1) { clubMemberPolicy.getActiveMember(club.id, userId) }
             }
 
-            it("회비 기능이 club 단위로 비공개면 빈 목록을 반환한다") {
+            it("회비 기능이 club 단위로 비공개면 AccountFeatureNotPublic 예외를 던진다") {
                 every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
 
-                queryService.findCardinals(club.id, userId).shouldBeEmpty()
+                shouldThrow<AccountFeatureNotPublicException> {
+                    queryService.findCardinals(club.id, userId)
+                }
 
                 verify(exactly = 0) {
                     accountRepository.findAllByClubIdAndStatusOrderByCardinalDesc(any(), any())
@@ -253,10 +256,10 @@ class GetMyAccountQueryServiceTest :
                 result.myPayment.paidAmount shouldBe 0
             }
 
-            it("회비 기능이 club 단위로 비공개면 AccountNotFound로 은닉한다") {
+            it("회비 기능이 club 단위로 비공개면 AccountFeatureNotPublic 예외를 던진다") {
                 every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
 
-                shouldThrow<AccountNotFoundException> {
+                shouldThrow<AccountFeatureNotPublicException> {
                     queryService.findMyAccount(club.id, cardinal = 7, userId = userId)
                 }
             }

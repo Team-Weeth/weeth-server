@@ -2,6 +2,7 @@ package com.weeth.domain.account.application.usecase.query
 
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
+import com.weeth.domain.account.application.exception.AccountFeatureNotPublicException
 import com.weeth.domain.account.application.exception.AccountTransactionNotFoundException
 import com.weeth.domain.account.application.mapper.MemberTransactionMapper
 import com.weeth.domain.account.application.usecase.MemberAccountAccessResolver
@@ -200,6 +201,32 @@ class GetMyAccountTransactionQueryServiceTest :
                 emptyList()
             every { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, any<Long>(), any()) } returns emptyList()
             every { fileMapper.toFileResponse(any()) } returns receiptResponse
+        }
+
+        describe("회비 기능 비공개 게이트") {
+            it("비공개면 findTransactions가 AccountFeatureNotPublic 예외를 던진다") {
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
+
+                shouldThrow<AccountFeatureNotPublicException> {
+                    queryService.findTransactions(
+                        clubId = club.id,
+                        cardinal = 7,
+                        filter = AccountTransactionFilter.ALL,
+                        sort = AccountTransactionSort.LATEST,
+                        page = 0,
+                        size = 20,
+                        userId = userId,
+                    )
+                }
+            }
+
+            it("비공개면 findTransaction이 AccountFeatureNotPublic 예외를 던진다") {
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
+
+                shouldThrow<AccountFeatureNotPublicException> {
+                    queryService.findTransaction(club.id, cardinal = 7, transactionId = 100L, userId = userId)
+                }
+            }
         }
 
         describe("findTransactions") {

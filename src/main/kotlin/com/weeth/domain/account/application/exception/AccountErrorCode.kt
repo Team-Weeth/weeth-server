@@ -44,4 +44,7 @@ enum class AccountErrorCode(
 
     @ExplainError("납부 완료(PAID) 상태가 아닌 대상을 환불 처리하려 할 때 발생합니다.")
     ACCOUNT_PAYMENT_NOT_REFUNDABLE(20113, HttpStatus.BAD_REQUEST, "납부 완료 상태에서만 환불할 수 있습니다."),
+
+    @ExplainError("회비 기능이 동아리 단위로 비공개일 때 부원이 회비 화면에 접근하면 발생합니다.")
+    ACCOUNT_FEATURE_NOT_PUBLIC(20114, HttpStatus.FORBIDDEN, "회비 기능이 공개되지 않았습니다."),
 }

@@ -3,6 +3,7 @@ package com.weeth.domain.account.application.usecase.query
 import com.weeth.domain.account.application.dto.response.AccountCardinalResponse
 import com.weeth.domain.account.application.dto.response.AccountVisibilityResponse
 import com.weeth.domain.account.application.dto.response.MyAccountResponse
+import com.weeth.domain.account.application.exception.AccountFeatureNotPublicException
 import com.weeth.domain.account.application.mapper.MyAccountMapper
 import com.weeth.domain.account.application.usecase.MemberAccountAccessResolver
 import com.weeth.domain.account.domain.enums.AccountStatus
@@ -39,8 +40,9 @@ class GetMyAccountQueryService(
         userId: Long,
     ): List<AccountCardinalResponse> {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
-        // 회비 기능이 club 단위로 비공개면 참여 기수와 무관하게 노출하지 않는다.
-        if (!accountSettingRepository.isVisibleToMembers(clubId)) return emptyList()
+        // 회비 기능이 club 단위로 비공개면 참여 기수와 무관하게 전용 예외로 차단한다.
+        // (참여 기수가 없어 빈 목록인 정상 케이스와 의미를 분리한다.)
+        if (!accountSettingRepository.isVisibleToMembers(clubId)) throw AccountFeatureNotPublicException()
 
         val participatedCardinals =
             clubMemberCardinalReader
