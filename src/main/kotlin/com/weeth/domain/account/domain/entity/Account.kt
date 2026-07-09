@@ -45,7 +45,6 @@ class Account(
     currentBalance: Int = 0,
     bankAccount: BankAccount? = null,
     bankAccountVisible: Boolean = false, // 계좌 노출 여부
-    memberVisible: Boolean = false, // 회비 회원 공개 여부
     lastModifiedBy: Long? = null, // 마지막 수정자. 추후 수정 로그 기능 확장에 따라 수정될 가능성 존재
     status: AccountStatus = AccountStatus.ACTIVE,
     registrationStep: AccountRegistrationStep = AccountRegistrationStep.BASIC,
@@ -95,10 +94,6 @@ class Account(
 
     @Column(nullable = false)
     var bankAccountVisible: Boolean = bankAccountVisible
-        private set
-
-    @Column(nullable = false)
-    var memberVisible: Boolean = memberVisible
         private set
 
     var lastModifiedBy: Long? = lastModifiedBy
@@ -162,15 +157,6 @@ class Account(
         if (next.isAfter(registrationStep)) {
             registrationStep = next
         }
-    }
-
-    fun showToMembers() {
-        check(isActive) { "활성화된 회비 장부만 회원에게 공개할 수 있습니다." }
-        memberVisible = true
-    }
-
-    fun hideFromMembers() {
-        memberVisible = false
     }
 
     fun markModifiedBy(adminId: Long) {
