@@ -14,6 +14,7 @@ import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionDirection
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
+import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
@@ -26,6 +27,7 @@ import java.time.YearMonth
 @Transactional(readOnly = true)
 class GetAccountDashboardQueryService(
     private val accountRepository: AccountRepository,
+    private val accountSettingRepository: AccountSettingRepository,
     private val transactionRepository: AccountTransactionRepository,
     private val paymentTargetRepository: AccountPaymentTargetRepository,
     private val clubMemberReader: ClubMemberReader,
@@ -67,6 +69,7 @@ class GetAccountDashboardQueryService(
 
         return accountDashboardMapper.toResponse(
             account = account,
+            memberVisible = accountSettingRepository.isVisibleToMembers(clubId),
             totalAmount = totalAmount,
             paidCount = paidCount.toInt(),
             totalTargetCount = totalTargetCount.toInt(),

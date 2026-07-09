@@ -16,6 +16,7 @@ class AccountDashboardMapper(
 ) {
     fun toResponse(
         account: Account,
+        memberVisible: Boolean,
         totalAmount: Int,
         paidCount: Int,
         totalTargetCount: Int,
@@ -36,7 +37,7 @@ class AccountDashboardMapper(
                     paidCount = paidCount,
                     totalTargetCount = totalTargetCount,
                 ),
-            memberVisible = account.memberVisible,
+            memberVisible = memberVisible,
             bankAccountPublic = account.bankAccountVisible,
             bankAccount = BankAccountResponse.from(account.bankAccount),
             lastModified =

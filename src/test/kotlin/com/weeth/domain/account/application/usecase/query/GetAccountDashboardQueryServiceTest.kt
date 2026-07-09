@@ -11,6 +11,7 @@ import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
+import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.account.fixture.AccountTestFixture
@@ -34,6 +35,7 @@ import java.time.ZoneId
 class GetAccountDashboardQueryServiceTest :
     DescribeSpec({
         val accountRepository = mockk<AccountRepository>()
+        val accountSettingRepository = mockk<AccountSettingRepository>()
         val transactionRepository = mockk<AccountTransactionRepository>()
         val paymentTargetRepository = mockk<AccountPaymentTargetRepository>()
         val clubMemberReader = mockk<ClubMemberReader>()
@@ -43,6 +45,7 @@ class GetAccountDashboardQueryServiceTest :
         val queryService =
             GetAccountDashboardQueryService(
                 accountRepository,
+                accountSettingRepository,
                 transactionRepository,
                 paymentTargetRepository,
                 clubMemberReader,
@@ -73,11 +76,13 @@ class GetAccountDashboardQueryServiceTest :
         beforeTest {
             clearMocks(
                 accountRepository,
+                accountSettingRepository,
                 transactionRepository,
                 paymentTargetRepository,
                 clubMemberReader,
                 fileAccessUrlPort,
             )
+            every { accountSettingRepository.isVisibleToMembers(any()) } returns false
             every { paymentTargetRepository.sumDueAmountByAccountId(accountId) } returns 1_390_000L
             every {
                 paymentTargetRepository.countByAccountIdAndTargetStatus(accountId, AccountTargetStatus.TARGETED)
@@ -102,6 +107,7 @@ class GetAccountDashboardQueryServiceTest :
                     )
                 account.markModifiedBy(5L)
                 every { accountRepository.findByClubIdAndCardinal(account.club.id, cardinal) } returns account
+                every { accountSettingRepository.isVisibleToMembers(account.club.id) } returns true
 
                 val transactions =
                     listOf(
@@ -136,6 +142,7 @@ class GetAccountDashboardQueryServiceTest :
                 val result = queryService.getDashboard(account.club.id, cardinal, userId)
 
                 result.accountId shouldBe accountId
+                result.memberVisible shouldBe true
                 result.period.startYearMonth shouldBe "2026-03"
                 result.period.endYearMonth shouldBe "2026-05"
                 result.monthlyBalances.map { it.yearMonth } shouldBe listOf("2026-03", "2026-04", "2026-05")

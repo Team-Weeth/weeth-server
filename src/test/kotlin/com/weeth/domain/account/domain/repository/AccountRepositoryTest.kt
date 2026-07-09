@@ -3,6 +3,7 @@ package com.weeth.domain.account.domain.repository
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
+import com.weeth.domain.account.domain.entity.AccountSetting
 import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
 import com.weeth.domain.account.domain.enums.AccountStatus
@@ -41,6 +42,7 @@ import java.time.LocalDateTime
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class AccountRepositoryTest(
     private val accountRepository: AccountRepository,
+    private val accountSettingRepository: AccountSettingRepository,
     private val accountTransactionRepository: AccountTransactionRepository,
     private val accountPaymentTargetRepository: AccountPaymentTargetRepository,
     private val clubRepository: ClubRepository,
@@ -81,10 +83,9 @@ class AccountRepositoryTest(
         fun createActiveAccount(
             club: Club,
             cardinal: Int,
-            memberVisible: Boolean = false,
             currentBalance: Int = 0,
-        ): Account {
-            val account =
+        ): Account =
+            accountRepository.save(
                 Account(
                     club = club,
                     currentBalance = currentBalance,
@@ -92,10 +93,8 @@ class AccountRepositoryTest(
                     name = "${cardinal}기 회비",
                     duesAmount = 50_000,
                     status = AccountStatus.ACTIVE,
-                )
-            if (memberVisible) account.showToMembers()
-            return accountRepository.save(account)
-        }
+                ),
+            )
 
         describe("AccountRepository") {
             it("동아리, 기수, 상태로 회비 장부를 조회한다") {
@@ -123,33 +122,19 @@ class AccountRepositoryTest(
                 }
             }
 
-            it("회원 공개된 활성 장부만 기수로 조회한다") {
-                val visibleClub = clubRepository.save(ClubTestFixture.createClub(code = "ACCOUNT-REPO-VISIBLE"))
-                val hiddenClub =
-                    clubRepository.save(
-                        ClubTestFixture.createClub(name = "비공개 장부 테스트 동아리", code = "ACCOUNT-REPO-HIDDEN"),
-                    )
-                val visibleAccount = createActiveAccount(visibleClub, cardinal = 6, memberVisible = true)
-                createActiveAccount(hiddenClub, cardinal = 6, memberVisible = false)
+            it("동아리의 활성 장부를 기수 내림차순으로 조회한다") {
+                val club = clubRepository.save(ClubTestFixture.createClub(code = "ACCOUNT-REPO-ACTIVE-DESC"))
+                createActiveAccount(club, cardinal = 6)
+                createActiveAccount(club, cardinal = 8)
+                accountRepository.save(Account.createDraft(club = club, cardinal = 7))
 
                 val found =
-                    accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
-                        clubId = visibleClub.id,
-                        cardinal = 6,
+                    accountRepository.findAllByClubIdAndStatusOrderByCardinalDesc(
+                        clubId = club.id,
                         status = AccountStatus.ACTIVE,
                     )
 
-                found?.id shouldBe visibleAccount.id
-                accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
-                    clubId = hiddenClub.id,
-                    cardinal = 6,
-                    status = AccountStatus.ACTIVE,
-                ) shouldBe null
-                accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
-                    clubId = visibleClub.id,
-                    cardinal = 6,
-                    status = AccountStatus.DRAFT,
-                ) shouldBe null
+                found.map { it.cardinal } shouldContainExactly listOf(8, 6)
             }
 
             it("현재 기수보다 작은 직전 활성 장부를 기수 내림차순으로 조회한다") {
@@ -176,6 +161,28 @@ class AccountRepositoryTest(
 
                 accountRepository.findByIdWithLock(account.id)?.id shouldBe account.id
                 accountRepository.findByIdWithLock(Long.MAX_VALUE) shouldBe null
+            }
+        }
+
+        describe("AccountSettingRepository") {
+            it("동아리 단위 공개 설정을 조회하고, 설정이 없으면 미공개로 간주한다") {
+                val club = clubRepository.save(ClubTestFixture.createClub(code = "ACCOUNT-SETTING-REPO"))
+
+                accountSettingRepository.isVisibleToMembers(club.id) shouldBe false
+
+                accountSettingRepository.save(AccountSetting.createDefault(club.id).apply { showToMembers() })
+
+                accountSettingRepository.findByClubId(club.id)?.memberVisible shouldBe true
+                accountSettingRepository.isVisibleToMembers(club.id) shouldBe true
+            }
+
+            it("같은 동아리에는 설정을 하나만 저장할 수 있다") {
+                val club = clubRepository.save(ClubTestFixture.createClub(code = "ACCOUNT-SETTING-UNIQUE"))
+                accountSettingRepository.saveAndFlush(AccountSetting.createDefault(club.id))
+
+                shouldThrow<DataIntegrityViolationException> {
+                    accountSettingRepository.saveAndFlush(AccountSetting.createDefault(club.id))
+                }
             }
         }
 

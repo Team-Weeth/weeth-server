@@ -105,18 +105,19 @@ class AccountManageController(
             ),
         )
 
-    @PatchMapping("/{accountId}/member-visibility")
-    @Operation(summary = "부원 거래 내역 공개 여부 수정")
+    @PatchMapping("/settings/visibility")
+    @Operation(
+        summary = "회비 기능 공개 여부 수정",
+        description = "회비 기능 전체를 동아리 단위로 부원에게 공개/비공개합니다. 특정 기수 장부가 아닌 회비 기능 전체에 적용됩니다.",
+    )
     fun updateMemberVisibility(
         @TsidParam
         @TsidPathVariable clubId: Long,
-        @PathVariable accountId: Long,
         @RequestBody @Valid request: UpdateMemberVisibilityRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
         manageAccountUseCase.updateMemberVisibility(
             clubId = clubId,
-            accountId = accountId,
             visible = request.visible,
             userId = userId,
         )
