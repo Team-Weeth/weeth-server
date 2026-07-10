@@ -2,6 +2,7 @@ package com.weeth.domain.account.application.usecase.query
 
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
+import com.weeth.domain.account.application.exception.AccountFeatureNotPublicException
 import com.weeth.domain.account.application.exception.AccountTransactionNotFoundException
 import com.weeth.domain.account.application.mapper.MemberTransactionMapper
 import com.weeth.domain.account.application.usecase.MemberAccountAccessResolver
@@ -11,6 +12,7 @@ import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountRepository
+import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.account.domain.repository.AccountTransactionRepository
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
@@ -45,6 +47,7 @@ import java.time.LocalDateTime
 class GetMyAccountTransactionQueryServiceTest :
     DescribeSpec({
         val accountRepository = mockk<AccountRepository>()
+        val accountSettingRepository = mockk<AccountSettingRepository>()
         val transactionRepository = mockk<AccountTransactionRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
@@ -54,7 +57,12 @@ class GetMyAccountTransactionQueryServiceTest :
             GetMyAccountTransactionQueryService(
                 transactionRepository = transactionRepository,
                 memberAccountAccessResolver =
-                    MemberAccountAccessResolver(accountRepository, clubMemberPolicy, clubMemberCardinalReader),
+                    MemberAccountAccessResolver(
+                        accountRepository,
+                        accountSettingRepository,
+                        clubMemberPolicy,
+                        clubMemberCardinalReader,
+                    ),
                 fileReader = fileReader,
                 fileMapper = fileMapper,
                 memberTransactionMapper = MemberTransactionMapper(),
@@ -83,7 +91,6 @@ class GetMyAccountTransactionQueryServiceTest :
                 name = "7기 회비",
                 duesAmount = 60_000,
                 currentBalance = 152_129,
-                memberVisible = true,
                 status = AccountStatus.ACTIVE,
             )
         val receiptResponse =
@@ -137,12 +144,14 @@ class GetMyAccountTransactionQueryServiceTest :
         beforeTest {
             clearMocks(
                 accountRepository,
+                accountSettingRepository,
                 transactionRepository,
                 clubMemberPolicy,
                 clubMemberCardinalReader,
                 fileReader,
                 fileMapper,
             )
+            every { accountSettingRepository.isVisibleToMembers(club.id) } returns true
             every { clubMemberPolicy.getActiveMember(club.id, userId) } returns member
             every { clubMemberCardinalReader.findAllByClubMember(member) } returns
                 listOf(
@@ -152,7 +161,7 @@ class GetMyAccountTransactionQueryServiceTest :
                     ),
                 )
             every {
-                accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+                accountRepository.findByClubIdAndCardinalAndStatus(
                     club.id,
                     7,
                     AccountStatus.ACTIVE,
@@ -192,6 +201,32 @@ class GetMyAccountTransactionQueryServiceTest :
                 emptyList()
             every { fileReader.findAll(FileOwnerType.ACCOUNT_TRANSACTION, any<Long>(), any()) } returns emptyList()
             every { fileMapper.toFileResponse(any()) } returns receiptResponse
+        }
+
+        describe("회비 기능 비공개 게이트") {
+            it("비공개면 findTransactions가 AccountFeatureNotPublic 예외를 던진다") {
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
+
+                shouldThrow<AccountFeatureNotPublicException> {
+                    queryService.findTransactions(
+                        clubId = club.id,
+                        cardinal = 7,
+                        filter = AccountTransactionFilter.ALL,
+                        sort = AccountTransactionSort.LATEST,
+                        page = 0,
+                        size = 20,
+                        userId = userId,
+                    )
+                }
+            }
+
+            it("비공개면 findTransaction이 AccountFeatureNotPublic 예외를 던진다") {
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
+
+                shouldThrow<AccountFeatureNotPublicException> {
+                    queryService.findTransaction(club.id, cardinal = 7, transactionId = 100L, userId = userId)
+                }
+            }
         }
 
         describe("findTransactions") {

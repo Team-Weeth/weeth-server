@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.usecase.query
 
+import com.weeth.domain.account.application.exception.AccountFeatureNotPublicException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.MyAccountMapper
 import com.weeth.domain.account.application.usecase.MemberAccountAccessResolver
@@ -9,6 +10,7 @@ import com.weeth.domain.account.domain.enums.AccountPaymentStatus
 import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
+import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.account.domain.vo.BankAccount
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
@@ -33,17 +35,24 @@ import java.time.LocalDateTime
 class GetMyAccountQueryServiceTest :
     DescribeSpec({
         val accountRepository = mockk<AccountRepository>()
+        val accountSettingRepository = mockk<AccountSettingRepository>()
         val paymentTargetRepository = mockk<AccountPaymentTargetRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
         val queryService =
             GetMyAccountQueryService(
                 accountRepository = accountRepository,
+                accountSettingRepository = accountSettingRepository,
                 paymentTargetRepository = paymentTargetRepository,
                 clubMemberPolicy = clubMemberPolicy,
                 clubMemberCardinalReader = clubMemberCardinalReader,
                 memberAccountAccessResolver =
-                    MemberAccountAccessResolver(accountRepository, clubMemberPolicy, clubMemberCardinalReader),
+                    MemberAccountAccessResolver(
+                        accountRepository,
+                        accountSettingRepository,
+                        clubMemberPolicy,
+                        clubMemberCardinalReader,
+                    ),
                 myAccountMapper = MyAccountMapper(),
             )
 
@@ -60,7 +69,6 @@ class GetMyAccountQueryServiceTest :
             id: Long,
             cardinal: Int,
             name: String = "${cardinal}기 회비",
-            memberVisible: Boolean = true,
             bankAccountVisible: Boolean = true,
         ): Account =
             Account(
@@ -72,7 +80,6 @@ class GetMyAccountQueryServiceTest :
                 currentBalance = 152_129,
                 bankAccount = BankAccount.of("국민은행", "12-12412-1231", "가천대 검도부", "이름_회비"),
                 bankAccountVisible = bankAccountVisible,
-                memberVisible = memberVisible,
                 status = AccountStatus.ACTIVE,
             )
 
@@ -102,15 +109,23 @@ class GetMyAccountQueryServiceTest :
             }
 
         beforeTest {
-            clearMocks(accountRepository, paymentTargetRepository, clubMemberPolicy, clubMemberCardinalReader)
+            clearMocks(
+                accountRepository,
+                accountSettingRepository,
+                paymentTargetRepository,
+                clubMemberPolicy,
+                clubMemberCardinalReader,
+            )
             every { clubMemberPolicy.getActiveMember(club.id, userId) } returns member
             every { clubMemberCardinalReader.findAllByClubMember(member) } returns participatedIn(6, 7)
+            // 기본은 회비 기능 공개 상태
+            every { accountSettingRepository.isVisibleToMembers(club.id) } returns true
         }
 
         describe("findCardinals") {
             it("공개 ACTIVE 장부 기수만 최신순으로 반환하고 가장 높은 기수를 latest로 표시한다") {
                 every {
-                    accountRepository.findAllByClubIdAndStatusAndMemberVisibleTrueOrderByCardinalDesc(
+                    accountRepository.findAllByClubIdAndStatusOrderByCardinalDesc(
                         club.id,
                         AccountStatus.ACTIVE,
                     )
@@ -124,10 +139,22 @@ class GetMyAccountQueryServiceTest :
                 verify(exactly = 1) { clubMemberPolicy.getActiveMember(club.id, userId) }
             }
 
+            it("회비 기능이 club 단위로 비공개면 AccountFeatureNotPublic 예외를 던진다") {
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
+
+                shouldThrow<AccountFeatureNotPublicException> {
+                    queryService.findCardinals(club.id, userId)
+                }
+
+                verify(exactly = 0) {
+                    accountRepository.findAllByClubIdAndStatusOrderByCardinalDesc(any(), any())
+                }
+            }
+
             it("내가 참여하지 않은 기수의 장부는 목록에서 제외한다") {
                 every { clubMemberCardinalReader.findAllByClubMember(member) } returns participatedIn(7)
                 every {
-                    accountRepository.findAllByClubIdAndStatusAndMemberVisibleTrueOrderByCardinalDesc(
+                    accountRepository.findAllByClubIdAndStatusOrderByCardinalDesc(
                         club.id,
                         AccountStatus.ACTIVE,
                     )
@@ -142,7 +169,7 @@ class GetMyAccountQueryServiceTest :
             it("참여한 기수가 없으면 빈 목록을 반환한다") {
                 every { clubMemberCardinalReader.findAllByClubMember(member) } returns emptyList()
                 every {
-                    accountRepository.findAllByClubIdAndStatusAndMemberVisibleTrueOrderByCardinalDesc(
+                    accountRepository.findAllByClubIdAndStatusOrderByCardinalDesc(
                         club.id,
                         AccountStatus.ACTIVE,
                     )
@@ -152,12 +179,22 @@ class GetMyAccountQueryServiceTest :
             }
         }
 
+        describe("getVisibility") {
+            it("활성 부원이면 club 단위 공개 여부를 반환한다") {
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns true
+                queryService.getVisibility(club.id, userId).visible shouldBe true
+
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
+                queryService.getVisibility(club.id, userId).visible shouldBe false
+            }
+        }
+
         describe("findMyAccount") {
             it("나의 납부 상태, 공개 계좌, 잔액과 목표액을 반환한다") {
                 val account = account(id = 12L, cardinal = 7)
                 val target = targeted(account, member)
                 every {
-                    accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+                    accountRepository.findByClubIdAndCardinalAndStatus(
                         club.id,
                         7,
                         AccountStatus.ACTIVE,
@@ -183,7 +220,7 @@ class GetMyAccountQueryServiceTest :
             it("계좌 비공개 장부는 bankAccountVisible=true가 아니면 계좌 정보를 숨긴다") {
                 val account = account(id = 12L, cardinal = 7, bankAccountVisible = false)
                 every {
-                    accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+                    accountRepository.findByClubIdAndCardinalAndStatus(
                         club.id,
                         7,
                         AccountStatus.ACTIVE,
@@ -202,7 +239,7 @@ class GetMyAccountQueryServiceTest :
             it("납부 대상 행이 없으면 targeted=false로 반환한다") {
                 val account = account(id = 12L, cardinal = 7)
                 every {
-                    accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+                    accountRepository.findByClubIdAndCardinalAndStatus(
                         club.id,
                         7,
                         AccountStatus.ACTIVE,
@@ -219,9 +256,17 @@ class GetMyAccountQueryServiceTest :
                 result.myPayment.paidAmount shouldBe 0
             }
 
-            it("미공개 또는 없는 장부는 AccountNotFound로 은닉한다") {
+            it("회비 기능이 club 단위로 비공개면 AccountFeatureNotPublic 예외를 던진다") {
+                every { accountSettingRepository.isVisibleToMembers(club.id) } returns false
+
+                shouldThrow<AccountFeatureNotPublicException> {
+                    queryService.findMyAccount(club.id, cardinal = 7, userId = userId)
+                }
+            }
+
+            it("없는 장부는 AccountNotFound로 은닉한다") {
                 every {
-                    accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+                    accountRepository.findByClubIdAndCardinalAndStatus(
                         club.id,
                         7,
                         AccountStatus.ACTIVE,
@@ -236,7 +281,7 @@ class GetMyAccountQueryServiceTest :
             it("내가 참여하지 않은 기수의 장부는 AccountNotFound로 은닉한다") {
                 every { clubMemberCardinalReader.findAllByClubMember(member) } returns participatedIn(6)
                 every {
-                    accountRepository.findByClubIdAndCardinalAndStatusAndMemberVisibleTrue(
+                    accountRepository.findByClubIdAndCardinalAndStatus(
                         club.id,
                         7,
                         AccountStatus.ACTIVE,
