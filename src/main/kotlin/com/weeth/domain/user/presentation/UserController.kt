@@ -8,6 +8,7 @@ import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
+import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
@@ -20,6 +21,7 @@ import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
+import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
@@ -63,6 +65,7 @@ class UserController(
     private val getUserProfileQueryService: GetUserProfileQueryService,
     private val getUserMyPageQueryService: GetUserMyPageQueryService,
     private val getUserPostQueryService: GetUserPostQueryService,
+    private val getUserAttendanceQueryService: GetUserAttendanceQueryService,
     private val tokenCookieProvider: TokenCookieProvider,
 ) {
     @PostMapping("/social/kakao")
@@ -226,6 +229,17 @@ class UserController(
     ): CommonResponse<PageResponse<UserMyPostResponse>> {
         val response = getUserPostQueryService.getMyPosts(userId, pageNumber, pageSize)
         return CommonResponse.success(UserResponseCode.USER_MY_POSTS_FIND_SUCCESS, response)
+    }
+
+    @GetMapping("/me/attended-sessions")
+    @Operation(summary = "출석한 세션 조회")
+    fun getAttendedSessions(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @RequestParam(defaultValue = "0") pageNumber: Int,
+        @RequestParam(defaultValue = "5") pageSize: Int,
+    ): CommonResponse<PageResponse<UserAttendedSessionResponse>> {
+        val response = getUserAttendanceQueryService.getAttendedSessions(userId, pageNumber, pageSize)
+        return CommonResponse.success(UserResponseCode.USER_ATTENDED_SESSIONS_FIND_SUCCESS, response)
     }
 
     private fun <T> buildTokenResponse(

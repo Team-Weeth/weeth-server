@@ -22,4 +22,5 @@ enum class UserResponseCode(
     USER_PROFILE_DELETED_SUCCESS(10912, HttpStatus.OK, "프로필이 성공적으로 삭제되었습니다."),
     USER_MY_PAGE_FIND_SUCCESS(10913, HttpStatus.OK, "마이페이지 정보를 성공적으로 조회했습니다."),
     USER_MY_POSTS_FIND_SUCCESS(10914, HttpStatus.OK, "내가 쓴 글을 성공적으로 조회했습니다."),
+    USER_ATTENDED_SESSIONS_FIND_SUCCESS(10915, HttpStatus.OK, "출석한 세션을 성공적으로 조회했습니다."),
 }
