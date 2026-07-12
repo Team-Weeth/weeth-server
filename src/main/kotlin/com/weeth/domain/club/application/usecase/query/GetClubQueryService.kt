@@ -23,7 +23,8 @@ class GetClubQueryService(
     private val clubMapper: ClubMapper,
 ) {
     fun findMyClubs(userId: Long): List<ClubInfoResponse> {
-        val members = clubMemberReader.findAllByUserIdAndMemberStatusWithClub(userId, MemberStatus.ACTIVE)
+        val members =
+            clubMemberReader.findAllByUserIdAndMemberStatusWithClubAndUserProfile(userId, MemberStatus.ACTIVE)
         if (members.isEmpty()) return emptyList()
 
         val cardinalsByMemberId =

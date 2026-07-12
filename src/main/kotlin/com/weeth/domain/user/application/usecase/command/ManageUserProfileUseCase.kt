@@ -43,6 +43,7 @@ class ManageUserProfileUseCase(
 
         saveFileIfPresent(request.profileImage, FileOwnerType.USER_PROFILE_IMAGE, savedProfile.id)
         saveFileIfPresent(request.headerImage, FileOwnerType.USER_PROFILE_HEADER, savedProfile.id)
+        assignCreatedProfileIfRequested(userId, savedProfile, request.clubIds)
 
         return userProfileMapper.toResponse(savedProfile)
     }
@@ -177,6 +178,29 @@ class ManageUserProfileUseCase(
     private fun validateDuplicateClubAssignments(assignments: List<DecodedClubProfileAssignment>) {
         if (assignments.map { it.clubId }.distinct().size != assignments.size) {
             throw UserProfileDuplicateClubAssignmentException()
+        }
+    }
+
+    private fun assignCreatedProfileIfRequested(
+        userId: Long,
+        profile: UserProfile,
+        clubIds: List<String>,
+    ) {
+        if (clubIds.isEmpty()) return
+
+        val assignments =
+            clubIds.map {
+                DecodedClubProfileAssignment(
+                    clubId = decodeClubId(it),
+                    profileId = profile.id,
+                )
+            }
+        validateDuplicateClubAssignments(assignments)
+
+        val membersByClubId = findAssignableMembers(userId, assignments.map { it.clubId }.distinct().sorted())
+        assignments.forEach { assignment ->
+            val member = membersByClubId[assignment.clubId] ?: throw UserProfileAssignmentNotAllowedException()
+            member.assignProfile(profile)
         }
     }
 

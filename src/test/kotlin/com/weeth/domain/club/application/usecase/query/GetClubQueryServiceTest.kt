@@ -55,8 +55,9 @@ class GetClubQueryServiceTest :
                             ReflectionTestUtils.setField(this, "id", 20L)
                         }
                 member.assignProfile(profile)
-                every { clubMemberReader.findAllByUserIdAndMemberStatusWithClub(1L, MemberStatus.ACTIVE) } returns
-                    listOf(member)
+                every {
+                    clubMemberReader.findAllByUserIdAndMemberStatusWithClubAndUserProfile(1L, MemberStatus.ACTIVE)
+                } returns listOf(member)
                 every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
                 every { clubMemberReader.countActiveByClubId(100L) } returns 12L
                 every { fileAccessUrlPort.resolve("USER_PROFILE_IMAGE/2026-07/profile.png") } returns

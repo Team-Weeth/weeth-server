@@ -40,6 +40,11 @@ interface ClubMemberReader {
         memberStatus: MemberStatus,
     ): List<ClubMember>
 
+    fun findAllByUserIdAndMemberStatusWithClubAndUserProfile(
+        userId: Long,
+        memberStatus: MemberStatus,
+    ): List<ClubMember>
+
     fun findActiveByUserId(userId: Long): List<ClubMember>
 
     fun countActiveByClubId(clubId: Long): Long

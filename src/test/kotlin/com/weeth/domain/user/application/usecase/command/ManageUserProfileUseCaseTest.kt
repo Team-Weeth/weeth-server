@@ -134,6 +134,34 @@ class ManageUserProfileUseCaseTest :
                 result.headerImageUrl shouldBe null
                 verify(exactly = 0) { fileRepository.save(any<File>()) }
             }
+
+            it("생성 요청에 clubIds가 있으면 생성한 프로필을 해당 ACTIVE 동아리에 바로 할당한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val club1 = ClubTestFixture.createClub(id = 100L, name = "동아리1")
+                val club2 = ClubTestFixture.createClub(id = 101L, name = "동아리2")
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 1000L, club = club1, user = user)
+                val member2 = ClubMemberTestFixture.createActiveMember(id = 1001L, club = club2, user = user)
+                val request =
+                    CreateMultiProfileRequest(
+                        name = "길동",
+                        clubIds = listOf(TsidBase62Encoder.encode(100L), TsidBase62Encoder.encode(101L)),
+                    )
+                every { userRepository.getById(1L) } returns user
+                every { userProfileRepository.save(any<UserProfile>()) } answers {
+                    firstArg<UserProfile>().apply {
+                        ReflectionTestUtils.setField(this, "id", 10L)
+                    }
+                }
+                every {
+                    clubMemberRepository.findAllActiveByUserIdAndClubIdsWithLock(1L, listOf(100L, 101L))
+                } returns listOf(member1, member2)
+
+                val result = useCase.create(userId = 1L, request = request)
+
+                result.profileId shouldBe 10L
+                member1.userProfile?.id shouldBe 10L
+                member2.userProfile?.id shouldBe 10L
+            }
         }
 
         describe("update") {
