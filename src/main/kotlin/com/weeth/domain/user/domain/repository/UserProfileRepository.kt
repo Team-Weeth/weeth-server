@@ -7,6 +7,11 @@ import java.util.Optional
 interface UserProfileRepository : JpaRepository<UserProfile, Long> {
     fun findAllByUserIdOrderByIdAsc(userId: Long): List<UserProfile>
 
+    fun findAllByUserIdAndIdIn(
+        userId: Long,
+        ids: List<Long>,
+    ): List<UserProfile>
+
     fun findByIdAndUserId(
         id: Long,
         userId: Long,

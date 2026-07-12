@@ -53,4 +53,13 @@ enum class UserErrorCode(
 
     @ExplainError("프로필 ID로 조회했으나 프로필이 없거나 로그인 사용자의 소유가 아닐 때 발생합니다.")
     USER_PROFILE_NOT_FOUND(20914, HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다."),
+
+    @ExplainError("프로필을 설정하려는 동아리가 로그인 사용자의 ACTIVE 멤버십이 아닐 때 발생합니다.")
+    USER_PROFILE_ASSIGNMENT_NOT_ALLOWED(20915, HttpStatus.FORBIDDEN, "해당 동아리에 프로필을 설정할 수 없습니다."),
+
+    @ExplainError("동아리별 프로필 설정 요청에서 같은 동아리가 중복될 때 발생합니다.")
+    USER_PROFILE_DUPLICATE_CLUB_ASSIGNMENT(20916, HttpStatus.BAD_REQUEST, "같은 동아리의 프로필 설정이 중복되었습니다."),
+
+    @ExplainError("동아리별 프로필 설정 요청의 clubId가 Base62 TSID 형식이 아닐 때 발생합니다.")
+    USER_PROFILE_INVALID_CLUB_ID(20917, HttpStatus.BAD_REQUEST, "동아리 ID 형식이 올바르지 않습니다."),
 }

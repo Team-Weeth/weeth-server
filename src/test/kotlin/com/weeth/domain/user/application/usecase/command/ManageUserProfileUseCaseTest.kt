@@ -1,18 +1,27 @@
 package com.weeth.domain.user.application.usecase.command
 
+import com.weeth.domain.club.domain.repository.ClubMemberRepository
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
+import com.weeth.domain.user.application.dto.request.ClubProfileAssignmentRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
+import com.weeth.domain.user.application.exception.UserProfileAssignmentNotAllowedException
+import com.weeth.domain.user.application.exception.UserProfileDuplicateClubAssignmentException
+import com.weeth.domain.user.application.exception.UserProfileInvalidClubIdException
 import com.weeth.domain.user.application.exception.UserProfileNotFoundException
 import com.weeth.domain.user.application.mapper.UserProfileMapper
 import com.weeth.domain.user.domain.entity.UserProfile
 import com.weeth.domain.user.domain.repository.UserProfileRepository
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.fixture.UserTestFixture
+import com.weeth.global.common.id.TsidBase62Encoder
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -27,6 +36,7 @@ class ManageUserProfileUseCaseTest :
     DescribeSpec({
         val userRepository = mockk<UserRepository>()
         val userProfileRepository = mockk<UserProfileRepository>()
+        val clubMemberRepository = mockk<ClubMemberRepository>()
         val fileRepository = mockk<FileRepository>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userProfileMapper = UserProfileMapper(fileAccessUrlPort)
@@ -34,12 +44,13 @@ class ManageUserProfileUseCaseTest :
             ManageUserProfileUseCase(
                 userRepository = userRepository,
                 userProfileRepository = userProfileRepository,
+                clubMemberRepository = clubMemberRepository,
                 fileRepository = fileRepository,
                 userProfileMapper = userProfileMapper,
             )
 
         beforeTest {
-            clearMocks(userRepository, userProfileRepository, fileRepository, fileAccessUrlPort)
+            clearMocks(userRepository, userProfileRepository, clubMemberRepository, fileRepository, fileAccessUrlPort)
         }
 
         describe("create") {
@@ -199,6 +210,111 @@ class ManageUserProfileUseCaseTest :
 
                 verify(exactly = 0) { fileRepository.save(any<File>()) }
                 verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
+            }
+        }
+
+        describe("assignClubProfiles") {
+            it("로그인 사용자의 ACTIVE 동아리 멤버십에 본인 프로필을 할당한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val club1 = ClubTestFixture.createClub(id = 100L, name = "동아리1")
+                val club2 = ClubTestFixture.createClub(id = 101L, name = "동아리2")
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 1000L, club = club1, user = user)
+                val member2 = ClubMemberTestFixture.createActiveMember(id = 1001L, club = club2, user = user)
+                val profile1 =
+                    UserProfile.create(user = user, name = "프로필1").apply {
+                        ReflectionTestUtils.setField(this, "id", 10L)
+                    }
+                val profile2 =
+                    UserProfile.create(user = user, name = "프로필2").apply {
+                        ReflectionTestUtils.setField(this, "id", 11L)
+                    }
+                val request =
+                    AssignClubProfileRequest(
+                        assignments =
+                            listOf(
+                                ClubProfileAssignmentRequest(TsidBase62Encoder.encode(100L), 10L),
+                                ClubProfileAssignmentRequest(TsidBase62Encoder.encode(101L), 11L),
+                            ),
+                    )
+                every { userProfileRepository.findAllByUserIdAndIdIn(1L, listOf(10L, 11L)) } returns
+                    listOf(profile1, profile2)
+                every {
+                    clubMemberRepository.findAllActiveByUserIdAndClubIdsWithLock(1L, listOf(100L, 101L))
+                } returns listOf(member1, member2)
+
+                useCase.assignClubProfiles(1L, request)
+
+                member1.userProfile shouldBe profile1
+                member2.userProfile shouldBe profile2
+            }
+
+            it("같은 동아리의 프로필 설정이 중복되면 예외가 발생한다") {
+                val clubId = TsidBase62Encoder.encode(100L)
+                val request =
+                    AssignClubProfileRequest(
+                        assignments =
+                            listOf(
+                                ClubProfileAssignmentRequest(clubId, 10L),
+                                ClubProfileAssignmentRequest(clubId, 11L),
+                            ),
+                    )
+
+                shouldThrow<UserProfileDuplicateClubAssignmentException> {
+                    useCase.assignClubProfiles(1L, request)
+                }
+            }
+
+            it("clubId가 Base62 형식이 아니면 예외가 발생한다") {
+                val request =
+                    AssignClubProfileRequest(
+                        assignments =
+                            listOf(
+                                ClubProfileAssignmentRequest("%%%", 10L),
+                            ),
+                    )
+
+                shouldThrow<UserProfileInvalidClubIdException> {
+                    useCase.assignClubProfiles(1L, request)
+                }
+            }
+
+            it("본인 소유가 아닌 프로필이 포함되면 예외가 발생한다") {
+                val request =
+                    AssignClubProfileRequest(
+                        assignments =
+                            listOf(
+                                ClubProfileAssignmentRequest(TsidBase62Encoder.encode(100L), 10L),
+                                ClubProfileAssignmentRequest(TsidBase62Encoder.encode(101L), 11L),
+                            ),
+                    )
+                every { userProfileRepository.findAllByUserIdAndIdIn(1L, listOf(10L, 11L)) } returns emptyList()
+
+                shouldThrow<UserProfileNotFoundException> {
+                    useCase.assignClubProfiles(1L, request)
+                }
+            }
+
+            it("ACTIVE 멤버십이 아닌 동아리가 포함되면 예외가 발생한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val profile =
+                    UserProfile.create(user = user, name = "프로필").apply {
+                        ReflectionTestUtils.setField(this, "id", 10L)
+                    }
+                val request =
+                    AssignClubProfileRequest(
+                        assignments =
+                            listOf(
+                                ClubProfileAssignmentRequest(TsidBase62Encoder.encode(100L), 10L),
+                            ),
+                    )
+                every { userProfileRepository.findAllByUserIdAndIdIn(1L, listOf(10L)) } returns listOf(profile)
+                every {
+                    clubMemberRepository.findAllActiveByUserIdAndClubIdsWithLock(1L, listOf(100L))
+                } returns emptyList()
+
+                shouldThrow<UserProfileAssignmentNotAllowedException> {
+                    useCase.assignClubProfiles(1L, request)
+                }
             }
         }
     })

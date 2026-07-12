@@ -1,16 +1,24 @@
 package com.weeth.domain.user.application.usecase.command
 
+import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
+import com.weeth.domain.user.application.exception.UserProfileAssignmentNotAllowedException
+import com.weeth.domain.user.application.exception.UserProfileDuplicateClubAssignmentException
+import com.weeth.domain.user.application.exception.UserProfileInvalidClubIdException
 import com.weeth.domain.user.application.exception.UserProfileNotFoundException
 import com.weeth.domain.user.application.mapper.UserProfileMapper
+import com.weeth.domain.user.domain.entity.UserProfile
 import com.weeth.domain.user.domain.repository.UserProfileRepository
 import com.weeth.domain.user.domain.repository.UserRepository
+import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -18,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional
 class ManageUserProfileUseCase(
     private val userRepository: UserRepository,
     private val userProfileRepository: UserProfileRepository,
+    private val clubMemberRepository: ClubMemberRepository,
     private val fileRepository: FileRepository,
     private val userProfileMapper: UserProfileMapper,
 ) {
@@ -71,6 +80,32 @@ class ManageUserProfileUseCase(
         return userProfileMapper.toResponse(profile)
     }
 
+    @Transactional
+    fun assignClubProfiles(
+        userId: Long,
+        request: AssignClubProfileRequest,
+    ) {
+        val assignments =
+            request.assignments.map {
+                DecodedClubProfileAssignment(
+                    clubId = decodeClubId(it.clubId),
+                    profileId = it.profileId,
+                )
+            }
+        validateDuplicateClubAssignments(assignments)
+
+        val profileIds = assignments.map { it.profileId }.distinct()
+        val profilesById = findOwnedProfiles(userId, profileIds)
+        val clubIds = assignments.map { it.clubId }.distinct().sorted()
+        val membersByClubId = findAssignableMembers(userId, clubIds)
+
+        assignments.forEach { assignment ->
+            val member = membersByClubId[assignment.clubId] ?: throw UserProfileAssignmentNotAllowedException()
+            val profile = profilesById[assignment.profileId] ?: throw UserProfileNotFoundException()
+            member.assignProfile(profile)
+        }
+    }
+
     private fun saveFileIfPresent(
         request: FileSaveRequest?,
         ownerType: FileOwnerType,
@@ -110,4 +145,47 @@ class ManageUserProfileUseCase(
             removeImage()
         }
     }
+
+    private fun decodeClubId(clubId: String): Long =
+        try {
+            TsidBase62Encoder.decode(clubId)
+        } catch (e: IllegalArgumentException) {
+            throw UserProfileInvalidClubIdException()
+        }
+
+    private fun validateDuplicateClubAssignments(assignments: List<DecodedClubProfileAssignment>) {
+        if (assignments.map { it.clubId }.distinct().size != assignments.size) {
+            throw UserProfileDuplicateClubAssignmentException()
+        }
+    }
+
+    private fun findOwnedProfiles(
+        userId: Long,
+        profileIds: List<Long>,
+    ): Map<Long, UserProfile> {
+        val profilesById = userProfileRepository.findAllByUserIdAndIdIn(userId, profileIds).associateBy { it.id }
+        if (profilesById.size != profileIds.size) {
+            throw UserProfileNotFoundException()
+        }
+        return profilesById
+    }
+
+    private fun findAssignableMembers(
+        userId: Long,
+        clubIds: List<Long>,
+    ): Map<Long, ClubMember> {
+        val membersByClubId =
+            clubMemberRepository
+                .findAllActiveByUserIdAndClubIdsWithLock(userId, clubIds)
+                .associateBy { it.club.id }
+        if (membersByClubId.size != clubIds.size) {
+            throw UserProfileAssignmentNotAllowedException()
+        }
+        return membersByClubId
+    }
+
+    private data class DecodedClubProfileAssignment(
+        val clubId: Long,
+        val profileId: Long,
+    )
 }
