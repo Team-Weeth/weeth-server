@@ -50,4 +50,7 @@ enum class UserErrorCode(
 
     @ExplainError("사용자가 LEAD인 활성 동아리를 보유한 상태로 위드 탈퇴를 시도할 때 발생합니다.")
     USER_HAS_LEAD_CLUB(20913, HttpStatus.CONFLICT, "LEAD인 동아리가 있어 탈퇴할 수 없습니다."),
+
+    @ExplainError("프로필 ID로 조회했으나 프로필이 없거나 로그인 사용자의 소유가 아닐 때 발생합니다.")
+    USER_PROFILE_NOT_FOUND(20914, HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다."),
 }

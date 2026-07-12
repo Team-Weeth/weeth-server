@@ -14,4 +14,7 @@ enum class UserResponseCode(
     USER_TERMS_AGREE_SUCCESS(10904, HttpStatus.OK, "약관 동의가 성공적으로 처리되었습니다."),
     INQUIRY_SEND_SUCCESS(10905, HttpStatus.OK, "문의가 성공적으로 접수되었습니다."),
     USER_LEFT_SUCCESS(10906, HttpStatus.OK, "위드 탈퇴가 완료되었습니다."),
+    USER_PROFILE_CREATED_SUCCESS(10907, HttpStatus.CREATED, "프로필이 성공적으로 생성되었습니다."),
+    USER_PROFILE_FIND_ALL_SUCCESS(10908, HttpStatus.OK, "프로필 목록을 성공적으로 조회했습니다."),
+    USER_PROFILE_FIND_SUCCESS(10909, HttpStatus.OK, "프로필을 성공적으로 조회했습니다."),
 }

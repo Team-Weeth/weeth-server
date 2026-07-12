@@ -2,16 +2,21 @@ package com.weeth.domain.user.presentation
 
 import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
 import com.weeth.domain.user.application.dto.request.CreateInquiryRequest
+import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
+import com.weeth.domain.user.application.dto.response.UserProfileResponse
+import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.CreateInquiryUseCase
 import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
+import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
+import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.dto.JwtDto
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -27,7 +32,9 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -44,6 +51,8 @@ class UserController(
     private val agreeTermsUseCase: AgreeTermsUseCase,
     private val createInquiryUseCase: CreateInquiryUseCase,
     private val leaveUserUseCase: LeaveUserUseCase,
+    private val manageUserProfileUseCase: ManageUserProfileUseCase,
+    private val getUserProfileQueryService: GetUserProfileQueryService,
     private val tokenCookieProvider: TokenCookieProvider,
 ) {
     @PostMapping("/social/kakao")
@@ -127,6 +136,35 @@ class UserController(
     ): CommonResponse<Void> {
         createInquiryUseCase.execute(request)
         return CommonResponse.success(UserResponseCode.INQUIRY_SEND_SUCCESS)
+    }
+
+    @PostMapping("/me/profiles")
+    @Operation(summary = "멀티프로필 생성")
+    fun createUserProfile(
+        @RequestBody @Valid request: CreateMultiProfileRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<UserProfileResponse> {
+        val response = manageUserProfileUseCase.create(userId, request)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_CREATED_SUCCESS, response)
+    }
+
+    @GetMapping("/me/profiles")
+    @Operation(summary = "멀티프로필 목록 조회")
+    fun getUserProfiles(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<UserProfilesResponse> {
+        val response = getUserProfileQueryService.findAll(userId)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_FIND_ALL_SUCCESS, response)
+    }
+
+    @GetMapping("/me/profiles/{profileId}")
+    @Operation(summary = "멀티프로필 단건 조회")
+    fun getUserProfile(
+        @PathVariable profileId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<UserProfileResponse> {
+        val response = getUserProfileQueryService.find(userId, profileId)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_FIND_SUCCESS, response)
     }
 
     private fun <T> buildTokenResponse(
