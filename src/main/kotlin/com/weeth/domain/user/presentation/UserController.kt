@@ -4,6 +4,7 @@ import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
 import com.weeth.domain.user.application.dto.request.CreateInquiryRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
+import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
@@ -165,6 +166,17 @@ class UserController(
     ): CommonResponse<UserProfileResponse> {
         val response = getUserProfileQueryService.find(userId, profileId)
         return CommonResponse.success(UserResponseCode.USER_PROFILE_FIND_SUCCESS, response)
+    }
+
+    @PatchMapping("/me/profiles/{profileId}")
+    @Operation(summary = "멀티프로필 수정")
+    fun updateUserProfile(
+        @PathVariable profileId: Long,
+        @RequestBody @Valid request: UpdateMultiProfileRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<UserProfileResponse> {
+        val response = manageUserProfileUseCase.update(userId, profileId, request)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_UPDATED_SUCCESS, response)
     }
 
     private fun <T> buildTokenResponse(

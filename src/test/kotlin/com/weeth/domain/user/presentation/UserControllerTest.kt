@@ -1,6 +1,7 @@
 package com.weeth.domain.user.presentation
 
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
+import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
@@ -137,6 +138,21 @@ class UserControllerTest :
                 response.code shouldBe UserResponseCode.USER_PROFILE_FIND_SUCCESS.code
                 response.message shouldBe UserResponseCode.USER_PROFILE_FIND_SUCCESS.message
                 response.data shouldBe profileResponse
+            }
+        }
+
+        describe("updateUserProfile") {
+            it("로그인 사용자의 멀티프로필을 수정한다") {
+                val request = UpdateMultiProfileRequest(name = "새 이름")
+                val profileResponse = UserProfileResponse(profileId = 10L, name = "새 이름")
+                io.mockk.every { manageUserProfileUseCase.update(1L, 10L, request) } returns profileResponse
+
+                val response = controller.updateUserProfile(10L, request, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_UPDATED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_UPDATED_SUCCESS.message
+                response.data shouldBe profileResponse
+                verify(exactly = 1) { manageUserProfileUseCase.update(1L, 10L, request) }
             }
         }
     })
