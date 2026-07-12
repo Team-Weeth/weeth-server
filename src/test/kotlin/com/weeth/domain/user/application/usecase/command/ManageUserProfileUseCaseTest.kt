@@ -369,6 +369,7 @@ class ManageUserProfileUseCaseTest :
                 every {
                     fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
                 } returns 1
+                every { clubMemberRepository.clearUserProfileReferences(10L) } returns 1
                 justRun { userProfileRepository.delete(profile) }
 
                 useCase.delete(1L, 10L)
@@ -379,6 +380,7 @@ class ManageUserProfileUseCaseTest :
                 verify(exactly = 1) {
                     fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
                 }
+                verify(exactly = 1) { clubMemberRepository.clearUserProfileReferences(10L) }
                 verify(exactly = 1) { userProfileRepository.delete(profile) }
             }
 

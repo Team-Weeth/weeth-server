@@ -125,6 +125,7 @@ class ManageUserProfileUseCase(
 
         fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, profile.id)
         fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, profile.id)
+        clubMemberRepository.clearUserProfileReferences(profile.id)
         userProfileRepository.delete(profile)
     }
 

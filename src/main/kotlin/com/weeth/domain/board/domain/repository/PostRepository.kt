@@ -20,7 +20,7 @@ import java.time.LocalDateTime
 interface PostRepository :
     JpaRepository<Post, Long>,
     PostReader {
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -36,7 +36,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -53,7 +53,7 @@ interface PostRepository :
 
     fun findByIdAndIsDeletedFalse(id: Long): Post?
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -100,7 +100,7 @@ interface PostRepository :
         @Param("ids") ids: List<Long>,
     ): List<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -126,7 +126,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post> = findAllActiveByBoardIds(boardIds, pageable)
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
@@ -142,7 +142,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
@@ -158,7 +158,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
@@ -176,7 +176,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
