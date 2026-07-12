@@ -2,7 +2,6 @@ package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
-import com.weeth.domain.club.application.dto.request.UpdateMemberProfileRequest
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
@@ -83,27 +82,6 @@ class ClubMemberController(
         val summary = getClubMemberQueryService.findMySummary(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.MEMBER_SUMMARY_FIND_SUCCESS, summary)
-    }
-
-    // TODO: 추후 동아리별 프로필 수정으로 변경 시 clubId 경로 변수 추가 및 단일 ClubMember만 수정하도록 변경
-    @PatchMapping("/members/me")
-    @Operation(summary = "내 클럽 활동 프로필 수정 (프로필 사진, 자기소개)", deprecated = true)
-    fun updateMyProfile(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-        @Valid @RequestBody request: UpdateMemberProfileRequest,
-    ): CommonResponse<Unit> {
-        manageClubMemberUsecase.updateProfile(userId, request)
-        return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_UPDATED_SUCCESS)
-    }
-
-    // TODO: 추후 동아리별 프로필 수정으로 변경 시 clubId 경로 변수 추가 및 단일 ClubMember만 수정하도록 변경
-    @DeleteMapping("/members/me/profile-image")
-    @Operation(summary = "동아리 프로필 사진 삭제", deprecated = true)
-    fun deleteMyProfileImage(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<Unit> {
-        manageClubMemberUsecase.deleteProfileImage(userId)
-        return CommonResponse.success(ClubResponseCode.MEMBER_PROFILE_IMAGE_DELETED_SUCCESS)
     }
 
     @GetMapping("/{clubId}/members/me/profile-status")
