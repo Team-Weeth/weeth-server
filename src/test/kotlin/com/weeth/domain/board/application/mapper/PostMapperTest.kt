@@ -11,10 +11,12 @@ import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.user.domain.entity.UserProfile
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
 import io.mockk.mockk
+import org.springframework.test.util.ReflectionTestUtils
 import java.time.LocalDateTime
 import kotlin.collections.emptyList
 
@@ -39,6 +41,7 @@ class PostMapperTest :
         every { authorMember.memberRole } returns MemberRole.USER
         every { authorMember.memberStatus } returns MemberStatus.ACTIVE
         every { authorMember.profileImageStorageKey } returns null
+        every { authorMember.userProfile } returns null
         every { authorMember.user } returns user
 
         every { post.id } returns 1L
@@ -66,6 +69,36 @@ class PostMapperTest :
                 response.fileUrls shouldBe emptyList()
                 response.isNew shouldBe true
             }
+
+            it("작성자 정보는 멤버가 사용 중인 멀티프로필 기준으로 변환한다") {
+                val profile =
+                    UserProfile
+                        .create(
+                            user = user,
+                            name = "멀티프로필",
+                            profileImageStorageKey = "USER_PROFILE_IMAGE/2026-07/profile.png",
+                        ).apply {
+                            ReflectionTestUtils.setField(this, "id", 10L)
+                        }
+                every { authorMember.userProfile } returns profile
+                every { authorMember.profileImageStorageKey } returns "CLUB_MEMBER_PROFILE/legacy.png"
+                every { fileAccessUrlPort.resolve("CLUB_MEMBER_PROFILE/legacy.png") } returns
+                    "https://cdn.test/legacy.png"
+                every { fileAccessUrlPort.resolve("USER_PROFILE_IMAGE/2026-07/profile.png") } returns
+                    "https://cdn.test/profile.png"
+
+                val response =
+                    mapper.toListResponse(
+                        post,
+                        files = emptyList(),
+                        now = now,
+                        isLiked = false,
+                        memberRole = MemberRole.USER,
+                    )
+
+                response.author.name shouldBe "멀티프로필"
+                response.author.profileImageUrl shouldBe "https://cdn.test/profile.png"
+            }
         }
 
         describe("작성자 익명화") {
@@ -79,6 +112,7 @@ class PostMapperTest :
                 every { leftMember.memberRole } returns MemberRole.USER
                 every { leftMember.memberStatus } returns MemberStatus.LEFT
                 every { leftMember.profileImageStorageKey } returns "POST/2026-05/leak.png"
+                every { leftMember.userProfile } returns null
                 every { leftMember.user } returns leftUser
 
                 val leftPost = mockk<Post>()

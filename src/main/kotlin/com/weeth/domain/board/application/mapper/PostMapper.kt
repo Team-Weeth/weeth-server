@@ -43,7 +43,7 @@ class PostMapper(
         id = post.id,
         boardId = post.board.id,
         boardName = post.board.name,
-        author = UserInfo.ofClubMember(post.clubMember, resolveProfileImage(post.clubMember)),
+        author = toAuthorInfo(post.clubMember),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
@@ -63,7 +63,7 @@ class PostMapper(
         memberRole: MemberRole,
     ) = PostListResponse(
         id = post.id,
-        author = UserInfo.ofClubMember(post.clubMember, resolveProfileImage(post.clubMember)),
+        author = toAuthorInfo(post.clubMember),
         boardId = post.board.id,
         boardName = post.board.name,
         title = post.title,
@@ -76,6 +76,15 @@ class PostMapper(
         boardConfig = BoardConfigResponse.of(post.board, memberRole),
     )
 
-    private fun resolveProfileImage(member: ClubMember): String? =
-        member.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) }
+    private fun toAuthorInfo(member: ClubMember): UserInfo =
+        UserInfo.ofClubMemberProfile(
+            clubMember = member,
+            profileName = member.userProfile?.name ?: member.user.name,
+            resolvedProfileImageUrl = resolveProfileImage(member),
+        )
+
+    private fun resolveProfileImage(member: ClubMember): String? {
+        val storageKey = member.userProfile?.profileImageStorageKey ?: member.profileImageStorageKey
+        return storageKey?.let { fileAccessUrlPort.resolve(it) }
+    }
 }
