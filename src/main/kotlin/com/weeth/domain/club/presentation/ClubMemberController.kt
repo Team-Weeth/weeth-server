@@ -87,7 +87,7 @@ class ClubMemberController(
 
     // TODO: 추후 동아리별 프로필 수정으로 변경 시 clubId 경로 변수 추가 및 단일 ClubMember만 수정하도록 변경
     @PatchMapping("/members/me")
-    @Operation(summary = "내 클럽 활동 프로필 수정 (프로필 사진, 자기소개)")
+    @Operation(summary = "내 클럽 활동 프로필 수정 (프로필 사진, 자기소개)", deprecated = true)
     fun updateMyProfile(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @Valid @RequestBody request: UpdateMemberProfileRequest,
@@ -98,7 +98,7 @@ class ClubMemberController(
 
     // TODO: 추후 동아리별 프로필 수정으로 변경 시 clubId 경로 변수 추가 및 단일 ClubMember만 수정하도록 변경
     @DeleteMapping("/members/me/profile-image")
-    @Operation(summary = "동아리 프로필 사진 삭제")
+    @Operation(summary = "동아리 프로필 사진 삭제", deprecated = true)
     fun deleteMyProfileImage(
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Unit> {
