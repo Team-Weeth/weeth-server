@@ -120,6 +120,20 @@ interface ClubMemberRepository :
         SELECT cm
         FROM ClubMember cm
         JOIN FETCH cm.club
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.user.id = :userId
+        ORDER BY cm.id ASC
+        """,
+    )
+    override fun findAllByUserIdWithClubAndUserProfile(
+        @Param("userId") userId: Long,
+    ): List<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.club
         WHERE cm.user.id = :userId
         AND cm.memberStatus = :memberStatus
         """,

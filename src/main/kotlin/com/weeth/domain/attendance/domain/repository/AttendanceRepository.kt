@@ -16,7 +16,9 @@ import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
-interface AttendanceRepository : JpaRepository<Attendance, Long> {
+interface AttendanceRepository :
+    JpaRepository<Attendance, Long>,
+    AttendanceReader {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(
@@ -35,6 +37,19 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
 
     @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
     fun findAllBySession(session: Session): List<Attendance>
+
+    @Query(
+        """
+        SELECT COUNT(a)
+        FROM Attendance a
+        WHERE a.clubMember.id IN :clubMemberIds
+        AND a.status = :status
+        """,
+    )
+    override fun countByClubMemberIdsAndStatus(
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+        @Param("status") status: AttendanceStatus,
+    ): Long
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))

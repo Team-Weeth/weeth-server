@@ -231,4 +231,17 @@ interface PostRepository :
     fun findActiveIdsByClubMemberIdIn(
         @Param("clubMemberIds") clubMemberIds: List<Long>,
     ): List<Long>
+
+    @Query(
+        """
+        SELECT COUNT(p)
+        FROM Post p
+        WHERE p.clubMember.id IN :clubMemberIds
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        """,
+    )
+    override fun countActiveByClubMemberIds(
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+    ): Long
 }

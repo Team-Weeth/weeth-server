@@ -1,0 +1,55 @@
+package com.weeth.domain.user.application.usecase.query
+
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
+import com.weeth.domain.attendance.domain.repository.AttendanceReader
+import com.weeth.domain.board.domain.repository.PostReader
+import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.user.application.dto.response.UserMyPageResponse
+import com.weeth.domain.user.application.mapper.UserMyPageMapper
+import com.weeth.domain.user.domain.repository.UserReader
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Service
+class GetUserMyPageQueryService(
+    private val userReader: UserReader,
+    private val clubMemberReader: ClubMemberReader,
+    private val postReader: PostReader,
+    private val attendanceReader: AttendanceReader,
+    private val userMyPageMapper: UserMyPageMapper,
+) {
+    @Transactional(readOnly = true)
+    fun getMyPage(userId: Long): UserMyPageResponse {
+        val user = userReader.getById(userId)
+        val clubMembers = clubMemberReader.findAllByUserIdWithClubAndUserProfile(userId)
+        val clubMemberIds = clubMembers.map { it.id }
+        val postCount = countPosts(clubMemberIds)
+        val attendedSessionCount = countAttendedSessions(clubMemberIds)
+        val usingProfileMembers =
+            clubMembers.filter {
+                it.memberStatus == MemberStatus.ACTIVE && it.userProfile != null
+            }
+
+        return userMyPageMapper.toResponse(
+            user = user,
+            postCount = postCount,
+            attendedSessionCount = attendedSessionCount,
+            usingProfileMembers = usingProfileMembers,
+        )
+    }
+
+    private fun countPosts(clubMemberIds: List<Long>): Long =
+        if (clubMemberIds.isEmpty()) {
+            0L
+        } else {
+            postReader.countActiveByClubMemberIds(clubMemberIds)
+        }
+
+    private fun countAttendedSessions(clubMemberIds: List<Long>): Long =
+        if (clubMemberIds.isEmpty()) {
+            0L
+        } else {
+            attendanceReader.countByClubMemberIdsAndStatus(clubMemberIds, AttendanceStatus.ATTEND)
+        }
+}
