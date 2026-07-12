@@ -8,7 +8,9 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserInfo
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.user.domain.entity.UserProfile
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -19,7 +21,8 @@ class DashboardMapperTest :
     DescribeSpec({
         val fileMapper = mockk<FileMapper>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
-        val mapper = DashboardMapper(fileMapper, fileAccessUrlPort)
+        val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
+        val mapper = DashboardMapper(fileMapper, fileAccessUrlPort, userInfoMapper)
         val now = LocalDateTime.now()
 
         val board = mockk<Board>()
@@ -38,6 +41,7 @@ class DashboardMapperTest :
                 every { leftMember.memberRole } returns MemberRole.USER
                 every { leftMember.memberStatus } returns MemberStatus.LEFT
                 every { leftMember.profileImageStorageKey } returns "CLUB_MEMBER_PROFILE/leak.png"
+                every { leftMember.userProfile } returns null
                 every { leftMember.user } returns leftUser
 
                 val post = mockk<Post>()
@@ -62,6 +66,52 @@ class DashboardMapperTest :
                 response.author.name shouldBe UserInfo.ANONYMOUS_USER_NAME
                 response.author.profileImageUrl shouldBe null
                 response.author.id shouldBe 9L
+            }
+
+            it("ACTIVE 멤버 게시글은 사용 중인 멀티프로필 기준으로 작성자 정보가 노출된다") {
+                every { fileAccessUrlPort.resolve("USER_PROFILE_IMAGE/dashboard.png") } returns
+                    "https://cdn/dashboard-profile.png"
+                every { fileAccessUrlPort.resolve("CLUB_MEMBER_PROFILE/legacy.png") } returns
+                    "https://cdn/legacy-profile.png"
+                val user = mockk<User>()
+                every { user.id } returns 10L
+                every { user.name } returns "개인정보 이름"
+                val userProfile =
+                    UserProfile.create(
+                        user = user,
+                        name = "대시 프로필",
+                        profileImageStorageKey = "USER_PROFILE_IMAGE/dashboard.png",
+                    )
+
+                val activeMember = mockk<ClubMember>()
+                every { activeMember.memberRole } returns MemberRole.USER
+                every { activeMember.memberStatus } returns MemberStatus.ACTIVE
+                every { activeMember.profileImageStorageKey } returns "CLUB_MEMBER_PROFILE/legacy.png"
+                every { activeMember.userProfile } returns userProfile
+                every { activeMember.user } returns user
+
+                val post = mockk<Post>()
+                every { post.id } returns 201L
+                every { post.title } returns "활성 멤버 글"
+                every { post.content } returns "내용"
+                every { post.clubMember } returns activeMember
+                every { post.board } returns board
+                every { post.commentCount } returns 0
+                every { post.likeCount } returns 0
+                every { post.createdAt } returns now
+
+                val response =
+                    mapper.toPostResponse(
+                        post,
+                        files = emptyList(),
+                        now = now,
+                        isLiked = false,
+                        memberRole = MemberRole.USER,
+                    )
+
+                response.author.name shouldBe "대시 프로필"
+                response.author.profileImageUrl shouldBe "https://cdn/dashboard-profile.png"
+                response.author.id shouldBe 10L
             }
         }
     })
