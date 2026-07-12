@@ -10,6 +10,7 @@ import com.weeth.domain.file.application.dto.response.FileResponse
 import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserInfo
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserProfile
 import io.kotest.core.spec.style.DescribeSpec
@@ -23,7 +24,8 @@ import kotlin.collections.emptyList
 class PostMapperTest :
     DescribeSpec({
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
-        val mapper = PostMapper(fileAccessUrlPort)
+        val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
+        val mapper = PostMapper(userInfoMapper)
         val now = LocalDateTime.now()
         val user = mockk<User>()
         val board = mockk<Board>()

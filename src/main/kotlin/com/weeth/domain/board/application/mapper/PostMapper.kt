@@ -7,18 +7,16 @@ import com.weeth.domain.board.application.dto.response.PostLikeResponse
 import com.weeth.domain.board.application.dto.response.PostListResponse
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
 import com.weeth.domain.board.domain.entity.Post
-import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.comment.application.dto.response.CommentResponse
 import com.weeth.domain.file.application.dto.response.FileResponse
-import com.weeth.domain.file.domain.port.FileAccessUrlPort
-import com.weeth.domain.user.application.dto.response.UserInfo
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
 @Component
 class PostMapper(
-    private val fileAccessUrlPort: FileAccessUrlPort,
+    private val userInfoMapper: UserInfoMapper,
 ) {
     fun toSaveResponse(post: Post) = PostSaveResponse(id = post.id, boardId = post.board.id)
 
@@ -43,7 +41,7 @@ class PostMapper(
         id = post.id,
         boardId = post.board.id,
         boardName = post.board.name,
-        author = toAuthorInfo(post.clubMember),
+        author = userInfoMapper.toClubMemberAuthorInfo(post.clubMember),
         title = post.title,
         content = post.content,
         time = post.modifiedAt,
@@ -63,7 +61,7 @@ class PostMapper(
         memberRole: MemberRole,
     ) = PostListResponse(
         id = post.id,
-        author = toAuthorInfo(post.clubMember),
+        author = userInfoMapper.toClubMemberAuthorInfo(post.clubMember),
         boardId = post.board.id,
         boardName = post.board.name,
         title = post.title,
@@ -75,16 +73,4 @@ class PostMapper(
         isNew = post.createdAt.isAfter(now.minusHours(24)),
         boardConfig = BoardConfigResponse.of(post.board, memberRole),
     )
-
-    private fun toAuthorInfo(member: ClubMember): UserInfo =
-        UserInfo.ofClubMemberProfile(
-            clubMember = member,
-            profileName = member.userProfile?.name ?: member.user.name,
-            resolvedProfileImageUrl = resolveProfileImage(member),
-        )
-
-    private fun resolveProfileImage(member: ClubMember): String? {
-        val storageKey = member.userProfile?.profileImageStorageKey ?: member.profileImageStorageKey
-        return storageKey?.let { fileAccessUrlPort.resolve(it) }
-    }
 }

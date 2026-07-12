@@ -6,6 +6,7 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.comment.domain.entity.Comment
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserInfo
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserProfile
 import io.kotest.core.spec.style.DescribeSpec
@@ -18,7 +19,8 @@ import java.time.LocalDateTime
 class CommentMapperTest :
     DescribeSpec({
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
-        val mapper = CommentMapper(fileAccessUrlPort)
+        val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
+        val mapper = CommentMapper(userInfoMapper)
         val now = LocalDateTime.now()
 
         describe("toCommentDto 작성자 익명화") {
