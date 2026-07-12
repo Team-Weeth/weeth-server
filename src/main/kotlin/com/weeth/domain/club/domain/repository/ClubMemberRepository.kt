@@ -64,6 +64,11 @@ interface ClubMemberRepository :
         @Param("clubIds") clubIds: List<Long>,
     ): List<ClubMember>
 
+    fun existsByUserProfileIdAndMemberStatus(
+        userProfileId: Long,
+        memberStatus: MemberStatus,
+    ): Boolean
+
     override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
         memberStatus: MemberStatus,

@@ -14,6 +14,7 @@ import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.exception.UserProfileAssignmentNotAllowedException
 import com.weeth.domain.user.application.exception.UserProfileDuplicateClubAssignmentException
+import com.weeth.domain.user.application.exception.UserProfileInUseException
 import com.weeth.domain.user.application.exception.UserProfileInvalidClubIdException
 import com.weeth.domain.user.application.exception.UserProfileNotFoundException
 import com.weeth.domain.user.application.mapper.UserProfileMapper
@@ -27,6 +28,7 @@ import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
+import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.test.util.ReflectionTestUtils
@@ -164,7 +166,7 @@ class ManageUserProfileUseCaseTest :
                         removeHeaderImage = true,
                         bio = "  새 소개  ",
                     )
-                every { userProfileRepository.findByIdAndUserId(10L, 1L) } returns Optional.of(profile)
+                every { userProfileRepository.findByIdAndUserIdWithLock(10L, 1L) } returns Optional.of(profile)
                 every {
                     fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, 10L)
                 } returns 1
@@ -202,7 +204,7 @@ class ManageUserProfileUseCaseTest :
 
             it("프로필이 없거나 로그인 사용자 소유가 아니면 예외가 발생한다") {
                 val request = UpdateMultiProfileRequest(name = "새 이름")
-                every { userProfileRepository.findByIdAndUserId(10L, 1L) } returns Optional.empty()
+                every { userProfileRepository.findByIdAndUserIdWithLock(10L, 1L) } returns Optional.empty()
 
                 shouldThrow<UserProfileNotFoundException> {
                     useCase.update(1L, 10L, request)
@@ -236,7 +238,7 @@ class ManageUserProfileUseCaseTest :
                                 ClubProfileAssignmentRequest(TsidBase62Encoder.encode(101L), 11L),
                             ),
                     )
-                every { userProfileRepository.findAllByUserIdAndIdIn(1L, listOf(10L, 11L)) } returns
+                every { userProfileRepository.findAllByUserIdAndIdInWithLock(1L, listOf(10L, 11L)) } returns
                     listOf(profile1, profile2)
                 every {
                     clubMemberRepository.findAllActiveByUserIdAndClubIdsWithLock(1L, listOf(100L, 101L))
@@ -287,7 +289,7 @@ class ManageUserProfileUseCaseTest :
                                 ClubProfileAssignmentRequest(TsidBase62Encoder.encode(101L), 11L),
                             ),
                     )
-                every { userProfileRepository.findAllByUserIdAndIdIn(1L, listOf(10L, 11L)) } returns emptyList()
+                every { userProfileRepository.findAllByUserIdAndIdInWithLock(1L, listOf(10L, 11L)) } returns emptyList()
 
                 shouldThrow<UserProfileNotFoundException> {
                     useCase.assignClubProfiles(1L, request)
@@ -307,7 +309,7 @@ class ManageUserProfileUseCaseTest :
                                 ClubProfileAssignmentRequest(TsidBase62Encoder.encode(100L), 10L),
                             ),
                     )
-                every { userProfileRepository.findAllByUserIdAndIdIn(1L, listOf(10L)) } returns listOf(profile)
+                every { userProfileRepository.findAllByUserIdAndIdInWithLock(1L, listOf(10L)) } returns listOf(profile)
                 every {
                     clubMemberRepository.findAllActiveByUserIdAndClubIdsWithLock(1L, listOf(100L))
                 } returns emptyList()
@@ -315,6 +317,58 @@ class ManageUserProfileUseCaseTest :
                 shouldThrow<UserProfileAssignmentNotAllowedException> {
                     useCase.assignClubProfiles(1L, request)
                 }
+            }
+        }
+
+        describe("delete") {
+            it("로그인 사용자의 미사용 프로필을 삭제하고 이미지 파일 메타데이터를 삭제한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val profile =
+                    UserProfile
+                        .create(
+                            user = user,
+                            name = "삭제할 프로필",
+                            profileImageStorageKey = "USER_PROFILE_IMAGE/2026-07/profile.png",
+                            headerImageStorageKey = "USER_PROFILE_HEADER/2026-07/header.png",
+                        ).apply {
+                            ReflectionTestUtils.setField(this, "id", 10L)
+                        }
+                every { userProfileRepository.findByIdAndUserIdWithLock(10L, 1L) } returns Optional.of(profile)
+                every { clubMemberRepository.existsByUserProfileIdAndMemberStatus(any(), any()) } returns false
+                every {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, 10L)
+                } returns 1
+                every {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
+                } returns 1
+                justRun { userProfileRepository.delete(profile) }
+
+                useCase.delete(1L, 10L)
+
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, 10L)
+                }
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
+                }
+                verify(exactly = 1) { userProfileRepository.delete(profile) }
+            }
+
+            it("사용 중인 프로필이면 예외가 발생한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val profile =
+                    UserProfile.create(user = user, name = "사용 중인 프로필").apply {
+                        ReflectionTestUtils.setField(this, "id", 10L)
+                    }
+                every { userProfileRepository.findByIdAndUserIdWithLock(10L, 1L) } returns Optional.of(profile)
+                every { clubMemberRepository.existsByUserProfileIdAndMemberStatus(10L, any()) } returns true
+
+                shouldThrow<UserProfileInUseException> {
+                    useCase.delete(1L, 10L)
+                }
+
+                verify(exactly = 0) { userProfileRepository.delete(any()) }
+                verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
             }
         }
     })

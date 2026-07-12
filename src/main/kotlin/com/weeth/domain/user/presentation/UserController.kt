@@ -180,6 +180,16 @@ class UserController(
         return CommonResponse.success(UserResponseCode.USER_PROFILE_UPDATED_SUCCESS, response)
     }
 
+    @DeleteMapping("/me/profiles/{profileId}")
+    @Operation(summary = "멀티프로필 삭제")
+    fun deleteUserProfile(
+        @PathVariable profileId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageUserProfileUseCase.delete(userId, profileId)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_DELETED_SUCCESS)
+    }
+
     @PatchMapping("/me/club-profile-assignments")
     @Operation(summary = "동아리별 사용 프로필 변경")
     fun assignClubProfiles(

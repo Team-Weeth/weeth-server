@@ -62,4 +62,7 @@ enum class UserErrorCode(
 
     @ExplainError("동아리별 프로필 설정 요청의 clubId가 Base62 TSID 형식이 아닐 때 발생합니다.")
     USER_PROFILE_INVALID_CLUB_ID(20917, HttpStatus.BAD_REQUEST, "동아리 ID 형식이 올바르지 않습니다."),
+
+    @ExplainError("삭제하려는 프로필이 하나 이상의 ACTIVE 동아리에서 사용 중일 때 발생합니다.")
+    USER_PROFILE_IN_USE(20918, HttpStatus.CONFLICT, "사용 중인 프로필은 삭제할 수 없습니다."),
 }

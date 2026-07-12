@@ -176,4 +176,16 @@ class UserControllerTest :
                 verify(exactly = 1) { manageUserProfileUseCase.assignClubProfiles(1L, request) }
             }
         }
+
+        describe("deleteUserProfile") {
+            it("로그인 사용자의 멀티프로필을 삭제한다") {
+                justRun { manageUserProfileUseCase.delete(1L, 10L) }
+
+                val response = controller.deleteUserProfile(10L, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_DELETED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_DELETED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.delete(1L, 10L) }
+            }
+        }
     })

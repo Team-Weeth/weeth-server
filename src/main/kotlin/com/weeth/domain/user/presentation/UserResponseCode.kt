@@ -19,4 +19,5 @@ enum class UserResponseCode(
     USER_PROFILE_FIND_SUCCESS(10909, HttpStatus.OK, "프로필을 성공적으로 조회했습니다."),
     USER_PROFILE_UPDATED_SUCCESS(10910, HttpStatus.OK, "프로필이 성공적으로 수정되었습니다."),
     USER_PROFILE_ASSIGNMENT_UPDATED_SUCCESS(10911, HttpStatus.OK, "동아리별 사용 프로필이 성공적으로 변경되었습니다."),
+    USER_PROFILE_DELETED_SUCCESS(10912, HttpStatus.OK, "프로필이 성공적으로 삭제되었습니다."),
 }

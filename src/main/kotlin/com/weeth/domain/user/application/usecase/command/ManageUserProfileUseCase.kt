@@ -1,6 +1,7 @@
 package com.weeth.domain.user.application.usecase.command
 
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.entity.File
@@ -12,6 +13,7 @@ import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.exception.UserProfileAssignmentNotAllowedException
 import com.weeth.domain.user.application.exception.UserProfileDuplicateClubAssignmentException
+import com.weeth.domain.user.application.exception.UserProfileInUseException
 import com.weeth.domain.user.application.exception.UserProfileInvalidClubIdException
 import com.weeth.domain.user.application.exception.UserProfileNotFoundException
 import com.weeth.domain.user.application.mapper.UserProfileMapper
@@ -53,7 +55,7 @@ class ManageUserProfileUseCase(
     ): UserProfileResponse {
         val profile =
             userProfileRepository
-                .findByIdAndUserId(profileId, userId)
+                .findByIdAndUserIdWithLock(profileId, userId)
                 .orElseThrow { UserProfileNotFoundException() }
 
         profile.update(
@@ -104,6 +106,25 @@ class ManageUserProfileUseCase(
             val profile = profilesById[assignment.profileId] ?: throw UserProfileNotFoundException()
             member.assignProfile(profile)
         }
+    }
+
+    @Transactional
+    fun delete(
+        userId: Long,
+        profileId: Long,
+    ) {
+        val profile =
+            userProfileRepository
+                .findByIdAndUserIdWithLock(profileId, userId)
+                .orElseThrow { UserProfileNotFoundException() }
+
+        if (clubMemberRepository.existsByUserProfileIdAndMemberStatus(profile.id, MemberStatus.ACTIVE)) {
+            throw UserProfileInUseException()
+        }
+
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, profile.id)
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, profile.id)
+        userProfileRepository.delete(profile)
     }
 
     private fun saveFileIfPresent(
@@ -163,7 +184,12 @@ class ManageUserProfileUseCase(
         userId: Long,
         profileIds: List<Long>,
     ): Map<Long, UserProfile> {
-        val profilesById = userProfileRepository.findAllByUserIdAndIdIn(userId, profileIds).associateBy { it.id }
+        val profilesById =
+            userProfileRepository
+                .findAllByUserIdAndIdInWithLock(
+                    userId,
+                    profileIds,
+                ).associateBy { it.id }
         if (profilesById.size != profileIds.size) {
             throw UserProfileNotFoundException()
         }
