@@ -1,5 +1,7 @@
 package com.weeth.domain.user.presentation
 
+import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
+import com.weeth.domain.user.application.dto.request.ClubProfileAssignmentRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
@@ -153,6 +155,25 @@ class UserControllerTest :
                 response.message shouldBe UserResponseCode.USER_PROFILE_UPDATED_SUCCESS.message
                 response.data shouldBe profileResponse
                 verify(exactly = 1) { manageUserProfileUseCase.update(1L, 10L, request) }
+            }
+        }
+
+        describe("assignClubProfiles") {
+            it("동아리별 사용 프로필을 변경한다") {
+                val request =
+                    AssignClubProfileRequest(
+                        assignments =
+                            listOf(
+                                ClubProfileAssignmentRequest(clubId = "1C", profileId = 10L),
+                            ),
+                    )
+                justRun { manageUserProfileUseCase.assignClubProfiles(1L, request) }
+
+                val response = controller.assignClubProfiles(request, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_ASSIGNMENT_UPDATED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_ASSIGNMENT_UPDATED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.assignClubProfiles(1L, request) }
             }
         }
     })

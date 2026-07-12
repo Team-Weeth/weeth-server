@@ -1,6 +1,7 @@
 package com.weeth.domain.user.presentation
 
 import com.weeth.domain.user.application.dto.request.AgreeTermsRequest
+import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
 import com.weeth.domain.user.application.dto.request.CreateInquiryRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.SocialLoginRequest
@@ -177,6 +178,16 @@ class UserController(
     ): CommonResponse<UserProfileResponse> {
         val response = manageUserProfileUseCase.update(userId, profileId, request)
         return CommonResponse.success(UserResponseCode.USER_PROFILE_UPDATED_SUCCESS, response)
+    }
+
+    @PatchMapping("/me/club-profile-assignments")
+    @Operation(summary = "동아리별 사용 프로필 변경")
+    fun assignClubProfiles(
+        @RequestBody @Valid request: AssignClubProfileRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageUserProfileUseCase.assignClubProfiles(userId, request)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_ASSIGNMENT_UPDATED_SUCCESS)
     }
 
     private fun <T> buildTokenResponse(
