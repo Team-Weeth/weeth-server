@@ -16,8 +16,8 @@ data class UserMyPostResponse(
     val boardName: String,
     @field:Schema(description = "게시글 제목", example = "제목")
     val title: String,
-    @field:Schema(description = "게시글 내용 미리보기", example = "내용 일부")
-    val contentPreview: String,
+    @field:Schema(description = "게시글 내용", example = "내용")
+    val content: String,
     @field:Schema(description = "댓글 수", example = "3")
     val commentCount: Int,
     @field:Schema(description = "좋아요 수", example = "5")

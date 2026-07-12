@@ -64,7 +64,7 @@ class GetUserPostQueryServiceTest :
                 result.content[0].boardId shouldBe 10L
                 result.content[0].boardName shouldBe "자유게시판"
                 result.content[0].title shouldBe "제목"
-                result.content[0].contentPreview shouldBe content
+                result.content[0].content shouldBe content
                 result.content[0].commentCount shouldBe 3
                 result.content[0].likeCount shouldBe 5
                 result.content[0].createdAt shouldBe createdAt

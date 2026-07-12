@@ -15,7 +15,7 @@ class UserPostMapper {
             boardId = post.board.id,
             boardName = post.board.name,
             title = post.title,
-            contentPreview = post.content,
+            content = post.content,
             commentCount = post.commentCount,
             likeCount = post.likeCount,
             createdAt = post.createdAt,

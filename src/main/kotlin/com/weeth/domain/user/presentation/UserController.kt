@@ -38,8 +38,11 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Max
+import jakarta.validation.constraints.Min
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
@@ -54,6 +57,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/v4/users")
 @ApiErrorCodeExample(UserErrorCode::class, JwtErrorCode::class)
+@Validated
 class UserController(
     private val authUserUseCase: AuthUserUseCase,
     private val socialLoginUseCase: SocialLoginUseCase,
@@ -224,8 +228,8 @@ class UserController(
     @Operation(summary = "내가 쓴 글 조회")
     fun getMyPosts(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @RequestParam(defaultValue = "0") pageNumber: Int,
-        @RequestParam(defaultValue = "5") pageSize: Int,
+        @RequestParam(defaultValue = "0") @Min(0) pageNumber: Int,
+        @RequestParam(defaultValue = "5") @Min(1) @Max(50) pageSize: Int,
     ): CommonResponse<PageResponse<UserMyPostResponse>> {
         val response = getUserPostQueryService.getMyPosts(userId, pageNumber, pageSize)
         return CommonResponse.success(UserResponseCode.USER_MY_POSTS_FIND_SUCCESS, response)
@@ -235,8 +239,8 @@ class UserController(
     @Operation(summary = "출석한 세션 조회")
     fun getAttendedSessions(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @RequestParam(defaultValue = "0") pageNumber: Int,
-        @RequestParam(defaultValue = "5") pageSize: Int,
+        @RequestParam(defaultValue = "0") @Min(0) pageNumber: Int,
+        @RequestParam(defaultValue = "5") @Min(1) @Max(50) pageSize: Int,
     ): CommonResponse<PageResponse<UserAttendedSessionResponse>> {
         val response = getUserAttendanceQueryService.getAttendedSessions(userId, pageNumber, pageSize)
         return CommonResponse.success(UserResponseCode.USER_ATTENDED_SESSIONS_FIND_SUCCESS, response)

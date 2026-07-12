@@ -190,7 +190,7 @@ class UserControllerTest :
                                     boardId = 10L,
                                     boardName = "자유게시판",
                                     title = "제목",
-                                    contentPreview = "내용 일부",
+                                    content = "내용",
                                     commentCount = 3,
                                     likeCount = 5,
                                     createdAt = LocalDateTime.of(2026, 6, 29, 10, 0),
