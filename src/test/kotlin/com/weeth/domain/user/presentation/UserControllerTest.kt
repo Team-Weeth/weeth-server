@@ -7,6 +7,7 @@ import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.response.UserMyPageInfoResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageStatsResponse
+import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
@@ -17,8 +18,10 @@ import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCas
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
 import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
+import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
+import com.weeth.global.common.response.PageResponse
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -29,6 +32,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseCookie
+import java.time.LocalDateTime
 
 class UserControllerTest :
     DescribeSpec({
@@ -41,6 +45,7 @@ class UserControllerTest :
         val manageUserProfileUseCase = mockk<ManageUserProfileUseCase>()
         val getUserProfileQueryService = mockk<GetUserProfileQueryService>()
         val getUserMyPageQueryService = mockk<GetUserMyPageQueryService>()
+        val getUserPostQueryService = mockk<GetUserPostQueryService>()
         val tokenCookieProvider = mockk<TokenCookieProvider>()
         val controller =
             UserController(
@@ -53,6 +58,7 @@ class UserControllerTest :
                 manageUserProfileUseCase = manageUserProfileUseCase,
                 getUserProfileQueryService = getUserProfileQueryService,
                 getUserMyPageQueryService = getUserMyPageQueryService,
+                getUserPostQueryService = getUserPostQueryService,
                 tokenCookieProvider = tokenCookieProvider,
             )
 
@@ -67,6 +73,7 @@ class UserControllerTest :
                 manageUserProfileUseCase,
                 getUserProfileQueryService,
                 getUserMyPageQueryService,
+                getUserPostQueryService,
                 tokenCookieProvider,
             )
         }
@@ -161,6 +168,41 @@ class UserControllerTest :
                 response.message shouldBe UserResponseCode.USER_MY_PAGE_FIND_SUCCESS.message
                 response.data shouldBe myPageResponse
                 verify(exactly = 1) { getUserMyPageQueryService.getMyPage(1L) }
+            }
+        }
+
+        describe("getMyPosts") {
+            it("로그인 사용자가 작성한 게시글 목록을 조회한다") {
+                val postsResponse =
+                    PageResponse(
+                        content =
+                            listOf(
+                                UserMyPostResponse(
+                                    postId = 200L,
+                                    clubId = "1C",
+                                    clubName = "Leets",
+                                    boardId = 10L,
+                                    boardName = "자유게시판",
+                                    title = "제목",
+                                    contentPreview = "내용 일부",
+                                    commentCount = 3,
+                                    likeCount = 5,
+                                    createdAt = LocalDateTime.of(2026, 6, 29, 10, 0),
+                                ),
+                            ),
+                        pageNumber = 0,
+                        pageSize = 5,
+                        totalElements = 12L,
+                        totalPages = 3,
+                    )
+                io.mockk.every { getUserPostQueryService.getMyPosts(1L, 0, 5) } returns postsResponse
+
+                val response = controller.getMyPosts(userId = 1L, pageNumber = 0, pageSize = 5)
+
+                response.code shouldBe UserResponseCode.USER_MY_POSTS_FIND_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_MY_POSTS_FIND_SUCCESS.message
+                response.data shouldBe postsResponse
+                verify(exactly = 1) { getUserPostQueryService.getMyPosts(1L, 0, 5) }
             }
         }
 

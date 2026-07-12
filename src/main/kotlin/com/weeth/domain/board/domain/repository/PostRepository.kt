@@ -5,6 +5,7 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
@@ -244,4 +245,27 @@ interface PostRepository :
     override fun countActiveByClubMemberIds(
         @Param("clubMemberIds") clubMemberIds: List<Long>,
     ): Long
+
+    @EntityGraph(attributePaths = ["board", "board.club"])
+    @Query(
+        value = """
+        SELECT p
+        FROM Post p
+        WHERE p.clubMember.user.id = :userId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+        countQuery = """
+        SELECT COUNT(p)
+        FROM Post p
+        WHERE p.clubMember.user.id = :userId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        """,
+    )
+    override fun findMyActivePosts(
+        @Param("userId") userId: Long,
+        pageable: Pageable,
+    ): Page<Post>
 }
