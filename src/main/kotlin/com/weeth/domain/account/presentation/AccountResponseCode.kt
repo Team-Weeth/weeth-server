@@ -28,4 +28,6 @@ enum class AccountResponseCode(
     ACCOUNT_PAYMENT_STATUS_FIND_SUCCESS(10128, HttpStatus.OK, "부원별 납부현황이 성공적으로 조회되었습니다."),
     ACCOUNT_MY_SUMMARY_FIND_SUCCESS(10129, HttpStatus.OK, "나의 회비 정보가 성공적으로 조회되었습니다."),
     ACCOUNT_CARDINAL_LIST_FIND_SUCCESS(10130, HttpStatus.OK, "회비 기수 목록이 성공적으로 조회되었습니다."),
+    ACCOUNT_PAYMENT_EXCLUDE_SUCCESS(10131, HttpStatus.OK, "선택한 부원이 납부 대상에서 제외되었습니다."),
+    ACCOUNT_VISIBILITY_FIND_SUCCESS(10132, HttpStatus.OK, "회비 기능 공개 여부가 성공적으로 조회되었습니다."),
 }

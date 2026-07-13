@@ -1,64 +1,56 @@
 package com.weeth.domain.account.application.usecase.command
 
-import com.weeth.domain.account.application.exception.AccountNotFoundException
-import com.weeth.domain.account.domain.entity.Account
-import com.weeth.domain.account.domain.enums.AccountStatus
-import com.weeth.domain.account.domain.repository.AccountRepository
-import com.weeth.domain.account.domain.vo.Money
+import com.weeth.domain.account.domain.entity.AccountSetting
+import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.club.fixture.ClubTestFixture
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 
 class ManageAccountUseCaseTest :
     DescribeSpec({
-        val accountRepository = mockk<AccountRepository>(relaxed = true)
+        val accountSettingRepository = mockk<AccountSettingRepository>(relaxed = true)
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val useCase =
             ManageAccountUseCase(
-                accountRepository = accountRepository,
+                accountSettingRepository = accountSettingRepository,
                 clubPermissionPolicy = clubPermissionPolicy,
             )
 
         val clubId = 1L
         val userId = 100L
-        val club = ClubTestFixture.createClub(id = clubId)
 
         beforeTest {
-            clearMocks(accountRepository, clubPermissionPolicy)
+            clearMocks(accountSettingRepository, clubPermissionPolicy)
         }
 
         describe("updateMemberVisibility") {
-            it("부원 거래 내역 공개 여부와 마지막 수정자를 저장한다") {
-                val account = Account.createDraft(club = club, cardinal = 5)
-                account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
-                account.activate()
-                every { accountRepository.findByIdWithLock(1L) } returns account
+            it("어드민 권한을 확인하고 club 단위 공개 여부를 저장한다") {
+                every { accountSettingRepository.findByClubId(clubId) } returns null
+                val saved = slot<AccountSetting>()
+                every { accountSettingRepository.save(capture(saved)) } answers { firstArg() }
 
-                useCase.updateMemberVisibility(clubId = clubId, accountId = 1L, visible = true, userId = userId)
+                useCase.updateMemberVisibility(clubId = clubId, visible = true, userId = userId)
 
-                account.status shouldBe AccountStatus.ACTIVE
-                account.memberVisible shouldBe true
-                account.lastModifiedBy shouldBe userId
+                verify { clubPermissionPolicy.requireAdmin(clubId, userId) }
+                saved.captured.clubId shouldBe clubId
+                saved.captured.memberVisible shouldBe true
             }
 
-            it("다른 동아리 장부이면 AccountNotFoundException을 던지고 공개 상태를 바꾸지 않는다") {
-                val otherClub = ClubTestFixture.createClub(id = 2L, code = "OTHER-CLUB")
-                val account = Account.createDraft(club = otherClub, cardinal = 5)
-                account.updateBasicInfo("5기 회비", Money.of(30_000), "운영비")
-                account.activate()
-                every { accountRepository.findByIdWithLock(1L) } returns account
+            it("기존 설정이 있으면 해당 설정을 갱신한다") {
+                val existing = AccountSetting.createDefault(clubId).apply { showToMembers() }
+                every { accountSettingRepository.findByClubId(clubId) } returns existing
+                val saved = slot<AccountSetting>()
+                every { accountSettingRepository.save(capture(saved)) } answers { firstArg() }
 
-                shouldThrow<AccountNotFoundException> {
-                    useCase.updateMemberVisibility(clubId = clubId, accountId = 1L, visible = true, userId = userId)
-                }
+                useCase.updateMemberVisibility(clubId = clubId, visible = false, userId = userId)
 
-                account.memberVisible shouldBe false
-                account.lastModifiedBy shouldBe null
+                saved.captured shouldBe existing
+                existing.memberVisible shouldBe false
             }
         }
     })

@@ -1,10 +1,12 @@
 package com.weeth.domain.account.application.usecase.query
 
 import com.weeth.domain.account.application.dto.request.AccountPaymentStatusFilter
+import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.mapper.AccountPaymentTargetMapper
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
+import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
@@ -232,6 +234,33 @@ class GetAccountPaymentTargetQueryServiceTest :
                     )
                 } returns 2L
                 every { clubMemberReader.countActiveByClubIdAndCardinalNumber(clubId, 40) } returns 5L
+            }
+
+            it("DRAFT 장부면 AccountNotActiveException 을 던지고 목록을 조회하지 않는다") {
+                val club = ClubTestFixture.createClub(id = clubId)
+                val account =
+                    AccountTestFixture.createAccount(id = accountId, club = club, status = AccountStatus.DRAFT)
+                every { accountRepository.findById(accountId) } returns Optional.of(account)
+
+                shouldThrow<AccountNotActiveException> {
+                    service.findPaymentStatus(
+                        clubId = clubId,
+                        accountId = accountId,
+                        userId = userId,
+                        paymentStatusFilter = AccountPaymentStatusFilter.ALL,
+                        keyword = null,
+                        page = 0,
+                        size = 20,
+                    )
+                }
+                verify(exactly = 0) {
+                    paymentTargetRepository.findActiveTargetsByPaymentStatusOrderByUnpaidFirst(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                    )
+                }
             }
 
             it("납부 대상 목록과 상단 요약(수납액/목표/납부율/카운트)을 함께 반환한다") {

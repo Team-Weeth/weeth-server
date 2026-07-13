@@ -3,6 +3,7 @@ package com.weeth.domain.account.presentation
 import com.weeth.domain.account.application.dto.request.AccountPaymentStatusFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
+import com.weeth.domain.account.application.dto.request.ExcludePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentPaidRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentUnpaidRequest
 import com.weeth.domain.account.application.dto.request.RefundPaymentRequest
@@ -21,6 +22,7 @@ import com.weeth.domain.account.application.usecase.query.GetAccountDashboardQue
 import com.weeth.domain.account.application.usecase.query.GetAccountPaymentTargetQueryService
 import com.weeth.domain.account.application.usecase.query.GetAccountTransactionQueryService
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_DASHBOARD_FIND_SUCCESS
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_EXCLUDE_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_PAID_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_PAYMENT_REFUND_SUCCESS
@@ -62,17 +64,17 @@ class AccountManageController(
     private val getAccountDashboardQueryService: GetAccountDashboardQueryService,
     private val getAccountPaymentTargetQueryService: GetAccountPaymentTargetQueryService,
 ) {
-    @GetMapping("/{accountId}/dashboard")
+    @GetMapping("/{cardinal}/dashboard")
     @Operation(summary = "회비 대시보드 조회", description = "잔액/총액, 납부 현황, 계좌, 월별 잔액 추이, 마지막 수정 정보를 집계해 반환합니다.")
     fun getDashboard(
         @TsidParam
         @TsidPathVariable clubId: Long,
-        @PathVariable accountId: Long,
+        @PathVariable cardinal: Int,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<AccountDashboardResponse> =
         CommonResponse.success(
             ACCOUNT_DASHBOARD_FIND_SUCCESS,
-            getAccountDashboardQueryService.getDashboard(clubId, accountId, userId),
+            getAccountDashboardQueryService.getDashboard(clubId, cardinal, userId),
         )
 
     @GetMapping("/{accountId}/payment-status")
@@ -103,18 +105,19 @@ class AccountManageController(
             ),
         )
 
-    @PatchMapping("/{accountId}/member-visibility")
-    @Operation(summary = "부원 거래 내역 공개 여부 수정")
+    @PatchMapping("/settings/visibility")
+    @Operation(
+        summary = "회비 기능 공개 여부 수정",
+        description = "회비 기능 전체를 동아리 단위로 부원에게 공개/비공개합니다. 특정 기수 장부가 아닌 회비 기능 전체에 적용됩니다.",
+    )
     fun updateMemberVisibility(
         @TsidParam
         @TsidPathVariable clubId: Long,
-        @PathVariable accountId: Long,
         @RequestBody @Valid request: UpdateMemberVisibilityRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
     ): CommonResponse<Void> {
         manageAccountUseCase.updateMemberVisibility(
             clubId = clubId,
-            accountId = accountId,
             visible = request.visible,
             userId = userId,
         )
@@ -226,6 +229,22 @@ class AccountManageController(
     ): CommonResponse<Void> {
         manageAccountPaymentUseCase.markUnpaid(clubId, accountId, request, userId)
         return CommonResponse.success(ACCOUNT_PAYMENT_MARK_UNPAID_SUCCESS)
+    }
+
+    @PatchMapping("/{accountId}/payment-targets/excluded")
+    @Operation(
+        summary = "납부 대상 제외(벌크)",
+        description = "선택한 부원들을 납부 대상에서 제외합니다. 미납 대상만 제외할 수 있으며, 납부 완료·환불 이력이 있으면 제외할 수 없습니다.",
+    )
+    fun excludePaymentTargets(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable accountId: Long,
+        @RequestBody @Valid request: ExcludePaymentTargetsRequest,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageAccountPaymentUseCase.exclude(clubId, accountId, request, userId)
+        return CommonResponse.success(ACCOUNT_PAYMENT_EXCLUDE_SUCCESS)
     }
 
     @PatchMapping("/{accountId}/payment-targets/refund")

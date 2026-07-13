@@ -5,7 +5,7 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.booleans.shouldBeTrue
 import jakarta.validation.Validation
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 class AccountTransactionRequestValidationTest :
     StringSpec({
@@ -32,7 +32,7 @@ class AccountTransactionRequestValidationTest :
                     amount = 10_000,
                     title = "스터디 지원금",
                     source = "인프런",
-                    transactedAt = LocalDate.of(2026, 7, 20),
+                    transactedAt = LocalDateTime.of(2026, 7, 20, 0, 0),
                     files = listOf(receipt1, receipt2),
                 )
 

@@ -1,5 +1,6 @@
 package com.weeth.domain.account.application.usecase.command
 
+import com.weeth.domain.account.application.dto.request.ExcludePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentPaidRequest
 import com.weeth.domain.account.application.dto.request.MarkPaymentUnpaidRequest
 import com.weeth.domain.account.application.dto.request.RefundPaymentRequest
@@ -7,12 +8,13 @@ import com.weeth.domain.account.application.exception.AccountNotActiveException
 import com.weeth.domain.account.application.exception.AccountNotFoundException
 import com.weeth.domain.account.application.exception.AccountPaymentNotRefundableException
 import com.weeth.domain.account.application.exception.AccountPaymentTargetNotFoundException
+import com.weeth.domain.account.application.exception.AccountPaymentTargetPaidException
 import com.weeth.domain.account.application.usecase.validateOwnedBy
 import com.weeth.domain.account.domain.entity.Account
 import com.weeth.domain.account.domain.entity.AccountPaymentTarget
 import com.weeth.domain.account.domain.entity.AccountTransaction
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
-import com.weeth.domain.account.domain.enums.AccountStatus
+import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.enums.AccountTransactionType
 import com.weeth.domain.account.domain.repository.AccountPaymentTargetRepository
 import com.weeth.domain.account.domain.repository.AccountRepository
@@ -90,6 +92,35 @@ class ManageAccountPaymentUseCase(
         account.markModifiedBy(userId)
     }
 
+    /**
+     * 납부 대상 제외(벌크): 선택된 대상들을 EXCLUDED 로 전이해 납부 대상에서 빼낸다.
+     * 미납(UNPAID) 대상만 제외할 수 있다 — 납부(PAID)/환불(REFUNDED) 이력이 있으면 거래·잔액 정합성이 깨지므로
+     * 하나라도 포함되면 아무것도 변경하지 않고 예외를 던진다(먼저 납부 정정 후 제외하도록 유도).
+     */
+    @Transactional
+    fun exclude(
+        clubId: Long,
+        accountId: Long,
+        request: ExcludePaymentTargetsRequest,
+        userId: Long,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val account = getActiveAccountWithLock(clubId, accountId)
+        val targets = getTargets(accountId, request.targetIds)
+
+        // 전부-또는-전무: 부분 적용을 막기 위해 전이 전에 먼저 전량 검증한다.
+        if (targets.any {
+                it.targetStatus != AccountTargetStatus.TARGETED ||
+                    it.paymentStatus != AccountPaymentStatus.UNPAID
+            }
+        ) {
+            throw AccountPaymentTargetPaidException()
+        }
+
+        targets.forEach { it.exclude() }
+        account.markModifiedBy(userId)
+    }
+
     /** 환불(벌크): DUES는 보존하고 REFUND 지출 거래를 생성해 잔액을 차감하며 상태를 REFUNDED로 전이한다. */
     @Transactional
     fun refund(
@@ -132,7 +163,7 @@ class ManageAccountPaymentUseCase(
     ): Account {
         val account = accountRepository.findByIdWithLock(accountId) ?: throw AccountNotFoundException()
         account.validateOwnedBy(clubId)
-        if (account.status != AccountStatus.ACTIVE) throw AccountNotActiveException()
+        if (!account.isActive) throw AccountNotActiveException()
         return account
     }
 

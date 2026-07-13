@@ -3,6 +3,7 @@ package com.weeth.domain.account.presentation
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
 import com.weeth.domain.account.application.dto.response.AccountCardinalResponse
+import com.weeth.domain.account.application.dto.response.AccountVisibilityResponse
 import com.weeth.domain.account.application.dto.response.MemberAccountTransactionsResponse
 import com.weeth.domain.account.application.dto.response.MemberTransactionDetailResponse
 import com.weeth.domain.account.application.dto.response.MyAccountResponse
@@ -13,6 +14,7 @@ import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_CARDINA
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_MY_SUMMARY_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_DETAIL_FIND_SUCCESS
 import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_TRANSACTION_FIND_SUCCESS
+import com.weeth.domain.account.presentation.AccountResponseCode.ACCOUNT_VISIBILITY_FIND_SUCCESS
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -35,6 +37,21 @@ class AccountController(
     private val getMyAccountQueryService: GetMyAccountQueryService,
     private val getMyAccountTransactionQueryService: GetMyAccountTransactionQueryService,
 ) {
+    @GetMapping("/settings/visibility")
+    @Operation(
+        summary = "회비 기능 공개 여부 조회",
+        description = "프론트에서 회비 탭 노출 여부를 판단하는 데 사용합니다. 동아리 단위 공개 여부를 반환합니다.",
+    )
+    fun getVisibility(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<AccountVisibilityResponse> =
+        CommonResponse.success(
+            ACCOUNT_VISIBILITY_FIND_SUCCESS,
+            getMyAccountQueryService.getVisibility(clubId = clubId, userId = userId),
+        )
+
     @GetMapping("/cardinals")
     @Operation(summary = "부원 회비 기수 목록 조회")
     fun findCardinals(

@@ -16,6 +16,7 @@ class AccountDashboardMapper(
 ) {
     fun toResponse(
         account: Account,
+        memberVisible: Boolean,
         totalAmount: Int,
         paidCount: Int,
         totalTargetCount: Int,
@@ -24,6 +25,7 @@ class AccountDashboardMapper(
         modifier: ClubMember?,
     ): AccountDashboardResponse =
         AccountDashboardResponse(
+            accountId = account.id,
             summary =
                 AccountDashboardResponse.SummaryResponse(
                     // 총 회비(목표액)는 레거시 account.totalAmount 가 아니라 납부 대상 dueAmount 합으로 live 계산한다.
@@ -35,6 +37,7 @@ class AccountDashboardMapper(
                     paidCount = paidCount,
                     totalTargetCount = totalTargetCount,
                 ),
+            memberVisible = memberVisible,
             bankAccountPublic = account.bankAccountVisible,
             bankAccount = BankAccountResponse.from(account.bankAccount),
             lastModified =

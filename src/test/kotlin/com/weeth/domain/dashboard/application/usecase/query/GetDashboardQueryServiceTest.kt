@@ -1,5 +1,6 @@
 package com.weeth.domain.dashboard.application.usecase.query
 
+import com.weeth.domain.account.domain.repository.AccountSettingReader
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardReader
 import com.weeth.domain.board.domain.repository.PostLikeReader
@@ -51,6 +52,7 @@ class GetDashboardQueryServiceTest :
         val postReader = mockk<PostReader>()
         val fileReader = mockk<FileReader>()
         val userReader = mockk<UserReader>()
+        val accountSettingReader = mockk<AccountSettingReader>()
         val fileMapper = mockk<FileMapper>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
@@ -68,6 +70,7 @@ class GetDashboardQueryServiceTest :
                 postReader = postReader,
                 fileReader = fileReader,
                 userReader = userReader,
+                accountSettingReader = accountSettingReader,
                 dashboardMapper = dashboardMapper,
             )
 
@@ -88,6 +91,7 @@ class GetDashboardQueryServiceTest :
                 postReader,
                 fileReader,
                 userReader,
+                accountSettingReader,
                 fileMapper,
             )
         }
@@ -104,12 +108,29 @@ class GetDashboardQueryServiceTest :
                     } returns emptyList()
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
                     every { userReader.getById(userId) } returns user
+                    every { accountSettingReader.isVisibleToMembers(clubId) } returns true
 
                     val result = queryService.getHome(clubId, userId)
 
                     result shouldNotBe null
                     result.club.memberCount shouldBe 10L
                     result.myClubs.size shouldBe 1
+                    result.accountVisible shouldBe true
+                }
+
+                it("회비 기능이 비공개면 accountVisible=false로 반환한다") {
+                    every { clubReader.getClubById(clubId) } returns club
+                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns clubMember
+                    every { clubMemberReader.countActiveByClubId(clubId) } returns 10L
+                    every { eventReader.findByClubIdAndDateRange(clubId, any(), any()) } returns emptyList()
+                    every {
+                        sessionReader.findAllByClubIdAndStartBetween(clubId, any(), any())
+                    } returns emptyList()
+                    every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
+                    every { userReader.getById(userId) } returns user
+                    every { accountSettingReader.isVisibleToMembers(clubId) } returns false
+
+                    queryService.getHome(clubId, userId).accountVisible shouldBe false
                 }
             }
 
@@ -164,6 +185,7 @@ class GetDashboardQueryServiceTest :
                     } returns listOf(session)
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
                     every { userReader.getById(userId) } returns user
+                    every { accountSettingReader.isVisibleToMembers(clubId) } returns true
 
                     val result = queryService.getHome(clubId, userId)
 

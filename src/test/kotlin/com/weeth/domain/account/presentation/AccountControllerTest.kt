@@ -3,6 +3,7 @@ package com.weeth.domain.account.presentation
 import com.weeth.domain.account.application.dto.request.AccountTransactionFilter
 import com.weeth.domain.account.application.dto.request.AccountTransactionSort
 import com.weeth.domain.account.application.dto.response.AccountCardinalResponse
+import com.weeth.domain.account.application.dto.response.AccountVisibilityResponse
 import com.weeth.domain.account.application.dto.response.MemberAccountTransactionsResponse
 import com.weeth.domain.account.application.dto.response.MemberTransactionDetailResponse
 import com.weeth.domain.account.application.dto.response.MyAccountResponse
@@ -34,6 +35,18 @@ class AccountControllerTest :
 
         beforeTest {
             clearMocks(getMyAccountQueryService, getMyAccountTransactionQueryService)
+        }
+
+        describe("getVisibility") {
+            it("회비 기능 공개 여부 성공 코드를 반환한다") {
+                every { getMyAccountQueryService.getVisibility(clubId, userId) } returns
+                    AccountVisibilityResponse(visible = true)
+
+                val response = controller.getVisibility(clubId, userId)
+
+                response.code shouldBe AccountResponseCode.ACCOUNT_VISIBILITY_FIND_SUCCESS.code
+                response.data?.visible shouldBe true
+            }
         }
 
         describe("findCardinals") {

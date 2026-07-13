@@ -45,7 +45,6 @@ class Account(
     currentBalance: Int = 0,
     bankAccount: BankAccount? = null,
     bankAccountVisible: Boolean = false, // 계좌 노출 여부
-    memberVisible: Boolean = false, // 회비 회원 공개 여부
     lastModifiedBy: Long? = null, // 마지막 수정자. 추후 수정 로그 기능 확장에 따라 수정될 가능성 존재
     status: AccountStatus = AccountStatus.ACTIVE,
     registrationStep: AccountRegistrationStep = AccountRegistrationStep.BASIC,
@@ -97,10 +96,6 @@ class Account(
     var bankAccountVisible: Boolean = bankAccountVisible
         private set
 
-    @Column(nullable = false)
-    var memberVisible: Boolean = memberVisible
-        private set
-
     var lastModifiedBy: Long? = lastModifiedBy
         private set
 
@@ -108,6 +103,9 @@ class Account(
     @Column(nullable = false, length = 20)
     var status: AccountStatus = status
         private set
+
+    val isActive: Boolean
+        get() = status == AccountStatus.ACTIVE
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -161,15 +159,6 @@ class Account(
         }
     }
 
-    fun showToMembers() {
-        check(status == AccountStatus.ACTIVE) { "활성화된 회비 장부만 회원에게 공개할 수 있습니다." }
-        memberVisible = true
-    }
-
-    fun hideFromMembers() {
-        memberVisible = false
-    }
-
     fun markModifiedBy(adminId: Long) {
         require(adminId > 0) { "마지막 수정자 ID는 0보다 커야 합니다: $adminId" }
         lastModifiedBy = adminId
@@ -202,6 +191,8 @@ class Account(
                 currentBalance -= transaction.amount
             }
         }
+        // 은행 거래내역처럼 적용 시점의 총잔액을 거래에 스냅샷으로 남긴다.
+        transaction.recordBalanceAfter(currentBalance)
         transaction.markApplied()
     }
 
