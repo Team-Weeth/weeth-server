@@ -65,22 +65,40 @@ class ManageUserProfileUseCase(
         )
         updateImage(
             request = request.profileImage,
-            remove = request.removeProfileImage == true,
             ownerType = FileOwnerType.USER_PROFILE_IMAGE,
             ownerId = profile.id,
-            removeImage = profile::removeProfileImage,
             updateStorageKey = { profile.update(profileImageStorageKey = it) },
         )
         updateImage(
             request = request.headerImage,
-            remove = request.removeHeaderImage == true,
             ownerType = FileOwnerType.USER_PROFILE_HEADER,
             ownerId = profile.id,
-            removeImage = profile::removeHeaderImage,
             updateStorageKey = { profile.update(headerImageStorageKey = it) },
         )
 
         return userProfileMapper.toResponse(profile)
+    }
+
+    @Transactional
+    fun deleteProfileImage(
+        userId: Long,
+        profileId: Long,
+    ) {
+        val profile = getOwnedProfileWithLock(userId, profileId)
+
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, profile.id)
+        profile.removeProfileImage()
+    }
+
+    @Transactional
+    fun deleteHeaderImage(
+        userId: Long,
+        profileId: Long,
+    ) {
+        val profile = getOwnedProfileWithLock(userId, profileId)
+
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, profile.id)
+        profile.removeHeaderImage()
     }
 
     @Transactional
@@ -150,24 +168,24 @@ class ManageUserProfileUseCase(
 
     private fun updateImage(
         request: FileSaveRequest?,
-        remove: Boolean,
         ownerType: FileOwnerType,
         ownerId: Long,
-        removeImage: () -> Unit,
         updateStorageKey: (String) -> Unit,
     ) {
         if (request != null) {
             fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(ownerType, ownerId)
             saveFileIfPresent(request, ownerType, ownerId)
             updateStorageKey(request.storageKey)
-            return
-        }
-
-        if (remove) {
-            fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(ownerType, ownerId)
-            removeImage()
         }
     }
+
+    private fun getOwnedProfileWithLock(
+        userId: Long,
+        profileId: Long,
+    ): UserProfile =
+        userProfileRepository
+            .findByIdAndUserIdWithLock(profileId, userId)
+            .orElseThrow { UserProfileNotFoundException() }
 
     private fun decodeClubId(clubId: String): Long =
         try {

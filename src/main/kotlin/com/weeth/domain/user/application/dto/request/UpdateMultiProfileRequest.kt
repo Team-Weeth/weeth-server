@@ -17,10 +17,6 @@ data class UpdateMultiProfileRequest(
     @field:Schema(description = "헤더 사진 (null=변경 안 함)", nullable = true)
     @field:Valid
     val headerImage: FileSaveRequest? = null,
-    @field:Schema(description = "프로필 사진 삭제 여부 (true=삭제, null/false=삭제 안 함)", example = "false", nullable = true)
-    val removeProfileImage: Boolean? = null,
-    @field:Schema(description = "헤더 사진 삭제 여부 (true=삭제, null/false=삭제 안 함)", example = "false", nullable = true)
-    val removeHeaderImage: Boolean? = null,
     @field:Schema(description = "자기소개 (null=변경 안 함)", example = "안녕하세요!", nullable = true)
     @field:Size(max = 30)
     val bio: String? = null,

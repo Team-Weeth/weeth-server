@@ -306,4 +306,28 @@ class UserControllerTest :
                 verify(exactly = 1) { manageUserProfileUseCase.delete(1L, 10L) }
             }
         }
+
+        describe("deleteUserProfileImage") {
+            it("로그인 사용자의 멀티프로필 프로필 사진을 삭제한다") {
+                justRun { manageUserProfileUseCase.deleteProfileImage(userId = 1L, profileId = 10L) }
+
+                val response = controller.deleteUserProfileImage(profileId = 10L, userId = 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_IMAGE_DELETED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_IMAGE_DELETED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.deleteProfileImage(userId = 1L, profileId = 10L) }
+            }
+        }
+
+        describe("deleteUserProfileHeaderImage") {
+            it("로그인 사용자의 멀티프로필 헤더 사진을 삭제한다") {
+                justRun { manageUserProfileUseCase.deleteHeaderImage(userId = 1L, profileId = 10L) }
+
+                val response = controller.deleteUserProfileHeaderImage(profileId = 10L, userId = 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_HEADER_IMAGE_DELETED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_HEADER_IMAGE_DELETED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.deleteHeaderImage(userId = 1L, profileId = 10L) }
+            }
+        }
     })

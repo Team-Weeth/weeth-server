@@ -165,7 +165,7 @@ class ManageUserProfileUseCaseTest :
         }
 
         describe("update") {
-            it("로그인 사용자의 프로필 정보를 부분 수정하고 이미지 파일을 교체하거나 삭제한다") {
+            it("로그인 사용자의 프로필 정보를 부분 수정하고 이미지 파일을 교체한다") {
                 val user = UserTestFixture.createRegisteredUser(1L)
                 val oldProfileStorageKey = "USER_PROFILE_IMAGE/2026-07/123e4567-e89b-12d3-a456-426614174000_old.png"
                 val oldHeaderStorageKey = "USER_PROFILE_HEADER/2026-07/123e4567-e89b-12d3-a456-426614174001_old.png"
@@ -191,33 +191,27 @@ class ManageUserProfileUseCaseTest :
                                 fileSize = 100L,
                                 contentType = "image/png",
                             ),
-                        removeHeaderImage = true,
                         bio = "  새 소개  ",
                     )
                 every { userProfileRepository.findByIdAndUserIdWithLock(10L, 1L) } returns Optional.of(profile)
                 every {
                     fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, 10L)
                 } returns 1
-                every {
-                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
-                } returns 1
                 every { fileRepository.save(any<File>()) } answers { firstArg() }
                 every { fileAccessUrlPort.resolve(newProfileStorageKey) } returns "https://cdn.test/new.png"
+                every { fileAccessUrlPort.resolve(oldHeaderStorageKey) } returns "https://cdn.test/header.png"
 
                 val result = useCase.update(1L, 10L, request)
 
                 result.profileId shouldBe 10L
                 result.name shouldBe "새 이름"
                 result.profileImageUrl shouldBe "https://cdn.test/new.png"
-                result.headerImageUrl shouldBe null
+                result.headerImageUrl shouldBe "https://cdn.test/header.png"
                 result.bio shouldBe "새 소개"
                 profile.profileImageStorageKey shouldBe newProfileStorageKey
-                profile.headerImageStorageKey shouldBe null
+                profile.headerImageStorageKey shouldBe oldHeaderStorageKey
                 verify(exactly = 1) {
                     fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, 10L)
-                }
-                verify(exactly = 1) {
-                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
                 }
                 verify(exactly = 1) {
                     fileRepository.save(
@@ -240,6 +234,62 @@ class ManageUserProfileUseCaseTest :
 
                 verify(exactly = 0) { fileRepository.save(any<File>()) }
                 verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
+            }
+        }
+
+        describe("deleteProfileImage") {
+            it("프로필 사진만 삭제하고 헤더 사진은 유지한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val profile =
+                    UserProfile
+                        .create(
+                            user = user,
+                            name = "프로필",
+                            profileImageStorageKey = "USER_PROFILE_IMAGE/2026-07/profile.png",
+                            headerImageStorageKey = "USER_PROFILE_HEADER/2026-07/header.png",
+                        ).apply {
+                            ReflectionTestUtils.setField(this, "id", 10L)
+                        }
+                every { userProfileRepository.findByIdAndUserIdWithLock(10L, 1L) } returns Optional.of(profile)
+                every {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, 10L)
+                } returns 1
+
+                useCase.deleteProfileImage(userId = 1L, profileId = 10L)
+
+                profile.profileImageStorageKey shouldBe null
+                profile.headerImageStorageKey shouldBe "USER_PROFILE_HEADER/2026-07/header.png"
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, 10L)
+                }
+            }
+        }
+
+        describe("deleteHeaderImage") {
+            it("헤더 사진만 삭제하고 프로필 사진은 유지한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val profile =
+                    UserProfile
+                        .create(
+                            user = user,
+                            name = "프로필",
+                            profileImageStorageKey = "USER_PROFILE_IMAGE/2026-07/profile.png",
+                            headerImageStorageKey = "USER_PROFILE_HEADER/2026-07/header.png",
+                        ).apply {
+                            ReflectionTestUtils.setField(this, "id", 10L)
+                        }
+                every { userProfileRepository.findByIdAndUserIdWithLock(10L, 1L) } returns Optional.of(profile)
+                every {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
+                } returns 1
+
+                useCase.deleteHeaderImage(userId = 1L, profileId = 10L)
+
+                profile.profileImageStorageKey shouldBe "USER_PROFILE_IMAGE/2026-07/profile.png"
+                profile.headerImageStorageKey shouldBe null
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, 10L)
+                }
             }
         }
 

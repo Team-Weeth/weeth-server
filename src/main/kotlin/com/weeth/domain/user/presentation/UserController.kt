@@ -201,6 +201,26 @@ class UserController(
         return CommonResponse.success(UserResponseCode.USER_PROFILE_DELETED_SUCCESS)
     }
 
+    @DeleteMapping("/me/profiles/{profileId}/profile-image")
+    @Operation(summary = "멀티프로필 프로필 사진 삭제")
+    fun deleteUserProfileImage(
+        @PathVariable profileId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageUserProfileUseCase.deleteProfileImage(userId, profileId)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_IMAGE_DELETED_SUCCESS)
+    }
+
+    @DeleteMapping("/me/profiles/{profileId}/header-image")
+    @Operation(summary = "멀티프로필 헤더 사진 삭제")
+    fun deleteUserProfileHeaderImage(
+        @PathVariable profileId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<Void> {
+        manageUserProfileUseCase.deleteHeaderImage(userId, profileId)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_HEADER_IMAGE_DELETED_SUCCESS)
+    }
+
     @PatchMapping("/me/club-profile-assignments")
     @Operation(summary = "동아리별 사용 프로필 변경")
     fun assignClubProfiles(
