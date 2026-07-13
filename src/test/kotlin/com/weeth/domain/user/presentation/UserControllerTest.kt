@@ -24,7 +24,7 @@ import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
-import com.weeth.global.common.response.PageResponse
+import com.weeth.global.common.response.SliceResponse
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -180,7 +180,7 @@ class UserControllerTest :
         describe("getMyPosts") {
             it("로그인 사용자가 작성한 게시글 목록을 조회한다") {
                 val postsResponse =
-                    PageResponse(
+                    SliceResponse(
                         content =
                             listOf(
                                 UserMyPostResponse(
@@ -198,8 +198,8 @@ class UserControllerTest :
                             ),
                         pageNumber = 0,
                         pageSize = 5,
-                        totalElements = 12L,
-                        totalPages = 3,
+                        numberOfElements = 1,
+                        hasNext = true,
                     )
                 io.mockk.every { getUserPostQueryService.getMyPosts(1L, 0, 5) } returns postsResponse
 
@@ -215,7 +215,7 @@ class UserControllerTest :
         describe("getAttendedSessions") {
             it("로그인 사용자가 출석한 세션 목록을 조회한다") {
                 val attendedSessionsResponse =
-                    PageResponse(
+                    SliceResponse(
                         content =
                             listOf(
                                 UserAttendedSessionResponse(
@@ -232,8 +232,8 @@ class UserControllerTest :
                             ),
                         pageNumber = 0,
                         pageSize = 5,
-                        totalElements = 8L,
-                        totalPages = 1,
+                        numberOfElements = 1,
+                        hasNext = false,
                     )
                 io.mockk.every {
                     getUserAttendanceQueryService.getAttendedSessions(1L, 0, 5)

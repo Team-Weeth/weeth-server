@@ -65,4 +65,7 @@ enum class UserErrorCode(
 
     @ExplainError("삭제하려는 프로필이 하나 이상의 ACTIVE 동아리에서 사용 중일 때 발생합니다.")
     USER_PROFILE_IN_USE(20918, HttpStatus.CONFLICT, "사용 중인 프로필은 삭제할 수 없습니다."),
+
+    @ExplainError("유효하지 않은 페이지 번호 또는 페이지 크기를 요청할 때 발생합니다.")
+    USER_PAGE_NOT_FOUND(20919, HttpStatus.BAD_REQUEST, "유효하지 않은 페이지입니다."),
 }

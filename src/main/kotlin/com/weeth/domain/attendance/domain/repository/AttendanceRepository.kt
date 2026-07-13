@@ -9,6 +9,7 @@ import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -63,18 +64,12 @@ interface AttendanceRepository :
         AND a.status = :status
         ORDER BY s.start DESC, a.id DESC
         """,
-        countQuery = """
-        SELECT COUNT(a)
-        FROM Attendance a
-        WHERE a.clubMember.user.id = :userId
-        AND a.status = :status
-        """,
     )
     override fun findByUserIdAndStatus(
         @Param("userId") userId: Long,
         @Param("status") status: AttendanceStatus,
         pageable: Pageable,
-    ): Page<Attendance>
+    ): Slice<Attendance>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))

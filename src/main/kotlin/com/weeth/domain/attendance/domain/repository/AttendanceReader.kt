@@ -2,8 +2,8 @@ package com.weeth.domain.attendance.domain.repository
 
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 
 interface AttendanceReader {
     fun countByClubMemberIdsAndStatus(
@@ -15,5 +15,5 @@ interface AttendanceReader {
         userId: Long,
         status: AttendanceStatus,
         pageable: Pageable,
-    ): Page<Attendance>
+    ): Slice<Attendance>
 }

@@ -256,16 +256,9 @@ interface PostRepository :
           AND p.board.isDeleted = false
         ORDER BY p.createdAt DESC, p.id DESC
         """,
-        countQuery = """
-        SELECT COUNT(p)
-        FROM Post p
-        WHERE p.clubMember.user.id = :userId
-          AND p.isDeleted = false
-          AND p.board.isDeleted = false
-        """,
     )
     override fun findMyActivePosts(
         @Param("userId") userId: Long,
         pageable: Pageable,
-    ): Page<Post>
+    ): Slice<Post>
 }

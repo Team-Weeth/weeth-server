@@ -2,7 +2,6 @@ package com.weeth.domain.board.domain.repository
 
 import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
-import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 import java.time.LocalDateTime
@@ -38,7 +37,7 @@ interface PostReader {
     fun findMyActivePosts(
         userId: Long,
         pageable: Pageable,
-    ): Page<Post>
+    ): Slice<Post>
 
     fun findFirstUnreadNoticeSince(
         clubId: Long,
