@@ -45,5 +45,5 @@ data class UserMyPageUsingProfileResponse(
     @field:Schema(description = "자기소개", nullable = true)
     val bio: String? = null,
     @field:Schema(description = "이 프로필을 사용 중인 동아리 목록")
-    val clubs: List<UserProfileClubResponse> = emptyList(),
+    val clubs: List<UserProfileClubResponse>,
 )
