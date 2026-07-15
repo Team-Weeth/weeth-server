@@ -47,4 +47,7 @@ enum class UserErrorCode(
 
     @ExplainError("프로필 초기 설정 시 필수 필드가 누락되었을 때 발생합니다.")
     PROFILE_REQUIRED_FIELDS_MISSING(20912, HttpStatus.BAD_REQUEST, "프로필 초기 설정 시 모든 필수 항목을 입력해야 합니다."),
+
+    @ExplainError("사용자가 LEAD인 활성 동아리를 보유한 상태로 위드 탈퇴를 시도할 때 발생합니다.")
+    USER_HAS_LEAD_CLUB(20913, HttpStatus.CONFLICT, "LEAD인 동아리가 있어 탈퇴할 수 없습니다."),
 }

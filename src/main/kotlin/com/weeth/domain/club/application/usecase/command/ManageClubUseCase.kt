@@ -28,8 +28,8 @@ import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -66,6 +66,7 @@ class ManageClubUseCase(
 
         val user =
             userReader.getByIdWithLock(userId)
+        if (!user.isRegistered()) throw UserInActiveException()
         clubJoinPolicy.validateCreateLimit(userId)
 
         val code = ClubCodePolicy.generateCode()
@@ -141,7 +142,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
 
         if (request.primaryContact == PrimaryContact.EMAIL) {
             val resolvedEmail = request.contactEmail ?: club.clubContact.email
@@ -179,7 +180,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
         val newCode = ClubCodePolicy.generateCode()
         club.regenerateCode(newCode)
     }
@@ -191,7 +192,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
         deleteExistingFiles(FileOwnerType.CLUB_PROFILE, clubId)
         club.removeProfileImage()
     }
@@ -203,7 +204,7 @@ class ManageClubUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
-        val club = clubRepository.getClubById(clubId)
+        val club = clubRepository.getClubByIdForUpdate(clubId)
         deleteExistingFiles(FileOwnerType.CLUB_BACKGROUND, clubId)
         club.removeBackgroundImage()
     }
@@ -237,11 +238,7 @@ class ManageClubUseCase(
         ownerType: FileOwnerType,
         ownerId: Long,
     ) {
-        val files = fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(ownerType, ownerId, FileStatus.UPLOADED)
-
-        if (files.isNotEmpty()) {
-            fileRepository.deleteAll(files)
-        }
+        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(ownerType, ownerId)
     }
 
     private fun validatePrimaryContactEmail(

@@ -1,6 +1,6 @@
 package com.weeth.domain.club.application.usecase.command
 
-import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.attendance.domain.service.AttendanceInitializer
 import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
@@ -16,18 +16,15 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
+import com.weeth.domain.club.domain.service.ClubActivityDeletionPolicy
 import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.domain.enums.FileOwnerType
-import com.weeth.domain.file.domain.enums.FileStatus
-import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
-import com.weeth.domain.file.fixture.FileTestFixture
-import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.session.fixture.SessionTestFixture
+import com.weeth.domain.user.application.exception.UserInActiveException
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -38,6 +35,10 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 class ManageClubMemberUseCaseTest :
     DescribeSpec({
@@ -45,13 +46,13 @@ class ManageClubMemberUseCaseTest :
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>()
-        val sessionReader = mockk<SessionReader>()
-        val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
+        val attendanceInitializer = mockk<AttendanceInitializer>(relaxed = true)
         val userReader = mockk<UserReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubJoinPolicy = mockk<ClubJoinPolicy>()
+        val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
         val fileRepository = mockk<FileRepository>()
-        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val clock = Clock.fixed(Instant.parse("2026-06-08T03:00:00Z"), ZoneId.of("Asia/Seoul"))
 
         val useCase =
             ManageClubMemberUsecase(
@@ -59,13 +60,13 @@ class ManageClubMemberUseCaseTest :
                 clubMemberRepository = clubMemberRepository,
                 clubMemberCardinalRepository = clubMemberCardinalRepository,
                 cardinalReader = cardinalReader,
-                sessionReader = sessionReader,
-                attendanceRepository = attendanceRepository,
+                attendanceInitializer = attendanceInitializer,
                 userReader = userReader,
                 clubMemberPolicy = clubMemberPolicy,
                 clubJoinPolicy = clubJoinPolicy,
+                clubActivityDeletionPolicy = clubActivityDeletionPolicy,
                 fileRepository = fileRepository,
-                fileAccessUrlPort = fileAccessUrlPort,
+                clock = clock,
             )
 
         beforeTest {
@@ -74,16 +75,16 @@ class ManageClubMemberUseCaseTest :
                 clubMemberRepository,
                 clubMemberCardinalRepository,
                 cardinalReader,
-                sessionReader,
-                attendanceRepository,
+                attendanceInitializer,
                 userReader,
                 clubMemberPolicy,
                 clubJoinPolicy,
+                clubActivityDeletionPolicy,
                 fileRepository,
-                fileAccessUrlPort,
             )
             every { clubMemberRepository.save(any()) } answers { firstArg() }
             every { fileRepository.save(any()) } answers { firstArg() }
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
         }
 
         describe("updateProfile") {
@@ -97,32 +98,22 @@ class ManageClubMemberUseCaseTest :
                 )
 
             context("프로필 사진만 변경할 때") {
-                it("모든 활성 ClubMember의 기존 파일을 삭제하고 새 파일로 URL을 업데이트한다") {
+                it("모든 활성 ClubMember의 기존 파일을 하드 딜리트하고 새 파일로 URL을 업데이트한다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
-                    val existingFile =
-                        FileTestFixture.createFile(
-                            id = 1L,
-                            fileName = "old.png",
-                            ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
-                            ownerId = userId,
-                        )
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
-                    every {
-                        fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
-                            FileOwnerType.CLUB_MEMBER_PROFILE,
-                            userId,
-                            FileStatus.UPLOADED,
-                        )
-                    } returns listOf(existingFile)
-                    every { fileRepository.deleteAll(any<List<com.weeth.domain.file.domain.entity.File>>()) } returns
-                        Unit
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
+
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(profileImage = profileImageRequest))
 
                     member1.profileImageStorageKey shouldBe profileImageRequest.storageKey
                     member2.profileImageStorageKey shouldBe profileImageRequest.storageKey
-                    verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
+                    verify(exactly = 1) {
+                        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
+                    }
                     verify(exactly = 1) { fileRepository.save(any()) }
+                    verify(exactly = 1) { clubMemberRepository.findAllActiveByUserIdWithLock(userId) }
+                    verify(exactly = 0) { clubMemberRepository.findActiveByUserId(userId) }
                 }
             }
 
@@ -131,13 +122,14 @@ class ManageClubMemberUseCaseTest :
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
 
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
 
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(bio = "안녕하세요!"))
 
                     member1.bio shouldBe "안녕하세요!"
                     member2.bio shouldBe "안녕하세요!"
-                    verify(exactly = 0) { fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(any(), any(), any()) }
+                    verify(exactly = 0) { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) }
                     verify(exactly = 0) { fileRepository.save(any()) }
                 }
             }
@@ -147,7 +139,8 @@ class ManageClubMemberUseCaseTest :
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
 
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
 
                     useCase.updateProfile(userId, UpdateMemberProfileRequest(bio = ""))
 
@@ -158,7 +151,7 @@ class ManageClubMemberUseCaseTest :
 
             context("활성 동아리 멤버십이 없을 때") {
                 it("ClubMemberNotFoundException을 던진다") {
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns emptyList()
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns emptyList()
 
                     shouldThrow<ClubMemberNotFoundException> {
                         useCase.updateProfile(userId, UpdateMemberProfileRequest(bio = "안녕하세요!"))
@@ -171,33 +164,22 @@ class ManageClubMemberUseCaseTest :
             val userId = 10L
 
             context("활성 멤버가 프로필 사진을 삭제할 때") {
-                it("모든 활성 ClubMember의 파일을 삭제하고 URL을 null로 만든다") {
+                it("모든 활성 ClubMember의 파일을 하드 딜리트하고 URL을 null로 만든다") {
                     val member1 = ClubMemberTestFixture.createActiveMember(id = 1L)
                     val member2 = ClubMemberTestFixture.createActiveMember(id = 2L)
                     member1.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
                     member2.updateProfileImageUrl("CLUB_MEMBER_PROFILE/2026-02/uuid_profile.png")
-                    val existingFile =
-                        FileTestFixture.createFile(
-                            id = 1L,
-                            fileName = "profile.png",
-                            ownerType = FileOwnerType.CLUB_MEMBER_PROFILE,
-                            ownerId = userId,
-                        )
 
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns listOf(member1, member2)
-                    every {
-                        fileRepository.findAllByOwnerTypeAndOwnerIdAndStatus(
-                            FileOwnerType.CLUB_MEMBER_PROFILE,
-                            userId,
-                            FileStatus.UPLOADED,
-                        )
-                    } returns listOf(existingFile)
-                    every { fileRepository.deleteAll(any<List<com.weeth.domain.file.domain.entity.File>>()) } returns
-                        Unit
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns
+                        listOf(member1, member2)
 
                     useCase.deleteProfileImage(userId)
 
-                    verify(exactly = 1) { fileRepository.deleteAll(listOf(existingFile)) }
+                    verify(exactly = 1) {
+                        fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, userId)
+                    }
+                    verify(exactly = 1) { clubMemberRepository.findAllActiveByUserIdWithLock(userId) }
+                    verify(exactly = 0) { clubMemberRepository.findActiveByUserId(userId) }
                     member1.profileImageStorageKey shouldBe null
                     member2.profileImageStorageKey shouldBe null
                 }
@@ -205,7 +187,7 @@ class ManageClubMemberUseCaseTest :
 
             context("활성 동아리 멤버십이 없을 때") {
                 it("ClubMemberNotFoundException을 던진다") {
-                    every { clubMemberRepository.findActiveByUserId(userId) } returns emptyList()
+                    every { clubMemberRepository.findAllActiveByUserIdWithLock(userId) } returns emptyList()
 
                     shouldThrow<ClubMemberNotFoundException> {
                         useCase.deleteProfileImage(userId)
@@ -232,18 +214,12 @@ class ManageClubMemberUseCaseTest :
                             club = club,
                             cardinalNumber = 31,
                         )
-                    val session30 = SessionTestFixture.createSession(club = club, cardinal = 30)
-                    val session31 = SessionTestFixture.createSession(club = club, cardinal = 31)
-
                     every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
                     every { clubMemberCardinalRepository.existsByClubMember(member) } returns false
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal30
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 31) } returns cardinal31
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
-                    every {
-                        sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30, 31))
-                    } returns listOf(session30, session31)
 
                     useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(30, 31)))
 
@@ -256,18 +232,13 @@ class ManageClubMemberUseCaseTest :
                         )
                     }
                     verify(exactly = 1) {
-                        attendanceRepository.saveAll(
-                            match<List<com.weeth.domain.attendance.domain.entity.Attendance>> {
-                                it.size ==
-                                    2
-                            },
-                        )
+                        attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal30, cardinal31))
                     }
                 }
             }
 
-            context("세션이 없는 기수를 설정하는 경우") {
-                it("ClubMemberCardinal만 저장되고 출석은 초기화되지 않는다") {
+            context("기수를 설정하는 경우") {
+                it("ClubMemberCardinal을 저장하고 출석 초기화를 요청한다") {
                     val cardinal =
                         CardinalTestFixture.createCardinal(
                             id = 1L,
@@ -280,7 +251,6 @@ class ManageClubMemberUseCaseTest :
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
-                    every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30)) } returns emptyList()
 
                     useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(30)))
 
@@ -292,12 +262,8 @@ class ManageClubMemberUseCaseTest :
                             },
                         )
                     }
-                    verify(
-                        exactly = 0,
-                    ) {
-                        attendanceRepository.saveAll(
-                            any<List<com.weeth.domain.attendance.domain.entity.Attendance>>(),
-                        )
+                    verify(exactly = 1) {
+                        attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal))
                     }
                 }
             }
@@ -316,7 +282,6 @@ class ManageClubMemberUseCaseTest :
                     every { cardinalReader.findByClubIdAndCardinalNumber(1L, 30) } returns cardinal
                     every { clubMemberCardinalRepository.saveAll(any<List<ClubMemberCardinal>>()) } answers
                         { firstArg() }
-                    every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(30)) } returns emptyList()
 
                     useCase.setInitialCardinals(1L, 10L, ClubMemberCardinalSetRequest(cardinals = listOf(30, 30)))
 
@@ -327,6 +292,9 @@ class ManageClubMemberUseCaseTest :
                                     1
                             },
                         )
+                    }
+                    verify(exactly = 1) {
+                        attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal))
                     }
                 }
             }
@@ -367,15 +335,21 @@ class ManageClubMemberUseCaseTest :
                 shouldThrow<CannotLeaveAsLeadException> {
                     useCase.leave(1L, 10L)
                 }
+
+                verify(exactly = 0) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(any(), any()) }
             }
 
-            it("일반 멤버가 탈퇴하면 LEFT 상태로 전환된다") {
+            it("일반 멤버가 탈퇴하면 활동 삭제 정책을 적용하고 LEFT 상태로 전환된다") {
                 val member = ClubMemberTestFixture.createActiveMember()
+                val now = LocalDateTime.now(clock)
                 every { clubMemberPolicy.getActiveMemberWithLock(1L, 10L) } returns member
+                justRun { clubActivityDeletionPolicy.markMemberActivitiesDeleted(eq(member), any()) }
 
                 useCase.leave(1L, 10L)
 
                 member.memberStatus shouldBe MemberStatus.LEFT
+                member.leftAt shouldBe now
+                verify(exactly = 1) { clubActivityDeletionPolicy.markMemberActivitiesDeleted(eq(member), now) }
             }
         }
 
@@ -383,7 +357,7 @@ class ManageClubMemberUseCaseTest :
             context("이미 USER로 1개 동아리에 가입한 사용자가 가입 시도하는 경우") {
                 it("ClubJoinLimitExceededException이 발생한다") {
                     val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
-                    val user = UserTestFixture.createActiveUser1()
+                    val user = UserTestFixture.createRegisteredUser()
 
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
@@ -405,7 +379,7 @@ class ManageClubMemberUseCaseTest :
             context("LEAD로 1개 동아리를 생성한 사용자가 USER로 가입 시도하는 경우") {
                 it("역할이 다르므로 가입에 성공한다") {
                     val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
-                    val user = UserTestFixture.createActiveUser1()
+                    val user = UserTestFixture.createRegisteredUser()
 
                     every { clubRepository.getClubById(1L) } returns targetClub
                     every { userReader.getByIdWithLock(10L) } returns user
@@ -419,6 +393,31 @@ class ManageClubMemberUseCaseTest :
                     )
 
                     verify(exactly = 1) { clubMemberRepository.save(any()) }
+                }
+            }
+
+            context("탈퇴 사용자가 가입 시도하는 경우") {
+                it("UserInActiveException이 발생하고 가입 처리를 진행하지 않는다") {
+                    val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
+                    val user =
+                        UserTestFixture
+                            .createRegisteredUser()
+                            .apply { leave(LocalDateTime.of(2026, 6, 12, 12, 0)) }
+
+                    every { clubRepository.getClubById(1L) } returns targetClub
+                    every { userReader.getByIdWithLock(10L) } returns user
+
+                    shouldThrow<UserInActiveException> {
+                        useCase.join(
+                            clubId = 1L,
+                            userId = 10L,
+                            request = ClubJoinRequest(code = "JOIN-CODE"),
+                        )
+                    }
+
+                    verify(exactly = 0) { clubMemberRepository.findByClubIdAndUserId(any(), any()) }
+                    verify(exactly = 0) { clubJoinPolicy.validateJoinLimit(any()) }
+                    verify(exactly = 0) { clubMemberRepository.save(any()) }
                 }
             }
         }

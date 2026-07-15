@@ -61,7 +61,7 @@ class GetPostQueryService(
         val files = fileReader.findAll(FileOwnerType.POST, post.id).map(fileMapper::toFileResponse)
         val comments = commentReader.findAllByPostId(post.id)
         val commentTree = getCommentQueryService.toCommentTreeResponses(comments)
-        val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrue(post, userId)
+        val isLiked = postLikeRepository.existsByPostAndUserIdAndIsActiveTrueAndDeletedAtIsNull(post, userId)
         val now = LocalDateTime.now()
 
         return postMapper.toDetailResponse(post, commentTree, files, isLiked, now, member.memberRole)

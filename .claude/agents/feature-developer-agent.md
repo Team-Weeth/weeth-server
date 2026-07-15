@@ -1,7 +1,7 @@
 ---
 name: feature-developer-agent
 description: "Develop new features following architecture rules. Proceeds in order: requirements → design → implementation → testing → review."
-tools: Glob, Grep, Read, Edit, Write, Bash, Task
+tools: Glob, Grep, Read, Edit, Write, Bash, Task, Skill
 model: sonnet
 color: green
 ---
@@ -12,7 +12,7 @@ Develop new features following `.claude/rules/architecture.md` patterns.
 **All output MUST be written in Korean.**
 
 - **In scope**: New feature implementation (Entity, UseCase, QueryService, Controller, DTO, Mapper, Port, tests)
-- **Out of scope**: Java→Kotlin migration (`kotlin-migration-agent`), architecture refactoring (`system-architect-agent`)
+- **Out of scope**: Architecture refactoring of existing code (`system-architect-agent`)
 - **Prerequisite**: Requirements must be clear enough to define API endpoints and domain behavior
 
 ## Package Placement
@@ -41,11 +41,11 @@ New files MUST follow `architecture.md` Package Structure. See the table there f
 - Grep for similar features → prevent duplicate creation
 - **Present design proposal to user → start coding after approval**
 
-### 1. API Contract Definition [`api-design.md`, `exception-handling.md`]
+### 1. API Contract Definition → `api-contract-update` skill [`api-design.md`, `exception-handling.md`]
 - Controller method signature, `@Operation`, `@Tag`
 - Request/Response DTO (`@Schema`, `@field:` validation)
-- ResponseCode enum (1XXX) + ErrorCode enum (2XXX) + `@ExplainError` — Grep existing code numbers to prevent conflicts
-- `@ApiSuccessCodeExample`, `@ApiErrorCodeExample` annotations
+- ResponseCode enum (`1DDNN`) + ErrorCode enum (`2DDNN`) + `@ExplainError` — use the skill's code registry to pick the next unused code
+- `@ApiErrorCodeExample` on the controller class or method
 
 ### 2. Domain Layer Design → `architecture-guide` skill [`architecture.md`]
 - Entity, Repository, Port, Domain Service **structure decision**
@@ -53,6 +53,7 @@ New files MUST follow `architecture.md` Package Structure. See the table there f
 
 ### 3. Application Layer Design [`mapper-dto.md`, `transaction-concurrency.md`]
 - Command UseCase, QueryService, Mapper, Exception **structure decision**
+- Locking or concurrent-write risk involved → `concurrency-safety` skill
 - Class list and dependencies only, implementation in Step 4
 
 **Step 2-3 output (required):** New/modified file list (with paths) + key dependencies as table → proceed after user approval
@@ -62,7 +63,7 @@ New files MUST follow `architecture.md` Package Structure. See the table there f
 - Order: Entity → Repository → UseCase/QueryService → Mapper → Adapter → Controller
 - Run `./gradlew ktlintFormat`
 
-### 5. Test Writing → `test-create` skill [`testing.md`]
+### 5. Test Writing — follow `.claude/skills/test-create/SKILL.md` (read it directly; it is not model-invocable) [`testing.md`]
 - Write tests for implemented classes
 - Order: Entity → UseCase/QueryService → Controller(`@WebMvcTest`)
 - Run `./gradlew test`
@@ -78,7 +79,7 @@ New files MUST follow `architecture.md` Package Structure. See the table there f
 - No UseCase-to-UseCase calls (→ Domain Service)
 - `@Transactional` on UseCase only, forbidden on Domain Service
 - Cross-domain reads via Reader interface, no direct Repository reference
-- New endpoints MUST have `@ApiSuccessCodeExample` + `@ApiErrorCodeExample`
+- New endpoints MUST declare `@ApiErrorCodeExample`
 - All API responses MUST be wrapped in `CommonResponse`
 
 ## Token Optimization

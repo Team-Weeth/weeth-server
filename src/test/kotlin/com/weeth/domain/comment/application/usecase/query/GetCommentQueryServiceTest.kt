@@ -8,6 +8,7 @@ import com.weeth.domain.comment.application.mapper.CommentMapper
 import com.weeth.domain.comment.fixture.CommentTestFixture
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
+import com.weeth.domain.file.domain.enums.FileStatus
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -59,14 +60,14 @@ class GetCommentQueryServiceTest :
                 val comment = CommentTestFixture.createPostComment(id = 1L, post = post, clubMember = member)
                 val response = stubResponse(1L)
 
-                every { fileReader.findAll(FileOwnerType.COMMENT, listOf(1L), any()) } returns emptyList()
+                every { fileReader.findAll(FileOwnerType.COMMENT, listOf(1L), FileStatus.UPLOADED) } returns emptyList()
                 every { commentMapper.toCommentDto(comment, emptyList(), emptyList()) } returns response
 
                 val result = service.toCommentTreeResponses(listOf(comment))
 
                 result.size shouldBe 1
                 result[0].id shouldBe 1L
-                verify(exactly = 1) { fileReader.findAll(FileOwnerType.COMMENT, listOf(1L), any()) }
+                verify(exactly = 1) { fileReader.findAll(FileOwnerType.COMMENT, listOf(1L), FileStatus.UPLOADED) }
             }
 
             it("부모-자식 구조를 트리로 조립한다") {
@@ -81,7 +82,8 @@ class GetCommentQueryServiceTest :
                 val childResponse = stubResponse(11L)
                 val parentResponse = stubResponse(10L, children = listOf(childResponse))
 
-                every { fileReader.findAll(FileOwnerType.COMMENT, listOf(10L, 11L), any()) } returns emptyList()
+                every { fileReader.findAll(FileOwnerType.COMMENT, listOf(10L, 11L), FileStatus.UPLOADED) } returns
+                    emptyList()
                 every { commentMapper.toCommentDto(child, emptyList(), emptyList()) } returns childResponse
                 every { commentMapper.toCommentDto(parent, listOf(childResponse), emptyList()) } returns parentResponse
 

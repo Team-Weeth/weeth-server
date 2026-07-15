@@ -1,5 +1,6 @@
 package com.weeth.domain.dashboard.application.usecase.query
 
+import com.weeth.domain.account.domain.repository.AccountSettingReader
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardReader
 import com.weeth.domain.board.domain.repository.PostLikeReader
@@ -39,6 +40,7 @@ class GetDashboardQueryService(
     private val postReader: PostReader,
     private val fileReader: FileReader,
     private val userReader: UserReader,
+    private val accountSettingReader: AccountSettingReader,
     private val dashboardMapper: DashboardMapper,
 ) {
     fun getHome(
@@ -62,6 +64,7 @@ class GetDashboardQueryService(
             club = club,
             memberCount = memberCount,
             myInfo = myInfo,
+            accountVisible = accountSettingReader.isVisibleToMembers(clubId),
             todaySchedules = dashboardMapper.toScheduleResponses(todayEvents, todaySessions),
             myClubs = myClubs,
         )

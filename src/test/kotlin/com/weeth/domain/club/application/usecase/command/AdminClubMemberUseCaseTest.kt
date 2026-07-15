@@ -1,6 +1,7 @@
 package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.attendance.domain.service.AttendanceInitializer
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture
 import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
@@ -48,6 +49,7 @@ class AdminClubMemberUseCaseTest :
         val clubMemberReader = mockk<ClubMemberReader>(relaxed = true)
         val sessionReader = mockk<SessionReader>(relaxed = true)
         val attendanceRepository = mockk<AttendanceRepository>(relaxed = true)
+        val attendanceInitializer = mockk<AttendanceInitializer>(relaxed = true)
         val penaltyReader = mockk<PenaltyReader>(relaxed = true)
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>(relaxed = true)
         val useCase =
@@ -59,6 +61,7 @@ class AdminClubMemberUseCaseTest :
                 clubMemberReader,
                 sessionReader,
                 attendanceRepository,
+                attendanceInitializer,
                 penaltyReader,
                 clubMemberCardinalRepository,
             )
@@ -74,6 +77,7 @@ class AdminClubMemberUseCaseTest :
                 clubMemberReader,
                 sessionReader,
                 attendanceRepository,
+                attendanceInitializer,
                 penaltyReader,
                 clubMemberCardinalRepository,
             )
@@ -286,20 +290,18 @@ class AdminClubMemberUseCaseTest :
                         club = adminMember.club,
                         cardinalNumber = 8,
                     )
-                val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
                 every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
                 every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member)
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
-                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
 
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))
 
                 verify(exactly = 1) { clubMemberCardinalRepository.save(any()) }
-                verify(
-                    exactly = 1,
-                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(exactly = 1) {
+                    attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal))
+                }
             }
 
             it("이미 등록된 기수는 무시한다") {
@@ -318,13 +320,12 @@ class AdminClubMemberUseCaseTest :
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))
 
                 verify(exactly = 0) { clubMemberCardinalRepository.save(any()) }
-                verify(
-                    exactly = 0,
-                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(exactly = 0) {
+                    attendanceInitializer.initializeForMemberCardinals(any(), any(), any())
+                }
             }
 
             it("동일한 요청이 중복으로 전달되면 1회만 처리한다") {
-                val session = SessionTestFixture.createSession(club = adminMember.club, cardinal = 8)
                 val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = adminMember.club)
                 val cardinal =
                     CardinalTestFixture.createCardinal(
@@ -337,14 +338,13 @@ class AdminClubMemberUseCaseTest :
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
-                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
 
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8), ClubMemberApplyObRequest(20L, 8)))
 
                 verify(exactly = 1) { clubMemberCardinalRepository.save(any()) }
-                verify(
-                    exactly = 1,
-                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(exactly = 1) {
+                    attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal))
+                }
             }
 
             it("존재하지 않는 기수면 예외가 발생한다") {
@@ -383,7 +383,6 @@ class AdminClubMemberUseCaseTest :
                 every { cardinalReader.findByClubIdAndCardinalNumber(1L, 8) } returns cardinal
                 every { clubMemberCardinalPolicy.notContains(member, cardinal) } returns true
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns true
-                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns emptyList()
 
                 useCase.applyOb(1L, 10L, listOf(ClubMemberApplyObRequest(20L, 8)))
 
@@ -405,34 +404,31 @@ class AdminClubMemberUseCaseTest :
             it("기수를 추가하면 해당 기수의 세션에 출석이 초기화된다") {
                 val member = createMember()
                 val cardinal = CardinalTestFixture.createCardinal(id = 1L, club = club, cardinalNumber = 8)
-                val session = SessionTestFixture.createSession(club = club, cardinal = 8)
                 stubMemberLock(member)
                 every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(1L)) } returns listOf(cardinal)
                 every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns emptyList()
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns false
-                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns listOf(session)
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(1L)))
 
-                verify(
-                    exactly = 1,
-                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(exactly = 1) {
+                    attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(cardinal))
+                }
             }
 
-            it("기수를 추가할 때 세션이 없으면 출석 초기화를 하지 않는다") {
+            it("추가할 기수가 없으면 출석 초기화를 요청하지 않는다") {
                 val member = createMember()
                 val cardinal = CardinalTestFixture.createCardinal(id = 1L, club = club, cardinalNumber = 8)
+                val existingLink = ClubMemberCardinal.create(member, cardinal)
                 stubMemberLock(member)
                 every { cardinalReader.findAllByClubIdAndIdIn(1L, listOf(1L)) } returns listOf(cardinal)
-                every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns emptyList()
-                every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, cardinal) } returns false
-                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(8)) } returns emptyList()
+                every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(existingLink)
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(1L)))
 
-                verify(
-                    exactly = 0,
-                ) { attendanceRepository.saveAll(any<List<com.weeth.domain.attendance.domain.entity.Attendance>>()) }
+                verify(exactly = 0) {
+                    attendanceInitializer.initializeForMemberCardinals(any(), any(), any())
+                }
             }
 
             it("최신 기수를 새로 추가하면 출석 통계와 패널티가 리셋된다") {
@@ -449,13 +445,15 @@ class AdminClubMemberUseCaseTest :
                     listOf(existingCardinal, newCardinal)
                 every { clubMemberCardinalRepository.findAllByClubMembers(listOf(member)) } returns listOf(existingLink)
                 every { clubMemberCardinalPolicy.isLatestOrFirstCardinal(member, newCardinal) } returns true
-                every { sessionReader.findAllByClubIdAndCardinalIn(1L, listOf(9)) } returns emptyList()
 
                 useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(1L, 2L)))
 
                 member.attendanceStats.attendanceCount shouldBe 0
                 member.attendanceStats.absenceCount shouldBe 0
                 member.penaltyCount shouldBe 0
+                verify(exactly = 1) {
+                    attendanceInitializer.initializeForMemberCardinals(1L, member, listOf(newCardinal))
+                }
             }
 
             it("출석 기록 없는 기수 삭제 시 force 없이도 바로 삭제된다") {

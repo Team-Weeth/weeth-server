@@ -82,6 +82,23 @@ interface PostRepository :
         @Param("id") id: Long,
     ): Post?
 
+    @EntityGraph(attributePaths = ["board", "board.club"])
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        """
+        SELECT p
+        FROM Post p
+        WHERE p.id IN :ids
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.id ASC
+        """,
+    )
+    fun findAllByIdsWithLock(
+        @Param("ids") ids: List<Long>,
+    ): List<Post>
+
     @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
     @Query(
         """
@@ -200,4 +217,18 @@ interface PostRepository :
     fun countActivePostsByBoardIds(
         @Param("boardIds") boardIds: List<Long>,
     ): List<BoardPostCount>
+
+    @Query(
+        """
+        SELECT p.id
+        FROM Post p
+        WHERE p.clubMember.id IN :clubMemberIds
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.id ASC
+        """,
+    )
+    fun findActiveIdsByClubMemberIdIn(
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+    ): List<Long>
 }

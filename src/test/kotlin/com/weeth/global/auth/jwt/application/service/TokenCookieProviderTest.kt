@@ -83,4 +83,42 @@ class TokenCookieProviderTest :
                 cookie.sameSite shouldBe "None"
             }
         }
+
+        describe("expireAccessTokenCookie") {
+            it("access token 쿠키를 같은 이름과 path로 만료한다") {
+                val cookieProperties =
+                    CookieProperties(
+                        accessTokenName = "access_token",
+                        refreshTokenName = "refresh_token",
+                        path = "/",
+                    )
+                val provider = TokenCookieProvider(cookieProperties, jwtProperties)
+
+                val cookie = provider.expireAccessTokenCookie()
+
+                cookie.name shouldBe "access_token"
+                cookie.value shouldBe ""
+                cookie.maxAge.seconds shouldBe 0L
+                cookie.path shouldBe "/"
+            }
+        }
+
+        describe("expireRefreshTokenCookie") {
+            it("refresh token 쿠키를 같은 이름과 refresh path로 만료한다") {
+                val cookieProperties =
+                    CookieProperties(
+                        accessTokenName = "access_token",
+                        refreshTokenName = "refresh_token",
+                        refreshPath = "/api/v4/users/social/refresh",
+                    )
+                val provider = TokenCookieProvider(cookieProperties, jwtProperties)
+
+                val cookie = provider.expireRefreshTokenCookie()
+
+                cookie.name shouldBe "refresh_token"
+                cookie.value shouldBe ""
+                cookie.maxAge.seconds shouldBe 0L
+                cookie.path shouldBe "/api/v4/users/social/refresh"
+            }
+        }
     })

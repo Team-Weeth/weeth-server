@@ -1,60 +1,56 @@
 package com.weeth.domain.account.application.usecase.command
 
-import com.weeth.domain.account.application.dto.request.AccountSaveRequest
-import com.weeth.domain.account.application.exception.AccountExistsException
-import com.weeth.domain.account.domain.repository.AccountRepository
-import com.weeth.domain.cardinal.domain.repository.CardinalReader
-import com.weeth.domain.cardinal.fixture.CardinalTestFixture
-import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.account.domain.entity.AccountSetting
+import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.club.fixture.ClubTestFixture
-import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 
 class ManageAccountUseCaseTest :
     DescribeSpec({
-        val accountRepository = mockk<AccountRepository>(relaxed = true)
-        val cardinalReader = mockk<CardinalReader>(relaxed = true)
-        val clubReader = mockk<ClubReader>(relaxed = true)
+        val accountSettingRepository = mockk<AccountSettingRepository>(relaxed = true)
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
-        val useCase = ManageAccountUseCase(accountRepository, cardinalReader, clubReader, clubPermissionPolicy)
+        val useCase =
+            ManageAccountUseCase(
+                accountSettingRepository = accountSettingRepository,
+                clubPermissionPolicy = clubPermissionPolicy,
+            )
 
         val clubId = 1L
         val userId = 100L
-        val club = ClubTestFixture.createClub()
 
         beforeTest {
-            clearMocks(accountRepository, cardinalReader, clubReader, clubPermissionPolicy)
-            every { clubReader.getClubById(clubId) } returns club
+            clearMocks(accountSettingRepository, clubPermissionPolicy)
         }
 
-        describe("save") {
-            context("이미 존재하는 기수로 저장 시") {
-                it("AccountExistsException을 던진다") {
-                    val request = AccountSaveRequest("설명", 100_000, 40)
-                    every { accountRepository.existsByClubIdAndCardinal(clubId, 40) } returns true
+        describe("updateMemberVisibility") {
+            it("어드민 권한을 확인하고 club 단위 공개 여부를 저장한다") {
+                every { accountSettingRepository.findByClubId(clubId) } returns null
+                val saved = slot<AccountSetting>()
+                every { accountSettingRepository.save(capture(saved)) } answers { firstArg() }
 
-                    shouldThrow<AccountExistsException> { useCase.save(clubId, request, userId) }
-                }
+                useCase.updateMemberVisibility(clubId = clubId, visible = true, userId = userId)
+
+                verify { clubPermissionPolicy.requireAdmin(clubId, userId) }
+                saved.captured.clubId shouldBe clubId
+                saved.captured.memberVisible shouldBe true
             }
 
-            context("정상 저장 시") {
-                it("기수 존재를 보장하고 account를 저장한다") {
-                    val request = AccountSaveRequest("설명", 100_000, 40)
-                    every { accountRepository.existsByClubIdAndCardinal(clubId, 40) } returns false
-                    every { cardinalReader.findByClubIdAndCardinalNumber(clubId, 40) } returns
-                        CardinalTestFixture.createCardinal(cardinalNumber = 40)
-                    every { accountRepository.save(any()) } answers { firstArg() }
+            it("기존 설정이 있으면 해당 설정을 갱신한다") {
+                val existing = AccountSetting.createDefault(clubId).apply { showToMembers() }
+                every { accountSettingRepository.findByClubId(clubId) } returns existing
+                val saved = slot<AccountSetting>()
+                every { accountSettingRepository.save(capture(saved)) } answers { firstArg() }
 
-                    useCase.save(clubId, request, userId)
+                useCase.updateMemberVisibility(clubId = clubId, visible = false, userId = userId)
 
-                    verify(exactly = 1) { clubPermissionPolicy.requireAdmin(clubId, userId) }
-                    verify(exactly = 1) { accountRepository.save(any()) }
-                }
+                saved.captured shouldBe existing
+                existing.memberVisible shouldBe false
             }
         }
     })

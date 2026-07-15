@@ -1,37 +1,34 @@
 package com.weeth.domain.account.application.usecase.command
 
-import com.weeth.domain.account.application.dto.request.AccountSaveRequest
-import com.weeth.domain.account.application.exception.AccountExistsException
-import com.weeth.domain.account.domain.entity.Account
-import com.weeth.domain.account.domain.repository.AccountRepository
-import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
-import com.weeth.domain.cardinal.domain.repository.CardinalReader
-import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.account.domain.entity.AccountSetting
+import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
 class ManageAccountUseCase(
-    private val accountRepository: AccountRepository,
-    private val cardinalReader: CardinalReader,
-    private val clubReader: ClubReader,
+    private val accountSettingRepository: AccountSettingRepository,
     private val clubPermissionPolicy: ClubPermissionPolicy,
 ) {
+    /** 회비 기능 전체의 club 단위 부원 공개 여부를 설정한다. 설정 행이 없으면 생성한다. */
     @Transactional
-    fun save(
+    fun updateMemberVisibility(
         clubId: Long,
-        request: AccountSaveRequest,
+        visible: Boolean,
         userId: Long,
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
-        val club = clubReader.getClubById(clubId)
+        val setting =
+            accountSettingRepository.findByClubId(clubId)
+                ?: AccountSetting.createDefault(clubId)
 
-        if (accountRepository.existsByClubIdAndCardinal(clubId, request.cardinal)) throw AccountExistsException()
+        if (visible) {
+            setting.showToMembers()
+        } else {
+            setting.hideFromMembers()
+        }
 
-        cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal)
-            ?: throw CardinalNotFoundException()
-
-        accountRepository.save(Account.create(club, request.description, request.totalAmount, request.cardinal))
+        accountSettingRepository.save(setting)
     }
 }

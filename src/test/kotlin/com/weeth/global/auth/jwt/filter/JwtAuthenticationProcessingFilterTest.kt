@@ -2,6 +2,7 @@ package com.weeth.global.auth.jwt.filter
 
 import com.weeth.global.auth.jwt.application.service.JwtTokenExtractor
 import com.weeth.global.auth.jwt.domain.enums.TokenType
+import com.weeth.global.auth.jwt.domain.port.AccessTokenBlacklistStorePort
 import com.weeth.global.auth.jwt.domain.service.JwtTokenProvider
 import com.weeth.global.auth.model.AuthenticatedUser
 import io.kotest.core.spec.style.DescribeSpec
@@ -21,11 +22,12 @@ class JwtAuthenticationProcessingFilterTest :
     DescribeSpec({
         val jwtProvider = mockk<JwtTokenProvider>()
         val jwtService = mockk<JwtTokenExtractor>()
-        val filter = JwtAuthenticationProcessingFilter(jwtProvider, jwtService)
+        val accessTokenBlacklistStore = mockk<AccessTokenBlacklistStorePort>()
+        val filter = JwtAuthenticationProcessingFilter(jwtProvider, jwtService, accessTokenBlacklistStore)
 
         beforeTest {
             SecurityContextHolder.clearContext()
-            clearMocks(jwtProvider, jwtService)
+            clearMocks(jwtProvider, jwtService, accessTokenBlacklistStore)
         }
 
         afterTest {
@@ -42,6 +44,7 @@ class JwtAuthenticationProcessingFilterTest :
                 every { jwtProvider.validate("access-token") } just runs
                 every { jwtService.extractClaims("access-token") } returns
                     JwtTokenExtractor.TokenClaims(1L, "admin@weeth.com", TokenType.ACCESS)
+                every { accessTokenBlacklistStore.isBlacklisted(1L) } returns false
 
                 filter.doFilter(request, response, chain)
 
@@ -63,6 +66,7 @@ class JwtAuthenticationProcessingFilterTest :
                 every { jwtProvider.validate("temp-token") } just runs
                 every { jwtService.extractClaims("temp-token") } returns
                     JwtTokenExtractor.TokenClaims(2L, "new@weeth.com", TokenType.TEMPORARY)
+                every { accessTokenBlacklistStore.isBlacklisted(2L) } returns false
 
                 filter.doFilter(request, response, chain)
 
@@ -93,6 +97,22 @@ class JwtAuthenticationProcessingFilterTest :
                 every { jwtService.extractAccessToken(request) } returns "access-token"
                 every { jwtProvider.validate("access-token") } just runs
                 every { jwtService.extractClaims("access-token") } returns null
+
+                filter.doFilter(request, response, chain)
+
+                SecurityContextHolder.getContext().authentication shouldBe null
+            }
+
+            it("blacklist에 등록된 사용자의 토큰이면 인증을 저장하지 않는다") {
+                val request = MockHttpServletRequest().apply { requestURI = "/api/v4/users/me" }
+                val response = MockHttpServletResponse()
+                val chain = MockFilterChain()
+
+                every { jwtService.extractAccessToken(request) } returns "access-token"
+                every { jwtProvider.validate("access-token") } just runs
+                every { jwtService.extractClaims("access-token") } returns
+                    JwtTokenExtractor.TokenClaims(1L, "left@weeth.com", TokenType.ACCESS)
+                every { accessTokenBlacklistStore.isBlacklisted(1L) } returns true
 
                 filter.doFilter(request, response, chain)
 

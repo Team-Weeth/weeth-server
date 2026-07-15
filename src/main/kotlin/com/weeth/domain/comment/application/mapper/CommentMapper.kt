@@ -19,9 +19,8 @@ class CommentMapper(
         CommentResponse(
             id = comment.id,
             author =
-                UserInfo.of(
-                    comment.clubMember.user,
-                    comment.clubMember.memberRole,
+                UserInfo.ofClubMember(
+                    comment.clubMember,
                     comment.clubMember.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
                 ),
             content = comment.content,
