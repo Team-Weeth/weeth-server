@@ -26,6 +26,7 @@ import com.weeth.domain.schedule.domain.repository.EventReader
 import com.weeth.domain.schedule.fixture.ScheduleTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -54,7 +55,8 @@ class GetDashboardQueryServiceTest :
         val accountSettingReader = mockk<AccountSettingReader>()
         val fileMapper = mockk<FileMapper>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
-        val dashboardMapper = DashboardMapper(fileMapper, fileAccessUrlPort)
+        val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
+        val dashboardMapper = DashboardMapper(fileMapper, fileAccessUrlPort, userInfoMapper)
 
         val queryService =
             GetDashboardQueryService(

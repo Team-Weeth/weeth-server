@@ -8,6 +8,7 @@ import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
+import com.weeth.domain.club.application.dto.response.ClubUsingProfileResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
@@ -37,6 +38,7 @@ class ClubMapper(
         cardinals = toCardinalNumbers(cardinals),
         memberRole = member.memberRole,
         memberStatus = member.memberStatus,
+        usingProfile = toUsingProfileResponse(member),
     )
 
     fun toResponse(club: Club) =
@@ -161,6 +163,16 @@ class ClubMapper(
         )
 
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
+
+    private fun toUsingProfileResponse(member: ClubMember): ClubUsingProfileResponse? =
+        member.userProfile?.let { profile ->
+            ClubUsingProfileResponse(
+                profileId = profile.id,
+                name = profile.name,
+                profileImageUrl = profile.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
+                bio = profile.bio,
+            )
+        }
 
     private fun toCardinalNumbers(cardinals: List<ClubMemberCardinal>): List<Int> {
         if (cardinals.isEmpty()) {

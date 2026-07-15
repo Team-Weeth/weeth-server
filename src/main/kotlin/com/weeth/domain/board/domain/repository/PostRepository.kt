@@ -5,6 +5,7 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.enums.BoardType
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
@@ -19,7 +20,7 @@ import java.time.LocalDateTime
 interface PostRepository :
     JpaRepository<Post, Long>,
     PostReader {
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -35,7 +36,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -52,7 +53,7 @@ interface PostRepository :
 
     fun findByIdAndIsDeletedFalse(id: Long): Post?
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -99,7 +100,7 @@ interface PostRepository :
         @Param("ids") ids: List<Long>,
     ): List<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "board"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile", "board"])
     @Query(
         """
         SELECT p
@@ -125,7 +126,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post> = findAllActiveByBoardIds(boardIds, pageable)
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
@@ -141,7 +142,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
@@ -157,7 +158,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
@@ -175,7 +176,7 @@ interface PostRepository :
         pageable: Pageable,
     ): Slice<Post>
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query(
         """
         SELECT p
@@ -231,4 +232,33 @@ interface PostRepository :
     fun findActiveIdsByClubMemberIdIn(
         @Param("clubMemberIds") clubMemberIds: List<Long>,
     ): List<Long>
+
+    @Query(
+        """
+        SELECT COUNT(p)
+        FROM Post p
+        WHERE p.clubMember.id IN :clubMemberIds
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        """,
+    )
+    override fun countActiveByClubMemberIds(
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+    ): Long
+
+    @EntityGraph(attributePaths = ["board", "board.club"])
+    @Query(
+        value = """
+        SELECT p
+        FROM Post p
+        WHERE p.clubMember.user.id = :userId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findMyActivePosts(
+        @Param("userId") userId: Long,
+        pageable: Pageable,
+    ): Slice<Post>
 }

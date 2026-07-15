@@ -13,13 +13,13 @@ import org.springframework.data.repository.query.Param
 interface CommentRepository :
     JpaRepository<Comment, Long>,
     CommentReader {
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     fun findByIdAndPostId(
         id: Long,
         postId: Long,
     ): Comment?
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(
@@ -35,7 +35,7 @@ interface CommentRepository :
         @Param("postId") postId: Long,
     ): Comment?
 
-    @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
+    @EntityGraph(attributePaths = ["clubMember", "clubMember.user", "clubMember.userProfile"])
     @Query("SELECT c FROM Comment c WHERE c.post.id = :postId")
     override fun findAllByPostId(
         @Param("postId") postId: Long,

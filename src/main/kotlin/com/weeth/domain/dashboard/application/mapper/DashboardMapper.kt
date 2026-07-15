@@ -21,6 +21,7 @@ import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.schedule.domain.entity.Event
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.user.application.dto.response.UserInfo
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
@@ -30,6 +31,7 @@ import java.time.LocalDateTime
 class DashboardMapper(
     private val fileMapper: FileMapper,
     private val fileAccessUrlPort: FileAccessUrlPort,
+    private val userInfoMapper: UserInfoMapper,
 ) {
     fun toClubInfoResponse(
         club: Club,
@@ -111,7 +113,7 @@ class DashboardMapper(
     ) = DashboardPostResponse(
         id = post.id,
         boardId = post.board.id,
-        author = UserInfo.ofClubMember(post.clubMember, resolveProfileImage(post.clubMember)),
+        author = userInfoMapper.toClubMemberAuthorInfo(post.clubMember),
         title = post.title,
         content = post.content,
         time = post.createdAt,

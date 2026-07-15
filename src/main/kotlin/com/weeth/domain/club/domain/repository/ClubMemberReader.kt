@@ -33,7 +33,14 @@ interface ClubMemberReader {
 
     fun findAllByUserIdWithClub(userId: Long): List<ClubMember>
 
+    fun findAllByUserIdWithClubAndUserProfile(userId: Long): List<ClubMember>
+
     fun findAllByUserIdAndMemberStatusWithClub(
+        userId: Long,
+        memberStatus: MemberStatus,
+    ): List<ClubMember>
+
+    fun findAllByUserIdAndMemberStatusWithClubAndUserProfile(
         userId: Long,
         memberStatus: MemberStatus,
     ): List<ClubMember>

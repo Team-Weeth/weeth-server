@@ -50,4 +50,22 @@ enum class UserErrorCode(
 
     @ExplainError("사용자가 LEAD인 활성 동아리를 보유한 상태로 위드 탈퇴를 시도할 때 발생합니다.")
     USER_HAS_LEAD_CLUB(20913, HttpStatus.CONFLICT, "LEAD인 동아리가 있어 탈퇴할 수 없습니다."),
+
+    @ExplainError("프로필 ID로 조회했으나 프로필이 없거나 로그인 사용자의 소유가 아닐 때 발생합니다.")
+    USER_PROFILE_NOT_FOUND(20914, HttpStatus.NOT_FOUND, "프로필을 찾을 수 없습니다."),
+
+    @ExplainError("프로필을 설정하려는 동아리가 로그인 사용자의 ACTIVE 멤버십이 아닐 때 발생합니다.")
+    USER_PROFILE_ASSIGNMENT_NOT_ALLOWED(20915, HttpStatus.FORBIDDEN, "해당 동아리에 프로필을 설정할 수 없습니다."),
+
+    @ExplainError("동아리별 프로필 설정 요청에서 같은 동아리가 중복될 때 발생합니다.")
+    USER_PROFILE_DUPLICATE_CLUB_ASSIGNMENT(20916, HttpStatus.BAD_REQUEST, "같은 동아리의 프로필 설정이 중복되었습니다."),
+
+    @ExplainError("동아리별 프로필 설정 요청의 clubId가 Base62 TSID 형식이 아닐 때 발생합니다.")
+    USER_PROFILE_INVALID_CLUB_ID(20917, HttpStatus.BAD_REQUEST, "동아리 ID 형식이 올바르지 않습니다."),
+
+    @ExplainError("삭제하려는 프로필이 하나 이상의 ACTIVE 동아리에서 사용 중일 때 발생합니다.")
+    USER_PROFILE_IN_USE(20918, HttpStatus.CONFLICT, "사용 중인 프로필은 삭제할 수 없습니다."),
+
+    @ExplainError("유효하지 않은 페이지 번호 또는 페이지 크기를 요청할 때 발생합니다.")
+    USER_PAGE_NOT_FOUND(20919, HttpStatus.BAD_REQUEST, "유효하지 않은 페이지입니다."),
 }

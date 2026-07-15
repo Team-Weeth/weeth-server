@@ -23,4 +23,17 @@ data class ClubInfoResponse(
     val memberRole: MemberRole,
     @field:Schema(description = "나의 멤버 상태", example = "ACTIVE")
     val memberStatus: MemberStatus,
+    @field:Schema(description = "현재 사용 중인 멀티프로필")
+    val usingProfile: ClubUsingProfileResponse? = null,
+)
+
+data class ClubUsingProfileResponse(
+    @field:Schema(description = "프로필 ID", example = "1")
+    val profileId: Long,
+    @field:Schema(description = "프로필 이름", example = "길동")
+    val name: String,
+    @field:Schema(description = "프로필 이미지 URL")
+    val profileImageUrl: String? = null,
+    @field:Schema(description = "자기소개", example = "안녕하세요")
+    val bio: String? = null,
 )
