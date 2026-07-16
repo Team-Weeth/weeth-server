@@ -121,7 +121,7 @@ class UserControllerTest :
 
         describe("createUserProfile") {
             it("멀티프로필을 생성한다") {
-                val request = CreateMultiProfileRequest(name = "길동")
+                val request = CreateMultiProfileRequest(name = "길동", clubIds = listOf("1A2b3C"))
                 val profileResponse = UserProfileResponse(profileId = 10L, name = "길동")
                 io.mockk.every { manageUserProfileUseCase.create(1L, request) } returns profileResponse
 

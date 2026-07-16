@@ -4,6 +4,7 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.Size
 
 data class CreateMultiProfileRequest(
@@ -21,5 +22,6 @@ data class CreateMultiProfileRequest(
     @field:Size(max = 30)
     val bio: String? = null,
     @field:Schema(description = "생성 직후 사용할 동아리 ID 목록", example = "[\"1A2b3C\", \"4D5e6F\"]")
-    val clubIds: List<String> = emptyList(),
+    @field:NotEmpty(message = "사용할 동아리를 1개 이상 선택해야 합니다.")
+    val clubIds: List<String>,
 )
