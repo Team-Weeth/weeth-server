@@ -106,6 +106,18 @@ JOIN user_profile up ON up.user_id = cm.user_id
 SET cm.user_profile_id = up.user_profile_id
 WHERE cm.member_status = 'ACTIVE';
 
+ALTER TABLE file
+    MODIFY COLUMN owner_type ENUM (
+        'POST',
+        'COMMENT',
+        'ACCOUNT_TRANSACTION',
+        'CLUB_MEMBER_PROFILE',
+        'USER_PROFILE_IMAGE',
+        'USER_PROFILE_HEADER',
+        'CLUB_PROFILE',
+        'CLUB_BACKGROUND'
+    ) NOT NULL;
+
 UPDATE file f
 JOIN user_profile up ON up.user_id = f.owner_id
 SET
