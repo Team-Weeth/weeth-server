@@ -18,7 +18,7 @@ data class PostListResponse(
     val title: String,
     @field:Schema(description = "내용")
     val content: String,
-    @field:Schema(description = "수정 시각")
+    @field:Schema(description = "생성 시각")
     val time: LocalDateTime,
     @field:Schema(description = "댓글 수")
     val commentCount: Int,

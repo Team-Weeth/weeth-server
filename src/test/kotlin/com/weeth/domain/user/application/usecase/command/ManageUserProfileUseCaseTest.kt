@@ -58,6 +58,8 @@ class ManageUserProfileUseCaseTest :
         describe("create") {
             it("사용자 프로필을 생성하고 이미지 파일 메타데이터를 저장한다") {
                 val user = UserTestFixture.createRegisteredUser(1L)
+                val club = ClubTestFixture.createClub(id = 100L, name = "동아리")
+                val member = ClubMemberTestFixture.createActiveMember(id = 1000L, club = club, user = user)
                 val profileStorageKey = "USER_PROFILE_IMAGE/2026-07/123e4567-e89b-12d3-a456-426614174000_profile.png"
                 val headerStorageKey = "USER_PROFILE_HEADER/2026-07/123e4567-e89b-12d3-a456-426614174001_header.png"
                 val request =
@@ -78,6 +80,7 @@ class ManageUserProfileUseCaseTest :
                                 contentType = "image/png",
                             ),
                         bio = "  안녕하세요  ",
+                        clubIds = listOf(TsidBase62Encoder.encode(100L)),
                     )
                 every { userRepository.getById(1L) } returns user
                 every { userProfileRepository.save(any<UserProfile>()) } answers {
@@ -86,6 +89,8 @@ class ManageUserProfileUseCaseTest :
                     }
                 }
                 every { fileRepository.save(any<File>()) } answers { firstArg() }
+                every { clubMemberRepository.findAllActiveByUserIdAndClubIdsWithLock(1L, listOf(100L)) } returns
+                    listOf(member)
                 every { fileAccessUrlPort.resolve(profileStorageKey) } returns "https://cdn.test/profile.png"
                 every { fileAccessUrlPort.resolve(headerStorageKey) } returns "https://cdn.test/header.png"
 
@@ -118,13 +123,21 @@ class ManageUserProfileUseCaseTest :
 
             it("이미지 요청이 없으면 파일 메타데이터를 저장하지 않는다") {
                 val user = UserTestFixture.createRegisteredUser(1L)
-                val request = CreateMultiProfileRequest(name = "길동")
+                val club = ClubTestFixture.createClub(id = 100L, name = "동아리")
+                val member = ClubMemberTestFixture.createActiveMember(id = 1000L, club = club, user = user)
+                val request =
+                    CreateMultiProfileRequest(
+                        name = "길동",
+                        clubIds = listOf(TsidBase62Encoder.encode(100L)),
+                    )
                 every { userRepository.getById(1L) } returns user
                 every { userProfileRepository.save(any<UserProfile>()) } answers {
                     firstArg<UserProfile>().apply {
                         ReflectionTestUtils.setField(this, "id", 10L)
                     }
                 }
+                every { clubMemberRepository.findAllActiveByUserIdAndClubIdsWithLock(1L, listOf(100L)) } returns
+                    listOf(member)
 
                 val result = useCase.create(userId = 1L, request = request)
 
