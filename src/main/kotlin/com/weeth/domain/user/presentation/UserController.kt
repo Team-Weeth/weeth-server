@@ -8,9 +8,7 @@ import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
-import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
-import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
@@ -21,9 +19,7 @@ import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
-import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.dto.JwtDto
@@ -31,7 +27,6 @@ import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
-import com.weeth.global.common.response.SliceResponse
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.security.SecurityRequirements
@@ -47,7 +42,6 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "USER", description = "사용자 API")
@@ -64,8 +58,6 @@ class UserController(
     private val manageUserProfileUseCase: ManageUserProfileUseCase,
     private val getUserProfileQueryService: GetUserProfileQueryService,
     private val getUserMyPageQueryService: GetUserMyPageQueryService,
-    private val getUserPostQueryService: GetUserPostQueryService,
-    private val getUserAttendanceQueryService: GetUserAttendanceQueryService,
     private val tokenCookieProvider: TokenCookieProvider,
 ) {
     @PostMapping("/social/kakao")
@@ -238,28 +230,6 @@ class UserController(
     ): CommonResponse<UserMyPageResponse> {
         val response = getUserMyPageQueryService.getMyPage(userId)
         return CommonResponse.success(UserResponseCode.USER_MY_PAGE_FIND_SUCCESS, response)
-    }
-
-    @GetMapping("/me/posts")
-    @Operation(summary = "내가 쓴 글 조회")
-    fun getMyPosts(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-        @RequestParam(defaultValue = "0") pageNumber: Int,
-        @RequestParam(defaultValue = "5") pageSize: Int,
-    ): CommonResponse<SliceResponse<UserMyPostResponse>> {
-        val response = getUserPostQueryService.getMyPosts(userId, pageNumber, pageSize)
-        return CommonResponse.success(UserResponseCode.USER_MY_POSTS_FIND_SUCCESS, response)
-    }
-
-    @GetMapping("/me/attended-sessions")
-    @Operation(summary = "출석한 세션 조회")
-    fun getAttendedSessions(
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-        @RequestParam(defaultValue = "0") pageNumber: Int,
-        @RequestParam(defaultValue = "5") pageSize: Int,
-    ): CommonResponse<SliceResponse<UserAttendedSessionResponse>> {
-        val response = getUserAttendanceQueryService.getAttendedSessions(userId, pageNumber, pageSize)
-        return CommonResponse.success(UserResponseCode.USER_ATTENDED_SESSIONS_FIND_SUCCESS, response)
     }
 
     private fun <T> buildTokenResponse(

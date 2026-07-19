@@ -11,8 +11,9 @@ interface AttendanceReader {
         status: AttendanceStatus,
     ): Long
 
-    fun findByUserIdAndStatus(
+    fun findByUserIdAndClubIdAndStatus(
         userId: Long,
+        clubId: Long,
         status: AttendanceStatus,
         pageable: Pageable,
     ): Slice<Attendance>

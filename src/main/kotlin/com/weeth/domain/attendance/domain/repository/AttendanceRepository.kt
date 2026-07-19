@@ -61,12 +61,15 @@ interface AttendanceRepository :
         JOIN FETCH a.session s
         JOIN FETCH s.club
         WHERE a.clubMember.user.id = :userId
+        AND s.club.id = :clubId
+        AND a.clubMember.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
         AND a.status = :status
         ORDER BY s.start DESC, a.id DESC
         """,
     )
-    override fun findByUserIdAndStatus(
+    override fun findByUserIdAndClubIdAndStatus(
         @Param("userId") userId: Long,
+        @Param("clubId") clubId: Long,
         @Param("status") status: AttendanceStatus,
         pageable: Pageable,
     ): Slice<Attendance>
