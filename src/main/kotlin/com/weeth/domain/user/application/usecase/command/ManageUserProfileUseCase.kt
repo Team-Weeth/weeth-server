@@ -10,6 +10,7 @@ import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
+import com.weeth.domain.user.application.dto.response.UserProfileClubResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.exception.UserProfileAssignmentNotAllowedException
 import com.weeth.domain.user.application.exception.UserProfileDuplicateClubAssignmentException
@@ -43,9 +44,12 @@ class ManageUserProfileUseCase(
 
         saveFileIfPresent(request.profileImage, FileOwnerType.USER_PROFILE_IMAGE, savedProfile.id)
         saveFileIfPresent(request.headerImage, FileOwnerType.USER_PROFILE_HEADER, savedProfile.id)
-        assignCreatedProfileIfRequested(userId, savedProfile, request.clubIds)
+        val assignedMembers = assignCreatedProfileIfRequested(userId, savedProfile, request.clubIds)
 
-        return userProfileMapper.toResponse(savedProfile)
+        return userProfileMapper.toResponse(
+            profile = savedProfile,
+            usingClubs = assignedMembers.toUserProfileClubResponses(),
+        )
     }
 
     @Transactional
@@ -76,7 +80,10 @@ class ManageUserProfileUseCase(
             updateStorageKey = { profile.update(headerImageStorageKey = it) },
         )
 
-        return userProfileMapper.toResponse(profile)
+        return userProfileMapper.toResponse(
+            profile = profile,
+            usingClubs = findUsingClubs(userId, profile.id),
+        )
     }
 
     @Transactional
@@ -204,8 +211,8 @@ class ManageUserProfileUseCase(
         userId: Long,
         profile: UserProfile,
         clubIds: List<String>,
-    ) {
-        if (clubIds.isEmpty()) return
+    ): List<ClubMember> {
+        if (clubIds.isEmpty()) return emptyList()
 
         val assignments =
             clubIds.map {
@@ -217,11 +224,21 @@ class ManageUserProfileUseCase(
         validateDuplicateClubAssignments(assignments)
 
         val membersByClubId = findAssignableMembers(userId, assignments.map { it.clubId }.distinct().sorted())
-        assignments.forEach { assignment ->
+        return assignments.map { assignment ->
             val member = membersByClubId[assignment.clubId] ?: throw UserProfileAssignmentNotAllowedException()
             member.assignProfile(profile)
+            member
         }
     }
+
+    private fun findUsingClubs(
+        userId: Long,
+        profileId: Long,
+    ): List<UserProfileClubResponse> =
+        clubMemberRepository
+            .findAllByUserIdAndMemberStatusWithClubAndUserProfile(userId, MemberStatus.ACTIVE)
+            .filter { it.userProfile?.id == profileId }
+            .toUserProfileClubResponses()
 
     private fun findOwnedProfiles(
         userId: Long,
@@ -257,4 +274,12 @@ class ManageUserProfileUseCase(
         val clubId: Long,
         val profileId: Long,
     )
+
+    private fun List<ClubMember>.toUserProfileClubResponses(): List<UserProfileClubResponse> =
+        map {
+            UserProfileClubResponse(
+                clubId = TsidBase62Encoder.encode(it.club.id),
+                name = it.club.name,
+            )
+        }
 }
