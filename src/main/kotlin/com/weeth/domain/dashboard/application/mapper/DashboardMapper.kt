@@ -20,9 +20,7 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.schedule.domain.entity.Event
 import com.weeth.domain.session.domain.entity.Session
-import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.application.mapper.UserInfoMapper
-import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
@@ -47,13 +45,11 @@ class DashboardMapper(
         code = club.code,
     )
 
-    fun toMyInfoResponse(
-        user: User,
-        clubMember: ClubMember,
-    ) = DashboardMyInfoResponse(
-        userInfo = UserInfo.ofSelf(user, clubMember.memberRole, resolveProfileImage(clubMember)),
-        bio = clubMember.bio,
-    )
+    fun toMyInfoResponse(clubMember: ClubMember) =
+        DashboardMyInfoResponse(
+            userInfo = userInfoMapper.toClubMemberAuthorInfo(clubMember),
+            bio = clubMember.bio,
+        )
 
     fun toHomeResponse(
         club: Club,
@@ -143,9 +139,6 @@ class DashboardMapper(
             title = post.title,
             content = post.content,
         )
-
-    private fun resolveProfileImage(member: ClubMember): String? =
-        member.profileImageStorageKey?.let { fileAccessUrlPort.resolve(it) }
 
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
 }
