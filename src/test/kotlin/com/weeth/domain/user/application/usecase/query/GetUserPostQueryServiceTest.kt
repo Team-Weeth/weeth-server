@@ -20,10 +20,14 @@ import io.mockk.mockk
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.SliceImpl
 import org.springframework.test.util.ReflectionTestUtils
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class GetUserPostQueryServiceTest :
     DescribeSpec({
+        val clock = Clock.fixed(Instant.parse("2026-06-30T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val postReader = mockk<PostReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val userPostMapper = UserPostMapper()
@@ -32,6 +36,7 @@ class GetUserPostQueryServiceTest :
                 postReader = postReader,
                 clubMemberPolicy = clubMemberPolicy,
                 userPostMapper = userPostMapper,
+                clock = clock,
             )
 
         beforeTest {
