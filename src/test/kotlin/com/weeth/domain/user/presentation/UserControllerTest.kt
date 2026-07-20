@@ -1,15 +1,12 @@
 package com.weeth.domain.user.presentation
 
-import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
 import com.weeth.domain.user.application.dto.request.ClubProfileAssignmentRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
-import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageInfoResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageStatsResponse
-import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
@@ -19,12 +16,9 @@ import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
-import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
-import com.weeth.global.common.response.SliceResponse
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
@@ -35,7 +29,6 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseCookie
-import java.time.LocalDateTime
 
 class UserControllerTest :
     DescribeSpec({
@@ -48,8 +41,6 @@ class UserControllerTest :
         val manageUserProfileUseCase = mockk<ManageUserProfileUseCase>()
         val getUserProfileQueryService = mockk<GetUserProfileQueryService>()
         val getUserMyPageQueryService = mockk<GetUserMyPageQueryService>()
-        val getUserPostQueryService = mockk<GetUserPostQueryService>()
-        val getUserAttendanceQueryService = mockk<GetUserAttendanceQueryService>()
         val tokenCookieProvider = mockk<TokenCookieProvider>()
         val controller =
             UserController(
@@ -62,8 +53,6 @@ class UserControllerTest :
                 manageUserProfileUseCase = manageUserProfileUseCase,
                 getUserProfileQueryService = getUserProfileQueryService,
                 getUserMyPageQueryService = getUserMyPageQueryService,
-                getUserPostQueryService = getUserPostQueryService,
-                getUserAttendanceQueryService = getUserAttendanceQueryService,
                 tokenCookieProvider = tokenCookieProvider,
             )
 
@@ -78,8 +67,6 @@ class UserControllerTest :
                 manageUserProfileUseCase,
                 getUserProfileQueryService,
                 getUserMyPageQueryService,
-                getUserPostQueryService,
-                getUserAttendanceQueryService,
                 tokenCookieProvider,
             )
         }
@@ -174,77 +161,6 @@ class UserControllerTest :
                 response.message shouldBe UserResponseCode.USER_MY_PAGE_FIND_SUCCESS.message
                 response.data shouldBe myPageResponse
                 verify(exactly = 1) { getUserMyPageQueryService.getMyPage(1L) }
-            }
-        }
-
-        describe("getMyPosts") {
-            it("로그인 사용자가 작성한 게시글 목록을 조회한다") {
-                val postsResponse =
-                    SliceResponse(
-                        content =
-                            listOf(
-                                UserMyPostResponse(
-                                    postId = 200L,
-                                    clubId = "1C",
-                                    clubName = "Leets",
-                                    boardId = 10L,
-                                    boardName = "자유게시판",
-                                    title = "제목",
-                                    content = "내용",
-                                    commentCount = 3,
-                                    likeCount = 5,
-                                    createdAt = LocalDateTime.of(2026, 6, 29, 10, 0),
-                                ),
-                            ),
-                        pageNumber = 0,
-                        pageSize = 5,
-                        numberOfElements = 1,
-                        hasNext = true,
-                    )
-                io.mockk.every { getUserPostQueryService.getMyPosts(1L, 0, 5) } returns postsResponse
-
-                val response = controller.getMyPosts(userId = 1L, pageNumber = 0, pageSize = 5)
-
-                response.code shouldBe UserResponseCode.USER_MY_POSTS_FIND_SUCCESS.code
-                response.message shouldBe UserResponseCode.USER_MY_POSTS_FIND_SUCCESS.message
-                response.data shouldBe postsResponse
-                verify(exactly = 1) { getUserPostQueryService.getMyPosts(1L, 0, 5) }
-            }
-        }
-
-        describe("getAttendedSessions") {
-            it("로그인 사용자가 출석한 세션 목록을 조회한다") {
-                val attendedSessionsResponse =
-                    SliceResponse(
-                        content =
-                            listOf(
-                                UserAttendedSessionResponse(
-                                    attendanceId = 1L,
-                                    clubId = "1C",
-                                    clubName = "Leets",
-                                    sessionId = 10L,
-                                    sessionTitle = "1차 정기모임",
-                                    cardinal = 6,
-                                    start = LocalDateTime.of(2026, 6, 29, 19, 0),
-                                    end = LocalDateTime.of(2026, 6, 29, 21, 0),
-                                    status = AttendanceStatus.ATTEND,
-                                ),
-                            ),
-                        pageNumber = 0,
-                        pageSize = 5,
-                        numberOfElements = 1,
-                        hasNext = false,
-                    )
-                io.mockk.every {
-                    getUserAttendanceQueryService.getAttendedSessions(1L, 0, 5)
-                } returns attendedSessionsResponse
-
-                val response = controller.getAttendedSessions(userId = 1L, pageNumber = 0, pageSize = 5)
-
-                response.code shouldBe UserResponseCode.USER_ATTENDED_SESSIONS_FIND_SUCCESS.code
-                response.message shouldBe UserResponseCode.USER_ATTENDED_SESSIONS_FIND_SUCCESS.message
-                response.data shouldBe attendedSessionsResponse
-                verify(exactly = 1) { getUserAttendanceQueryService.getAttendedSessions(1L, 0, 5) }
             }
         }
 

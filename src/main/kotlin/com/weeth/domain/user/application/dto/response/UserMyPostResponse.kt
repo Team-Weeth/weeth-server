@@ -24,4 +24,6 @@ data class UserMyPostResponse(
     val likeCount: Int,
     @field:Schema(description = "작성 시각")
     val createdAt: LocalDateTime,
+    @field:Schema(description = "신규 게시글 여부 (24시간 이내)", example = "true")
+    val isNew: Boolean,
 )

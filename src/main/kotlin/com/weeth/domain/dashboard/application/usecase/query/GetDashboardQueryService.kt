@@ -18,7 +18,6 @@ import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileReader
 import com.weeth.domain.schedule.domain.repository.EventReader
 import com.weeth.domain.session.domain.repository.SessionReader
-import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Slice
 import org.springframework.data.domain.SliceImpl
@@ -39,7 +38,6 @@ class GetDashboardQueryService(
     private val sessionReader: SessionReader,
     private val postReader: PostReader,
     private val fileReader: FileReader,
-    private val userReader: UserReader,
     private val accountSettingReader: AccountSettingReader,
     private val dashboardMapper: DashboardMapper,
 ) {
@@ -58,7 +56,7 @@ class GetDashboardQueryService(
         val todaySessions = sessionReader.findAllByClubIdAndStartBetween(clubId, todayStart, todayEnd)
 
         val myClubs = clubMemberReader.findActiveByUserId(userId).map(dashboardMapper::toMyClubResponse)
-        val myInfo = dashboardMapper.toMyInfoResponse(userReader.getById(userId), myMember)
+        val myInfo = dashboardMapper.toMyInfoResponse(myMember)
 
         return dashboardMapper.toHomeResponse(
             club = club,

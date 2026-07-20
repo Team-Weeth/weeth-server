@@ -36,6 +36,7 @@ interface PostReader {
 
     fun findMyActivePosts(
         userId: Long,
+        clubId: Long,
         pageable: Pageable,
     ): Slice<Post>
 

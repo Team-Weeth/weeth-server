@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.usecase.command
 
+import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
@@ -174,6 +175,9 @@ class ManageUserProfileUseCaseTest :
                 result.profileId shouldBe 10L
                 member1.userProfile?.id shouldBe 10L
                 member2.userProfile?.id shouldBe 10L
+                result.usingClubs.map { it.clubId } shouldBe
+                    listOf(TsidBase62Encoder.encode(100L), TsidBase62Encoder.encode(101L))
+                result.usingClubs.map { it.name } shouldBe listOf("동아리1", "동아리2")
             }
         }
 
@@ -193,6 +197,9 @@ class ManageUserProfileUseCaseTest :
                         ).apply {
                             ReflectionTestUtils.setField(this, "id", 10L)
                         }
+                val club = ClubTestFixture.createClub(id = 100L, name = "동아리")
+                val member = ClubMemberTestFixture.createActiveMember(id = 1000L, club = club, user = user)
+                member.assignProfile(profile)
                 val newProfileStorageKey = "USER_PROFILE_IMAGE/2026-07/123e4567-e89b-12d3-a456-426614174002_new.png"
                 val request =
                     UpdateMultiProfileRequest(
@@ -213,6 +220,9 @@ class ManageUserProfileUseCaseTest :
                 every { fileRepository.save(any<File>()) } answers { firstArg() }
                 every { fileAccessUrlPort.resolve(newProfileStorageKey) } returns "https://cdn.test/new.png"
                 every { fileAccessUrlPort.resolve(oldHeaderStorageKey) } returns "https://cdn.test/header.png"
+                every {
+                    clubMemberRepository.findAllByUserIdAndMemberStatusWithClubAndUserProfile(1L, MemberStatus.ACTIVE)
+                } returns listOf(member)
 
                 val result = useCase.update(1L, 10L, request)
 
@@ -221,6 +231,8 @@ class ManageUserProfileUseCaseTest :
                 result.profileImageUrl shouldBe "https://cdn.test/new.png"
                 result.headerImageUrl shouldBe "https://cdn.test/header.png"
                 result.bio shouldBe "새 소개"
+                result.usingClubs.map { it.clubId } shouldBe listOf(TsidBase62Encoder.encode(100L))
+                result.usingClubs.map { it.name } shouldBe listOf("동아리")
                 profile.profileImageStorageKey shouldBe newProfileStorageKey
                 profile.headerImageStorageKey shouldBe oldHeaderStorageKey
                 verify(exactly = 1) {

@@ -3,6 +3,7 @@ package com.weeth.domain.user.application.usecase.query
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.fixture.SessionTestFixture
 import com.weeth.domain.user.application.exception.UserPageNotFoundException
@@ -23,15 +24,17 @@ import java.time.LocalDateTime
 class GetUserAttendanceQueryServiceTest :
     DescribeSpec({
         val attendanceReader = mockk<AttendanceReader>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val userAttendanceMapper = UserAttendanceMapper()
         val queryService =
             GetUserAttendanceQueryService(
                 attendanceReader = attendanceReader,
+                clubMemberPolicy = clubMemberPolicy,
                 userAttendanceMapper = userAttendanceMapper,
             )
 
         beforeTest {
-            clearMocks(attendanceReader)
+            clearMocks(attendanceReader, clubMemberPolicy)
         }
 
         describe("getAttendedSessions") {
@@ -56,11 +59,12 @@ class GetUserAttendanceQueryServiceTest :
                             it.attend()
                         }
                 val pageable = PageRequest.of(0, 10)
+                every { clubMemberPolicy.getActiveMember(100L, 1L) } returns member
                 every {
-                    attendanceReader.findByUserIdAndStatus(1L, AttendanceStatus.ATTEND, pageable)
+                    attendanceReader.findByUserIdAndClubIdAndStatus(1L, 100L, AttendanceStatus.ATTEND, pageable)
                 } returns SliceImpl(listOf(attendance), pageable, true)
 
-                val result = queryService.getAttendedSessions(userId = 1L, pageNumber = 0, pageSize = 10)
+                val result = queryService.getAttendedSessions(userId = 1L, clubId = 100L, pageNumber = 0, pageSize = 10)
 
                 result.content shouldHaveSize 1
                 result.content[0].attendanceId shouldBe 1L
@@ -80,19 +84,19 @@ class GetUserAttendanceQueryServiceTest :
 
             it("pageNumber가 음수면 예외를 던진다") {
                 shouldThrow<UserPageNotFoundException> {
-                    queryService.getAttendedSessions(userId = 1L, pageNumber = -1, pageSize = 5)
+                    queryService.getAttendedSessions(userId = 1L, clubId = 100L, pageNumber = -1, pageSize = 5)
                 }
             }
 
             it("pageSize가 0이면 예외를 던진다") {
                 shouldThrow<UserPageNotFoundException> {
-                    queryService.getAttendedSessions(userId = 1L, pageNumber = 0, pageSize = 0)
+                    queryService.getAttendedSessions(userId = 1L, clubId = 100L, pageNumber = 0, pageSize = 0)
                 }
             }
 
             it("pageSize가 최대값을 초과하면 예외를 던진다") {
                 shouldThrow<UserPageNotFoundException> {
-                    queryService.getAttendedSessions(userId = 1L, pageNumber = 0, pageSize = 51)
+                    queryService.getAttendedSessions(userId = 1L, clubId = 100L, pageNumber = 0, pageSize = 51)
                 }
             }
         }

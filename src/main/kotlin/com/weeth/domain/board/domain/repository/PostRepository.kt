@@ -252,6 +252,8 @@ interface PostRepository :
         SELECT p
         FROM Post p
         WHERE p.clubMember.user.id = :userId
+          AND p.board.club.id = :clubId
+          AND p.clubMember.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
           AND p.isDeleted = false
           AND p.board.isDeleted = false
         ORDER BY p.createdAt DESC, p.id DESC
@@ -259,6 +261,7 @@ interface PostRepository :
     )
     override fun findMyActivePosts(
         @Param("userId") userId: Long,
+        @Param("clubId") clubId: Long,
         pageable: Pageable,
     ): Slice<Post>
 }

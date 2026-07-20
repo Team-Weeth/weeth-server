@@ -4,6 +4,7 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.application.exception.UserPageNotFoundException
 import com.weeth.domain.user.application.mapper.UserPostMapper
@@ -19,20 +20,27 @@ import io.mockk.mockk
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.SliceImpl
 import org.springframework.test.util.ReflectionTestUtils
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneId
 
 class GetUserPostQueryServiceTest :
     DescribeSpec({
+        val clock = Clock.fixed(Instant.parse("2026-06-30T03:00:00Z"), ZoneId.of("Asia/Seoul"))
         val postReader = mockk<PostReader>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val userPostMapper = UserPostMapper()
         val queryService =
             GetUserPostQueryService(
                 postReader = postReader,
+                clubMemberPolicy = clubMemberPolicy,
                 userPostMapper = userPostMapper,
+                clock = clock,
             )
 
         beforeTest {
-            clearMocks(postReader)
+            clearMocks(postReader, clubMemberPolicy)
         }
 
         describe("getMyPosts") {
@@ -55,9 +63,11 @@ class GetUserPostQueryServiceTest :
                         .withCreatedAt(createdAt)
                 repeat(3) { post.increaseCommentCount() }
                 val pageable = PageRequest.of(0, 5)
-                every { postReader.findMyActivePosts(1L, pageable) } returns SliceImpl(listOf(post), pageable, true)
+                every { clubMemberPolicy.getActiveMember(100L, 1L) } returns member
+                every { postReader.findMyActivePosts(1L, 100L, pageable) } returns
+                    SliceImpl(listOf(post), pageable, true)
 
-                val result = queryService.getMyPosts(userId = 1L, pageNumber = 0, pageSize = 5)
+                val result = queryService.getMyPosts(userId = 1L, clubId = 100L, pageNumber = 0, pageSize = 5)
 
                 result.content shouldHaveSize 1
                 result.content[0].postId shouldBe 200L
@@ -70,6 +80,7 @@ class GetUserPostQueryServiceTest :
                 result.content[0].commentCount shouldBe 3
                 result.content[0].likeCount shouldBe 5
                 result.content[0].createdAt shouldBe createdAt
+                result.content[0].isNew shouldBe false
                 result.pageNumber shouldBe 0
                 result.pageSize shouldBe 5
                 result.numberOfElements shouldBe 1
@@ -78,19 +89,19 @@ class GetUserPostQueryServiceTest :
 
             it("pageNumber가 음수면 예외를 던진다") {
                 shouldThrow<UserPageNotFoundException> {
-                    queryService.getMyPosts(userId = 1L, pageNumber = -1, pageSize = 5)
+                    queryService.getMyPosts(userId = 1L, clubId = 100L, pageNumber = -1, pageSize = 5)
                 }
             }
 
             it("pageSize가 0이면 예외를 던진다") {
                 shouldThrow<UserPageNotFoundException> {
-                    queryService.getMyPosts(userId = 1L, pageNumber = 0, pageSize = 0)
+                    queryService.getMyPosts(userId = 1L, clubId = 100L, pageNumber = 0, pageSize = 0)
                 }
             }
 
             it("pageSize가 최대값을 초과하면 예외를 던진다") {
                 shouldThrow<UserPageNotFoundException> {
-                    queryService.getMyPosts(userId = 1L, pageNumber = 0, pageSize = 51)
+                    queryService.getMyPosts(userId = 1L, clubId = 100L, pageNumber = 0, pageSize = 51)
                 }
             }
         }
