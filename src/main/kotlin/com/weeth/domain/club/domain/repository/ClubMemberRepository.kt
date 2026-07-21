@@ -190,6 +190,19 @@ interface ClubMemberRepository :
     ): Long
 
     @Query(
+        """
+        SELECT new com.weeth.domain.club.domain.repository.ClubMemberCount(cm.club.id, COUNT(cm))
+        FROM ClubMember cm
+        WHERE cm.club.id IN :clubIds
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        GROUP BY cm.club.id
+        """,
+    )
+    override fun countActiveByClubIds(
+        @Param("clubIds") clubIds: List<Long>,
+    ): List<ClubMemberCount>
+
+    @Query(
         value = """
         SELECT cm
         FROM ClubMember cm

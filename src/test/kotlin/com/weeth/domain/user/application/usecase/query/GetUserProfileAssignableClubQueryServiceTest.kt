@@ -1,6 +1,7 @@
 package com.weeth.domain.user.application.usecase.query
 
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.repository.ClubMemberCount
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
@@ -46,8 +47,11 @@ class GetUserProfileAssignableClubQueryServiceTest :
                 every {
                     clubMemberReader.findAllByUserIdAndMemberStatusWithClub(1L, MemberStatus.ACTIVE)
                 } returns listOf(secondMember, firstMember)
-                every { clubMemberReader.countActiveByClubId(100L) } returns 12L
-                every { clubMemberReader.countActiveByClubId(101L) } returns 8L
+                every { clubMemberReader.countActiveByClubIds(listOf(100L, 101L)) } returns
+                    listOf(
+                        ClubMemberCount(clubId = 100L, memberCount = 12L),
+                        ClubMemberCount(clubId = 101L, memberCount = 8L),
+                    )
                 every { fileAccessUrlPort.resolve("CLUB_PROFILE/leet.png") } returns "https://cdn.test/leet.png"
                 every { fileAccessUrlPort.resolve("CLUB_PROFILE/weeth.png") } returns "https://cdn.test/weeth.png"
 

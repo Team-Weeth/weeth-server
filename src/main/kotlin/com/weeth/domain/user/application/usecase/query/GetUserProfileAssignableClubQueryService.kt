@@ -22,16 +22,28 @@ class GetUserProfileAssignableClubQueryService(
                 .findAllByUserIdAndMemberStatusWithClub(userId, MemberStatus.ACTIVE)
                 .map { it.club }
                 .sortedBy { it.id }
-                .map(::toResponse)
+        if (clubs.isEmpty()) {
+            return UserProfileAssignableClubsResponse(clubs = emptyList())
+        }
 
-        return UserProfileAssignableClubsResponse(clubs = clubs)
+        val memberCountByClubId =
+            clubMemberReader
+                .countActiveByClubIds(clubs.map { it.id })
+                .associate { it.clubId to it.memberCount }
+
+        return UserProfileAssignableClubsResponse(
+            clubs = clubs.map { toResponse(it, memberCountByClubId[it.id] ?: 0L) },
+        )
     }
 
-    private fun toResponse(club: Club): UserProfileAssignableClubResponse =
+    private fun toResponse(
+        club: Club,
+        memberCount: Long,
+    ): UserProfileAssignableClubResponse =
         UserProfileAssignableClubResponse(
             clubId = TsidBase62Encoder.encode(club.id),
             name = club.name,
             clubImage = club.profileImageStorageKey?.let(fileAccessUrlPort::resolve),
-            clubMemberNumber = clubMemberReader.countActiveByClubId(club.id),
+            clubMemberNumber = memberCount,
         )
 }
