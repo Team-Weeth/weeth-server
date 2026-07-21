@@ -87,10 +87,10 @@ class GetUserMyPageQueryServiceTest :
                 every { clubMemberReader.findAllByUserIdWithClubAndUserProfile(1L) } returns
                     listOf(firstMember, secondMember)
                 every { clubMemberPolicy.getActiveMember(100L, 1L) } returns firstMember
-                every { postReader.countActiveByClubMemberIds(listOf(1000L, 1001L)) } returns 12L
+                every { postReader.countActiveByClubMemberIds(listOf(1000L)) } returns 12L
                 every {
                     attendanceReader.countByClubMemberIdsAndStatus(
-                        listOf(1000L, 1001L),
+                        listOf(1000L),
                         AttendanceStatus.ATTEND,
                     )
                 } returns 8L

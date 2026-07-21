@@ -27,19 +27,24 @@ class GetUserMyPageQueryService(
         userId: Long,
         clubId: Long,
     ): UserMyPageResponse {
-        val currentProfile = clubMemberPolicy.getActiveMember(clubId, userId).userProfile
-        return getMyPageResponse(userId, currentProfile)
+        val currentMember = clubMemberPolicy.getActiveMember(clubId, userId)
+        return getMyPageResponse(
+            userId = userId,
+            currentClubMemberId = currentMember.id,
+            currentProfile = currentMember.userProfile,
+        )
     }
 
     private fun getMyPageResponse(
         userId: Long,
+        currentClubMemberId: Long,
         currentProfile: UserProfile?,
     ): UserMyPageResponse {
         val user = userReader.getById(userId)
         val clubMembers = clubMemberReader.findAllByUserIdWithClubAndUserProfile(userId)
-        val clubMemberIds = clubMembers.map { it.id }
-        val postCount = countPosts(clubMemberIds)
-        val attendedSessionCount = countAttendedSessions(clubMemberIds)
+        val currentClubMemberIds = listOf(currentClubMemberId)
+        val postCount = countPosts(currentClubMemberIds)
+        val attendedSessionCount = countAttendedSessions(currentClubMemberIds)
         val usingProfileMembers =
             clubMembers.filter {
                 it.memberStatus == MemberStatus.ACTIVE && it.userProfile != null
