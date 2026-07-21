@@ -5,6 +5,7 @@ import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.mapper.UserMyPageMapper
@@ -27,6 +28,7 @@ class GetUserMyPageQueryServiceTest :
         val clubMemberReader = mockk<ClubMemberReader>()
         val postReader = mockk<PostReader>()
         val attendanceReader = mockk<AttendanceReader>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userMyPageMapper = UserMyPageMapper(fileAccessUrlPort)
         val queryService =
@@ -35,15 +37,16 @@ class GetUserMyPageQueryServiceTest :
                 clubMemberReader = clubMemberReader,
                 postReader = postReader,
                 attendanceReader = attendanceReader,
+                clubMemberPolicy = clubMemberPolicy,
                 userMyPageMapper = userMyPageMapper,
             )
 
         beforeTest {
-            clearMocks(userReader, clubMemberReader, postReader, attendanceReader, fileAccessUrlPort)
+            clearMocks(userReader, clubMemberReader, postReader, attendanceReader, clubMemberPolicy, fileAccessUrlPort)
         }
 
         describe("getMyPage") {
-            it("개인정보, 통계, 현재 사용 중인 프로필 목록을 반환한다") {
+            it("기존 마이페이지 요약과 현재 동아리에서 사용 중인 멀티프로필을 반환한다") {
                 val user =
                     UserTestFixture
                         .createRegisteredUser(1L)
@@ -83,6 +86,7 @@ class GetUserMyPageQueryServiceTest :
                 every { userReader.getById(1L) } returns user
                 every { clubMemberReader.findAllByUserIdWithClubAndUserProfile(1L) } returns
                     listOf(firstMember, secondMember)
+                every { clubMemberPolicy.getActiveMember(100L, 1L) } returns firstMember
                 every { postReader.countActiveByClubMemberIds(listOf(1000L, 1001L)) } returns 12L
                 every {
                     attendanceReader.countByClubMemberIdsAndStatus(
@@ -95,7 +99,7 @@ class GetUserMyPageQueryServiceTest :
                 every { fileAccessUrlPort.resolve("USER_PROFILE_HEADER/header.png") } returns
                     "https://cdn.test/header.png"
 
-                val result = queryService.getMyPage(userId = 1L)
+                val result = queryService.getMyPage(userId = 1L, clubId = 100L)
 
                 result.user.name shouldBe "홍길동"
                 result.user.tel shouldBe "01012345678"
@@ -114,6 +118,11 @@ class GetUserMyPageQueryServiceTest :
                 result.usingProfiles[0].clubs.map { it.clubId } shouldBe
                     listOf(TsidBase62Encoder.encode(100L), TsidBase62Encoder.encode(101L))
                 result.usingProfiles[0].clubs.map { it.name } shouldBe listOf("Leets", "Weeth")
+                result.currentProfile?.profileId shouldBe 10L
+                result.currentProfile?.name shouldBe "길동"
+                result.currentProfile?.profileImageUrl shouldBe "https://cdn.test/profile.png"
+                result.currentProfile?.headerImageUrl shouldBe "https://cdn.test/header.png"
+                result.currentProfile?.bio shouldBe "안녕하세요"
             }
         }
     }) {

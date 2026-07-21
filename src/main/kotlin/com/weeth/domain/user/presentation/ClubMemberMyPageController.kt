@@ -2,9 +2,11 @@ package com.weeth.domain.user.presentation
 
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
+import com.weeth.domain.user.application.dto.response.UserMyPageResponse
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
+import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -28,7 +30,19 @@ import org.springframework.web.bind.annotation.RestController
 class ClubMemberMyPageController(
     private val getUserPostQueryService: GetUserPostQueryService,
     private val getUserAttendanceQueryService: GetUserAttendanceQueryService,
+    private val getUserMyPageQueryService: GetUserMyPageQueryService,
 ) {
+    @GetMapping
+    @Operation(summary = "현재 동아리 마이페이지 요약 조회")
+    fun getSummary(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<UserMyPageResponse> {
+        val response = getUserMyPageQueryService.getMyPage(userId, clubId)
+        return CommonResponse.success(UserResponseCode.USER_MY_PAGE_FIND_SUCCESS, response)
+    }
+
     @GetMapping("/posts")
     @Operation(summary = "현재 동아리에서 내가 쓴 글 조회")
     fun getMyPosts(

@@ -5,8 +5,10 @@ import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
 import com.weeth.domain.user.application.mapper.UserMyPageMapper
+import com.weeth.domain.user.domain.entity.UserProfile
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,10 +19,22 @@ class GetUserMyPageQueryService(
     private val clubMemberReader: ClubMemberReader,
     private val postReader: PostReader,
     private val attendanceReader: AttendanceReader,
+    private val clubMemberPolicy: ClubMemberPolicy,
     private val userMyPageMapper: UserMyPageMapper,
 ) {
     @Transactional(readOnly = true)
-    fun getMyPage(userId: Long): UserMyPageResponse {
+    fun getMyPage(
+        userId: Long,
+        clubId: Long,
+    ): UserMyPageResponse {
+        val currentProfile = clubMemberPolicy.getActiveMember(clubId, userId).userProfile
+        return getMyPageResponse(userId, currentProfile)
+    }
+
+    private fun getMyPageResponse(
+        userId: Long,
+        currentProfile: UserProfile?,
+    ): UserMyPageResponse {
         val user = userReader.getById(userId)
         val clubMembers = clubMemberReader.findAllByUserIdWithClubAndUserProfile(userId)
         val clubMemberIds = clubMembers.map { it.id }
@@ -36,6 +50,7 @@ class GetUserMyPageQueryService(
             postCount = postCount,
             attendedSessionCount = attendedSessionCount,
             usingProfileMembers = usingProfileMembers,
+            currentProfile = currentProfile,
         )
     }
 

@@ -2,8 +2,13 @@ package com.weeth.domain.user.presentation
 
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
+import com.weeth.domain.user.application.dto.response.UserMyPageCurrentProfileResponse
+import com.weeth.domain.user.application.dto.response.UserMyPageInfoResponse
+import com.weeth.domain.user.application.dto.response.UserMyPageResponse
+import com.weeth.domain.user.application.dto.response.UserMyPageStatsResponse
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
+import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.global.common.response.SliceResponse
 import io.kotest.core.spec.style.DescribeSpec
@@ -18,14 +23,50 @@ class ClubMemberMyPageControllerTest :
     DescribeSpec({
         val getUserPostQueryService = mockk<GetUserPostQueryService>()
         val getUserAttendanceQueryService = mockk<GetUserAttendanceQueryService>()
+        val getUserMyPageQueryService = mockk<GetUserMyPageQueryService>()
         val controller =
             ClubMemberMyPageController(
                 getUserPostQueryService = getUserPostQueryService,
                 getUserAttendanceQueryService = getUserAttendanceQueryService,
+                getUserMyPageQueryService = getUserMyPageQueryService,
             )
 
         beforeTest {
-            clearMocks(getUserPostQueryService, getUserAttendanceQueryService)
+            clearMocks(getUserPostQueryService, getUserAttendanceQueryService, getUserMyPageQueryService)
+        }
+
+        describe("getSummary") {
+            it("현재 동아리 마이페이지 요약을 조회한다") {
+                val responseBody =
+                    UserMyPageResponse(
+                        user =
+                            UserMyPageInfoResponse(
+                                name = "홍길동",
+                                tel = "01012345678",
+                                email = "hong@example.com",
+                                school = "가천대학교",
+                                department = "컴퓨터공학과",
+                                studentId = "20201234",
+                            ),
+                        stats = UserMyPageStatsResponse(postCount = 12L, attendedSessionCount = 8L),
+                        usingProfiles = emptyList(),
+                        currentProfile =
+                            UserMyPageCurrentProfileResponse(
+                                profileId = 10L,
+                                name = "길동",
+                                profileImageUrl = "https://cdn.test/profile.png",
+                                headerImageUrl = "https://cdn.test/header.png",
+                            ),
+                    )
+                every { getUserMyPageQueryService.getMyPage(1L, 100L) } returns responseBody
+
+                val response = controller.getSummary(clubId = 100L, userId = 1L)
+
+                response.code shouldBe UserResponseCode.USER_MY_PAGE_FIND_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_MY_PAGE_FIND_SUCCESS.message
+                response.data shouldBe responseBody
+                verify(exactly = 1) { getUserMyPageQueryService.getMyPage(1L, 100L) }
+            }
         }
 
         describe("getMyPosts") {
