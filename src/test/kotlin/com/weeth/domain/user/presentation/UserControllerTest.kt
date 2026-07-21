@@ -13,6 +13,7 @@ import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
+import com.weeth.domain.user.application.usecase.query.GetUserProfileAssignableClubQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
 import io.kotest.core.spec.style.DescribeSpec
@@ -36,6 +37,7 @@ class UserControllerTest :
         val leaveUserUseCase = mockk<LeaveUserUseCase>()
         val manageUserProfileUseCase = mockk<ManageUserProfileUseCase>()
         val getUserProfileQueryService = mockk<GetUserProfileQueryService>()
+        val getUserProfileAssignableClubQueryService = mockk<GetUserProfileAssignableClubQueryService>()
         val tokenCookieProvider = mockk<TokenCookieProvider>()
         val controller =
             UserController(
@@ -47,6 +49,7 @@ class UserControllerTest :
                 leaveUserUseCase = leaveUserUseCase,
                 manageUserProfileUseCase = manageUserProfileUseCase,
                 getUserProfileQueryService = getUserProfileQueryService,
+                getUserProfileAssignableClubQueryService = getUserProfileAssignableClubQueryService,
                 tokenCookieProvider = tokenCookieProvider,
             )
 
@@ -60,6 +63,7 @@ class UserControllerTest :
                 leaveUserUseCase,
                 manageUserProfileUseCase,
                 getUserProfileQueryService,
+                getUserProfileAssignableClubQueryService,
                 tokenCookieProvider,
             )
         }
