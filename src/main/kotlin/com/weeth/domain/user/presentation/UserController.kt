@@ -8,7 +8,7 @@ import com.weeth.domain.user.application.dto.request.SocialLoginRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateUserProfileRequest
 import com.weeth.domain.user.application.dto.response.SocialLoginResponse
-import com.weeth.domain.user.application.dto.response.UserMyPageResponse
+import com.weeth.domain.user.application.dto.response.UserProfileAssignableClubsResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
@@ -19,7 +19,7 @@ import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
+import com.weeth.domain.user.application.usecase.query.GetUserProfileAssignableClubQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.dto.JwtDto
@@ -57,7 +57,7 @@ class UserController(
     private val leaveUserUseCase: LeaveUserUseCase,
     private val manageUserProfileUseCase: ManageUserProfileUseCase,
     private val getUserProfileQueryService: GetUserProfileQueryService,
-    private val getUserMyPageQueryService: GetUserMyPageQueryService,
+    private val getUserProfileAssignableClubQueryService: GetUserProfileAssignableClubQueryService,
     private val tokenCookieProvider: TokenCookieProvider,
 ) {
     @PostMapping("/social/kakao")
@@ -223,13 +223,13 @@ class UserController(
         return CommonResponse.success(UserResponseCode.USER_PROFILE_ASSIGNMENT_UPDATED_SUCCESS)
     }
 
-    @GetMapping("/me/mypage")
-    @Operation(summary = "마이페이지 요약 조회")
-    fun getMyPage(
+    @GetMapping("/me/profiles/assignable-clubs")
+    @Operation(summary = "프로필을 사용할 수 있는 동아리 목록 조회")
+    fun getUserProfileAssignableClubs(
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<UserMyPageResponse> {
-        val response = getUserMyPageQueryService.getMyPage(userId)
-        return CommonResponse.success(UserResponseCode.USER_MY_PAGE_FIND_SUCCESS, response)
+    ): CommonResponse<UserProfileAssignableClubsResponse> {
+        val response = getUserProfileAssignableClubQueryService.findAll(userId)
+        return CommonResponse.success(UserResponseCode.USER_PROFILE_ASSIGNABLE_CLUBS_FIND_SUCCESS, response)
     }
 
     private fun <T> buildTokenResponse(

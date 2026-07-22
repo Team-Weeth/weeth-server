@@ -4,9 +4,6 @@ import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
 import com.weeth.domain.user.application.dto.request.ClubProfileAssignmentRequest
 import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
 import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
-import com.weeth.domain.user.application.dto.response.UserMyPageInfoResponse
-import com.weeth.domain.user.application.dto.response.UserMyPageResponse
-import com.weeth.domain.user.application.dto.response.UserMyPageStatsResponse
 import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
@@ -16,7 +13,7 @@ import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
 import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
-import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
+import com.weeth.domain.user.application.usecase.query.GetUserProfileAssignableClubQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
 import io.kotest.core.spec.style.DescribeSpec
@@ -40,7 +37,7 @@ class UserControllerTest :
         val leaveUserUseCase = mockk<LeaveUserUseCase>()
         val manageUserProfileUseCase = mockk<ManageUserProfileUseCase>()
         val getUserProfileQueryService = mockk<GetUserProfileQueryService>()
-        val getUserMyPageQueryService = mockk<GetUserMyPageQueryService>()
+        val getUserProfileAssignableClubQueryService = mockk<GetUserProfileAssignableClubQueryService>()
         val tokenCookieProvider = mockk<TokenCookieProvider>()
         val controller =
             UserController(
@@ -52,7 +49,7 @@ class UserControllerTest :
                 leaveUserUseCase = leaveUserUseCase,
                 manageUserProfileUseCase = manageUserProfileUseCase,
                 getUserProfileQueryService = getUserProfileQueryService,
-                getUserMyPageQueryService = getUserMyPageQueryService,
+                getUserProfileAssignableClubQueryService = getUserProfileAssignableClubQueryService,
                 tokenCookieProvider = tokenCookieProvider,
             )
 
@@ -66,7 +63,7 @@ class UserControllerTest :
                 leaveUserUseCase,
                 manageUserProfileUseCase,
                 getUserProfileQueryService,
-                getUserMyPageQueryService,
+                getUserProfileAssignableClubQueryService,
                 tokenCookieProvider,
             )
         }
@@ -134,33 +131,6 @@ class UserControllerTest :
                 response.code shouldBe UserResponseCode.USER_PROFILE_FIND_ALL_SUCCESS.code
                 response.message shouldBe UserResponseCode.USER_PROFILE_FIND_ALL_SUCCESS.message
                 response.data shouldBe profilesResponse
-            }
-        }
-
-        describe("getMyPage") {
-            it("마이페이지 요약 정보를 조회한다") {
-                val myPageResponse =
-                    UserMyPageResponse(
-                        user =
-                            UserMyPageInfoResponse(
-                                name = "홍길동",
-                                tel = "01012345678",
-                                email = "hong@example.com",
-                                school = "가천대학교",
-                                department = "컴퓨터공학과",
-                                studentId = "20201234",
-                            ),
-                        stats = UserMyPageStatsResponse(postCount = 12L, attendedSessionCount = 8L),
-                        usingProfiles = emptyList(),
-                    )
-                io.mockk.every { getUserMyPageQueryService.getMyPage(1L) } returns myPageResponse
-
-                val response = controller.getMyPage(1L)
-
-                response.code shouldBe UserResponseCode.USER_MY_PAGE_FIND_SUCCESS.code
-                response.message shouldBe UserResponseCode.USER_MY_PAGE_FIND_SUCCESS.message
-                response.data shouldBe myPageResponse
-                verify(exactly = 1) { getUserMyPageQueryService.getMyPage(1L) }
             }
         }
 

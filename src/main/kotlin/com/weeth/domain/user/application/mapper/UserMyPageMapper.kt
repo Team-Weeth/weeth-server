@@ -2,6 +2,7 @@ package com.weeth.domain.user.application.mapper
 
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
+import com.weeth.domain.user.application.dto.response.UserMyPageCurrentProfileResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageInfoResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageStatsResponse
@@ -21,11 +22,13 @@ class UserMyPageMapper(
         postCount: Long,
         attendedSessionCount: Long,
         usingProfileMembers: List<ClubMember>,
+        currentProfile: UserProfile? = null,
     ): UserMyPageResponse =
         UserMyPageResponse(
             user = toInfoResponse(user),
             stats = UserMyPageStatsResponse(postCount = postCount, attendedSessionCount = attendedSessionCount),
             usingProfiles = toUsingProfiles(usingProfileMembers),
+            currentProfile = currentProfile?.let(::toCurrentProfile),
         )
 
     private fun toInfoResponse(user: User): UserMyPageInfoResponse =
@@ -70,6 +73,15 @@ class UserMyPageMapper(
                             name = it.club.name,
                         )
                     },
+        )
+
+    private fun toCurrentProfile(profile: UserProfile): UserMyPageCurrentProfileResponse =
+        UserMyPageCurrentProfileResponse(
+            profileId = profile.id,
+            name = profile.name,
+            profileImageUrl = resolveImage(profile.profileImageStorageKey),
+            headerImageUrl = resolveImage(profile.headerImageStorageKey),
+            bio = profile.bio,
         )
 
     private fun resolveImage(storageKey: String?): String? = storageKey?.let(fileAccessUrlPort::resolve)
