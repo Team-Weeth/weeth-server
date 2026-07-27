@@ -7,6 +7,9 @@ import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.session.domain.entity.Session
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.EntityGraph
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -16,7 +19,9 @@ import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
 import java.time.LocalDateTime
 
-interface AttendanceRepository : JpaRepository<Attendance, Long> {
+interface AttendanceRepository :
+    JpaRepository<Attendance, Long>,
+    AttendanceReader {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(
@@ -35,6 +40,39 @@ interface AttendanceRepository : JpaRepository<Attendance, Long> {
 
     @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
     fun findAllBySession(session: Session): List<Attendance>
+
+    @Query(
+        """
+        SELECT COUNT(a)
+        FROM Attendance a
+        WHERE a.clubMember.id IN :clubMemberIds
+        AND a.status = :status
+        """,
+    )
+    override fun countByClubMemberIdsAndStatus(
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+        @Param("status") status: AttendanceStatus,
+    ): Long
+
+    @Query(
+        value = """
+        SELECT a
+        FROM Attendance a
+        JOIN FETCH a.session s
+        JOIN FETCH s.club
+        WHERE a.clubMember.user.id = :userId
+        AND s.club.id = :clubId
+        AND a.clubMember.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        AND a.status = :status
+        ORDER BY s.start DESC, a.id DESC
+        """,
+    )
+    override fun findByUserIdAndClubIdAndStatus(
+        @Param("userId") userId: Long,
+        @Param("clubId") clubId: Long,
+        @Param("status") status: AttendanceStatus,
+        pageable: Pageable,
+    ): Slice<Attendance>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))

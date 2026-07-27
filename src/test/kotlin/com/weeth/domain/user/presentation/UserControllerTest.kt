@@ -1,11 +1,20 @@
 package com.weeth.domain.user.presentation
 
+import com.weeth.domain.user.application.dto.request.AssignClubProfileRequest
+import com.weeth.domain.user.application.dto.request.ClubProfileAssignmentRequest
+import com.weeth.domain.user.application.dto.request.CreateMultiProfileRequest
+import com.weeth.domain.user.application.dto.request.UpdateMultiProfileRequest
+import com.weeth.domain.user.application.dto.response.UserProfileResponse
+import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.usecase.command.AgreeTermsUseCase
 import com.weeth.domain.user.application.usecase.command.AuthUserUseCase
 import com.weeth.domain.user.application.usecase.command.CreateInquiryUseCase
 import com.weeth.domain.user.application.usecase.command.LeaveUserUseCase
+import com.weeth.domain.user.application.usecase.command.ManageUserProfileUseCase
 import com.weeth.domain.user.application.usecase.command.SocialLoginUseCase
 import com.weeth.domain.user.application.usecase.command.UpdateUserProfileUseCase
+import com.weeth.domain.user.application.usecase.query.GetUserProfileAssignableClubQueryService
+import com.weeth.domain.user.application.usecase.query.GetUserProfileQueryService
 import com.weeth.global.auth.jwt.application.service.TokenCookieProvider
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -26,6 +35,9 @@ class UserControllerTest :
         val agreeTermsUseCase = mockk<AgreeTermsUseCase>(relaxed = true)
         val createInquiryUseCase = mockk<CreateInquiryUseCase>(relaxed = true)
         val leaveUserUseCase = mockk<LeaveUserUseCase>()
+        val manageUserProfileUseCase = mockk<ManageUserProfileUseCase>()
+        val getUserProfileQueryService = mockk<GetUserProfileQueryService>()
+        val getUserProfileAssignableClubQueryService = mockk<GetUserProfileAssignableClubQueryService>()
         val tokenCookieProvider = mockk<TokenCookieProvider>()
         val controller =
             UserController(
@@ -35,6 +47,9 @@ class UserControllerTest :
                 agreeTermsUseCase = agreeTermsUseCase,
                 createInquiryUseCase = createInquiryUseCase,
                 leaveUserUseCase = leaveUserUseCase,
+                manageUserProfileUseCase = manageUserProfileUseCase,
+                getUserProfileQueryService = getUserProfileQueryService,
+                getUserProfileAssignableClubQueryService = getUserProfileAssignableClubQueryService,
                 tokenCookieProvider = tokenCookieProvider,
             )
 
@@ -46,6 +61,9 @@ class UserControllerTest :
                 agreeTermsUseCase,
                 createInquiryUseCase,
                 leaveUserUseCase,
+                manageUserProfileUseCase,
+                getUserProfileQueryService,
+                getUserProfileAssignableClubQueryService,
                 tokenCookieProvider,
             )
         }
@@ -82,6 +100,120 @@ class UserControllerTest :
                 cookies[1] shouldContain "refresh_token="
                 cookies[1] shouldContain "Max-Age=0"
                 verify(exactly = 1) { leaveUserUseCase.execute(1L) }
+            }
+        }
+
+        describe("createUserProfile") {
+            it("멀티프로필을 생성한다") {
+                val request = CreateMultiProfileRequest(name = "길동", clubIds = listOf("1A2b3C"))
+                val profileResponse = UserProfileResponse(profileId = 10L, name = "길동")
+                io.mockk.every { manageUserProfileUseCase.create(1L, request) } returns profileResponse
+
+                val response = controller.createUserProfile(request, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_CREATED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_CREATED_SUCCESS.message
+                response.data shouldBe profileResponse
+                verify(exactly = 1) { manageUserProfileUseCase.create(1L, request) }
+            }
+        }
+
+        describe("getUserProfiles") {
+            it("로그인 사용자의 멀티프로필 목록을 조회한다") {
+                val profilesResponse =
+                    UserProfilesResponse(
+                        profiles = listOf(UserProfileResponse(profileId = 10L, name = "길동")),
+                    )
+                io.mockk.every { getUserProfileQueryService.findAll(1L) } returns profilesResponse
+
+                val response = controller.getUserProfiles(1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_FIND_ALL_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_FIND_ALL_SUCCESS.message
+                response.data shouldBe profilesResponse
+            }
+        }
+
+        describe("getUserProfile") {
+            it("로그인 사용자의 멀티프로필을 단건 조회한다") {
+                val profileResponse = UserProfileResponse(profileId = 10L, name = "길동")
+                io.mockk.every { getUserProfileQueryService.find(1L, 10L) } returns profileResponse
+
+                val response = controller.getUserProfile(10L, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_FIND_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_FIND_SUCCESS.message
+                response.data shouldBe profileResponse
+            }
+        }
+
+        describe("updateUserProfile") {
+            it("로그인 사용자의 멀티프로필을 수정한다") {
+                val request = UpdateMultiProfileRequest(name = "새 이름")
+                val profileResponse = UserProfileResponse(profileId = 10L, name = "새 이름")
+                io.mockk.every { manageUserProfileUseCase.update(1L, 10L, request) } returns profileResponse
+
+                val response = controller.updateUserProfile(10L, request, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_UPDATED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_UPDATED_SUCCESS.message
+                response.data shouldBe profileResponse
+                verify(exactly = 1) { manageUserProfileUseCase.update(1L, 10L, request) }
+            }
+        }
+
+        describe("assignClubProfiles") {
+            it("동아리별 사용 프로필을 변경한다") {
+                val request =
+                    AssignClubProfileRequest(
+                        assignments =
+                            listOf(
+                                ClubProfileAssignmentRequest(clubId = "1C", profileId = 10L),
+                            ),
+                    )
+                justRun { manageUserProfileUseCase.assignClubProfiles(1L, request) }
+
+                val response = controller.assignClubProfiles(request, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_ASSIGNMENT_UPDATED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_ASSIGNMENT_UPDATED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.assignClubProfiles(1L, request) }
+            }
+        }
+
+        describe("deleteUserProfile") {
+            it("로그인 사용자의 멀티프로필을 삭제한다") {
+                justRun { manageUserProfileUseCase.delete(1L, 10L) }
+
+                val response = controller.deleteUserProfile(10L, 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_DELETED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_DELETED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.delete(1L, 10L) }
+            }
+        }
+
+        describe("deleteUserProfileImage") {
+            it("로그인 사용자의 멀티프로필 프로필 사진을 삭제한다") {
+                justRun { manageUserProfileUseCase.deleteProfileImage(userId = 1L, profileId = 10L) }
+
+                val response = controller.deleteUserProfileImage(profileId = 10L, userId = 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_IMAGE_DELETED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_IMAGE_DELETED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.deleteProfileImage(userId = 1L, profileId = 10L) }
+            }
+        }
+
+        describe("deleteUserProfileHeaderImage") {
+            it("로그인 사용자의 멀티프로필 헤더 사진을 삭제한다") {
+                justRun { manageUserProfileUseCase.deleteHeaderImage(userId = 1L, profileId = 10L) }
+
+                val response = controller.deleteUserProfileHeaderImage(profileId = 10L, userId = 1L)
+
+                response.code shouldBe UserResponseCode.USER_PROFILE_HEADER_IMAGE_DELETED_SUCCESS.code
+                response.message shouldBe UserResponseCode.USER_PROFILE_HEADER_IMAGE_DELETED_SUCCESS.message
+                verify(exactly = 1) { manageUserProfileUseCase.deleteHeaderImage(userId = 1L, profileId = 10L) }
             }
         }
     })

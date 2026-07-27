@@ -8,7 +8,9 @@ import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
 import com.weeth.domain.user.application.exception.UserHasLeadClubException
+import com.weeth.domain.user.domain.entity.UserProfile
 import com.weeth.domain.user.domain.enums.Status
+import com.weeth.domain.user.domain.repository.UserProfileRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import com.weeth.global.auth.jwt.application.usecase.JwtManageUseCase
@@ -34,6 +36,7 @@ class LeaveUserUseCaseTest :
         val clubMemberRepository = mockk<ClubMemberRepository>()
         val clubActivityDeletionPolicy = mockk<ClubActivityDeletionPolicy>()
         val fileRepository = mockk<FileRepository>()
+        val userProfileRepository = mockk<UserProfileRepository>()
         val jwtManageUseCase = mockk<JwtManageUseCase>()
         val accessTokenBlacklistStore = mockk<AccessTokenBlacklistStorePort>()
         val meterRegistry = SimpleMeterRegistry()
@@ -44,6 +47,7 @@ class LeaveUserUseCaseTest :
                 clubMemberRepository = clubMemberRepository,
                 clubActivityDeletionPolicy = clubActivityDeletionPolicy,
                 fileRepository = fileRepository,
+                userProfileRepository = userProfileRepository,
                 jwtManageUseCase = jwtManageUseCase,
                 accessTokenBlacklistStore = accessTokenBlacklistStore,
                 meterRegistry = meterRegistry,
@@ -56,10 +60,13 @@ class LeaveUserUseCaseTest :
                 clubMemberRepository,
                 clubActivityDeletionPolicy,
                 fileRepository,
+                userProfileRepository,
                 jwtManageUseCase,
                 accessTokenBlacklistStore,
             )
             every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(any(), any()) } returns 0
+            every { fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(any(), any()) } returns 0
+            every { userProfileRepository.findAllByUserIdOrderByIdAsc(any()) } returns emptyList()
             if (TransactionSynchronizationManager.isSynchronizationActive()) {
                 TransactionSynchronizationManager.clearSynchronization()
             }
@@ -209,6 +216,43 @@ class LeaveUserUseCaseTest :
 
                 verify(exactly = 1) {
                     fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.CLUB_MEMBER_PROFILE, 1L)
+                }
+            }
+
+            it("위드 탈퇴 시 멀티프로필 이미지와 헤더 파일도 하드 딜리트한다") {
+                val user = UserTestFixture.createRegisteredUser(1L)
+                val profile1 = UserProfile.create(user = user, name = "프로필1")
+                val profile2 = UserProfile.create(user = user, name = "프로필2")
+                org.springframework.test.util.ReflectionTestUtils
+                    .setField(profile1, "id", 10L)
+                org.springframework.test.util.ReflectionTestUtils
+                    .setField(profile2, "id", 11L)
+                every { userReader.getByIdWithLock(1L) } returns user
+                every { clubMemberRepository.findAllActiveByUserIdWithLock(1L) } returns emptyList()
+                every { userProfileRepository.findAllByUserIdOrderByIdAsc(1L) } returns listOf(profile1, profile2)
+                justRun { jwtManageUseCase.deleteRefreshToken(1L) }
+                justRun { accessTokenBlacklistStore.blacklist(1L) }
+                TransactionSynchronizationManager.initSynchronization()
+
+                useCase.execute(1L)
+
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(
+                        FileOwnerType.USER_PROFILE_IMAGE,
+                        listOf(10L, 11L),
+                    )
+                }
+                verify(exactly = 1) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerIdIn(
+                        FileOwnerType.USER_PROFILE_HEADER,
+                        listOf(10L, 11L),
+                    )
+                }
+                verify(exactly = 0) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_IMAGE, any())
+                }
+                verify(exactly = 0) {
+                    fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.USER_PROFILE_HEADER, any())
                 }
             }
 

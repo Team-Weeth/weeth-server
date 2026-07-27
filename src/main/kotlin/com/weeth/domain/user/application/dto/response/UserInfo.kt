@@ -41,11 +41,22 @@ data class UserInfo(
         fun ofClubMember(
             clubMember: ClubMember,
             resolvedProfileImageUrl: String?,
+        ): UserInfo =
+            ofClubMemberProfile(
+                clubMember = clubMember,
+                profileName = clubMember.user.name,
+                resolvedProfileImageUrl = resolvedProfileImageUrl,
+            )
+
+        fun ofClubMemberProfile(
+            clubMember: ClubMember,
+            profileName: String,
+            resolvedProfileImageUrl: String?,
         ): UserInfo {
             val isLeft = clubMember.memberStatus == MemberStatus.LEFT
             return UserInfo(
                 id = clubMember.user.id,
-                name = if (isLeft) ANONYMOUS_USER_NAME else clubMember.user.name,
+                name = if (isLeft) ANONYMOUS_USER_NAME else profileName,
                 profileImageUrl = if (isLeft) null else resolvedProfileImageUrl,
                 role = clubMember.memberRole,
             )

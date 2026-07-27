@@ -32,6 +32,14 @@ interface PostReader {
         pageable: Pageable,
     ): Slice<Post>
 
+    fun countActiveByClubMemberIds(clubMemberIds: List<Long>): Long
+
+    fun findMyActivePosts(
+        userId: Long,
+        clubId: Long,
+        pageable: Pageable,
+    ): Slice<Post>
+
     fun findFirstUnreadNoticeSince(
         clubId: Long,
         clubMemberId: Long,

@@ -9,6 +9,7 @@ import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.jpa.repository.QueryHints
 import org.springframework.data.repository.query.Param
@@ -45,6 +46,35 @@ interface ClubMemberRepository :
     fun findAllActiveByUserIdWithLock(
         @Param("userId") userId: Long,
     ): List<ClubMember>
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.club
+        WHERE cm.user.id = :userId
+        AND cm.club.id IN :clubIds
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        ORDER BY cm.club.id ASC
+        """,
+    )
+    fun findAllActiveByUserIdAndClubIdsWithLock(
+        @Param("userId") userId: Long,
+        @Param("clubIds") clubIds: List<Long>,
+    ): List<ClubMember>
+
+    fun existsByUserProfileIdAndMemberStatus(
+        userProfileId: Long,
+        memberStatus: MemberStatus,
+    ): Boolean
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ClubMember cm SET cm.userProfile = null WHERE cm.userProfile.id = :profileId")
+    fun clearUserProfileReferences(
+        @Param("profileId") profileId: Long,
+    ): Int
 
     override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
@@ -97,11 +127,40 @@ interface ClubMemberRepository :
         SELECT cm
         FROM ClubMember cm
         JOIN FETCH cm.club
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.user.id = :userId
+        ORDER BY cm.id ASC
+        """,
+    )
+    override fun findAllByUserIdWithClubAndUserProfile(
+        @Param("userId") userId: Long,
+    ): List<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.club
         WHERE cm.user.id = :userId
         AND cm.memberStatus = :memberStatus
         """,
     )
     override fun findAllByUserIdAndMemberStatusWithClub(
+        @Param("userId") userId: Long,
+        @Param("memberStatus") memberStatus: MemberStatus,
+    ): List<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.club
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.user.id = :userId
+        AND cm.memberStatus = :memberStatus
+        """,
+    )
+    override fun findAllByUserIdAndMemberStatusWithClubAndUserProfile(
         @Param("userId") userId: Long,
         @Param("memberStatus") memberStatus: MemberStatus,
     ): List<ClubMember>
@@ -129,6 +188,19 @@ interface ClubMemberRepository :
     override fun countActiveByClubId(
         @Param("clubId") clubId: Long,
     ): Long
+
+    @Query(
+        """
+        SELECT new com.weeth.domain.club.domain.repository.ClubMemberCount(cm.club.id, COUNT(cm))
+        FROM ClubMember cm
+        WHERE cm.club.id IN :clubIds
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        GROUP BY cm.club.id
+        """,
+    )
+    override fun countActiveByClubIds(
+        @Param("clubIds") clubIds: List<Long>,
+    ): List<ClubMemberCount>
 
     @Query(
         value = """

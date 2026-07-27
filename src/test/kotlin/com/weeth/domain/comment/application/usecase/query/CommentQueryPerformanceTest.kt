@@ -20,6 +20,7 @@ import com.weeth.domain.file.domain.entity.File
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.file.domain.repository.FileRepository
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.repository.UserRepository
@@ -163,7 +164,8 @@ class CommentQueryPerformanceTest(
                         override fun resolve(storageKey: String): String = "https://test.local/$storageKey"
                     }
                 val fileMapper = FileMapper(fileAccessUrlPort)
-                val commentMapper = CommentMapper(fileAccessUrlPort)
+                val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
+                val commentMapper = CommentMapper(userInfoMapper)
                 val legacyService = LegacyCommentQueryService(fileRepository, fileMapper, commentMapper)
                 val improvedService = GetCommentQueryService(fileRepository, fileMapper, commentMapper)
 

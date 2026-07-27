@@ -26,7 +26,7 @@ import com.weeth.domain.schedule.domain.repository.EventReader
 import com.weeth.domain.schedule.fixture.ScheduleTestFixture
 import com.weeth.domain.session.domain.repository.SessionReader
 import com.weeth.domain.session.fixture.SessionTestFixture
-import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -50,11 +50,11 @@ class GetDashboardQueryServiceTest :
         val sessionReader = mockk<SessionReader>()
         val postReader = mockk<PostReader>()
         val fileReader = mockk<FileReader>()
-        val userReader = mockk<UserReader>()
         val accountSettingReader = mockk<AccountSettingReader>()
         val fileMapper = mockk<FileMapper>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
-        val dashboardMapper = DashboardMapper(fileMapper, fileAccessUrlPort)
+        val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
+        val dashboardMapper = DashboardMapper(fileMapper, fileAccessUrlPort, userInfoMapper)
 
         val queryService =
             GetDashboardQueryService(
@@ -67,7 +67,6 @@ class GetDashboardQueryServiceTest :
                 sessionReader = sessionReader,
                 postReader = postReader,
                 fileReader = fileReader,
-                userReader = userReader,
                 accountSettingReader = accountSettingReader,
                 dashboardMapper = dashboardMapper,
             )
@@ -88,7 +87,6 @@ class GetDashboardQueryServiceTest :
                 sessionReader,
                 postReader,
                 fileReader,
-                userReader,
                 accountSettingReader,
                 fileMapper,
             )
@@ -105,7 +103,6 @@ class GetDashboardQueryServiceTest :
                         sessionReader.findAllByClubIdAndStartBetween(clubId, any(), any())
                     } returns emptyList()
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
-                    every { userReader.getById(userId) } returns user
                     every { accountSettingReader.isVisibleToMembers(clubId) } returns true
 
                     val result = queryService.getHome(clubId, userId)
@@ -125,7 +122,6 @@ class GetDashboardQueryServiceTest :
                         sessionReader.findAllByClubIdAndStartBetween(clubId, any(), any())
                     } returns emptyList()
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
-                    every { userReader.getById(userId) } returns user
                     every { accountSettingReader.isVisibleToMembers(clubId) } returns false
 
                     queryService.getHome(clubId, userId).accountVisible shouldBe false
@@ -182,7 +178,6 @@ class GetDashboardQueryServiceTest :
                         sessionReader.findAllByClubIdAndStartBetween(clubId, any(), any())
                     } returns listOf(session)
                     every { clubMemberReader.findActiveByUserId(userId) } returns listOf(clubMember)
-                    every { userReader.getById(userId) } returns user
                     every { accountSettingReader.isVisibleToMembers(clubId) } returns true
 
                     val result = queryService.getHome(clubId, userId)

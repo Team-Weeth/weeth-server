@@ -4,6 +4,7 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.vo.ClubAttendanceStats
 import com.weeth.domain.user.domain.entity.User
+import com.weeth.domain.user.domain.entity.UserProfile
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Embedded
@@ -70,6 +71,11 @@ class ClubMember(
 
     @Column(length = 30)
     var bio: String? = null
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_profile_id", nullable = true)
+    var userProfile: UserProfile? = null
         private set
 
     @Column(name = "left_at", nullable = true)
@@ -179,6 +185,11 @@ class ClubMember(
         val trimmed = bio?.trim()?.takeIf { it.isNotBlank() }
         require((trimmed?.length ?: 0) <= 30) { "자기소개는 30자 이하여야 합니다." }
         this.bio = trimmed
+    }
+
+    fun assignProfile(profile: UserProfile) {
+        check(profile.user.id == user.id) { "본인 프로필만 사용할 수 있습니다." }
+        this.userProfile = profile
     }
 
     fun decrementPenaltyCount() {
