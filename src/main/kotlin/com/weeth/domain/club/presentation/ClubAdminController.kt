@@ -2,6 +2,7 @@ package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberSort
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
@@ -14,6 +15,7 @@ import com.weeth.domain.club.application.usecase.query.GetClubQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.response.PageResponse
 import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
@@ -27,6 +29,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "CLUB-ADMIN", description = "동아리 관리자 API")
@@ -96,14 +99,43 @@ class ClubAdminController(
     }
 
     @GetMapping("/members")
-    @Operation(summary = "동아리 멤버 목록 조회")
+    @Operation(
+        summary = "동아리 멤버 목록 조회",
+        description = "기수 필터, 이름·학과·학번 검색, 정렬, 페이지네이션을 지원합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.",
+    )
     fun getClubMembers(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @TsidParam
         @TsidPathVariable clubId: Long,
-    ): CommonResponse<List<ClubMemberResponse>> {
-        val members = getClubMemberQueryService.findClubMembersForAdmin(clubId, userId)
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(required = false) keyword: String?,
+        @RequestParam(required = false) cardinalNumber: Int?,
+        @RequestParam(defaultValue = "CARDINAL_DESC") sort: ClubMemberSort,
+    ): CommonResponse<PageResponse<ClubMemberResponse>> {
+        val members =
+            getClubMemberQueryService.findClubMembersForAdmin(
+                clubId = clubId,
+                userId = userId,
+                page = page,
+                size = size,
+                keyword = keyword,
+                cardinalNumber = cardinalNumber,
+                sort = sort,
+            )
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
+    }
+
+    @GetMapping("/members/{clubMemberId}")
+    @Operation(summary = "동아리 멤버 상세 조회", description = "가입 대기·추방·탈퇴 멤버도 조회할 수 있습니다.")
+    fun getClubMemberDetail(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable clubMemberId: Long,
+    ): CommonResponse<ClubMemberResponse> {
+        val member = getClubMemberQueryService.findClubMemberDetailForAdmin(clubId, userId, clubMemberId)
+        return CommonResponse.success(ClubResponseCode.MEMBER_FIND_DETAIL_SUCCESS, member)
     }
 
     @PatchMapping("/members/{clubMemberId}/accept")
