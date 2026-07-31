@@ -82,6 +82,9 @@ class ClubMapper(
         absenceCount = member.attendanceStats.absenceCount,
         attendanceRate = member.attendanceStats.attendanceRate,
         penaltyCount = member.penaltyCount,
+        profileImageUrl = resolveMemberProfileImage(member),
+        bio = resolveMemberBio(member),
+        joinedAt = member.createdAt,
     )
 
     fun toMemberProfileResponse(
@@ -163,6 +166,14 @@ class ClubMapper(
         )
 
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
+
+    // 멀티프로필 도입 이후 멤버가 동아리에서 노출하는 프로필은 userProfile이다.
+    // ClubMember의 동명 필드는 멀티프로필 이전 데이터라 fallback으로만 사용한다.
+    private fun resolveMemberProfileImage(member: ClubMember): String? =
+        (member.userProfile?.profileImageStorageKey ?: member.profileImageStorageKey)
+            ?.let { fileAccessUrlPort.resolve(it) }
+
+    private fun resolveMemberBio(member: ClubMember): String? = member.userProfile?.bio ?: member.bio
 
     private fun toUsingProfileResponse(member: ClubMember): ClubUsingProfileResponse? =
         member.userProfile?.let { profile ->

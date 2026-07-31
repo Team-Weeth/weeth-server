@@ -1,15 +1,20 @@
 package com.weeth.domain.club.application.usecase.query
 
+import com.weeth.domain.club.application.dto.request.ClubMemberSort
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
+import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.global.common.response.PageResponse
+import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -26,21 +31,55 @@ class GetClubMemberQueryService(
     fun findClubMembersForAdmin(
         clubId: Long,
         userId: Long,
-    ): List<ClubMemberResponse> {
+        page: Int,
+        size: Int,
+        keyword: String?,
+        cardinalNumber: Int?,
+        sort: ClubMemberSort,
+    ): PageResponse<ClubMemberResponse> {
         clubPermissionPolicy.requireAdmin(clubId, userId)
-        val members = clubMemberReader.findAllByClubId(clubId)
 
-        if (members.isEmpty()) {
-            return emptyList()
-        }
+        val pageable = PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, MAX_PAGE_SIZE))
+        val members =
+            clubMemberReader.findAdminMembers(
+                clubId = clubId,
+                cardinalNumber = cardinalNumber,
+                keyword = keyword?.trim()?.takeIf { it.isNotBlank() },
+                sortKey = sort.queryKey,
+                pageable = pageable,
+            )
 
-        val allMemberCardinals = clubMemberCardinalReader.findAllByClubMembers(members)
-        val memberCardinalMap = allMemberCardinals.groupBy { it.clubMember.id }
+        // 기수는 조회된 페이지의 멤버에 대해서만 일괄 조회해 N+1을 피한다.
+        val cardinalsByMemberId =
+            if (members.isEmpty) {
+                emptyMap()
+            } else {
+                clubMemberCardinalReader.findAllByClubMembers(members.content).groupBy { it.clubMember.id }
+            }
 
-        return members.map { member ->
-            val cardinals = memberCardinalMap[member.id] ?: emptyList()
-            clubMapper.toMemberResponse(member, cardinals)
-        }
+        return PageResponse.from(
+            members.map { member ->
+                clubMapper.toMemberResponse(member, cardinalsByMemberId[member.id] ?: emptyList())
+            },
+        )
+    }
+
+    /**
+     * 어드민 멤버 상세. 승인 대기·추방·탈퇴 멤버도 관리 화면에서 볼 수 있어야 하므로
+     * 활성 멤버만 조회하는 [findMyMemberProfile]과 분리한다.
+     */
+    fun findClubMemberDetailForAdmin(
+        clubId: Long,
+        userId: Long,
+        clubMemberId: Long,
+    ): ClubMemberResponse {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val member = clubMemberReader.findAdminMemberDetail(clubMemberId) ?: throw ClubMemberNotFoundException()
+        if (member.club.id != clubId) throw ClubMemberNotInClubException()
+
+        val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
+        return clubMapper.toMemberResponse(member, cardinals)
     }
 
     fun findMyMemberProfile(
@@ -72,5 +111,9 @@ class GetClubMemberQueryService(
         val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
 
         return clubMapper.toMemberSummaryResponse(member, cardinals)
+    }
+
+    companion object {
+        private const val MAX_PAGE_SIZE = 100
     }
 }
