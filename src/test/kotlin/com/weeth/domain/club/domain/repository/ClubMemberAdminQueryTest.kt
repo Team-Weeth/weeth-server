@@ -15,11 +15,14 @@ import com.weeth.domain.user.domain.vo.Email
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import jakarta.persistence.EntityManager
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest
 import org.springframework.context.annotation.Import
 import org.springframework.data.domain.PageRequest
+import java.time.LocalDateTime
 
 /**
  * findAdminMembers는 기수 정렬을 위해 ORDER BY에 스칼라 서브쿼리를 쓰므로 실제 DB로 검증한다.
@@ -34,12 +37,15 @@ class ClubMemberAdminQueryTest(
     private val userRepository: UserRepository,
     private val cardinalRepository: CardinalRepository,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
+    private val entityManager: EntityManager,
 ) : DescribeSpec({
 
         val pageable = PageRequest.of(0, 10)
+        val baseCreatedAt = LocalDateTime.of(2026, 3, 1, 10, 0)
 
         /**
          * 기수 없음 1명 + 6기 1명 + 6·7기 1명 + 대기 1명 + 추방 1명을 심고 clubId를 돌려준다.
+         * 가입일은 저장 순서대로 1분씩 벌려 명시적으로 지정한다.
          */
         fun seed(): Long {
             val club = clubRepository.save(ClubTestFixture.createClub(code = "ADMINQ"))
@@ -47,6 +53,7 @@ class ClubMemberAdminQueryTest(
             val cardinal7 = cardinalRepository.save(Cardinal.create(club = club, cardinalNumber = 7))
 
             var emailSequence = 0
+            val savedMemberIds = mutableListOf<Long>()
 
             fun save(
                 name: String,
@@ -68,6 +75,7 @@ class ClubMemberAdminQueryTest(
                 val member =
                     clubMemberRepository.save(ClubMember(club = club, user = user, memberStatus = status))
                 cardinals.forEach { clubMemberCardinalRepository.save(ClubMemberCardinal.create(member, it)) }
+                savedMemberIds += member.id
             }
 
             save("가기수없음", "컴퓨터공학과", "20240001", MemberStatus.ACTIVE, emptyList())
@@ -75,6 +83,21 @@ class ClubMemberAdminQueryTest(
             save("다칠기", "컴퓨터공학과", "20240003", MemberStatus.ACTIVE, listOf(cardinal6, cardinal7))
             save("라대기", null, null, MemberStatus.WAITING, emptyList())
             save("마추방", null, null, MemberStatus.BANNED, emptyList())
+
+            // @CreatedDate로 찍히는 createdAt은 DB 컬럼 정밀도에 따라 연속 저장 시 같은 값이 될 수 있고,
+            // 그러면 JOINED_DESC가 타이브레이커(id ASC)로 떨어져 검증이 무의미해진다.
+            // createdAt은 updatable = false라 엔티티로는 못 바꾸므로 네이티브 UPDATE로 값을 확정한다.
+            entityManager.flush()
+            savedMemberIds.forEachIndexed { index, memberId ->
+                entityManager
+                    .createNativeQuery("UPDATE club_member SET created_at = :createdAt WHERE club_member_id = :id")
+                    .setParameter("createdAt", baseCreatedAt.plusMinutes(index.toLong()))
+                    .setParameter("id", memberId)
+                    .executeUpdate()
+            }
+            // 영속성 컨텍스트에 남은 예전 값이 조회 결과로 되돌아오지 않도록 비운다.
+            entityManager.clear()
+
             return club.id
         }
 
@@ -141,10 +164,12 @@ class ClubMemberAdminQueryTest(
                         pageable,
                     )
 
-                // seed는 저장 순서대로 createdAt이 증가하므로 역순이어야 한다.
+                // seed가 createdAt을 1분 간격으로 확정하므로 tie로 타이브레이커(id ASC)에 떨어질 일이 없다.
+                // 값이 실제로 서로 다른지 먼저 확인해, 정밀도가 바뀌면 순서가 아니라 여기서 실패하게 한다.
+                result.content.map { it.createdAt }.distinct() shouldHaveSize 5
+                result.content.map { it.createdAt } shouldBe result.content.map { it.createdAt }.sortedDescending()
                 result.content.map { it.user.name } shouldContainExactly
                     listOf("마추방", "라대기", "다칠기", "나육기", "가기수없음")
-                result.content.map { it.createdAt } shouldBe result.content.map { it.createdAt }.sortedDescending()
             }
 
             it("가입 대기·추방 멤버도 목록에 포함된다") {

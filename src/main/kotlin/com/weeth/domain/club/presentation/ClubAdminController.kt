@@ -108,7 +108,7 @@ class ClubAdminController(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
+        @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) cardinalNumber: Int?,
         @RequestParam(defaultValue = "CARDINAL_DESC") sort: ClubMemberSort,
