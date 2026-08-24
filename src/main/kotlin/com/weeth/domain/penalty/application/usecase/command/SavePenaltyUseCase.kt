@@ -6,7 +6,9 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
+import com.weeth.domain.penalty.application.exception.WarningNotEnabledException
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
+import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -27,15 +29,25 @@ class SavePenaltyUseCase(
         request: SavePenaltyRequest,
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
-        val clubMember = clubMemberPolicy.getActiveMember(clubId, request.userId)
-        val cardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
 
-        val penalty = mapper.toEntity(request, clubMember, cardinal)
-        penaltyRepository.save(penalty)
+        request.userIds.forEach { targetUserId ->
+            val clubMember = clubMemberPolicy.getActiveMember(clubId, targetUserId)
+            val cardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
 
-        val lockedMember =
-            clubMemberRepository.findByIdWithLock(clubMember.id)
-                ?: throw PenaltyNotFoundException()
-        lockedMember.incrementPenaltyCount()
+            if (request.penaltyType == PenaltyType.WARNING && !clubMember.club.warningEnabled) {
+                throw WarningNotEnabledException()
+            }
+
+            val penalty = mapper.toEntity(request, clubMember, cardinal)
+            penaltyRepository.save(penalty)
+
+            val lockedMember =
+                clubMemberRepository.findByIdWithLock(clubMember.id)
+                    ?: throw PenaltyNotFoundException()
+            when (penalty.penaltyType) {
+                PenaltyType.PENALTY -> lockedMember.incrementPenaltyCount(request.score)
+                PenaltyType.WARNING -> lockedMember.incrementWarningCount(request.score)
+            }
+        }
     }
 }
