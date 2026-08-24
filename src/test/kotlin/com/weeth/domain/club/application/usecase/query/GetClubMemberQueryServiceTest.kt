@@ -57,7 +57,14 @@ class GetClubMemberQueryServiceTest :
             )
 
         beforeTest {
-            clearMocks(clubMemberReader, clubMemberCardinalReader, clubMemberPolicy, clubPermissionPolicy, userReader)
+            clearMocks(
+                clubMemberReader,
+                clubMemberCardinalReader,
+                clubMemberPolicy,
+                clubPermissionPolicy,
+                userReader,
+                penaltyReader,
+            )
         }
 
         describe("findClubMembersForAdmin") {
@@ -80,6 +87,7 @@ class GetClubMemberQueryServiceTest :
                         clubMemberReader.findAdminMembers(1L, null, null, "CARDINAL_DESC", any())
                     } returns PageImpl(listOf(member), PageRequest.of(0, 20), 1)
                     every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns memberCardinals
+                    every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
 
                     val result =
                         service.findClubMembersForAdmin(
