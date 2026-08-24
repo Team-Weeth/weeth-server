@@ -15,6 +15,7 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
+import com.weeth.domain.penalty.domain.repository.PenaltyReader
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -41,6 +42,7 @@ class GetClubMemberQueryServiceTest :
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userReader = mockk<UserReader>()
+        val penaltyReader = mockk<PenaltyReader>()
         val clubMapper = ClubMapper(fileAccessUrlPort)
 
         val service =
@@ -51,6 +53,7 @@ class GetClubMemberQueryServiceTest :
                 clubPermissionPolicy = clubPermissionPolicy,
                 clubMapper = clubMapper,
                 userReader = userReader,
+                penaltyReader = penaltyReader,
             )
 
         beforeTest {
