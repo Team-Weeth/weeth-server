@@ -129,6 +129,24 @@ class GetClubMemberQueryService(
         return clubMapper.toMemberSummaryResponse(member, cardinals)
     }
 
+    fun searchClubMembers(
+        clubId: Long,
+        userId: Long,
+        keyword: String,
+        page: Int,
+        size: Int,
+        cardinalNumber: Int?,
+    ): PageResponse<ClubMemberResponse> =
+        findClubMembersForAdmin(
+            clubId = clubId,
+            userId = userId,
+            page = page,
+            size = size,
+            keyword = keyword,
+            cardinalNumber = cardinalNumber,
+            sort = ClubMemberSort.CARDINAL_DESC, // 검색은 기수 내림차순 고정
+        )
+
     companion object {
         private const val MAX_PAGE_SIZE = 100
     }
