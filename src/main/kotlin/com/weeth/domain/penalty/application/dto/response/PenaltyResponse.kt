@@ -10,10 +10,10 @@ data class PenaltyResponse(
     val name: String,
     @field:Schema(description = "동아리 멤버 상태", example = "ACTIVE")
     val memberStatus: MemberStatus,
-    @field:Schema(description = "패널티 횟수", example = "2")
+    @field:Schema(description = "페널티 횟수", example = "2")
     val penaltyCount: Int,
     @field:Schema(description = "소속 기수 목록", example = "[3, 4]")
     val cardinals: List<Int>,
-    @field:Schema(description = "패널티 상세 목록")
+    @field:Schema(description = "페널티 상세 목록")
     val penalties: List<PenaltyDetailResponse>,
 )
