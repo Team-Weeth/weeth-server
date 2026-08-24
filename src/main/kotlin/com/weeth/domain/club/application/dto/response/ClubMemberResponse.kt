@@ -37,8 +37,10 @@ data class ClubMemberResponse(
     val absenceCount: Int,
     @field:Schema(description = "출석률 (%)", example = "83")
     val attendanceRate: Int,
-    @field:Schema(description = "패널티 횟수", example = "1")
+    @field:Schema(description = "페널티 횟수", example = "1")
     val penaltyCount: Int,
+    @field:Schema(description = "최근 페널티 일시 (없으면 null)", nullable = true)
+    val lastPenaltyAt: LocalDateTime? = null,
     @field:Schema(description = "프로필 이미지 URL", example = "https://cdn.weeth.com/profile/1.png", nullable = true)
     val profileImageUrl: String? = null,
     @field:Schema(description = "자기소개", example = "안녕하세요", nullable = true)

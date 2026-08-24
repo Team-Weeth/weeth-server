@@ -66,6 +66,7 @@ class ClubMapper(
     fun toMemberResponse(
         member: ClubMember,
         cardinals: List<ClubMemberCardinal>,
+        lastPenaltyAt: java.time.LocalDateTime? = null,
     ) = ClubMemberResponse(
         userId = member.user.id,
         clubMemberId = member.id,
@@ -82,6 +83,7 @@ class ClubMapper(
         absenceCount = member.attendanceStats.absenceCount,
         attendanceRate = member.attendanceStats.attendanceRate,
         penaltyCount = member.penaltyCount,
+        lastPenaltyAt = lastPenaltyAt,
         profileImageUrl = resolveMemberProfileImage(member),
         bio = resolveMemberBio(member),
         joinedAt = member.createdAt,
