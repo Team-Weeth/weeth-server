@@ -70,7 +70,7 @@ class Club(
     var warningEnabled: Boolean = false
         private set
 
-    @Column(length = 500)
+    @Column(length = 500, nullable = true)
     var penaltyRule: String? = null
         private set
 
