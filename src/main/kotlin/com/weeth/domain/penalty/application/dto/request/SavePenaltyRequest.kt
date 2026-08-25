@@ -16,7 +16,7 @@ data class SavePenaltyRequest(
     val score: Int = 1,
     @field:Schema(description = "페널티 사유", example = "정기모임 무단 불참")
     @field:NotBlank
-    @field:Size(max = 50)
+    @field:Size(max = 20)
     val penaltyDescription: String,
     @field:Schema(description = "페널티 타입 (기본값: PENALTY)", example = "PENALTY", allowableValues = ["PENALTY", "WARNING"])
     val penaltyType: PenaltyType = PenaltyType.PENALTY,
