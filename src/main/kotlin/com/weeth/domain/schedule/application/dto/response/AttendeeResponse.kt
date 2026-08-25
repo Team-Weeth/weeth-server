@@ -8,7 +8,7 @@ data class AttendeeResponse(
     val name: String,
     @field:Schema(description = "학과", example = "컴퓨터공학과")
     val department: String?,
-    @field:Schema(description = "직급", example = "USER")
+    @field:Schema(description = "권한", example = "USER")
     val role: MemberRole,
     @field:Schema(description = "프로필 이미지 URL")
     val profileImageUrl: String?,
