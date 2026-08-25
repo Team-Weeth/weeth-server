@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetUserPenaltyQueryService(
     private val penaltyReader: PenaltyReader,
     private val clubMemberPolicy: ClubMemberPolicy,
 ) {
-    @Transactional(readOnly = true)
     fun getMyPenalties(
         userId: Long,
         clubId: Long,
