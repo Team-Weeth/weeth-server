@@ -1,12 +1,21 @@
 package com.weeth.domain.schedule.application.usecase.query
 
+import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
+import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.schedule.application.dto.response.EventResponse
+import com.weeth.domain.schedule.application.dto.response.ScheduleAttendanceStatus
+import com.weeth.domain.schedule.application.dto.response.ScheduleDetailResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
 import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.application.mapper.ScheduleMapper
+import com.weeth.domain.schedule.domain.enums.Type
 import com.weeth.domain.schedule.domain.repository.EventRepository
+import com.weeth.domain.session.application.exception.SessionNotFoundException
+import com.weeth.domain.session.domain.entity.Session
+import com.weeth.domain.session.domain.enums.SessionStatus
 import com.weeth.domain.session.domain.repository.SessionReader
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -18,6 +27,7 @@ import java.time.LocalDateTime
 class GetScheduleQueryService(
     private val eventRepository: EventRepository,
     private val sessionReader: SessionReader,
+    private val attendanceReader: AttendanceReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val scheduleMapper: ScheduleMapper,
     private val eventMapper: EventMapper,
@@ -38,6 +48,7 @@ class GetScheduleQueryService(
     fun findMonthly(
         clubId: Long,
         userId: Long,
+        cardinal: Int,
         start: LocalDateTime,
         end: LocalDateTime,
     ): List<ScheduleResponse> {
@@ -45,15 +56,72 @@ class GetScheduleQueryService(
 
         val events =
             eventRepository
-                .findByClubIdAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(clubId, end, start)
+                .findByClubIdAndCardinalAndDateRange(clubId, cardinal, start, end)
                 .map { scheduleMapper.toResponse(it) }
 
         val sessions =
             sessionReader
-                .findAllByClubIdAndStartBetween(clubId, start, end)
+                .findAllByClubIdAndCardinalAndStartBetween(clubId, cardinal, start, end)
                 .map { scheduleMapper.toResponse(it) }
 
         return (events + sessions).sortedBy { it.start }
+    }
+
+    fun findDetail(
+        clubId: Long,
+        userId: Long,
+        id: Long,
+        type: Type,
+    ): ScheduleDetailResponse {
+        clubMemberPolicy.getActiveMember(clubId, userId)
+        return when (type) {
+            Type.EVENT -> {
+                val event = eventRepository.findByIdOrNull(id) ?: throw EventNotFoundException()
+                if (event.club.id != clubId) throw EventNotFoundException()
+                scheduleMapper.toDetailResponse(event)
+            }
+
+            Type.SESSION -> {
+                val session = sessionReader.getById(id)
+                if (session.club.id != clubId) throw SessionNotFoundException()
+                val allAttendances = attendanceReader.findAllBySession(session)
+                val myAttendance = attendanceReader.findBySessionAndUserId(session, userId)
+                val myStatus = deriveAttendanceStatus(myAttendance, session)
+                val attendedAt = myAttendance?.modifiedAt?.takeIf { myStatus == ScheduleAttendanceStatus.COMPLETED }
+                scheduleMapper.toDetailResponse(session, allAttendances, myStatus, attendedAt)
+            }
+        }
+    }
+
+    private fun deriveAttendanceStatus(
+        attendance: Attendance?,
+        session: Session,
+    ): ScheduleAttendanceStatus {
+        val now = LocalDateTime.now()
+        if (attendance == null) {
+            return when {
+                now.isBefore(session.start) -> ScheduleAttendanceStatus.UPCOMING
+                session.status == SessionStatus.OPEN && !now.isAfter(session.end) -> ScheduleAttendanceStatus.OPEN
+                else -> ScheduleAttendanceStatus.ABSENT
+            }
+        }
+        return when (attendance.status) {
+            AttendanceStatus.ATTEND -> {
+                ScheduleAttendanceStatus.COMPLETED
+            }
+
+            AttendanceStatus.ABSENT -> {
+                ScheduleAttendanceStatus.ABSENT
+            }
+
+            AttendanceStatus.PENDING -> {
+                val isOpen =
+                    session.status == SessionStatus.OPEN &&
+                        !now.isBefore(session.start) &&
+                        !now.isAfter(session.end)
+                if (isOpen) ScheduleAttendanceStatus.OPEN else ScheduleAttendanceStatus.UPCOMING
+            }
+        }
     }
 
     fun findYearly(
