@@ -26,6 +26,4 @@ enum class UserResponseCode(
     USER_PROFILE_IMAGE_DELETED_SUCCESS(10916, HttpStatus.OK, "프로필 사진이 성공적으로 삭제되었습니다."),
     USER_PROFILE_HEADER_IMAGE_DELETED_SUCCESS(10917, HttpStatus.OK, "프로필 헤더 사진이 성공적으로 삭제되었습니다."),
     USER_PROFILE_ASSIGNABLE_CLUBS_FIND_SUCCESS(10918, HttpStatus.OK, "프로필을 사용할 수 있는 동아리 목록을 성공적으로 조회했습니다."),
-    USER_MY_PENALTIES_FIND_SUCCESS(10919, HttpStatus.OK, "페널티 목록을 성공적으로 조회했습니다."),
-    USER_PENALTY_RULE_FIND_SUCCESS(10920, HttpStatus.OK, "패널티 규정을 성공적으로 조회했습니다."),
 }
