@@ -1,16 +1,12 @@
 package com.weeth.domain.user.presentation
 
 import com.weeth.domain.club.application.exception.ClubErrorCode
-import com.weeth.domain.penalty.application.dto.response.PenaltyRuleResponse
-import com.weeth.domain.penalty.application.usecase.query.GetPenaltyRuleQueryService
 import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
-import com.weeth.domain.user.application.dto.response.UserMyPenaltyResponse
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
-import com.weeth.domain.user.application.usecase.query.GetUserPenaltyQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
@@ -35,8 +31,6 @@ class ClubMemberMyPageController(
     private val getUserPostQueryService: GetUserPostQueryService,
     private val getUserAttendanceQueryService: GetUserAttendanceQueryService,
     private val getUserMyPageQueryService: GetUserMyPageQueryService,
-    private val getUserPenaltyQueryService: GetUserPenaltyQueryService,
-    private val getPenaltyRuleQueryService: GetPenaltyRuleQueryService,
 ) {
     @GetMapping
     @Operation(summary = "현재 동아리 마이페이지 요약 조회")
@@ -60,31 +54,6 @@ class ClubMemberMyPageController(
     ): CommonResponse<SliceResponse<UserMyPostResponse>> {
         val response = getUserPostQueryService.getMyPosts(userId, clubId, pageNumber, pageSize)
         return CommonResponse.success(UserResponseCode.USER_MY_POSTS_FIND_SUCCESS, response)
-    }
-
-    @GetMapping("/penalty-rule")
-    @Operation(summary = "현재 동아리 패널티 규정 조회")
-    fun getPenaltyRule(
-        @TsidParam
-        @TsidPathVariable clubId: Long,
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<PenaltyRuleResponse> =
-        CommonResponse.success(
-            UserResponseCode.USER_PENALTY_RULE_FIND_SUCCESS,
-            getPenaltyRuleQueryService.getRule(clubId),
-        )
-
-    @GetMapping("/penalties")
-    @Operation(summary = "현재 동아리에서 나의 페널티 목록 조회")
-    fun getMyPenalties(
-        @TsidParam
-        @TsidPathVariable clubId: Long,
-        @Parameter(hidden = true) @CurrentUser userId: Long,
-        @RequestParam(defaultValue = "0") pageNumber: Int,
-        @RequestParam(defaultValue = "5") pageSize: Int,
-    ): CommonResponse<SliceResponse<UserMyPenaltyResponse>> {
-        val response = getUserPenaltyQueryService.getMyPenalties(userId, clubId, pageNumber, pageSize)
-        return CommonResponse.success(UserResponseCode.USER_MY_PENALTIES_FIND_SUCCESS, response)
     }
 
     @GetMapping("/attended-sessions")
