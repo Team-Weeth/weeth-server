@@ -133,21 +133,20 @@ class GetClubMemberQueryService(
         clubId: Long,
         userId: Long,
         keyword: String,
-        page: Int,
-        size: Int,
         cardinalNumber: Int?,
-    ): PageResponse<ClubMemberResponse> =
+    ): List<ClubMemberResponse> =
         findClubMembersForAdmin(
             clubId = clubId,
             userId = userId,
-            page = page,
-            size = size,
+            page = 0,
+            size = MAX_SEARCH_SIZE,
             keyword = keyword,
             cardinalNumber = cardinalNumber,
             sort = ClubMemberSort.CARDINAL_DESC, // 검색은 기수 내림차순 고정
-        )
+        ).content
 
     companion object {
         private const val MAX_PAGE_SIZE = 100
+        private const val MAX_SEARCH_SIZE = 50
     }
 }

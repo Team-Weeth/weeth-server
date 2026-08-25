@@ -143,17 +143,13 @@ class ClubAdminController(
         @TsidPathVariable clubId: Long,
         @RequestParam keyword: String,
         @RequestParam(required = false) cardinalNumber: Int?,
-        @RequestParam(defaultValue = "0") page: Int,
-        @RequestParam(defaultValue = "20") size: Int,
-    ): CommonResponse<PageResponse<ClubMemberResponse>> {
+    ): CommonResponse<List<ClubMemberResponse>> {
         val members =
             getClubMemberQueryService.searchClubMembers(
                 clubId = clubId,
                 userId = userId,
                 keyword = keyword,
                 cardinalNumber = cardinalNumber,
-                page = page,
-                size = size,
             )
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
     }
