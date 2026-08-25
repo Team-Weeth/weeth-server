@@ -37,6 +37,7 @@ class SavePenaltyUseCase(
             if (!club.warningEnabled) throw WarningNotEnabledException()
         }
 
+        // TODO: 현재 userIds 수만큼 쿼리가 발생하는 N+1 문제가 있음. bulk 조회 방식으로 리팩토링 필요
         request.userIds.forEach { targetUserId ->
             val clubMember = clubMemberPolicy.getActiveMember(clubId, targetUserId)
             val cardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
