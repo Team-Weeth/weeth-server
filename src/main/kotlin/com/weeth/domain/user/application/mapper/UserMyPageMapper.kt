@@ -21,12 +21,18 @@ class UserMyPageMapper(
         user: User,
         postCount: Long,
         attendedSessionCount: Long,
+        penaltyCount: Int,
         usingProfileMembers: List<ClubMember>,
         currentProfile: UserProfile? = null,
     ): UserMyPageResponse =
         UserMyPageResponse(
             user = toInfoResponse(user),
-            stats = UserMyPageStatsResponse(postCount = postCount, attendedSessionCount = attendedSessionCount),
+            stats =
+                UserMyPageStatsResponse(
+                    postCount = postCount,
+                    attendedSessionCount = attendedSessionCount,
+                    penaltyCount = penaltyCount,
+                ),
             usingProfiles = toUsingProfiles(usingProfileMembers),
             currentProfile = currentProfile?.let(::toCurrentProfile),
         )
