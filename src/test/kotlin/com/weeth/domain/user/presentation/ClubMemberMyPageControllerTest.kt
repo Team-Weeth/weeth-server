@@ -1,7 +1,6 @@
 package com.weeth.domain.user.presentation
 
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
-import com.weeth.domain.penalty.application.usecase.query.GetPenaltyRuleQueryService
 import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageCurrentProfileResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageInfoResponse
@@ -10,7 +9,6 @@ import com.weeth.domain.user.application.dto.response.UserMyPageStatsResponse
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserMyPageQueryService
-import com.weeth.domain.user.application.usecase.query.GetUserPenaltyQueryService
 import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.global.common.response.SliceResponse
 import io.kotest.core.spec.style.DescribeSpec
@@ -26,25 +24,15 @@ class ClubMemberMyPageControllerTest :
         val getUserPostQueryService = mockk<GetUserPostQueryService>()
         val getUserAttendanceQueryService = mockk<GetUserAttendanceQueryService>()
         val getUserMyPageQueryService = mockk<GetUserMyPageQueryService>()
-        val getUserPenaltyQueryService = mockk<GetUserPenaltyQueryService>()
-        val getPenaltyRuleQueryService = mockk<GetPenaltyRuleQueryService>()
         val controller =
             ClubMemberMyPageController(
                 getUserPostQueryService = getUserPostQueryService,
                 getUserAttendanceQueryService = getUserAttendanceQueryService,
                 getUserMyPageQueryService = getUserMyPageQueryService,
-                getUserPenaltyQueryService = getUserPenaltyQueryService,
-                getPenaltyRuleQueryService = getPenaltyRuleQueryService,
             )
 
         beforeTest {
-            clearMocks(
-                getUserPostQueryService,
-                getUserAttendanceQueryService,
-                getUserMyPageQueryService,
-                getUserPenaltyQueryService,
-                getPenaltyRuleQueryService,
-            )
+            clearMocks(getUserPostQueryService, getUserAttendanceQueryService, getUserMyPageQueryService)
         }
 
         describe("getSummary") {
@@ -60,7 +48,7 @@ class ClubMemberMyPageControllerTest :
                                 department = "컴퓨터공학과",
                                 studentId = "20201234",
                             ),
-                        stats = UserMyPageStatsResponse(postCount = 12L, attendedSessionCount = 8L, penaltyCount = 0),
+                        stats = UserMyPageStatsResponse(postCount = 12L, attendedSessionCount = 8L),
                         usingProfiles = emptyList(),
                         currentProfile =
                             UserMyPageCurrentProfileResponse(
