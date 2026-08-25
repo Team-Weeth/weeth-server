@@ -67,6 +67,16 @@ interface SessionRepository :
         end: LocalDateTime,
     ): List<Session> = findByStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(end, start)
 
+    @Query(
+        "SELECT s FROM Session s WHERE s.club.id = :clubId AND s.cardinal = :cardinal AND s.start <= :end AND s.end >= :start ORDER BY s.start ASC",
+    )
+    override fun findAllByClubIdAndCardinalAndStartBetween(
+        @Param("clubId") clubId: Long,
+        @Param("cardinal") cardinal: Int,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+    ): List<Session>
+
     override fun findAllByClubIdAndCardinalIn(
         clubId: Long,
         cardinals: List<Int>,
