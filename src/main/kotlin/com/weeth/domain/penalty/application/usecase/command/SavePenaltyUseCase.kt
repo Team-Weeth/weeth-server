@@ -1,6 +1,7 @@
 package com.weeth.domain.penalty.application.usecase.command
 
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
+import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
@@ -20,6 +21,7 @@ class SavePenaltyUseCase(
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
+    private val clubReader: ClubReader,
     private val mapper: PenaltyMapper,
 ) {
     @Transactional
@@ -30,13 +32,14 @@ class SavePenaltyUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
+        if (request.penaltyType == PenaltyType.WARNING) {
+            val club = clubReader.getClubById(clubId)
+            if (!club.warningEnabled) throw WarningNotEnabledException()
+        }
+
         request.userIds.forEach { targetUserId ->
             val clubMember = clubMemberPolicy.getActiveMember(clubId, targetUserId)
             val cardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
-
-            if (request.penaltyType == PenaltyType.WARNING && !clubMember.club.warningEnabled) {
-                throw WarningNotEnabledException()
-            }
 
             val penalty = mapper.toEntity(request, clubMember, cardinal)
             penaltyRepository.save(penalty)
