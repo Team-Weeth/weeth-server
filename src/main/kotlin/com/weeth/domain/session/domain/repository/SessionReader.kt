@@ -28,6 +28,13 @@ interface SessionReader {
         end: LocalDateTime,
     ): List<Session>
 
+    fun findAllByClubIdAndCardinalAndStartBetween(
+        clubId: Long,
+        cardinal: Int,
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): List<Session>
+
     fun findAllByClubIdAndCardinalIn(
         clubId: Long,
         cardinals: List<Int>,
