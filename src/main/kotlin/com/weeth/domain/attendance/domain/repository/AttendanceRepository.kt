@@ -39,7 +39,15 @@ interface AttendanceRepository :
     ): List<Attendance>
 
     @EntityGraph(attributePaths = ["clubMember", "clubMember.user"])
-    fun findAllBySession(session: Session): List<Attendance>
+    override fun findAllBySession(session: Session): List<Attendance>
+
+    @Query(
+        "SELECT a FROM Attendance a JOIN FETCH a.clubMember cm JOIN FETCH cm.user WHERE a.session = :session AND cm.user.id = :userId",
+    )
+    override fun findBySessionAndUserId(
+        @Param("session") session: Session,
+        @Param("userId") userId: Long,
+    ): Attendance?
 
     @Query(
         """
