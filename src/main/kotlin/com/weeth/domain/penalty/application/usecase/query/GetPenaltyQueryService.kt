@@ -1,10 +1,14 @@
 package com.weeth.domain.penalty.application.usecase.query
 
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
+import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
+import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.penalty.application.dto.response.MemberPenaltyDetailResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
@@ -17,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 class GetPenaltyQueryService(
     private val penaltyRepository: PenaltyRepository,
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
+    private val clubMemberReader: ClubMemberReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
@@ -57,6 +62,21 @@ class GetPenaltyQueryService(
 
             mapper.toByCardinalResponse(cardinal.cardinalNumber, responses)
         }
+    }
+
+    fun findMemberPenaltyDetail(
+        clubId: Long,
+        userId: Long,
+        clubMemberId: Long,
+    ): MemberPenaltyDetailResponse {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+        val clubMember = clubMemberReader.findAdminMemberDetail(clubMemberId) ?: throw ClubMemberNotFoundException()
+        if (clubMember.club.id != clubId) throw ClubMemberNotInClubException()
+
+        val cardinals = clubMemberCardinalReader.findAllByClubMember(clubMember)
+        val penalties = penaltyRepository.findByClubMemberIds(listOf(clubMember.id))
+
+        return mapper.toMemberPenaltyDetailResponse(clubMember, cardinals, penalties)
     }
 
     fun findByUser(

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
-@Tag(name = "PENALTY", description = "패널티 API")
+@Tag(name = "PENALTY", description = "페널티 API")
 @RestController
 @RequestMapping("/api/v4/clubs/{clubId}/penalties")
 @ApiErrorCodeExample(PenaltyErrorCode::class)
@@ -23,7 +23,7 @@ class PenaltyUserController(
     private val getPenaltyQueryService: GetPenaltyQueryService,
 ) {
     @GetMapping
-    @Operation(summary = "본인 패널티 조회", hidden = true)
+    @Operation(summary = "본인 페널티 조회", hidden = true)
     fun findAllPenalties(
         @TsidParam
         @TsidPathVariable clubId: Long,

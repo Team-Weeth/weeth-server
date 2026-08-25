@@ -65,6 +65,10 @@ class ClubMember(
     var penaltyCount: Int = 0
         private set
 
+    @Column(nullable = false)
+    var warningCount: Int = 0
+        private set
+
     @Column(length = 500)
     var profileImageStorageKey: String? = null
         private set
@@ -158,8 +162,17 @@ class ClubMember(
         attendanceStats.recalculate(attendCount, absentCount)
     }
 
-    fun incrementPenaltyCount() {
-        penaltyCount++
+    fun incrementPenaltyCount(score: Int = 1) {
+        require(score > 0) { "페널티 점수는 1 이상이어야 합니다." }
+        penaltyCount += score
+    }
+
+    fun adjustPenaltyCount(delta: Int) {
+        penaltyCount = (penaltyCount + delta).coerceAtLeast(0)
+    }
+
+    fun adjustWarningCount(delta: Int) {
+        warningCount = (warningCount + delta).coerceAtLeast(0)
     }
 
     fun resetPenaltyCount() {
@@ -167,7 +180,7 @@ class ClubMember(
     }
 
     fun recalculatePenaltyCount(count: Int) {
-        require(count >= 0) { "패널티 수는 0 이상이어야 합니다." }
+        require(count >= 0) { "페널티 수는 0 이상이어야 합니다." }
         penaltyCount = count
     }
 
@@ -195,6 +208,17 @@ class ClubMember(
     fun decrementPenaltyCount() {
         if (penaltyCount > 0) {
             penaltyCount--
+        }
+    }
+
+    fun incrementWarningCount(score: Int = 1) {
+        require(score > 0) { "경고 점수는 1 이상이어야 합니다." }
+        warningCount += score
+    }
+
+    fun decrementWarningCount() {
+        if (warningCount > 0) {
+            warningCount--
         }
     }
 

@@ -126,6 +126,34 @@ class ClubAdminController(
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
     }
 
+    @GetMapping("/members/search")
+    @Operation(
+        summary = "동아리 멤버 이름 검색",
+        description = """
+            멤버 이름으로 검색합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.
+
+            사용 예시:
+            - 전체 멤버 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=김
+            - 5기만 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=김&cardinalNumber=5
+        """,
+    )
+    fun searchClubMembers(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @RequestParam keyword: String,
+        @RequestParam(required = false) cardinalNumber: Int?,
+    ): CommonResponse<List<ClubMemberResponse>> {
+        val members =
+            getClubMemberQueryService.searchClubMembers(
+                clubId = clubId,
+                userId = userId,
+                keyword = keyword,
+                cardinalNumber = cardinalNumber,
+            )
+        return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
+    }
+
     @GetMapping("/members/{clubMemberId}")
     @Operation(summary = "동아리 멤버 상세 조회", description = "가입 대기·추방·탈퇴 멤버도 조회할 수 있습니다.")
     fun getClubMemberDetail(

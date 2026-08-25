@@ -12,6 +12,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.penalty.domain.repository.PenaltyReader
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.common.response.PageResponse
 import org.springframework.data.domain.PageRequest
@@ -27,6 +28,7 @@ class GetClubMemberQueryService(
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMapper: ClubMapper,
     private val userReader: UserReader,
+    private val penaltyReader: PenaltyReader,
 ) {
     fun findClubMembersForAdmin(
         clubId: Long,
@@ -49,17 +51,31 @@ class GetClubMemberQueryService(
                 pageable = pageable,
             )
 
-        // 기수는 조회된 페이지의 멤버에 대해서만 일괄 조회해 N+1을 피한다.
+        // 기수와 최근 페널티는 조회된 페이지의 멤버에 대해서만 일괄 조회해 N+1을 피한다.
+        val clubMemberIds = members.content.map { it.id }
         val cardinalsByMemberId =
             if (members.isEmpty) {
                 emptyMap()
             } else {
                 clubMemberCardinalReader.findAllByClubMembers(members.content).groupBy { it.clubMember.id }
             }
+        val lastPenaltyAtByMemberId =
+            if (clubMemberIds.isEmpty()) {
+                emptyMap()
+            } else {
+                penaltyReader
+                    .findByClubMemberIds(clubMemberIds)
+                    .groupBy { it.clubMember.id }
+                    .mapValues { (_, penalties) -> penalties.first().createdAt }
+            }
 
         return PageResponse.from(
             members.map { member ->
-                clubMapper.toMemberResponse(member, cardinalsByMemberId[member.id] ?: emptyList())
+                clubMapper.toMemberResponse(
+                    member,
+                    cardinalsByMemberId[member.id] ?: emptyList(),
+                    lastPenaltyAtByMemberId[member.id],
+                )
             },
         )
     }
@@ -113,7 +129,24 @@ class GetClubMemberQueryService(
         return clubMapper.toMemberSummaryResponse(member, cardinals)
     }
 
+    fun searchClubMembers(
+        clubId: Long,
+        userId: Long,
+        keyword: String,
+        cardinalNumber: Int?,
+    ): List<ClubMemberResponse> =
+        findClubMembersForAdmin(
+            clubId = clubId,
+            userId = userId,
+            page = 0,
+            size = MAX_SEARCH_SIZE,
+            keyword = keyword,
+            cardinalNumber = cardinalNumber,
+            sort = ClubMemberSort.CARDINAL_DESC, // 검색은 기수 내림차순 고정
+        ).content
+
     companion object {
         private const val MAX_PAGE_SIZE = 100
+        private const val MAX_SEARCH_SIZE = 50
     }
 }

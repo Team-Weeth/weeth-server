@@ -66,6 +66,14 @@ class Club(
     var backgroundImageStorageKey: String? = backgroundImageStorageKey
         private set
 
+    @Column(nullable = false)
+    var warningEnabled: Boolean = false
+        private set
+
+    @Column(length = 500, nullable = true)
+    var penaltyRule: String? = null
+        private set
+
     // todo: 동아리 삭제 지원
 
     fun update(
@@ -119,6 +127,21 @@ class Club(
         }
     }
 
+    fun updatePenaltyRule(rule: String?) {
+        rule?.let {
+            require(it.length <= MAX_PENALTY_RULE_LENGTH) { "패널티 규정은 ${MAX_PENALTY_RULE_LENGTH}자 이하여야 합니다." }
+        }
+        this.penaltyRule = rule?.takeIf { it.isNotBlank() }
+    }
+
+    fun enableWarning() {
+        warningEnabled = true
+    }
+
+    fun disableWarning() {
+        warningEnabled = false
+    }
+
     fun regenerateCode(newCode: String) {
         require(newCode.isNotBlank()) { "초대 코드는 비어 있을 수 없습니다." }
         this.code = newCode
@@ -141,6 +164,7 @@ class Club(
 
     companion object {
         private const val MAX_DESCRIPTION_LENGTH = 30
+        private const val MAX_PENALTY_RULE_LENGTH = 500
 
         fun create(
             name: String,

@@ -47,6 +47,7 @@ src/main/resources/*.p8
 src/test/resources/*.env
 .env.local
 .env.*.local
+.env
 
 ### Claude Code ###
 # 로컬 평가 텔레메트리 — 분석은 로컬에서, 결론만 docs/plan에 반영

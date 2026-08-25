@@ -3,6 +3,8 @@ package com.weeth.domain.penalty.domain.repository
 import com.weeth.domain.penalty.domain.entity.Penalty
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
@@ -40,4 +42,15 @@ interface PenaltyRepository :
         clubId: Long,
         cardinalId: Long,
     ): List<Penalty>
+
+    @Query("SELECT p FROM Penalty p WHERE p.clubMember.id IN :clubMemberIds ORDER BY p.id DESC")
+    override fun findByClubMemberIds(
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+    ): List<Penalty>
+
+    @Query("SELECT p FROM Penalty p WHERE p.clubMember.id = :clubMemberId ORDER BY p.id DESC")
+    override fun findSliceByClubMemberId(
+        @Param("clubMemberId") clubMemberId: Long,
+        pageable: Pageable,
+    ): Slice<Penalty>
 }
