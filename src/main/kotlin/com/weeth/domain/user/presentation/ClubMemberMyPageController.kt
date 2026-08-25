@@ -71,7 +71,7 @@ class ClubMemberMyPageController(
     ): CommonResponse<PenaltyRuleResponse> =
         CommonResponse.success(
             UserResponseCode.USER_PENALTY_RULE_FIND_SUCCESS,
-            getPenaltyRuleQueryService.getRule(clubId),
+            getPenaltyRuleQueryService.getRule(clubId, userId),
         )
 
     @GetMapping("/penalties")
