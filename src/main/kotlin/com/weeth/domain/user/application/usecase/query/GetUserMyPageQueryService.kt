@@ -31,7 +31,6 @@ class GetUserMyPageQueryService(
         return getMyPageResponse(
             userId = userId,
             currentClubMemberId = currentMember.id,
-            penaltyCount = currentMember.penaltyCount,
             currentProfile = currentMember.userProfile,
         )
     }
@@ -39,7 +38,6 @@ class GetUserMyPageQueryService(
     private fun getMyPageResponse(
         userId: Long,
         currentClubMemberId: Long,
-        penaltyCount: Int,
         currentProfile: UserProfile?,
     ): UserMyPageResponse {
         val user = userReader.getById(userId)
@@ -56,7 +54,6 @@ class GetUserMyPageQueryService(
             user = user,
             postCount = postCount,
             attendedSessionCount = attendedSessionCount,
-            penaltyCount = penaltyCount,
             usingProfileMembers = usingProfileMembers,
             currentProfile = currentProfile,
         )
