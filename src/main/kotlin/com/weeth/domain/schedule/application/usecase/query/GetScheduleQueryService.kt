@@ -100,8 +100,8 @@ class GetScheduleQueryService(
         val now = LocalDateTime.now()
         if (attendance == null) {
             return when {
-                now.isBefore(session.start) -> ScheduleAttendanceStatus.UPCOMING
-                session.status == SessionStatus.OPEN && !now.isAfter(session.end) -> ScheduleAttendanceStatus.OPEN
+                now.isBefore(session.start.minusMinutes(10)) -> ScheduleAttendanceStatus.UPCOMING
+                session.status == SessionStatus.OPEN && session.isCheckInAllowed(now) -> ScheduleAttendanceStatus.OPEN
                 else -> ScheduleAttendanceStatus.ABSENT
             }
         }
