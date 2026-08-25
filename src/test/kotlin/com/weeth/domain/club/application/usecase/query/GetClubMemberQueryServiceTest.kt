@@ -78,7 +78,7 @@ class GetClubMemberQueryServiceTest :
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
                     clubMemberReader.findAdminMembers(1L, null, "홍길동", "CARDINAL_DESC", any())
-                } returns PageImpl(listOf(member), PageRequest.of(0, 20), 1)
+                } returns PageImpl(listOf(member), PageRequest.of(0, 50), 1)
                 every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns listOf(memberCardinal)
                 every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
 
@@ -88,11 +88,9 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "홍길동",
                         cardinalNumber = null,
-                        page = 0,
-                        size = 20,
                     )
 
-                result.content shouldHaveSize 1
+                result shouldHaveSize 1
                 verify(exactly = 1) {
                     clubMemberReader.findAdminMembers(1L, null, "홍길동", "CARDINAL_DESC", any())
                 }
@@ -106,7 +104,7 @@ class GetClubMemberQueryServiceTest :
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
                     clubMemberReader.findAdminMembers(1L, 7, "김", "CARDINAL_DESC", any())
-                } returns PageImpl(listOf(member), PageRequest.of(0, 20), 1)
+                } returns PageImpl(listOf(member), PageRequest.of(0, 50), 1)
                 every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
                 every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
 
@@ -116,11 +114,9 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "김",
                         cardinalNumber = 7,
-                        page = 0,
-                        size = 20,
                     )
 
-                result.content shouldHaveSize 1
+                result shouldHaveSize 1
             }
 
             it("검색 결과가 없을 수 있다") {
@@ -130,7 +126,7 @@ class GetClubMemberQueryServiceTest :
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
                     clubMemberReader.findAdminMembers(1L, null, "존재하지않음", "CARDINAL_DESC", any())
-                } returns PageImpl(emptyList(), PageRequest.of(0, 20), 0)
+                } returns PageImpl(emptyList(), PageRequest.of(0, 50), 0)
                 every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
                 val result =
@@ -139,28 +135,19 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "존재하지않음",
                         cardinalNumber = null,
-                        page = 0,
-                        size = 20,
                     )
 
-                result.content.shouldBeEmpty()
+                result.shouldBeEmpty()
             }
 
             it("기본값은 기수 내림차순 정렬이다") {
                 val club = ClubTestFixture.createClub()
                 val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
-                val pageableSlot = slot<Pageable>()
 
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
-                    clubMemberReader.findAdminMembers(
-                        1L,
-                        null,
-                        "김",
-                        "CARDINAL_DESC",
-                        capture(pageableSlot),
-                    )
-                } returns PageImpl(emptyList(), PageRequest.of(0, 20), 0)
+                    clubMemberReader.findAdminMembers(1L, null, "김", "CARDINAL_DESC", any())
+                } returns PageImpl(emptyList(), PageRequest.of(0, 50), 0)
                 every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
                 service.searchClubMembers(
@@ -168,8 +155,6 @@ class GetClubMemberQueryServiceTest :
                     userId = 99L,
                     keyword = "김",
                     cardinalNumber = null,
-                    page = 0,
-                    size = 20,
                 )
 
                 verify(exactly = 1) {

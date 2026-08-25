@@ -7,14 +7,11 @@ import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
-import com.weeth.global.common.response.PageResponse
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
-import org.springframework.data.domain.PageImpl
-import org.springframework.data.domain.PageRequest
 import java.time.LocalDateTime
 
 class ClubAdminControllerTest :
@@ -68,8 +65,6 @@ class ClubAdminControllerTest :
                         bio = "안녕하세요",
                         joinedAt = LocalDateTime.of(2026, 3, 1, 10, 0),
                     )
-                val pageImpl = PageImpl(listOf(member), PageRequest.of(0, 20), 1)
-                val pageResponse = PageResponse.from(pageImpl)
 
                 every {
                     getClubMemberQueryService.searchClubMembers(
@@ -77,10 +72,8 @@ class ClubAdminControllerTest :
                         userId = userId,
                         keyword = "홍길동",
                         cardinalNumber = null,
-                        page = 0,
-                        size = 20,
                     )
-                } returns pageResponse
+                } returns listOf(member)
 
                 val response =
                     controller.searchClubMembers(
@@ -88,16 +81,11 @@ class ClubAdminControllerTest :
                         clubId = clubId,
                         keyword = "홍길동",
                         cardinalNumber = null,
-                        page = 0,
-                        size = 20,
                     )
 
                 response.code shouldBe ClubResponseCode.MEMBER_FIND_ALL_SUCCESS.code
-                response.data?.content?.size shouldBe 1
-                response.data
-                    ?.content
-                    ?.first()
-                    ?.name shouldBe "홍길동"
+                response.data?.size shouldBe 1
+                response.data?.first()?.name shouldBe "홍길동"
             }
 
             it("특정 기수로 검색할 수 있다") {
@@ -123,8 +111,6 @@ class ClubAdminControllerTest :
                         bio = null,
                         joinedAt = LocalDateTime.of(2024, 3, 1, 10, 0),
                     )
-                val pageImpl = PageImpl(listOf(member), PageRequest.of(0, 20), 1)
-                val pageResponse = PageResponse.from(pageImpl)
 
                 every {
                     getClubMemberQueryService.searchClubMembers(
@@ -132,10 +118,8 @@ class ClubAdminControllerTest :
                         userId = userId,
                         keyword = "김",
                         cardinalNumber = 5,
-                        page = 0,
-                        size = 20,
                     )
-                } returns pageResponse
+                } returns listOf(member)
 
                 val response =
                     controller.searchClubMembers(
@@ -143,31 +127,21 @@ class ClubAdminControllerTest :
                         clubId = clubId,
                         keyword = "김",
                         cardinalNumber = 5,
-                        page = 0,
-                        size = 20,
                     )
 
                 response.code shouldBe ClubResponseCode.MEMBER_FIND_ALL_SUCCESS.code
-                response.data
-                    ?.content
-                    ?.first()
-                    ?.cardinals shouldBe listOf(5)
+                response.data?.first()?.cardinals shouldBe listOf(5)
             }
 
             it("검색 결과가 없을 수 있다") {
-                val pageImpl = PageImpl(emptyList<ClubMemberResponse>(), PageRequest.of(0, 20), 0)
-                val pageResponse = PageResponse.from(pageImpl)
-
                 every {
                     getClubMemberQueryService.searchClubMembers(
                         clubId = clubId,
                         userId = userId,
                         keyword = "존재하지않음",
                         cardinalNumber = null,
-                        page = 0,
-                        size = 20,
                     )
-                } returns pageResponse
+                } returns emptyList()
 
                 val response =
                     controller.searchClubMembers(
@@ -175,66 +149,10 @@ class ClubAdminControllerTest :
                         clubId = clubId,
                         keyword = "존재하지않음",
                         cardinalNumber = null,
-                        page = 0,
-                        size = 20,
                     )
 
                 response.code shouldBe ClubResponseCode.MEMBER_FIND_ALL_SUCCESS.code
-                response.data?.content?.size shouldBe 0
-            }
-
-            it("페이지네이션을 지원한다") {
-                val members =
-                    (1..10).map {
-                        ClubMemberResponse(
-                            userId = it.toLong(),
-                            clubMemberId = (100 + it).toLong(),
-                            name = "멤버$it",
-                            email = "member$it@example.com",
-                            tel = null,
-                            school = null,
-                            department = null,
-                            studentId = null,
-                            cardinals = emptyList(),
-                            memberStatus = MemberStatus.ACTIVE,
-                            memberRole = MemberRole.USER,
-                            attendanceCount = 0,
-                            absenceCount = 0,
-                            attendanceRate = 0,
-                            penaltyCount = 0,
-                            lastPenaltyAt = null,
-                            profileImageUrl = null,
-                            bio = null,
-                            joinedAt = LocalDateTime.now(),
-                        )
-                    }
-                val pageImpl = PageImpl(members, PageRequest.of(0, 10), 25)
-                val pageResponse = PageResponse.from(pageImpl)
-
-                every {
-                    getClubMemberQueryService.searchClubMembers(
-                        clubId = clubId,
-                        userId = userId,
-                        keyword = "멤버",
-                        cardinalNumber = null,
-                        page = 0,
-                        size = 10,
-                    )
-                } returns pageResponse
-
-                val response =
-                    controller.searchClubMembers(
-                        userId = userId,
-                        clubId = clubId,
-                        keyword = "멤버",
-                        cardinalNumber = null,
-                        page = 0,
-                        size = 10,
-                    )
-
-                response.code shouldBe ClubResponseCode.MEMBER_FIND_ALL_SUCCESS.code
-                response.data?.content?.size shouldBe 10
-                response.data?.totalElements shouldBe 25
+                response.data?.size shouldBe 0
             }
         }
     })
