@@ -33,8 +33,6 @@ data class UserMyPageStatsResponse(
     val postCount: Long,
     @field:Schema(description = "출석한 세션 수", example = "8")
     val attendedSessionCount: Long,
-    @field:Schema(description = "패널티 횟수", example = "2")
-    val penaltyCount: Int,
 )
 
 data class UserMyPageUsingProfileResponse(
