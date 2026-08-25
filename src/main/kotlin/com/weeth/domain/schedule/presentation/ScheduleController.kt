@@ -54,8 +54,9 @@ class ScheduleController(
             getScheduleQueryService.findDetail(clubId, userId, id, type),
         )
 
+    @Deprecated("사용하지 않는 API")
     @GetMapping("/yearly")
-    @Operation(summary = "연도별 일정 조회", hidden = true)
+    @Operation(summary = "연도별 일정 조회", deprecated = true)
     fun findByYearly(
         @TsidParam
         @TsidPathVariable clubId: Long,
