@@ -1,6 +1,8 @@
 package com.weeth.domain.penalty.application.usecase.query
 
 import com.weeth.domain.club.domain.repository.ClubReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -11,20 +13,24 @@ import io.mockk.mockk
 class GetPenaltyRuleQueryServiceTest :
     DescribeSpec({
         val clubReader = mockk<ClubReader>()
-        val queryService = GetPenaltyRuleQueryService(clubReader)
+        val clubMemberPolicy = mockk<ClubMemberPolicy>()
+        val queryService = GetPenaltyRuleQueryService(clubReader, clubMemberPolicy)
+
+        val userId = 1L
+        val clubMember = ClubMemberTestFixture.createActiveMember()
 
         beforeTest {
-            clearMocks(clubReader)
+            clearMocks(clubReader, clubMemberPolicy)
+            every { clubMemberPolicy.getActiveMember(any(), userId) } returns clubMember
         }
 
         describe("getRule") {
             it("클럽의 페널티 규정을 조회한다") {
-                val ruleContent = "1. 정기모임 무단 불참: 5점\n2. 지각: 2점"
                 val club = ClubTestFixture.createClub()
                 // 직접 penaltyRule을 설정할 방법을 찾아야 함
                 every { clubReader.getClubById(club.id) } returns club
 
-                val response = queryService.getRule(club.id)
+                val response = queryService.getRule(club.id, userId)
 
                 response.content shouldBe club.penaltyRule
             }
@@ -33,7 +39,7 @@ class GetPenaltyRuleQueryServiceTest :
                 val club = ClubTestFixture.createClub()
                 every { clubReader.getClubById(club.id) } returns club
 
-                val response = queryService.getRule(club.id)
+                val response = queryService.getRule(club.id, userId)
 
                 response.content shouldBe club.penaltyRule
             }
@@ -52,7 +58,7 @@ class GetPenaltyRuleQueryServiceTest :
                 val club = ClubTestFixture.createClub()
                 every { clubReader.getClubById(club.id) } returns club
 
-                val response = queryService.getRule(club.id)
+                val response = queryService.getRule(club.id, userId)
 
                 response.content shouldBe club.penaltyRule
             }
