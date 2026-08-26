@@ -67,6 +67,23 @@ class GetScheduleQueryService(
         return (events + sessions).sortedBy { it.start }
     }
 
+    fun findAdminEvents(
+        clubId: Long,
+        userId: Long,
+        cardinal: Int?,
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): List<EventResponse> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
+        val events =
+            if (cardinal != null) {
+                eventRepository.findByClubIdAndCardinalAndDateRange(clubId, cardinal, start, end)
+            } else {
+                eventRepository.findByClubIdAndDateRange(clubId, start, end)
+            }
+        return events.map { eventMapper.toResponse(it) }
+    }
+
     fun findDetail(
         clubId: Long,
         userId: Long,
