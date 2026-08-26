@@ -3,6 +3,7 @@ package com.weeth.domain.schedule.application.usecase.query
 import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.schedule.application.dto.response.EventResponse
@@ -35,6 +36,7 @@ class GetScheduleQueryServiceTest :
         val sessionReader = mockk<SessionReader>()
         val attendanceReader = mockk<AttendanceReader>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
+        val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val scheduleMapper = mockk<ScheduleMapper>()
         val eventMapper = mockk<EventMapper>()
         val queryService =
@@ -43,6 +45,7 @@ class GetScheduleQueryServiceTest :
                 sessionReader,
                 attendanceReader,
                 clubMemberPolicy,
+                clubPermissionPolicy,
                 scheduleMapper,
                 eventMapper,
             )
@@ -160,7 +163,7 @@ class GetScheduleQueryServiceTest :
             }
         }
 
-        describe("findAdminEvents") {
+        describe("findEventsByAdmin") {
             it("cardinal이 있으면 해당 기수 이벤트만 반환한다") {
                 val event = ScheduleTestFixture.createEvent(id = 1L, cardinal = cardinal)
                 val eventResponse = mockk<EventResponse>()
@@ -169,7 +172,7 @@ class GetScheduleQueryServiceTest :
                     listOf(event)
                 every { eventMapper.toResponse(event) } returns eventResponse
 
-                queryService.findAdminEvents(clubId, userId, cardinal, start, end) shouldBe listOf(eventResponse)
+                queryService.findEventsByAdmin(clubId, userId, cardinal, start, end) shouldBe listOf(eventResponse)
             }
 
             it("cardinal이 null이면 전체 기수 이벤트를 반환한다") {
@@ -182,14 +185,14 @@ class GetScheduleQueryServiceTest :
                 every { eventMapper.toResponse(event1) } returns response1
                 every { eventMapper.toResponse(event2) } returns response2
 
-                queryService.findAdminEvents(clubId, userId, null, start, end) shouldBe listOf(response1, response2)
+                queryService.findEventsByAdmin(clubId, userId, null, start, end) shouldBe listOf(response1, response2)
             }
 
             it("일정이 없으면 빈 목록을 반환한다") {
                 every { eventRepository.findByClubIdAndCardinalAndDateRange(clubId, cardinal, start, end) } returns
                     emptyList()
 
-                queryService.findAdminEvents(clubId, userId, cardinal, start, end) shouldBe emptyList()
+                queryService.findEventsByAdmin(clubId, userId, cardinal, start, end) shouldBe emptyList()
             }
         }
 

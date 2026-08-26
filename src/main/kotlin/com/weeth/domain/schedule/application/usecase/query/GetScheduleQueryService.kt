@@ -4,6 +4,7 @@ import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.schedule.application.dto.response.EventResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleAttendanceStatus
 import com.weeth.domain.schedule.application.dto.response.ScheduleDetailResponse
@@ -29,6 +30,7 @@ class GetScheduleQueryService(
     private val sessionReader: SessionReader,
     private val attendanceReader: AttendanceReader,
     private val clubMemberPolicy: ClubMemberPolicy,
+    private val clubPermissionPolicy: ClubPermissionPolicy,
     private val scheduleMapper: ScheduleMapper,
     private val eventMapper: EventMapper,
 ) {
@@ -67,14 +69,14 @@ class GetScheduleQueryService(
         return (events + sessions).sortedBy { it.start }
     }
 
-    fun findAdminEvents(
+    fun findEventsByAdmin(
         clubId: Long,
         userId: Long,
         cardinal: Int?,
         start: LocalDateTime,
         end: LocalDateTime,
     ): List<EventResponse> {
-        clubMemberPolicy.getActiveMember(clubId, userId)
+        clubPermissionPolicy.requireAdmin(clubId, userId)
         val events =
             if (cardinal != null) {
                 eventRepository.findByClubIdAndCardinalAndDateRange(clubId, cardinal, start, end)
