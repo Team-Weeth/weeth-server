@@ -47,7 +47,7 @@ class EventAdminController(
     ): CommonResponse<List<EventResponse>> =
         CommonResponse.success(
             ScheduleResponseCode.EVENT_FIND_ALL_SUCCESS,
-            getScheduleQueryService.findAdminEvents(clubId, userId, cardinal, start, end),
+            getScheduleQueryService.findEventsByAdmin(clubId, userId, cardinal, start, end),
         )
 
     @PostMapping
