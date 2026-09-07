@@ -66,10 +66,6 @@ class Club(
     var backgroundImageStorageKey: String? = backgroundImageStorageKey
         private set
 
-    @Column(nullable = false)
-    var warningEnabled: Boolean = false
-        private set
-
     @Column(length = 500, nullable = true)
     var penaltyRule: String? = null
         private set
@@ -132,14 +128,6 @@ class Club(
             require(it.length <= MAX_PENALTY_RULE_LENGTH) { "패널티 규정은 ${MAX_PENALTY_RULE_LENGTH}자 이하여야 합니다." }
         }
         this.penaltyRule = rule?.takeIf { it.isNotBlank() }
-    }
-
-    fun enableWarning() {
-        warningEnabled = true
-    }
-
-    fun disableWarning() {
-        warningEnabled = false
     }
 
     fun regenerateCode(newCode: String) {
