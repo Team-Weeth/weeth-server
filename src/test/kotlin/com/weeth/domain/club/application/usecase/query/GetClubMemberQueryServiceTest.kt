@@ -1,9 +1,11 @@
 package com.weeth.domain.club.application.usecase.query
 
+import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.club.application.dto.request.ClubMemberSort
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
+import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.application.mapper.ClubMapper
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
@@ -33,6 +35,7 @@ import io.mockk.verify
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.SliceImpl
 
 class GetClubMemberQueryServiceTest :
     DescribeSpec({
@@ -43,6 +46,7 @@ class GetClubMemberQueryServiceTest :
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userReader = mockk<UserReader>()
         val penaltyReader = mockk<PenaltyReader>()
+        val postReader = mockk<PostReader>()
         val clubMapper = ClubMapper(fileAccessUrlPort)
 
         val service =
@@ -54,6 +58,7 @@ class GetClubMemberQueryServiceTest :
                 clubMapper = clubMapper,
                 userReader = userReader,
                 penaltyReader = penaltyReader,
+                postReader = postReader,
             )
 
         beforeTest {
@@ -64,6 +69,7 @@ class GetClubMemberQueryServiceTest :
                 clubPermissionPolicy,
                 userReader,
                 penaltyReader,
+                postReader,
             )
         }
 
@@ -312,6 +318,206 @@ class GetClubMemberQueryServiceTest :
 
                     shouldThrow<ClubMemberNotInClubException> {
                         service.findClubMemberDetailForAdmin(clubId = 1L, userId = 99L, clubMemberId = 5L)
+                    }
+                }
+            }
+        }
+
+        describe("findMemberDetail") {
+            val club = ClubTestFixture.createClub(id = 1L)
+            val clubId = 1L
+            val userId = 99L
+            val clubMemberId = 10L
+
+            context("활성 멤버 상세를 조회하는 경우") {
+                it("ClubMemberDetailResponse를 반환한다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+                    val targetUser = UserTestFixture.createActiveUser1(1L)
+                    val targetMember =
+                        ClubMemberTestFixture.createActiveMember(
+                            id = clubMemberId,
+                            club = club,
+                            user = targetUser,
+                        )
+                    val cardinal = Cardinal.create(club = club, cardinalNumber = 7)
+                    val memberCardinal = ClubMemberCardinal.create(targetMember, cardinal)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every { clubMemberReader.findPublicMemberDetail(clubId, clubMemberId) } returns targetMember
+                    every { clubMemberCardinalReader.findAllByClubMember(targetMember) } returns listOf(memberCardinal)
+                    every { postReader.countActiveByClubMemberIds(listOf(clubMemberId)) } returns 5L
+
+                    val result =
+                        service.findMemberDetail(
+                            clubId = clubId,
+                            userId = userId,
+                            clubMemberId = clubMemberId,
+                        )
+
+                    result.clubMemberId shouldBe clubMemberId
+                    result.name shouldBe targetUser.name
+                    result.memberRole shouldBe MemberRole.USER
+                    result.cardinals shouldBe listOf(7)
+                    result.postCount shouldBe 5L
+                    result.email shouldBe targetUser.emailValue
+                }
+            }
+
+            context("존재하지 않는 멤버를 조회하는 경우") {
+                it("ClubMemberNotFoundException을 던진다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every { clubMemberReader.findPublicMemberDetail(clubId, clubMemberId) } returns null
+
+                    shouldThrow<ClubMemberNotFoundException> {
+                        service.findMemberDetail(
+                            clubId = clubId,
+                            userId = userId,
+                            clubMemberId = clubMemberId,
+                        )
+                    }
+                }
+            }
+
+            context("비활성 멤버가 조회하는 경우") {
+                it("MemberNotActiveException을 던진다") {
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } throws MemberNotActiveException()
+
+                    shouldThrow<MemberNotActiveException> {
+                        service.findMemberDetail(
+                            clubId = clubId,
+                            userId = userId,
+                            clubMemberId = clubMemberId,
+                        )
+                    }
+                }
+            }
+        }
+
+        describe("findPublicMembers") {
+            val club = ClubTestFixture.createClub(id = 1L)
+            val clubId = 1L
+            val userId = 99L
+
+            context("활성 멤버가 조회하는 경우") {
+                it("멤버 목록을 SliceResponse로 반환한다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+                    val member =
+                        ClubMemberTestFixture.createActiveMember(
+                            id = 10L,
+                            club = club,
+                            user = UserTestFixture.createActiveUser1(1L),
+                        )
+                    val cardinal = Cardinal.create(club = club, cardinalNumber = 7)
+                    val memberCardinal = ClubMemberCardinal.create(member, cardinal)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every {
+                        clubMemberReader.findPublicMembers(clubId, null, null, any())
+                    } returns SliceImpl(listOf(member), PageRequest.of(0, 20), false)
+                    every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns
+                        listOf(memberCardinal)
+
+                    val result =
+                        service.findPublicMembers(
+                            clubId = clubId,
+                            userId = userId,
+                            cardinalNumber = null,
+                            memberRole = null,
+                            page = 0,
+                            size = 20,
+                        )
+
+                    result.content shouldHaveSize 1
+                    result.hasNext shouldBe false
+                    val response = result.content.first()
+                    response.name shouldBe member.user.name
+                    response.memberRole shouldBe MemberRole.USER
+                    response.cardinals shouldBe listOf(7)
+                    verify(exactly = 1) { clubMemberPolicy.getActiveMember(clubId, userId) }
+                }
+
+                it("기수 필터를 Repository에 전달한다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+                    val pageableSlot = slot<Pageable>()
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every {
+                        clubMemberReader.findPublicMembers(clubId, 7, null, capture(pageableSlot))
+                    } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
+                    every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
+
+                    service.findPublicMembers(
+                        clubId = clubId,
+                        userId = userId,
+                        cardinalNumber = 7,
+                        memberRole = null,
+                        page = 0,
+                        size = 20,
+                    )
+
+                    verify(exactly = 1) { clubMemberReader.findPublicMembers(clubId, 7, null, any()) }
+                }
+
+                it("역할 필터를 Repository에 전달한다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every {
+                        clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, any())
+                    } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
+                    every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
+
+                    service.findPublicMembers(
+                        clubId = clubId,
+                        userId = userId,
+                        cardinalNumber = null,
+                        memberRole = MemberRole.ADMIN,
+                        page = 0,
+                        size = 20,
+                    )
+
+                    verify(exactly = 1) { clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, any()) }
+                }
+
+                it("조회 결과가 없으면 빈 SliceResponse를 반환한다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every {
+                        clubMemberReader.findPublicMembers(clubId, null, null, any())
+                    } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
+                    every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
+
+                    val result =
+                        service.findPublicMembers(
+                            clubId = clubId,
+                            userId = userId,
+                            cardinalNumber = null,
+                            memberRole = null,
+                            page = 0,
+                            size = 20,
+                        )
+
+                    result.content.shouldBeEmpty()
+                    result.hasNext shouldBe false
+                }
+            }
+
+            context("비활성 멤버가 접근하는 경우") {
+                it("MemberNotActiveException을 던진다") {
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } throws MemberNotActiveException()
+
+                    shouldThrow<MemberNotActiveException> {
+                        service.findPublicMembers(
+                            clubId = clubId,
+                            userId = userId,
+                            cardinalNumber = null,
+                            memberRole = null,
+                            page = 0,
+                            size = 20,
+                        )
                     }
                 }
             }
