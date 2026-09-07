@@ -1,13 +1,17 @@
 package com.weeth.domain.club.application.usecase.query
 
+import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.application.dto.request.ClubMemberSort
+import com.weeth.domain.club.application.dto.response.ClubMemberDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.mapper.ClubMapper
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -15,6 +19,7 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.domain.repository.PenaltyReader
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.common.response.PageResponse
+import com.weeth.global.common.response.SliceResponse
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -29,6 +34,7 @@ class GetClubMemberQueryService(
     private val clubMapper: ClubMapper,
     private val userReader: UserReader,
     private val penaltyReader: PenaltyReader,
+    private val postReader: PostReader,
 ) {
     fun findClubMembersForAdmin(
         clubId: Long,
@@ -144,6 +150,56 @@ class GetClubMemberQueryService(
             cardinalNumber = cardinalNumber,
             sort = ClubMemberSort.CARDINAL_DESC, // 검색은 기수 내림차순 고정
         ).content
+
+    fun findMemberDetail(
+        clubId: Long,
+        userId: Long,
+        clubMemberId: Long,
+    ): ClubMemberDetailResponse {
+        clubMemberPolicy.getActiveMember(clubId, userId)
+
+        val member =
+            clubMemberReader.findPublicMemberDetail(clubId, clubMemberId)
+                ?: throw ClubMemberNotFoundException()
+
+        val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
+        val postCount = postReader.countActiveByClubMemberIds(listOf(clubMemberId))
+
+        return clubMapper.toMemberDetailResponse(member, cardinals, postCount)
+    }
+
+    fun findPublicMembers(
+        clubId: Long,
+        userId: Long,
+        cardinalNumber: Int?,
+        memberRole: MemberRole?,
+        page: Int,
+        size: Int,
+    ): SliceResponse<ClubMemberPublicResponse> {
+        clubMemberPolicy.getActiveMember(clubId, userId)
+
+        val pageable = PageRequest.of(page.coerceAtLeast(0), size.coerceIn(1, MAX_PAGE_SIZE))
+        val members =
+            clubMemberReader.findPublicMembers(
+                clubId = clubId,
+                cardinalNumber = cardinalNumber,
+                memberRole = memberRole,
+                pageable = pageable,
+            )
+
+        val cardinalsByMemberId =
+            if (members.isEmpty) {
+                emptyMap()
+            } else {
+                clubMemberCardinalReader.findAllByClubMembers(members.content).groupBy { it.clubMember.id }
+            }
+
+        return SliceResponse.from(
+            members.map { member ->
+                clubMapper.toPublicMemberResponse(member, cardinalsByMemberId[member.id] ?: emptyList())
+            },
+        )
+    }
 
     companion object {
         private const val MAX_PAGE_SIZE = 100

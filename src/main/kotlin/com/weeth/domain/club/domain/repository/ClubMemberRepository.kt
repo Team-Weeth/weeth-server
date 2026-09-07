@@ -7,6 +7,7 @@ import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
@@ -483,4 +484,50 @@ interface ClubMemberRepository :
         @Param("clubId") clubId: Long,
         @Param("userIds") userIds: List<Long>,
     ): List<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.club.id = :clubId
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
+        AND (
+            :cardinalNumber IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM ClubMemberCardinal cmc
+                WHERE cmc.clubMember = cm
+                AND cmc.cardinal.cardinalNumber = :cardinalNumber
+            )
+        )
+        ORDER BY
+            (SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm) DESC,
+            cm.id ASC
+        """,
+    )
+    override fun findPublicMembers(
+        @Param("clubId") clubId: Long,
+        @Param("cardinalNumber") cardinalNumber: Int?,
+        @Param("memberRole") memberRole: MemberRole?,
+        pageable: Pageable,
+    ): Slice<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.id = :clubMemberId
+        AND cm.club.id = :clubId
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        """,
+    )
+    override fun findPublicMemberDetail(
+        @Param("clubId") clubId: Long,
+        @Param("clubMemberId") clubMemberId: Long,
+    ): ClubMember?
 }

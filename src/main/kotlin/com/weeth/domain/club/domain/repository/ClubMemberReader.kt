@@ -5,6 +5,7 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 
 interface ClubMemberReader {
     fun findByIdWithLock(clubMemberId: Long): ClubMember?
@@ -121,4 +122,16 @@ interface ClubMemberReader {
         clubId: Long,
         userIds: List<Long>,
     ): List<ClubMember>
+
+    fun findPublicMembers(
+        clubId: Long,
+        cardinalNumber: Int?,
+        memberRole: MemberRole?,
+        pageable: Pageable,
+    ): Slice<ClubMember>
+
+    fun findPublicMemberDetail(
+        clubId: Long,
+        clubMemberId: Long,
+    ): ClubMember?
 }

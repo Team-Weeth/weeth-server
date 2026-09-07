@@ -3,7 +3,9 @@ package com.weeth.domain.club.application.mapper
 import com.weeth.domain.club.application.dto.response.ClubCreateResponse
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
@@ -167,10 +169,42 @@ class ClubMapper(
             clubName = club.name,
         )
 
+    fun toMemberDetailResponse(
+        member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+        postCount: Long,
+    ) = ClubMemberDetailResponse(
+        clubMemberId = member.id,
+        name = resolveMemberName(member),
+        profileImageUrl = resolveMemberProfileImage(member),
+        headerImageUrl = member.userProfile?.headerImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
+        memberRole = member.memberRole,
+        cardinals = toCardinalNumbers(cardinals),
+        bio = resolveMemberBio(member),
+        tel = member.user.telValue,
+        email = member.user.emailValue,
+        studentId = member.user.studentId,
+        postCount = postCount,
+    )
+
+    fun toPublicMemberResponse(
+        member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+    ) = ClubMemberPublicResponse(
+        clubMemberId = member.id,
+        name = member.user.name,
+        profileImageUrl = resolveMemberProfileImage(member),
+        memberRole = member.memberRole,
+        cardinals = toCardinalNumbers(cardinals),
+        bio = resolveMemberBio(member),
+    )
+
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
 
     // 멀티프로필 도입 이후 멤버가 동아리에서 노출하는 프로필은 userProfile이다.
     // ClubMember의 동명 필드는 멀티프로필 이전 데이터라 fallback으로만 사용한다.
+    private fun resolveMemberName(member: ClubMember): String = member.userProfile?.name ?: member.user.name
+
     private fun resolveMemberProfileImage(member: ClubMember): String? =
         (member.userProfile?.profileImageStorageKey ?: member.profileImageStorageKey)
             ?.let { fileAccessUrlPort.resolve(it) }

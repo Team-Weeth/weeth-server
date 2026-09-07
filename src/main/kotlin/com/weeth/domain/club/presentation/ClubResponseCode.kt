@@ -32,4 +32,7 @@ enum class ClubResponseCode(
     MEMBER_RESTORED_SUCCESS(11121, HttpStatus.OK, "멤버가 복구되었습니다."),
     MEMBER_CARDINAL_UPDATED_SUCCESS(11122, HttpStatus.OK, "멤버 기수가 수정되었습니다."),
     MEMBER_FIND_DETAIL_SUCCESS(11123, HttpStatus.OK, "멤버 상세 정보를 성공적으로 조회했습니다."),
+    MEMBER_LIST_FIND_SUCCESS(11124, HttpStatus.OK, "멤버 목록을 성공적으로 조회했습니다."),
+    MEMBER_DETAIL_FIND_SUCCESS(11125, HttpStatus.OK, "멤버 상세 정보를 성공적으로 조회했습니다."),
+    MEMBER_POSTS_FIND_SUCCESS(11126, HttpStatus.OK, "멤버 게시글 목록을 성공적으로 조회했습니다."),
 }

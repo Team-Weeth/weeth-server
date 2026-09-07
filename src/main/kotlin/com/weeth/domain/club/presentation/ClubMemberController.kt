@@ -2,15 +2,21 @@ package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubJoinRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberCardinalSetRequest
+import com.weeth.domain.club.application.dto.response.ClubMemberDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
+import com.weeth.domain.club.domain.enums.MemberRole
+import com.weeth.domain.user.application.dto.response.UserMyPostResponse
+import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
+import com.weeth.global.common.response.SliceResponse
 import com.weeth.global.common.web.TsidParam
 import com.weeth.global.common.web.TsidPathVariable
 import io.swagger.v3.oas.annotations.Operation
@@ -21,9 +27,11 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 
@@ -34,6 +42,7 @@ import org.springframework.web.bind.annotation.RestController
 class ClubMemberController(
     private val manageClubMemberUsecase: ManageClubMemberUsecase,
     private val getClubMemberQueryService: GetClubMemberQueryService,
+    private val getUserPostQueryService: GetUserPostQueryService,
 ) {
     @PostMapping("/{clubId}/join")
     @Operation(summary = "동아리 가입")
@@ -94,6 +103,70 @@ class ClubMemberController(
         val status = getClubMemberQueryService.findProfileStatus(clubId, userId)
 
         return CommonResponse.success(ClubResponseCode.PROFILE_STATUS_FIND_SUCCESS, status)
+    }
+
+    @GetMapping("/{clubId}/members/{clubMemberId}")
+    @Operation(summary = "동아리 멤버 상세 조회")
+    fun getMemberDetail(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable clubMemberId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<ClubMemberDetailResponse> {
+        val response =
+            getClubMemberQueryService.findMemberDetail(
+                clubId = clubId,
+                userId = userId,
+                clubMemberId = clubMemberId,
+            )
+        return CommonResponse.success(ClubResponseCode.MEMBER_DETAIL_FIND_SUCCESS, response)
+    }
+
+    @GetMapping("/{clubId}/members/{clubMemberId}/posts")
+    @Operation(summary = "동아리 멤버가 작성한 글 목록 조회")
+    fun getMemberPosts(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable clubMemberId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @RequestParam(defaultValue = "0") pageNumber: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int,
+    ): CommonResponse<SliceResponse<UserMyPostResponse>> {
+        val response =
+            getUserPostQueryService.getMemberPosts(
+                requesterId = userId,
+                clubId = clubId,
+                targetClubMemberId = clubMemberId,
+                pageNumber = pageNumber,
+                pageSize = pageSize,
+            )
+        return CommonResponse.success(ClubResponseCode.MEMBER_POSTS_FIND_SUCCESS, response)
+    }
+
+    @GetMapping("/{clubId}/members")
+    @Operation(
+        summary = "동아리 멤버 목록 조회",
+        description = "기수·역할 필터와 무한스크롤 페이지네이션을 지원합니다. 활성 멤버만 조회됩니다.",
+    )
+    fun getMembers(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @RequestParam(required = false) cardinalNumber: Int?,
+        @RequestParam(required = false) memberRole: MemberRole?,
+        @RequestParam(defaultValue = "0") pageNumber: Int,
+        @RequestParam(defaultValue = "20") pageSize: Int,
+    ): CommonResponse<SliceResponse<ClubMemberPublicResponse>> {
+        val response =
+            getClubMemberQueryService.findPublicMembers(
+                clubId = clubId,
+                userId = userId,
+                cardinalNumber = cardinalNumber,
+                memberRole = memberRole,
+                page = pageNumber,
+                size = pageSize,
+            )
+        return CommonResponse.success(ClubResponseCode.MEMBER_LIST_FIND_SUCCESS, response)
     }
 
     @PostMapping("/{clubId}/members/me/cardinals")
