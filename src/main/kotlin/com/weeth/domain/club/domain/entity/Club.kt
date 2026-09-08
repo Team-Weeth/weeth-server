@@ -134,14 +134,6 @@ class Club(
         this.penaltyRule = rule?.takeIf { it.isNotBlank() }
     }
 
-    fun enableWarning() {
-        warningEnabled = true
-    }
-
-    fun disableWarning() {
-        warningEnabled = false
-    }
-
     fun regenerateCode(newCode: String) {
         require(newCode.isNotBlank()) { "초대 코드는 비어 있을 수 없습니다." }
         this.code = newCode

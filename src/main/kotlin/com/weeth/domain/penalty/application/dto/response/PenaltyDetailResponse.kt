@@ -1,5 +1,6 @@
 package com.weeth.domain.penalty.application.dto.response
 
+import com.weeth.domain.penalty.domain.enums.PenaltyType
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
@@ -14,4 +15,6 @@ data class PenaltyDetailResponse(
     val score: Int,
     @field:Schema(description = "페널티 부여 일시", example = "2026-02-19T01:00:00")
     val time: LocalDateTime,
+    @field:Schema(description = "페널티 유형 (PENALTY: 패널티, WARNING: 경고)", example = "PENALTY")
+    val penaltyType: PenaltyType,
 )

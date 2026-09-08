@@ -50,6 +50,7 @@ class PenaltyMapper(
             penaltyDescription = penalty.penaltyDescription,
             score = penalty.score,
             time = penalty.createdAt,
+            penaltyType = penalty.penaltyType,
         )
 
     fun toByCardinalResponse(
