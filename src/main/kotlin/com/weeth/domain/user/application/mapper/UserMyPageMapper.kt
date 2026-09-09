@@ -22,7 +22,7 @@ class UserMyPageMapper(
         postCount: Long,
         attendedSessionCount: Long,
         penaltyCount: Int,
-        warningCount: Int,
+        warningCount: Int?,
         usingProfileMembers: List<ClubMember>,
         currentProfile: UserProfile? = null,
     ): UserMyPageResponse =
