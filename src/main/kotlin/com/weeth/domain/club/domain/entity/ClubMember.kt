@@ -214,6 +214,12 @@ class ClubMember(
     fun incrementWarningCount(score: Int = 1) {
         require(score > 0) { "경고 점수는 1 이상이어야 합니다." }
         warningCount += score
+        // 경고 2회마다 패널티 1회로 자동 전환
+        val converted = warningCount / WARNING_TO_PENALTY_THRESHOLD
+        if (converted > 0) {
+            warningCount -= converted * WARNING_TO_PENALTY_THRESHOLD
+            penaltyCount += converted
+        }
     }
 
     fun decrementWarningCount() {
@@ -224,6 +230,7 @@ class ClubMember(
 
     companion object {
         private const val RETENTION_DAYS = 30L
+        const val WARNING_TO_PENALTY_THRESHOLD = 2
 
         fun create(
             club: Club,

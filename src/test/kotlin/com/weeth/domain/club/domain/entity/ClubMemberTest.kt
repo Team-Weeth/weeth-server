@@ -133,6 +133,36 @@ class ClubMemberTest :
             member.attendanceStats.attendanceRate shouldBe 0
         }
 
+        "incrementWarningCount — 경고 2회 누적 시 패널티 1회로 자동 전환되고 경고는 초기화된다" {
+            val member = ClubMember(club = club, user = user)
+
+            member.incrementWarningCount()
+            member.incrementWarningCount()
+
+            member.warningCount shouldBe 0
+            member.penaltyCount shouldBe 1
+        }
+
+        "incrementWarningCount — 경고 1회는 전환 없이 warningCount만 증가한다" {
+            val member = ClubMember(club = club, user = user)
+
+            member.incrementWarningCount()
+
+            member.warningCount shouldBe 1
+            member.penaltyCount shouldBe 0
+        }
+
+        "incrementWarningCount — 경고 3회 누적 시 패널티 1회 전환 후 경고 1회 남는다" {
+            val member = ClubMember(club = club, user = user)
+
+            member.incrementWarningCount()
+            member.incrementWarningCount()
+            member.incrementWarningCount()
+
+            member.warningCount shouldBe 1
+            member.penaltyCount shouldBe 1
+        }
+
         "incrementPenaltyCount — 패널티를 증가시킨다" {
             val member = ClubMember(club = club, user = user)
 
