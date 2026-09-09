@@ -60,7 +60,7 @@ class ClubMemberMyPageControllerTest :
                                 department = "컴퓨터공학과",
                                 studentId = "20201234",
                             ),
-                        stats = UserMyPageStatsResponse(postCount = 12L, attendedSessionCount = 8L, penaltyCount = 0),
+                        stats = UserMyPageStatsResponse(postCount = 12L, attendedSessionCount = 8L, penaltyCount = 0, warningCount = 0),
                         usingProfiles = emptyList(),
                         currentProfile =
                             UserMyPageCurrentProfileResponse(
