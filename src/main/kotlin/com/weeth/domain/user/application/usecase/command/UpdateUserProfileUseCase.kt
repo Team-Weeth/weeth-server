@@ -33,6 +33,11 @@ class UpdateUserProfileUseCase(
             school = request.school,
             department = request.department,
         )
+        user.updatePrivacy(
+            telPublic = request.telPublic,
+            emailPublic = request.emailPublic,
+            studentInfoPublic = request.studentInfoPublic,
+        )
     }
 
     private fun validateRequiredFields(request: UpdateUserProfileRequest) {
