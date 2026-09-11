@@ -14,6 +14,7 @@ import java.time.Clock
 import java.time.LocalDateTime
 
 @Service
+@Transactional(readOnly = true)
 class GetUserPostQueryService(
     private val postReader: PostReader,
     private val clubMemberPolicy: ClubMemberPolicy,
@@ -24,7 +25,6 @@ class GetUserPostQueryService(
         private const val MAX_PAGE_SIZE = 50
     }
 
-    @Transactional(readOnly = true)
     fun getMyPosts(
         userId: Long,
         clubId: Long,
