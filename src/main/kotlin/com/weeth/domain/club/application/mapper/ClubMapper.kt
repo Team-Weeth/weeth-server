@@ -184,6 +184,7 @@ class ClubMapper(
         tel = member.user.telValue,
         email = member.user.emailValue,
         studentId = member.user.studentId,
+        department = member.user.department,
         postCount = postCount,
     )
 
@@ -192,7 +193,7 @@ class ClubMapper(
         cardinals: List<ClubMemberCardinal>,
     ) = ClubMemberPublicResponse(
         clubMemberId = member.id,
-        name = member.user.name,
+        name = resolveMemberName(member),
         profileImageUrl = resolveMemberProfileImage(member),
         memberRole = member.memberRole,
         cardinals = toCardinalNumbers(cardinals),
