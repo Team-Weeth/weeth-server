@@ -182,7 +182,8 @@ class ClubMapper(
         cardinals = toCardinalNumbers(cardinals),
         bio = resolveMemberBio(member),
         tel = member.user.telValue.takeIf { member.user.telPublic },
-        email = member.user.emailValue.takeIf { member.user.emailPublic },
+        email =
+            member.user.emailValue.takeIf { member.user.emailPublic },
         studentId = member.user.studentId.takeIf { member.user.studentInfoPublic },
         department = member.user.department.takeIf { member.user.studentInfoPublic },
         postCount = postCount,

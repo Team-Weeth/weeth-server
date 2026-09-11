@@ -26,6 +26,12 @@ data class UserMyPageInfoResponse(
     val department: String? = null,
     @field:Schema(description = "학번", example = "20201234", nullable = true)
     val studentId: String? = null,
+    @field:Schema(description = "전화번호 공개 여부", example = "true")
+    val telPublic: Boolean,
+    @field:Schema(description = "이메일 공개 여부", example = "true")
+    val emailPublic: Boolean,
+    @field:Schema(description = "학과·학번 공개 여부", example = "true")
+    val studentInfoPublic: Boolean,
 )
 
 data class UserMyPageStatsResponse(

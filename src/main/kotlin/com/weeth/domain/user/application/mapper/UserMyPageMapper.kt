@@ -45,6 +45,9 @@ class UserMyPageMapper(
             school = user.school,
             department = user.department,
             studentId = user.studentId,
+            telPublic = user.telPublic,
+            emailPublic = user.emailPublic,
+            studentInfoPublic = user.studentInfoPublic,
         )
 
     private fun toUsingProfiles(members: List<ClubMember>): List<UserMyPageUsingProfileResponse> =
