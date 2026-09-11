@@ -41,6 +41,8 @@ data class UserMyPageStatsResponse(
     val attendedSessionCount: Long,
     @field:Schema(description = "패널티 횟수", example = "2")
     val penaltyCount: Int,
+    @field:Schema(description = "경고 횟수. 경고 기능을 사용하지 않는 동아리는 null", example = "1", nullable = true)
+    val warningCount: Int?,
 )
 
 data class UserMyPageUsingProfileResponse(

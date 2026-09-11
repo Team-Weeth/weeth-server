@@ -63,7 +63,13 @@ class ClubMemberMyPageControllerTest :
                                 emailPublic = true,
                                 studentInfoPublic = true,
                             ),
-                        stats = UserMyPageStatsResponse(postCount = 12L, attendedSessionCount = 8L, penaltyCount = 0),
+                        stats =
+                            UserMyPageStatsResponse(
+                                postCount = 12L,
+                                attendedSessionCount = 8L,
+                                penaltyCount = 0,
+                                warningCount = 0,
+                            ),
                         usingProfiles = emptyList(),
                         currentProfile =
                             UserMyPageCurrentProfileResponse(

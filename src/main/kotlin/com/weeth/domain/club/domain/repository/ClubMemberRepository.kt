@@ -142,6 +142,7 @@ interface ClubMemberRepository :
             ) END ASC,
             CASE WHEN :sortKey = 'NAME_ASC' THEN user.name END ASC,
             CASE WHEN :sortKey = 'JOINED_DESC' THEN cm.createdAt END DESC,
+            CASE WHEN :sortKey = 'PENALTY_DESC' THEN cm.penaltyCount END DESC,
             cm.id ASC
         """,
         countQuery = """

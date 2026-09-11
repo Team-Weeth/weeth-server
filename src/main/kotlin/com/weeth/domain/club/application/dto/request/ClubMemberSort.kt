@@ -20,6 +20,9 @@ enum class ClubMemberSort {
 
     /** 최근 가입순 */
     JOINED_DESC,
+
+    /** 패널티 많은 순 */
+    PENALTY_DESC,
     ;
 
     /** 리포지토리 `ORDER BY`가 분기 기준으로 사용하는 키. */
