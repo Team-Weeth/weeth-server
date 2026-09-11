@@ -20,8 +20,8 @@ data class ClubMemberDetailResponse(
     val bio: String?,
     @field:Schema(description = "전화번호", example = "01012345678", nullable = true)
     val tel: String?,
-    @field:Schema(description = "이메일", example = "hong@example.com")
-    val email: String,
+    @field:Schema(description = "이메일", example = "hong@example.com", nullable = true)
+    val email: String?,
     @field:Schema(description = "학번", example = "20201234", nullable = true)
     val studentId: String?,
     @field:Schema(description = "학과", example = "컴퓨터공학과", nullable = true)
