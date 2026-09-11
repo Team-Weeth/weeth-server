@@ -1,6 +1,7 @@
 package com.weeth.domain.user.application.usecase.query
 
 import com.weeth.domain.board.domain.repository.PostReader
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.exception.UserPageNotFoundException
@@ -13,6 +14,7 @@ import java.time.Clock
 import java.time.LocalDateTime
 
 @Service
+@Transactional(readOnly = true)
 class GetUserPostQueryService(
     private val postReader: PostReader,
     private val clubMemberPolicy: ClubMemberPolicy,
@@ -23,7 +25,6 @@ class GetUserPostQueryService(
         private const val MAX_PAGE_SIZE = 50
     }
 
-    @Transactional(readOnly = true)
     fun getMyPosts(
         userId: Long,
         clubId: Long,
@@ -35,6 +36,25 @@ class GetUserPostQueryService(
         val pageable = PageRequest.of(pageNumber, pageSize)
         val now = LocalDateTime.now(clock)
         val posts = postReader.findMyActivePosts(userId, clubId, pageable)
+        return SliceResponse.from(posts.map { userPostMapper.toMyPostResponse(it, now) })
+    }
+
+    @Transactional(readOnly = true)
+    fun getMemberPosts(
+        requesterId: Long,
+        clubId: Long,
+        targetClubMemberId: Long,
+        pageNumber: Int,
+        pageSize: Int,
+    ): SliceResponse<UserMyPostResponse> {
+        validatePage(pageNumber, pageSize)
+        clubMemberPolicy.getActiveMember(clubId, requesterId)
+        val target = clubMemberPolicy.getMemberInClub(clubId, targetClubMemberId)
+        if (!target.isActive()) throw ClubMemberNotFoundException()
+
+        val pageable = PageRequest.of(pageNumber, pageSize)
+        val now = LocalDateTime.now(clock)
+        val posts = postReader.findActivePostsByClubMemberId(targetClubMemberId, pageable)
         return SliceResponse.from(posts.map { userPostMapper.toMyPostResponse(it, now) })
     }
 

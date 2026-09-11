@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ADD COLUMN tel_public       TINYINT(1) NOT NULL DEFAULT 1,
+    ADD COLUMN email_public     TINYINT(1) NOT NULL DEFAULT 1,
+    ADD COLUMN student_info_public TINYINT(1) NOT NULL DEFAULT 1;

@@ -46,4 +46,9 @@ interface PostReader {
         boardType: BoardType,
         since: LocalDateTime,
     ): Post?
+
+    fun findActivePostsByClubMemberId(
+        clubMemberId: Long,
+        pageable: Pageable,
+    ): Slice<Post>
 }
