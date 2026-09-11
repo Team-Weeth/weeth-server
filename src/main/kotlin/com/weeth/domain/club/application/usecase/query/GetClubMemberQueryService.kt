@@ -173,6 +173,7 @@ class GetClubMemberQueryService(
         userId: Long,
         cardinalNumber: Int?,
         memberRole: MemberRole?,
+        keyword: String?,
         page: Int,
         size: Int,
     ): SliceResponse<ClubMemberPublicResponse> {
@@ -184,6 +185,7 @@ class GetClubMemberQueryService(
                 clubId = clubId,
                 cardinalNumber = cardinalNumber,
                 memberRole = memberRole,
+                keyword = keyword?.trim()?.takeIf { it.isNotBlank() },
                 pageable = pageable,
             )
 

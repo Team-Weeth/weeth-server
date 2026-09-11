@@ -127,6 +127,7 @@ interface ClubMemberReader {
         clubId: Long,
         cardinalNumber: Int?,
         memberRole: MemberRole?,
+        keyword: String?,
         pageable: Pageable,
     ): Slice<ClubMember>
 

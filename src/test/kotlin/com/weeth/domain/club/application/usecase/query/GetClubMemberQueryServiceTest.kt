@@ -414,7 +414,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, null, null, any())
+                        clubMemberReader.findPublicMembers(clubId, null, null, null, any())
                     } returns SliceImpl(listOf(member), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns
                         listOf(memberCardinal)
@@ -425,6 +425,7 @@ class GetClubMemberQueryServiceTest :
                             userId = userId,
                             cardinalNumber = null,
                             memberRole = null,
+                            keyword = null,
                             page = 0,
                             size = 20,
                         )
@@ -444,7 +445,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, 7, null, capture(pageableSlot))
+                        clubMemberReader.findPublicMembers(clubId, 7, null, null, capture(pageableSlot))
                     } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -453,11 +454,12 @@ class GetClubMemberQueryServiceTest :
                         userId = userId,
                         cardinalNumber = 7,
                         memberRole = null,
+                        keyword = null,
                         page = 0,
                         size = 20,
                     )
 
-                    verify(exactly = 1) { clubMemberReader.findPublicMembers(clubId, 7, null, any()) }
+                    verify(exactly = 1) { clubMemberReader.findPublicMembers(clubId, 7, null, null, any()) }
                 }
 
                 it("역할 필터를 Repository에 전달한다") {
@@ -465,7 +467,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, any())
+                        clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, null, any())
                     } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -474,11 +476,14 @@ class GetClubMemberQueryServiceTest :
                         userId = userId,
                         cardinalNumber = null,
                         memberRole = MemberRole.ADMIN,
+                        keyword = null,
                         page = 0,
                         size = 20,
                     )
 
-                    verify(exactly = 1) { clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, any()) }
+                    verify(
+                        exactly = 1,
+                    ) { clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, null, any()) }
                 }
 
                 it("조회 결과가 없으면 빈 SliceResponse를 반환한다") {
@@ -486,7 +491,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, null, null, any())
+                        clubMemberReader.findPublicMembers(clubId, null, null, null, any())
                     } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -496,6 +501,7 @@ class GetClubMemberQueryServiceTest :
                             userId = userId,
                             cardinalNumber = null,
                             memberRole = null,
+                            keyword = null,
                             page = 0,
                             size = 20,
                         )
@@ -515,6 +521,7 @@ class GetClubMemberQueryServiceTest :
                             userId = userId,
                             cardinalNumber = null,
                             memberRole = null,
+                            keyword = null,
                             page = 0,
                             size = 20,
                         )

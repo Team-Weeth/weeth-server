@@ -154,6 +154,7 @@ class ClubMemberController(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @RequestParam(required = false) cardinalNumber: Int?,
         @RequestParam(required = false) memberRole: MemberRole?,
+        @RequestParam(required = false) keyword: String?,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "20") pageSize: Int,
     ): CommonResponse<SliceResponse<ClubMemberPublicResponse>> {
@@ -163,6 +164,7 @@ class ClubMemberController(
                 userId = userId,
                 cardinalNumber = cardinalNumber,
                 memberRole = memberRole,
+                keyword = keyword,
                 page = pageNumber,
                 size = pageSize,
             )
