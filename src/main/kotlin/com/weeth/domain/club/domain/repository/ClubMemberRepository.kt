@@ -127,6 +127,7 @@ interface ClubMemberRepository :
                 AND cmc.cardinal.cardinalNumber = :cardinalNumber
             )
         )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
         AND (
             :keyword IS NULL
             OR user.name LIKE CONCAT('%', :keyword, '%')
@@ -159,6 +160,7 @@ interface ClubMemberRepository :
                 AND cmc.cardinal.cardinalNumber = :cardinalNumber
             )
         )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
         AND (
             :keyword IS NULL
             OR user.name LIKE CONCAT('%', :keyword, '%')
@@ -170,6 +172,7 @@ interface ClubMemberRepository :
     override fun findAdminMembers(
         @Param("clubId") clubId: Long,
         @Param("cardinalNumber") cardinalNumber: Int?,
+        @Param("memberRole") memberRole: MemberRole?,
         @Param("keyword") keyword: String?,
         @Param("sortKey") sortKey: String,
         pageable: Pageable,
