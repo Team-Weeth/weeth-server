@@ -211,14 +211,17 @@ class ClubMember(
         }
     }
 
-    fun incrementWarningCount(score: Int = 1) {
+    fun incrementWarningCount(score: Int = 1): Int {
         require(score > 0) { "경고 점수는 1 이상이어야 합니다." }
         warningCount += score
+        var convertedCount = 0
         // 경고 2회마다 패널티 1회로 자동 전환
-        if (warningCount >= WARNING_TO_PENALTY_THRESHOLD) {
+        while (warningCount >= WARNING_TO_PENALTY_THRESHOLD) {
             warningCount -= WARNING_TO_PENALTY_THRESHOLD
             penaltyCount += 1
+            convertedCount++
         }
+        return convertedCount
     }
 
     fun decrementWarningCount() {

@@ -10,6 +10,7 @@ import com.weeth.domain.penalty.application.dto.response.PenaltyByCardinalRespon
 import com.weeth.domain.penalty.application.dto.response.PenaltyDetailResponse
 import com.weeth.domain.penalty.application.dto.response.PenaltyResponse
 import com.weeth.domain.penalty.domain.entity.Penalty
+import com.weeth.domain.penalty.domain.enums.PenaltyType
 import org.springframework.stereotype.Component
 
 @Component
@@ -27,6 +28,18 @@ class PenaltyMapper(
             penaltyDescription = request.penaltyDescription,
             penaltyType = request.penaltyType,
             score = request.score,
+        )
+
+    fun toAutoConvertedPenalty(
+        clubMember: ClubMember,
+        cardinal: Cardinal,
+    ): Penalty =
+        Penalty(
+            clubMember = clubMember,
+            cardinal = cardinal,
+            penaltyDescription = "누적경고 ${ClubMember.WARNING_TO_PENALTY_THRESHOLD}회",
+            penaltyType = PenaltyType.PENALTY,
+            score = 1,
         )
 
     fun toResponse(
