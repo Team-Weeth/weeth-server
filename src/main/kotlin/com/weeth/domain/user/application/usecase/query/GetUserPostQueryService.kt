@@ -39,7 +39,6 @@ class GetUserPostQueryService(
         return SliceResponse.from(posts.map { userPostMapper.toMyPostResponse(it, now) })
     }
 
-    @Transactional(readOnly = true)
     fun getMemberPosts(
         requesterId: Long,
         clubId: Long,

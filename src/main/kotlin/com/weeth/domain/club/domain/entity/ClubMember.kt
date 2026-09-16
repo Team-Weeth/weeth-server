@@ -162,17 +162,8 @@ class ClubMember(
         attendanceStats.recalculate(attendCount, absentCount)
     }
 
-    fun incrementPenaltyCount(score: Int = 1) {
-        require(score > 0) { "페널티 점수는 1 이상이어야 합니다." }
-        penaltyCount += score
-    }
-
-    fun adjustPenaltyCount(delta: Int) {
-        penaltyCount = (penaltyCount + delta).coerceAtLeast(0)
-    }
-
-    fun adjustWarningCount(delta: Int) {
-        warningCount = (warningCount + delta).coerceAtLeast(0)
+    fun incrementPenaltyCount() {
+        penaltyCount += 1
     }
 
     fun resetPenaltyCount() {
@@ -211,9 +202,8 @@ class ClubMember(
         }
     }
 
-    fun incrementWarningCount(score: Int = 1): Int {
-        require(score > 0) { "경고 점수는 1 이상이어야 합니다." }
-        warningCount += score
+    fun incrementWarningCount(): Int {
+        warningCount += 1
         var convertedCount = 0
         // 경고 2회마다 패널티 1회로 자동 전환
         while (warningCount >= WARNING_TO_PENALTY_THRESHOLD) {

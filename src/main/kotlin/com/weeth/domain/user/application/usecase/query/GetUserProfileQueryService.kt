@@ -13,12 +13,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetUserProfileQueryService(
     private val userProfileRepository: UserProfileRepository,
     private val clubMemberReader: ClubMemberReader,
     private val userProfileMapper: UserProfileMapper,
 ) {
-    @Transactional(readOnly = true)
     fun findAll(userId: Long): UserProfilesResponse {
         val usingClubsByProfileId = findUsingClubsByProfileId(userId)
         val profiles =
@@ -33,7 +33,6 @@ class GetUserProfileQueryService(
         return userProfileMapper.toListResponse(profiles)
     }
 
-    @Transactional(readOnly = true)
     fun find(
         userId: Long,
         profileId: Long,
