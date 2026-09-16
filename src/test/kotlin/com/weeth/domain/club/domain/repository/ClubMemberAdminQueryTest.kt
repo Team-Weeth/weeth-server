@@ -172,9 +172,38 @@ class ClubMemberAdminQueryTest(
                 // seed가 createdAt을 1분 간격으로 확정하므로 tie로 타이브레이커(id ASC)에 떨어질 일이 없다.
                 // 값이 실제로 서로 다른지 먼저 확인해, 정밀도가 바뀌면 순서가 아니라 여기서 실패하게 한다.
                 result.content.map { it.createdAt }.distinct() shouldHaveSize 5
-                result.content.map { it.createdAt } shouldBe result.content.map { it.createdAt }.sortedDescending()
+                // 추방 멤버(마추방)는 가장 최근 가입임에도 상태 우선순위 때문에 맨 뒤로 밀린다.
                 result.content.map { it.user.name } shouldContainExactly
-                    listOf("마추방", "라대기", "다칠기", "나육기", "가기수없음")
+                    listOf("라대기", "다칠기", "나육기", "가기수없음", "마추방")
+            }
+
+            it("탈퇴·추방 멤버는 정렬 기준과 무관하게 항상 맨 뒤로 정렬된다") {
+                val clubId = seed()
+                val club = clubRepository.findById(clubId).orElseThrow()
+                val leftUser =
+                    userRepository.save(
+                        User(name = "가나다", email = Email.from("admin-query-left@test.com"), status = Status.ACTIVE),
+                    )
+                clubMemberRepository.save(ClubMember(club = club, user = leftUser, memberStatus = MemberStatus.LEFT))
+                entityManager.flush()
+                entityManager.clear()
+
+                val result =
+                    clubMemberRepository.findAdminMembers(
+                        clubId,
+                        null,
+                        null,
+                        null,
+                        ClubMemberSort.NAME_ASC.queryKey,
+                        PageRequest.of(0, 10),
+                    )
+
+                val deprioritized = setOf(MemberStatus.BANNED, MemberStatus.LEFT)
+                val statuses = result.content.map { it.memberStatus }
+                val firstDeprioritizedIndex = statuses.indexOfFirst { it in deprioritized }
+
+                statuses.take(firstDeprioritizedIndex).none { it in deprioritized } shouldBe true
+                statuses.drop(firstDeprioritizedIndex).all { it in deprioritized } shouldBe true
             }
 
             it("가입 대기·추방 멤버도 목록에 포함된다") {

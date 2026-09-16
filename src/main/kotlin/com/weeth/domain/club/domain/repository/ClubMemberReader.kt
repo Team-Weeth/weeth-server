@@ -38,6 +38,7 @@ interface ClubMemberReader {
      * @param keyword null이면 검색 없음. 이름·학과·학번을 대상으로 부분 일치 검색한다.
      * @param sortKey `ClubMemberSort`의 이름. 기수 정렬은 멤버의 최신(최대) 기수번호 기준이며,
      *   어떤 값이든 마지막 타이브레이커는 `clubMemberId ASC`다.
+     *   BANNED·LEFT 멤버는 sortKey와 무관하게 항상 맨 뒤로 밀린다.
      */
     fun findAdminMembers(
         clubId: Long,

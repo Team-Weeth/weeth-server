@@ -135,6 +135,9 @@ interface ClubMemberRepository :
             OR user.studentId LIKE CONCAT('%', :keyword, '%')
         )
         ORDER BY
+            CASE WHEN cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.BANNED
+                OR cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.LEFT
+                THEN 1 ELSE 0 END ASC,
             CASE WHEN :sortKey = 'CARDINAL_DESC' THEN (
                 SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm
             ) END DESC,
