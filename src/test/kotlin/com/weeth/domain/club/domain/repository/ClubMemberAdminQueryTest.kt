@@ -136,7 +136,12 @@ class ClubMemberAdminQueryTest(
                         pageable,
                     )
 
-                result.content.takeLast(2).map { it.user.name } shouldContainExactly listOf("나육기", "다칠기")
+                // 마추방(BANNED)은 기수와 무관하게 상태 우선순위로 맨 뒤로 밀리므로 별도로 확인한다.
+                result.content.map { it.user.name }.dropLast(1) shouldContainExactly
+                    listOf("가기수없음", "라대기", "나육기", "다칠기")
+                result.content
+                    .last()
+                    .user.name shouldBe "마추방"
             }
 
             it("NAME_ASC는 이름순으로 정렬한다") {
