@@ -31,7 +31,6 @@ class GetUserPenaltyQueryService(
             penalties.map { penalty ->
                 UserMyPenaltyResponse(
                     penaltyId = penalty.id,
-                    score = penalty.score,
                     penaltyDescription = penalty.penaltyDescription,
                     penaltyType = penalty.penaltyType,
                     createdAt = penalty.createdAt,

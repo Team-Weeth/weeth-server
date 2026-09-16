@@ -50,11 +50,11 @@ class SavePenaltyUseCase(
                     ?: throw PenaltyNotFoundException()
             when (penalty.penaltyType) {
                 PenaltyType.PENALTY -> {
-                    lockedMember.incrementPenaltyCount(request.score)
+                    lockedMember.incrementPenaltyCount()
                 }
 
                 PenaltyType.WARNING -> {
-                    val convertedCount = lockedMember.incrementWarningCount(request.score)
+                    val convertedCount = lockedMember.incrementWarningCount()
                     repeat(convertedCount) {
                         penaltyRepository.save(mapper.toAutoConvertedPenalty(lockedMember, cardinal))
                     }

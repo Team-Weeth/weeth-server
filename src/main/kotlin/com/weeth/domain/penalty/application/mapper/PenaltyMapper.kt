@@ -27,7 +27,6 @@ class PenaltyMapper(
             cardinal = cardinal,
             penaltyDescription = request.penaltyDescription,
             penaltyType = request.penaltyType,
-            score = request.score,
         )
 
     fun toAutoConvertedPenalty(
@@ -39,7 +38,6 @@ class PenaltyMapper(
             cardinal = cardinal,
             penaltyDescription = "누적경고 ${ClubMember.WARNING_TO_PENALTY_THRESHOLD}회",
             penaltyType = PenaltyType.PENALTY,
-            score = 1,
         )
 
     fun toResponse(
@@ -61,7 +59,6 @@ class PenaltyMapper(
             penaltyId = penalty.id,
             cardinal = penalty.cardinal.cardinalNumber,
             penaltyDescription = penalty.penaltyDescription,
-            score = penalty.score,
             time = penalty.createdAt,
             penaltyType = penalty.penaltyType,
         )

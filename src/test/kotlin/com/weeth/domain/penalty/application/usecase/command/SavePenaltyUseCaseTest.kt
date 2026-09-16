@@ -82,7 +82,6 @@ class SavePenaltyUseCaseTest :
                         request =
                             SavePenaltyRequest(
                                 userIds = listOf(1L),
-                                score = 1,
                                 penaltyDescription = "경고 테스트",
                                 penaltyType = PenaltyType.WARNING,
                             ),
@@ -99,7 +98,6 @@ class SavePenaltyUseCaseTest :
                     request =
                         SavePenaltyRequest(
                             userIds = listOf(clubMember.user.id),
-                            score = 1,
                             penaltyDescription = "정기모임 무단 불참",
                             penaltyType = PenaltyType.PENALTY,
                         ),
@@ -119,7 +117,6 @@ class SavePenaltyUseCaseTest :
                     request =
                         SavePenaltyRequest(
                             userIds = listOf(clubMember.user.id),
-                            score = 1,
                             penaltyDescription = "지각",
                             penaltyType = PenaltyType.WARNING,
                         ),
@@ -144,7 +141,6 @@ class SavePenaltyUseCaseTest :
                     request =
                         SavePenaltyRequest(
                             userIds = listOf(clubMember.user.id),
-                            score = 1,
                             penaltyDescription = "지각",
                             penaltyType = PenaltyType.WARNING,
                         ),
@@ -156,7 +152,6 @@ class SavePenaltyUseCaseTest :
 
                 val autoConverted = savedSlot.last()
                 autoConverted.penaltyType shouldBe PenaltyType.PENALTY
-                autoConverted.score shouldBe 1
                 autoConverted.penaltyDescription shouldBe "누적경고 ${threshold}회"
             }
         }
