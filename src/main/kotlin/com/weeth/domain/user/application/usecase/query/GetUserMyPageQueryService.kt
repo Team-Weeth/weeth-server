@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetUserMyPageQueryService(
     private val userReader: UserReader,
     private val clubMemberReader: ClubMemberReader,
@@ -22,7 +23,6 @@ class GetUserMyPageQueryService(
     private val clubMemberPolicy: ClubMemberPolicy,
     private val userMyPageMapper: UserMyPageMapper,
 ) {
-    @Transactional(readOnly = true)
     fun getMyPage(
         userId: Long,
         clubId: Long,

@@ -12,6 +12,7 @@ import com.weeth.domain.club.application.usecase.command.AdminClubMemberUseCase
 import com.weeth.domain.club.application.usecase.command.ManageClubUseCase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -101,7 +102,7 @@ class ClubAdminController(
     @GetMapping("/members")
     @Operation(
         summary = "동아리 멤버 목록 조회",
-        description = "기수 필터, 이름·학과·학번 검색, 정렬, 페이지네이션을 지원합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.",
+        description = "기수·역할 필터, 이름·학과·학번 검색, 정렬, 페이지네이션을 지원합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.",
     )
     fun getClubMembers(
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -111,6 +112,7 @@ class ClubAdminController(
         @RequestParam(defaultValue = "10") size: Int,
         @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) cardinalNumber: Int?,
+        @RequestParam(required = false) memberRole: MemberRole?,
         @RequestParam(defaultValue = "CARDINAL_DESC") sort: ClubMemberSort,
     ): CommonResponse<PageResponse<ClubMemberResponse>> {
         val members =
@@ -121,6 +123,7 @@ class ClubAdminController(
                 size = size,
                 keyword = keyword,
                 cardinalNumber = cardinalNumber,
+                memberRole = memberRole,
                 sort = sort,
             )
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
@@ -128,21 +131,22 @@ class ClubAdminController(
 
     @GetMapping("/members/search")
     @Operation(
-        summary = "동아리 멤버 이름 검색",
+        summary = "동아리 멤버 검색",
         description = """
-            멤버 이름으로 검색합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.
+            이름·학과·학번(keyword), 기수, 역할로 멤버를 검색합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.
 
             사용 예시:
-            - 전체 멤버 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=김
-            - 5기만 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=김&cardinalNumber=5
+            - 이름 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=김
+            - 5기 + 역할로 검색: GET /api/v4/admin/clubs/xxx/members/search?cardinalNumber=5&memberRole=ADMIN
         """,
     )
     fun searchClubMembers(
         @Parameter(hidden = true) @CurrentUser userId: Long,
         @TsidParam
         @TsidPathVariable clubId: Long,
-        @RequestParam keyword: String,
+        @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) cardinalNumber: Int?,
+        @RequestParam(required = false) memberRole: MemberRole?,
     ): CommonResponse<List<ClubMemberResponse>> {
         val members =
             getClubMemberQueryService.searchClubMembers(
@@ -150,6 +154,7 @@ class ClubAdminController(
                 userId = userId,
                 keyword = keyword,
                 cardinalNumber = cardinalNumber,
+                memberRole = memberRole,
             )
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
     }

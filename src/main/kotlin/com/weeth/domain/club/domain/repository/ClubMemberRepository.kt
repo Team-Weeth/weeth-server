@@ -127,6 +127,7 @@ interface ClubMemberRepository :
                 AND cmc.cardinal.cardinalNumber = :cardinalNumber
             )
         )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
         AND (
             :keyword IS NULL
             OR user.name LIKE CONCAT('%', :keyword, '%')
@@ -134,6 +135,9 @@ interface ClubMemberRepository :
             OR user.studentId LIKE CONCAT('%', :keyword, '%')
         )
         ORDER BY
+            CASE WHEN cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.BANNED
+                OR cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.LEFT
+                THEN 1 ELSE 0 END ASC,
             CASE WHEN :sortKey = 'CARDINAL_DESC' THEN (
                 SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm
             ) END DESC,
@@ -159,6 +163,7 @@ interface ClubMemberRepository :
                 AND cmc.cardinal.cardinalNumber = :cardinalNumber
             )
         )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
         AND (
             :keyword IS NULL
             OR user.name LIKE CONCAT('%', :keyword, '%')
@@ -170,6 +175,7 @@ interface ClubMemberRepository :
     override fun findAdminMembers(
         @Param("clubId") clubId: Long,
         @Param("cardinalNumber") cardinalNumber: Int?,
+        @Param("memberRole") memberRole: MemberRole?,
         @Param("keyword") keyword: String?,
         @Param("sortKey") sortKey: String,
         pageable: Pageable,

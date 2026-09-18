@@ -7,8 +7,6 @@ import java.time.LocalDateTime
 data class UserMyPenaltyResponse(
     @field:Schema(description = "페널티 ID", example = "1")
     val penaltyId: Long,
-    @field:Schema(description = "페널티 점수", example = "2")
-    val score: Int,
     @field:Schema(description = "페널티 사유", example = "정기모임 무단 불참")
     val penaltyDescription: String,
     @field:Schema(description = "페널티 타입", example = "PENALTY")

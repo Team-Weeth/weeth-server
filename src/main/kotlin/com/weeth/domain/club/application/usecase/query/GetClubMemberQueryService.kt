@@ -43,6 +43,7 @@ class GetClubMemberQueryService(
         size: Int,
         keyword: String?,
         cardinalNumber: Int?,
+        memberRole: MemberRole?,
         sort: ClubMemberSort,
     ): PageResponse<ClubMemberResponse> {
         clubPermissionPolicy.requireAdmin(clubId, userId)
@@ -52,6 +53,7 @@ class GetClubMemberQueryService(
             clubMemberReader.findAdminMembers(
                 clubId = clubId,
                 cardinalNumber = cardinalNumber,
+                memberRole = memberRole,
                 keyword = keyword?.trim()?.takeIf { it.isNotBlank() },
                 sortKey = sort.queryKey,
                 pageable = pageable,
@@ -138,8 +140,9 @@ class GetClubMemberQueryService(
     fun searchClubMembers(
         clubId: Long,
         userId: Long,
-        keyword: String,
+        keyword: String?,
         cardinalNumber: Int?,
+        memberRole: MemberRole?,
     ): List<ClubMemberResponse> =
         findClubMembersForAdmin(
             clubId = clubId,
@@ -148,6 +151,7 @@ class GetClubMemberQueryService(
             size = MAX_SEARCH_SIZE,
             keyword = keyword,
             cardinalNumber = cardinalNumber,
+            memberRole = memberRole,
             sort = ClubMemberSort.CARDINAL_DESC, // 검색은 기수 내림차순 고정
         ).content
 

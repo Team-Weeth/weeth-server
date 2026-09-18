@@ -36,6 +36,7 @@ import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.SliceImpl
+import org.springframework.test.util.ReflectionTestUtils
 
 class GetClubMemberQueryServiceTest :
     DescribeSpec({
@@ -83,7 +84,7 @@ class GetClubMemberQueryServiceTest :
 
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
-                    clubMemberReader.findAdminMembers(1L, null, "홍길동", "CARDINAL_DESC", any())
+                    clubMemberReader.findAdminMembers(1L, null, null, "홍길동", "CARDINAL_DESC", any())
                 } returns PageImpl(listOf(member), PageRequest.of(0, 50), 1)
                 every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns listOf(memberCardinal)
                 every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
@@ -94,11 +95,12 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "홍길동",
                         cardinalNumber = null,
+                        memberRole = null,
                     )
 
                 result shouldHaveSize 1
                 verify(exactly = 1) {
-                    clubMemberReader.findAdminMembers(1L, null, "홍길동", "CARDINAL_DESC", any())
+                    clubMemberReader.findAdminMembers(1L, null, null, "홍길동", "CARDINAL_DESC", any())
                 }
             }
 
@@ -109,7 +111,7 @@ class GetClubMemberQueryServiceTest :
 
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
-                    clubMemberReader.findAdminMembers(1L, 7, "김", "CARDINAL_DESC", any())
+                    clubMemberReader.findAdminMembers(1L, 7, null, "김", "CARDINAL_DESC", any())
                 } returns PageImpl(listOf(member), PageRequest.of(0, 50), 1)
                 every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
                 every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
@@ -120,6 +122,7 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "김",
                         cardinalNumber = 7,
+                        memberRole = null,
                     )
 
                 result shouldHaveSize 1
@@ -131,7 +134,7 @@ class GetClubMemberQueryServiceTest :
 
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
-                    clubMemberReader.findAdminMembers(1L, null, "존재하지않음", "CARDINAL_DESC", any())
+                    clubMemberReader.findAdminMembers(1L, null, null, "존재하지않음", "CARDINAL_DESC", any())
                 } returns PageImpl(emptyList(), PageRequest.of(0, 50), 0)
                 every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -141,6 +144,7 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "존재하지않음",
                         cardinalNumber = null,
+                        memberRole = null,
                     )
 
                 result.shouldBeEmpty()
@@ -152,7 +156,7 @@ class GetClubMemberQueryServiceTest :
 
                 every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                 every {
-                    clubMemberReader.findAdminMembers(1L, null, "김", "CARDINAL_DESC", any())
+                    clubMemberReader.findAdminMembers(1L, null, null, "김", "CARDINAL_DESC", any())
                 } returns PageImpl(emptyList(), PageRequest.of(0, 50), 0)
                 every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -161,11 +165,36 @@ class GetClubMemberQueryServiceTest :
                     userId = 99L,
                     keyword = "김",
                     cardinalNumber = null,
+                    memberRole = null,
                 )
 
                 verify(exactly = 1) {
-                    clubMemberReader.findAdminMembers(1L, null, "김", "CARDINAL_DESC", any())
+                    clubMemberReader.findAdminMembers(1L, null, null, "김", "CARDINAL_DESC", any())
                 }
+            }
+
+            it("역할로 멤버를 검색한다") {
+                val club = ClubTestFixture.createClub()
+                val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
+                val member = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
+
+                every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                every {
+                    clubMemberReader.findAdminMembers(1L, null, MemberRole.ADMIN, null, "CARDINAL_DESC", any())
+                } returns PageImpl(listOf(member), PageRequest.of(0, 50), 1)
+                every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
+                every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+
+                val result =
+                    service.searchClubMembers(
+                        clubId = 1L,
+                        userId = 99L,
+                        keyword = null,
+                        cardinalNumber = null,
+                        memberRole = MemberRole.ADMIN,
+                    )
+
+                result shouldHaveSize 1
             }
         }
 
@@ -186,7 +215,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                     every {
-                        clubMemberReader.findAdminMembers(1L, null, null, "CARDINAL_DESC", any())
+                        clubMemberReader.findAdminMembers(1L, null, null, null, "CARDINAL_DESC", any())
                     } returns PageImpl(listOf(member), PageRequest.of(0, 20), 1)
                     every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns memberCardinals
                     every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
@@ -199,6 +228,7 @@ class GetClubMemberQueryServiceTest :
                             size = 20,
                             keyword = null,
                             cardinalNumber = null,
+                            memberRole = null,
                             sort = ClubMemberSort.CARDINAL_DESC,
                         )
 
@@ -217,10 +247,41 @@ class GetClubMemberQueryServiceTest :
                     response.absenceCount shouldBe member.attendanceStats.absenceCount
                     response.attendanceRate shouldBe member.attendanceStats.attendanceRate
                     response.penaltyCount shouldBe member.penaltyCount
+                    response.warningCount shouldBe null
                     response.cardinals shouldBe listOf(6, 7)
                     response.joinedAt shouldBe member.createdAt
                     verify(exactly = 1) { clubPermissionPolicy.requireAdmin(1L, 99L) }
                     verify(exactly = 1) { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) }
+                }
+
+                it("동아리 경고 기능이 활성화된 경우 경고 횟수를 포함한다") {
+                    val club = ClubTestFixture.createClub()
+                    ReflectionTestUtils.setField(club, "warningEnabled", true)
+                    val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
+                    val member =
+                        ClubTestFixture.createClubMember(club = club, user = UserTestFixture.createActiveUser1(1L))
+                    ReflectionTestUtils.setField(member, "warningCount", 1)
+
+                    every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                    every {
+                        clubMemberReader.findAdminMembers(1L, null, null, null, "CARDINAL_DESC", any())
+                    } returns PageImpl(listOf(member), PageRequest.of(0, 20), 1)
+                    every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
+                    every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+
+                    val result =
+                        service.findClubMembersForAdmin(
+                            clubId = 1L,
+                            userId = 99L,
+                            page = 0,
+                            size = 20,
+                            keyword = null,
+                            cardinalNumber = null,
+                            memberRole = null,
+                            sort = ClubMemberSort.CARDINAL_DESC,
+                        )
+
+                    result.content.first().warningCount shouldBe 1
                 }
 
                 it("검색어 공백을 제거하고 기수 필터·정렬을 그대로 리포지토리에 전달한다") {
@@ -229,7 +290,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                     every {
-                        clubMemberReader.findAdminMembers(1L, 7, "홍길동", "NAME_ASC", any())
+                        clubMemberReader.findAdminMembers(1L, 7, null, "홍길동", "NAME_ASC", any())
                     } returns PageImpl(emptyList(), PageRequest.of(0, 20), 0)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -241,12 +302,39 @@ class GetClubMemberQueryServiceTest :
                             size = 20,
                             keyword = "  홍길동  ",
                             cardinalNumber = 7,
+                            memberRole = null,
                             sort = ClubMemberSort.NAME_ASC,
                         )
 
                     result.content.shouldBeEmpty()
                     verify(exactly = 1) {
-                        clubMemberReader.findAdminMembers(1L, 7, "홍길동", "NAME_ASC", any())
+                        clubMemberReader.findAdminMembers(1L, 7, null, "홍길동", "NAME_ASC", any())
+                    }
+                }
+
+                it("역할 필터를 그대로 리포지토리에 전달한다") {
+                    val club = ClubTestFixture.createClub()
+                    val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
+
+                    every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                    every {
+                        clubMemberReader.findAdminMembers(1L, null, MemberRole.ADMIN, null, "CARDINAL_DESC", any())
+                    } returns PageImpl(emptyList(), PageRequest.of(0, 20), 0)
+                    every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
+
+                    service.findClubMembersForAdmin(
+                        clubId = 1L,
+                        userId = 99L,
+                        page = 0,
+                        size = 20,
+                        keyword = null,
+                        cardinalNumber = null,
+                        memberRole = MemberRole.ADMIN,
+                        sort = ClubMemberSort.CARDINAL_DESC,
+                    )
+
+                    verify(exactly = 1) {
+                        clubMemberReader.findAdminMembers(1L, null, MemberRole.ADMIN, null, "CARDINAL_DESC", any())
                     }
                 }
 
@@ -257,7 +345,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
                     every {
-                        clubMemberReader.findAdminMembers(1L, null, null, any(), capture(pageableSlot))
+                        clubMemberReader.findAdminMembers(1L, null, null, null, any(), capture(pageableSlot))
                     } returns PageImpl(emptyList(), PageRequest.of(0, 100), 0)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -268,6 +356,7 @@ class GetClubMemberQueryServiceTest :
                         size = 500,
                         keyword = null,
                         cardinalNumber = null,
+                        memberRole = null,
                         sort = ClubMemberSort.CARDINAL_DESC,
                     )
 
@@ -294,6 +383,29 @@ class GetClubMemberQueryServiceTest :
                     result.clubMemberId shouldBe 5L
                     result.memberStatus shouldBe MemberStatus.BANNED
                     result.cardinals.shouldBeEmpty()
+                    result.warningCount shouldBe null
+                }
+            }
+
+            context("동아리 경고 기능이 활성화된 경우") {
+                it("경고 횟수를 포함한다") {
+                    val warningClub = ClubTestFixture.createClub(id = 1L)
+                    ReflectionTestUtils.setField(warningClub, "warningEnabled", true)
+                    val warningAdmin =
+                        ClubTestFixture.createClubMember(
+                            club = warningClub,
+                            memberRole = MemberRole.ADMIN,
+                        )
+                    val member = ClubMemberTestFixture.createActiveMember(id = 5L, club = warningClub)
+                    ReflectionTestUtils.setField(member, "warningCount", 1)
+
+                    every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns warningAdmin
+                    every { clubMemberReader.findAdminMemberDetail(5L) } returns member
+                    every { clubMemberCardinalReader.findAllByClubMember(member) } returns emptyList()
+
+                    val result = service.findClubMemberDetailForAdmin(clubId = 1L, userId = 99L, clubMemberId = 5L)
+
+                    result.warningCount shouldBe 1
                 }
             }
 

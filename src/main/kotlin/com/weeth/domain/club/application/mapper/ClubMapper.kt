@@ -85,6 +85,7 @@ class ClubMapper(
         absenceCount = member.attendanceStats.absenceCount,
         attendanceRate = member.attendanceStats.attendanceRate,
         penaltyCount = member.penaltyCount,
+        warningCount = if (member.club.warningEnabled) member.warningCount else null,
         lastPenaltyAt = lastPenaltyAt,
         profileImageUrl = resolveMemberProfileImage(member),
         bio = resolveMemberBio(member),

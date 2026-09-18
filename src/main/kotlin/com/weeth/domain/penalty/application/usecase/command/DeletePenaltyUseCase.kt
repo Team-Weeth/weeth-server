@@ -32,8 +32,8 @@ class DeletePenaltyUseCase(
             clubMemberRepository.findByIdWithLock(penalty.clubMember.id)
                 ?: throw PenaltyNotFoundException()
         when (penalty.penaltyType) {
-            PenaltyType.PENALTY -> lockedMember.adjustPenaltyCount(-penalty.score)
-            PenaltyType.WARNING -> lockedMember.adjustWarningCount(-penalty.score)
+            PenaltyType.PENALTY -> lockedMember.decrementPenaltyCount()
+            PenaltyType.WARNING -> lockedMember.decrementWarningCount()
         }
 
         penaltyRepository.delete(penalty)
