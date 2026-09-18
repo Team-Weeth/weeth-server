@@ -1,6 +1,7 @@
 package com.weeth.domain.penalty.domain.repository
 
 import com.weeth.domain.penalty.domain.entity.Penalty
+import com.weeth.domain.penalty.domain.enums.PenaltyType
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.domain.Pageable
@@ -28,6 +29,21 @@ interface PenaltyRepository :
     ): Int
 
     @Query(
+        """
+        SELECT COUNT(p)
+        FROM Penalty p
+        WHERE p.clubMember.id = :clubMemberId
+        AND (:cardinalId IS NULL OR p.cardinal.id = :cardinalId)
+        AND p.penaltyType = :penaltyType
+        """,
+    )
+    override fun countByClubMemberIdAndCardinalIdAndPenaltyType(
+        @Param("clubMemberId") clubMemberId: Long,
+        @Param("cardinalId") cardinalId: Long?,
+        @Param("penaltyType") penaltyType: PenaltyType,
+    ): Int
+
+    @Query(
         "SELECT p FROM Penalty p JOIN FETCH p.clubMember cm JOIN FETCH cm.user JOIN FETCH p.cardinal WHERE cm.id = :clubMemberId AND p.cardinal.id = :cardinalId ORDER BY p.id DESC",
     )
     fun findByClubMemberIdAndCardinalIdOrderByIdDesc(
@@ -48,9 +64,18 @@ interface PenaltyRepository :
         @Param("clubMemberIds") clubMemberIds: List<Long>,
     ): List<Penalty>
 
-    @Query("SELECT p FROM Penalty p WHERE p.clubMember.id = :clubMemberId ORDER BY p.id DESC")
+    @Query(
+        """
+        SELECT p
+        FROM Penalty p
+        WHERE p.clubMember.id = :clubMemberId
+        AND (:cardinalId IS NULL OR p.cardinal.id = :cardinalId)
+        ORDER BY p.id DESC
+        """,
+    )
     override fun findSliceByClubMemberId(
         @Param("clubMemberId") clubMemberId: Long,
+        @Param("cardinalId") cardinalId: Long?,
         pageable: Pageable,
     ): Slice<Penalty>
 }
