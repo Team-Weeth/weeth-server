@@ -1,10 +1,14 @@
 package com.weeth.tools.filemigration
 
+import software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider
+import software.amazon.awssdk.core.sync.RequestBody
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3Client
 import software.amazon.awssdk.services.s3.model.CopyObjectRequest
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest
 import software.amazon.awssdk.services.s3.model.NoSuchKeyException
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import software.amazon.awssdk.services.s3.model.S3Exception
 import java.sql.Connection
 import java.sql.DriverManager
@@ -24,7 +28,14 @@ class FileMigrator(
     private val s3: S3Client?,
     private val work: Connection,
     private val target: Connection,
+    /**
+     * 대상 버킷 전용 클라이언트. [s3]와 동일 인스턴스면 `CopyObject`(서버사이드)를 쓰고,
+     * 다르면 교차 계정이므로 GetObject → PutObject 스트리밍으로 옮긴다.
+     */
+    private val s3Target: S3Client? = s3,
 ) {
+    private val crossAccount: Boolean get() = s3 !== s3Target
+
     private data class Pending(
         val v3FileId: Long,
         val oldKey: String,
@@ -42,8 +53,11 @@ class FileMigrator(
 
     fun run() {
         println("=== 파일 마이그레이션 ${if (config.dryRun) "[DRY-RUN]" else "[APPLY]"} ===")
-        println("  원본: s3://${config.sourceBucket}")
-        println("  대상: s3://${config.targetBucket}")
+        println("  원본: s3://${config.sourceBucket}${config.sourceProfile?.let { " (profile=$it)" } ?: ""}")
+        println("  대상: s3://${config.targetBucket}${config.targetProfile?.let { " (profile=$it)" } ?: ""}")
+        if (!config.offline) {
+            println("  방식: ${if (crossAccount) "GetObject→PutObject 스트리밍(교차 계정)" else "CopyObject(서버사이드)"}")
+        }
 
         val pending = loadPending()
         println("  대상 건수: ${pending.size}")
@@ -159,17 +173,21 @@ class FileMigrator(
         }
 
         try {
-            s3!!.copyObject(
-                CopyObjectRequest
-                    .builder()
-                    .sourceBucket(config.sourceBucket)
-                    .sourceKey(item.oldKey)
-                    .destinationBucket(config.targetBucket)
-                    .destinationKey(newKey)
-                    .build(),
-            )
+            if (crossAccount) {
+                streamCopy(item.oldKey, newKey, size, contentType)
+            } else {
+                s3!!.copyObject(
+                    CopyObjectRequest
+                        .builder()
+                        .sourceBucket(config.sourceBucket)
+                        .sourceKey(item.oldKey)
+                        .destinationBucket(config.targetBucket)
+                        .destinationKey(newKey)
+                        .build(),
+                )
+            }
         } catch (e: S3Exception) {
-            mark(item, "FAILED", "CopyObject 실패: ${e.statusCode()}")
+            mark(item, "FAILED", "복사 실패: ${e.statusCode()}")
             count("COPY_FAILED")
             return
         }
@@ -189,6 +207,40 @@ class FileMigrator(
                 it.executeUpdate()
             }
         count("COPIED")
+    }
+
+    /**
+     * 교차 계정 복사. 소스와 대상 자격증명이 달라 `CopyObject`를 쓸 수 없을 때 사용한다.
+     *
+     * 바이트가 실행 머신을 경유하므로 서버사이드 복사보다 느리고 소스 계정에 egress 비용이 발생한다.
+     * 대신 소스 계정의 버킷 정책을 수정하지 않아도 된다.
+     * 크기를 이미 알고 있으므로(HeadObject) 스트리밍으로 넘겨 메모리에 전부 적재하지 않는다.
+     */
+    private fun streamCopy(
+        oldKey: String,
+        newKey: String,
+        size: Long,
+        contentType: String,
+    ) {
+        s3!!
+            .getObject(
+                GetObjectRequest
+                    .builder()
+                    .bucket(config.sourceBucket)
+                    .key(oldKey)
+                    .build(),
+            ).use { input ->
+                s3Target!!.putObject(
+                    PutObjectRequest
+                        .builder()
+                        .bucket(config.targetBucket)
+                        .key(newKey)
+                        .contentType(contentType)
+                        .contentLength(size)
+                        .build(),
+                    RequestBody.fromInputStream(input, size),
+                )
+            }
     }
 
     /**
@@ -312,18 +364,43 @@ class FileMigrator(
     }
 }
 
+/**
+ * 프로파일을 지정하면 `~/.aws/credentials` 의 해당 프로파일을, 지정하지 않으면
+ * 기본 자격증명 체인(환경변수 → 기본 프로파일 → IAM 역할)을 사용한다.
+ */
+private fun s3Client(
+    region: String,
+    profile: String?,
+): S3Client =
+    S3Client
+        .builder()
+        .region(Region.of(region))
+        .apply { profile?.let { credentialsProvider(ProfileCredentialsProvider.create(it)) } }
+        .build()
+
 fun main(args: Array<String>) {
     val config = MigrationConfig.fromArgs(args)
 
     // 오프라인 모드에서는 S3Client를 만들지 않는다(자격증명 없이도 실행되어야 한다).
-    val s3 = if (config.offline) null else S3Client.builder().region(Region.of(config.region)).build()
+    val source = if (config.offline) null else s3Client(config.region, config.sourceProfile)
+
+    // 두 프로파일이 다르면 교차 계정이므로 대상 전용 클라이언트를 따로 만든다.
+    // 같거나 지정되지 않았으면 동일 인스턴스를 공유해 CopyObject(서버사이드)를 쓴다.
+    val targetS3 =
+        when {
+            source == null -> null
+            config.targetProfile == null || config.targetProfile == config.sourceProfile -> source
+            else -> s3Client(config.region, config.targetProfile)
+        }
+
     try {
         DriverManager.getConnection(config.workJdbcUrl, config.dbUser, config.dbPassword).use { work ->
             DriverManager.getConnection(config.targetJdbcUrl, config.dbUser, config.dbPassword).use { target ->
-                FileMigrator(config, s3, work, target).run()
+                FileMigrator(config, source, work, target, targetS3).run()
             }
         }
     } finally {
-        s3?.close()
+        if (targetS3 !== source) targetS3?.close()
+        source?.close()
     }
 }

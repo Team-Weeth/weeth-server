@@ -20,6 +20,14 @@ data class MigrationConfig(
     /** V4 대상 버킷. 원본과 같아도 키가 달라 복사는 필요하다. */
     val targetBucket: String,
     val region: String,
+    /**
+     * 소스/대상 버킷이 서로 다른 AWS 계정에 있을 때 각각의 프로파일을 지정한다.
+     * 둘이 다르면 `CopyObject`(서버사이드) 대신 GetObject → PutObject 스트리밍으로 전환된다.
+     * 소스 계정 버킷 정책을 수정할 수 없을 때 쓰는 경로다.
+     * 지정하지 않으면 기본 자격증명 체인 하나를 양쪽에 사용한다.
+     */
+    val sourceProfile: String?,
+    val targetProfile: String?,
     /** true면 S3 복사와 DB 쓰기를 수행하지 않고 계획만 출력한다. */
     val dryRun: Boolean,
     /**
@@ -71,6 +79,8 @@ data class MigrationConfig(
                 sourceBucket = opt("source-bucket", "MIG_SOURCE_BUCKET", bucketDefault),
                 targetBucket = opt("target-bucket", "MIG_TARGET_BUCKET", bucketDefault),
                 region = opt("region", "AWS_REGION", DEFAULT_REGION),
+                sourceProfile = opts["source-profile"] ?: System.getenv("MIG_SOURCE_PROFILE"),
+                targetProfile = opts["target-profile"] ?: System.getenv("MIG_TARGET_PROFILE"),
                 // 기본값이 dry-run이다. 실제 반영은 --apply 를 명시해야 한다.
                 dryRun = offline || !opts.containsKey("apply"),
                 offline = offline,
