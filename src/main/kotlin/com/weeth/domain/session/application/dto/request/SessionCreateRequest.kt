@@ -12,7 +12,7 @@ data class SessionCreateRequest(
     @field:NotBlank
     val title: String,
     @field:Schema(description = "세션 내용", example = "OT 및 자기소개")
-    @field:Size(max = 500)
+    @field:Size(max = 1000)
     val content: String?,
     @field:Schema(description = "모임 장소", example = "공학관 401호")
     val location: String?,

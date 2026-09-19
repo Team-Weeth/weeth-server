@@ -56,7 +56,7 @@ class Session(
     var title: String = title
         private set
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     var content: String? = content
         private set
 
