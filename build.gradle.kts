@@ -149,3 +149,35 @@ ktlint {
     outputToConsole.set(true)
     ignoreFailures.set(false)
 }
+
+// =============================================================================
+// V3 → V4 파일 마이그레이터 (일회성 도구)
+// =============================================================================
+// 운영 아티팩트(bootJar)에 포함되지 않도록 별도 소스셋으로 분리한다.
+// Spring 컨텍스트 없이 JDBC + AWS SDK만 사용한다.
+//
+// 실행:
+//   ./gradlew migrateFiles --args="--source-bucket=... --target-bucket=..."          # dry-run
+//   ./gradlew migrateFiles --args="--source-bucket=... --target-bucket=... --apply"  # 실제 반영
+sourceSets {
+    create("migration") {
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+}
+
+val migrationImplementation: Configuration by configurations.getting
+val migrationRuntimeOnly: Configuration by configurations.getting
+
+dependencies {
+    migrationImplementation(platform("software.amazon.awssdk:bom:$awsSdkBomVersion"))
+    migrationImplementation("software.amazon.awssdk:s3")
+    migrationRuntimeOnly("com.mysql:mysql-connector-j")
+}
+
+tasks.register<JavaExec>("migrateFiles") {
+    group = "migration"
+    description = "V3 S3 객체를 V4 키 형식으로 복사하고 file 테이블을 채운다 (기본 dry-run)"
+    mainClass.set("com.weeth.tools.filemigration.FileMigratorKt")
+    classpath = sourceSets["migration"].runtimeClasspath
+}
