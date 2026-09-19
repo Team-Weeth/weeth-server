@@ -18,10 +18,12 @@ import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.vo.BoardConfig
 import com.weeth.domain.board.fixture.BoardTestFixture
+import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubTestFixture
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
@@ -127,8 +129,8 @@ class ManageBoardUseCaseTest :
                 }
             }
 
-            it("총 게시판 수가 4개 이상이면 예외를 던진다") {
-                every { boardRepository.countByClubIdAndIsDeletedFalse(clubId) } returns 4
+            it("club의 게시판 상한에 도달하면 예외를 던진다") {
+                every { boardRepository.countByClubIdAndIsDeletedFalse(clubId) } returns Club.DEFAULT_MAX_BOARD_COUNT
                 val request =
                     CreateBoardRequest(
                         name = "초과 게시판",
@@ -142,6 +144,29 @@ class ManageBoardUseCaseTest :
                 shouldThrow<BoardLimitExceededException> {
                     useCase.create(clubId, request, userId)
                 }
+            }
+
+            it("club의 상한이 상향되면 기본값을 넘겨도 생성된다") {
+                // 상한이 club별로 동작하는지 확인한다. 상수였다면 이 케이스가 성립하지 않는다.
+                // 공유 인스턴스를 변경하면 다른 테스트로 상태가 새므로 별도 club을 쓴다.
+                val relaxedClub =
+                    ClubTestFixture.createClub().apply {
+                        changeMaxBoardCount(Club.DEFAULT_MAX_BOARD_COUNT + 2)
+                    }
+                every { clubReader.getClubByIdForUpdate(clubId) } returns relaxedClub
+                every { boardRepository.countByClubIdAndIsDeletedFalse(clubId) } returns Club.DEFAULT_MAX_BOARD_COUNT
+                every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(clubId, "추가 게시판") } returns false
+                val request =
+                    CreateBoardRequest(
+                        name = "추가 게시판",
+                        description = "추가 게시판 설명",
+                        type = BoardType.GENERAL,
+                        commentEnabled = true,
+                        writePermission = MemberRole.USER,
+                        isPrivate = false,
+                    )
+
+                shouldNotThrowAny { useCase.create(clubId, request, userId) }
             }
 
             it("같은 클럽에 동일한 이름의 게시판이 이미 있으면 예외를 던진다") {
