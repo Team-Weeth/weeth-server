@@ -8,7 +8,7 @@ data class ScheduleUpdateRequest(
     @field:Schema(description = "일정 제목 (null=변경 안 함)", example = "MT")
     val title: String?,
     @field:Schema(description = "일정 내용 (null=변경 안 함)", example = "1박 2일 MT입니다.")
-    @field:Size(max = 500)
+    @field:Size(max = 1000)
     val content: String?,
     @field:Schema(description = "장소 (null=변경 안 함)", example = "가평")
     val location: String?,
