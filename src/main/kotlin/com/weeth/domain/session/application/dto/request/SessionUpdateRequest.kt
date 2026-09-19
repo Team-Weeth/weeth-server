@@ -8,7 +8,7 @@ data class SessionUpdateRequest(
     @field:Schema(description = "세션 제목 (null=변경 안 함)", example = "1차 정기모임")
     val title: String?,
     @field:Schema(description = "세션 내용 (null=변경 안 함)", example = "OT 및 자기소개")
-    @field:Size(max = 500)
+    @field:Size(max = 1000)
     val content: String?,
     @field:Schema(description = "모임 장소 (null=변경 안 함)", example = "공학관 401호")
     val location: String?,
