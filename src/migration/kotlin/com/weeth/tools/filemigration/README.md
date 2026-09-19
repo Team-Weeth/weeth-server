@@ -29,9 +29,65 @@ V3가 원본 파일명을 보존하지 않은 구(舊) 레코드(`file_name`이 
 - **원본 버킷은 읽기만 한다.** 삭제하지 않으므로 롤백은 V4 쪽만 정리하면 된다.
 - `CopyObject`는 서버사이드다. 객체 바이트가 실행 머신을 거치지 않는다.
 
+## AWS 자격증명 (교차 계정)
+
+**V3 버킷과 V4 버킷은 서로 다른 AWS 계정에 있다.**
+
+`CopyObject`는 하나의 주체가 소스 읽기와 대상 쓰기를 모두 수행하므로, 그 주체를 어디에 두느냐가
+복사된 객체의 **소유권**을 결정한다. 반드시 **대상(V4) 계정의 IAM 사용자**로 실행한다.
+소스(V3) 계정 주체로 실행하면 V4 버킷에 들어간 객체를 V3 계정이 소유하게 되어,
+이후 V3 계정을 정리할 때 접근 불능이 된다.
+
+### 1. V4 계정에 IAM 사용자 + 정책
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    { "Sid": "ReadSourceCrossAccount", "Effect": "Allow",
+      "Action": ["s3:ListBucket", "s3:GetObject"],
+      "Resource": ["arn:aws:s3:::weeth-aws-bucket", "arn:aws:s3:::weeth-aws-bucket/*"] },
+    { "Sid": "WriteTarget", "Effect": "Allow",
+      "Action": ["s3:PutObject"],
+      "Resource": "arn:aws:s3:::<V4버킷>/*" }
+  ]
+}
+```
+
+### 2. V3 계정의 **버킷 정책**에 접근 허용
+
+IAM 정책만으로는 타 계정 버킷에 접근할 수 없다. 양쪽이 모두 허용해야 한다.
+
+```json
+{ "Sid": "AllowV4MigrationRead", "Effect": "Allow",
+  "Principal": { "AWS": "arn:aws:iam::<V4계정ID>:user/weeth-migration" },
+  "Action": ["s3:ListBucket", "s3:GetObject"],
+  "Resource": ["arn:aws:s3:::weeth-aws-bucket", "arn:aws:s3:::weeth-aws-bucket/*"] }
+```
+
+`ListBucket`의 Resource는 버킷 ARN(`/*` 없음), `GetObject`는 `/*` 포함이다.
+
+### ⚠️ `s3:ListBucket`은 선택이 아니다
+
+`s3:GetObject`만 부여하면 **존재하지 않는 객체에 404가 아니라 403이 반환된다**
+(S3가 객체 존재 여부를 숨기기 위해). 그러면 `MISSING_IN_S3`로 분류해야 할 건이
+전부 `FAILED (HeadObject 실패: 403)`이 되어 **S3 유실 건수를 측정할 수 없다.**
+
+### 기타
+
+- 소스 버킷이 고객 관리 KMS 키로 암호화돼 있으면 **V3 계정의 KMS 키 정책**에도 V4 사용자의 `kms:Decrypt`가 필요하다.
+- 두 버킷이 같은 리전(`ap-northeast-2`)이면 전송 비용이 없다.
+- **검증이 끝날 때까지 소스 버킷을 삭제하지 않는다.** 롤백 창구다.
+- 마이그레이션 완료 후 해당 액세스 키를 폐기한다.
+
 ## 실행
 
 자격증명은 인자로 받지 않는다. DB는 환경변수, S3는 AWS SDK 기본 자격증명 체인을 쓴다.
+
+```bash
+aws configure --profile weeth-migration   # V4 계정 사용자 키
+export AWS_PROFILE=weeth-migration
+```
 
 ```bash
 # 1) 오프라인 — S3 접근 없이 키 생성·소유 매핑만 검토 (자격증명 불필요)
