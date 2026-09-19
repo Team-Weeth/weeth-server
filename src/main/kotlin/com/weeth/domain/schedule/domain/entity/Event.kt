@@ -17,7 +17,7 @@ import java.time.LocalDateTime
 class Event(
     club: Club,
     var title: String,
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     var content: String? = null,
     var location: String? = null,
     var cardinal: Int,

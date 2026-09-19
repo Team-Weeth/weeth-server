@@ -17,7 +17,13 @@ data class FileSaveRequest(
     @field:Schema(description = "파일 크기(bytes)", example = "102400")
     @field:Positive
     val fileSize: Long,
-    @field:Schema(description = "파일 Content-Type. `image/png, image/jpeg, application/pdf` 지원", example = "image/png")
+    @field:Schema(
+        description =
+            "파일 Content-Type. `image/png`, `image/jpeg`, `image/webp`, `application/pdf`, " +
+                "`application/vnd.openxmlformats-officedocument.presentationml.presentation`(pptx), " +
+                "`application/vnd.openxmlformats-officedocument.wordprocessingml.document`(docx) 지원",
+        example = "image/png",
+    )
     @field:NotBlank
     val contentType: String,
 )
