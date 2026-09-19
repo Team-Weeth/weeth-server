@@ -18,6 +18,8 @@ object ContentTypes {
             "png" to "image/png",
             "webp" to "image/webp",
             "pdf" to "application/pdf",
+            "pptx" to "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+            "docx" to "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         )
 
     fun fromExtension(extension: String?): String? = extension?.lowercase()?.let { SUPPORTED[it] }
