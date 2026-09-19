@@ -1,0 +1,9 @@
+ALTER TABLE club
+    ADD COLUMN warning_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN penalty_rule    VARCHAR(500);
+
+ALTER TABLE club_member
+    ADD COLUMN warning_count INT NOT NULL DEFAULT 0;
+
+ALTER TABLE penalty
+    ADD COLUMN score INT NOT NULL DEFAULT 1;
