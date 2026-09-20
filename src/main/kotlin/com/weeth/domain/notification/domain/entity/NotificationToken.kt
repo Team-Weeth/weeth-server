@@ -86,7 +86,7 @@ class NotificationToken(
                 registeredAt = registeredAt,
             )
 
-        private fun normalizeToken(token: String): String {
+        fun normalizeToken(token: String): String {
             val normalized = token.trim()
             require(normalized.isNotBlank()) { "알림 토큰은 공백일 수 없습니다." }
             require(normalized.length <= MAX_TOKEN_LENGTH) { "알림 토큰은 ${MAX_TOKEN_LENGTH}자를 초과할 수 없습니다." }

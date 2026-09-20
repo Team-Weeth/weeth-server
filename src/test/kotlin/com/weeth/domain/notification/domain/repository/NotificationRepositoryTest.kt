@@ -45,6 +45,23 @@ class NotificationRepositoryTest(
             result shouldContainExactlyInAnyOrder listOf("active-token-1", "active-token-2")
         }
 
+        "registerToken은 토큰을 새로 저장하고 같은 토큰 재등록 시 소유자와 상태를 갱신한다" {
+            val user1 = userRepository.save(UserTestFixture.createActiveUser1())
+            val user2 = userRepository.save(UserTestFixture.createActiveUser2())
+            val firstRegisteredAt = LocalDateTime.of(2026, 9, 21, 10, 0)
+            val secondRegisteredAt = LocalDateTime.of(2026, 9, 21, 10, 5)
+
+            notificationTokenRepository.registerToken(user1.id, "fcm-token", firstRegisteredAt)
+            notificationTokenRepository.registerToken(user2.id, "fcm-token", secondRegisteredAt)
+
+            val result = notificationTokenRepository.findByToken("fcm-token")
+
+            result?.user?.id shouldBe user2.id
+            result?.isActive shouldBe true
+            result?.lastRegisteredAt shouldBe secondRegisteredAt
+            notificationTokenRepository.findAll().size shouldBe 1
+        }
+
         "deactivateInvalidTokens는 발송 시작 시각 이전에 등록된 토큰만 비활성화한다" {
             val user = userRepository.save(UserTestFixture.createActiveUser1())
             val sendStartedAt = LocalDateTime.of(2026, 9, 21, 10, 0)

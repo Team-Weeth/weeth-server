@@ -12,6 +12,39 @@ interface NotificationTokenRepository :
     NotificationTokenReader {
     override fun findByToken(token: String): NotificationToken?
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+        value = """
+            INSERT INTO notification_token (
+                user_id,
+                token,
+                is_active,
+                last_registered_at,
+                created_at,
+                modified_at
+            )
+            VALUES (
+                :userId,
+                :token,
+                true,
+                :registeredAt,
+                :registeredAt,
+                :registeredAt
+            )
+            ON DUPLICATE KEY UPDATE
+                user_id = :userId,
+                is_active = true,
+                last_registered_at = :registeredAt,
+                modified_at = :registeredAt
+        """,
+        nativeQuery = true,
+    )
+    fun registerToken(
+        @Param("userId") userId: Long,
+        @Param("token") token: String,
+        @Param("registeredAt") registeredAt: LocalDateTime,
+    ): Int
+
     @Query(
         """
         SELECT nt.token
