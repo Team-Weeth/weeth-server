@@ -12,7 +12,7 @@ data class ScheduleSaveRequest(
     @field:NotBlank
     val title: String,
     @field:Schema(description = "일정 내용", example = "1박 2일 MT입니다.")
-    @field:Size(max = 500)
+    @field:Size(max = 1000)
     val content: String? = null,
     @field:Schema(description = "장소", example = "가평")
     val location: String? = null,
