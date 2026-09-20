@@ -22,8 +22,8 @@ import java.time.LocalDateTime
     name = "user_notification",
     indexes = [
         Index(
-            name = "idx_user_notification_user_read_created",
-            columnList = "user_id, is_read, created_at DESC",
+            name = "idx_user_notification_user_club_read_created",
+            columnList = "user_id, club_id, is_read, created_at DESC",
         ),
         Index(
             name = "idx_user_notification_notice_post",

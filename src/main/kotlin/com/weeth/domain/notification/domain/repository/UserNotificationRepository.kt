@@ -26,15 +26,20 @@ interface UserNotificationRepository :
         @Param("postId") postId: Long,
     ): List<Long>
 
-    override fun countByUserIdAndIsReadFalse(userId: Long): Long
-
-    override fun findByUserIdAndId(
+    override fun countByUserIdAndClubIdAndIsReadFalse(
         userId: Long,
+        clubId: Long,
+    ): Long
+
+    override fun findByUserIdAndClubIdAndId(
+        userId: Long,
+        clubId: Long,
         notificationId: Long,
     ): UserNotification?
 
-    override fun findAllByUserIdOrderByCreatedAtDesc(
+    override fun findAllByUserIdAndClubIdOrderByCreatedAtDesc(
         userId: Long,
+        clubId: Long,
         pageable: Pageable,
     ): Page<UserNotification>
 
@@ -45,11 +50,13 @@ interface UserNotificationRepository :
         SET un.isRead = true,
             un.readAt = :readAt
         WHERE un.user.id = :userId
+        AND un.clubId = :clubId
         AND un.isRead = false
         """,
     )
-    fun markAllReadByUserId(
+    fun markAllReadByUserIdAndClubId(
         @Param("userId") userId: Long,
+        @Param("clubId") clubId: Long,
         @Param("readAt") readAt: LocalDateTime,
     ): Int
 }

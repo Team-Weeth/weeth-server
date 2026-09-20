@@ -11,15 +11,20 @@ interface UserNotificationReader {
         postId: Long,
     ): List<Long>
 
-    fun countByUserIdAndIsReadFalse(userId: Long): Long
-
-    fun findByUserIdAndId(
+    fun countByUserIdAndClubIdAndIsReadFalse(
         userId: Long,
+        clubId: Long,
+    ): Long
+
+    fun findByUserIdAndClubIdAndId(
+        userId: Long,
+        clubId: Long,
         notificationId: Long,
     ): UserNotification?
 
-    fun findAllByUserIdOrderByCreatedAtDesc(
+    fun findAllByUserIdAndClubIdOrderByCreatedAtDesc(
         userId: Long,
+        clubId: Long,
         pageable: Pageable,
     ): Page<UserNotification>
 }
