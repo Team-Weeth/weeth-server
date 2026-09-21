@@ -28,4 +28,6 @@ data class ClubMemberDetailResponse(
     val department: String?,
     @field:Schema(description = "작성한 글 총 개수", example = "12")
     val postCount: Long,
+    @field:Schema(description = "포지션 (미지정이면 null)", nullable = true)
+    val position: ClubPositionOptionResponse? = null,
 )

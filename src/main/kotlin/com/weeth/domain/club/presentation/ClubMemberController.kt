@@ -146,7 +146,7 @@ class ClubMemberController(
     @GetMapping("/{clubId}/members")
     @Operation(
         summary = "동아리 멤버 목록 조회",
-        description = "기수·역할 필터와 무한스크롤 페이지네이션을 지원합니다. 활성 멤버만 조회됩니다.",
+        description = "기수·역할·포지션 필터와 무한스크롤 페이지네이션을 지원합니다. 활성 멤버만 조회됩니다.",
     )
     fun getMembers(
         @TsidParam
@@ -155,6 +155,7 @@ class ClubMemberController(
         @RequestParam(required = false) cardinalNumber: Int?,
         @RequestParam(required = false) memberRole: MemberRole?,
         @RequestParam(required = false) keyword: String?,
+        @RequestParam(required = false) positionOptionId: Long?,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "20") pageSize: Int,
     ): CommonResponse<SliceResponse<ClubMemberPublicResponse>> {
@@ -165,6 +166,7 @@ class ClubMemberController(
                 cardinalNumber = cardinalNumber,
                 memberRole = memberRole,
                 keyword = keyword,
+                positionOptionId = positionOptionId,
                 page = pageNumber,
                 size = pageSize,
             )

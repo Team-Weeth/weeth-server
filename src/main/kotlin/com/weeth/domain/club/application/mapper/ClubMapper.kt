@@ -177,6 +177,7 @@ class ClubMapper(
         member: ClubMember,
         cardinals: List<ClubMemberCardinal>,
         postCount: Long,
+        position: ClubPositionOptionResponse? = null,
     ) = ClubMemberDetailResponse(
         clubMemberId = member.id,
         name = resolveMemberName(member),
@@ -191,11 +192,13 @@ class ClubMapper(
         studentId = member.user.studentId.takeIf { member.user.studentInfoPublic },
         department = member.user.department.takeIf { member.user.studentInfoPublic },
         postCount = postCount,
+        position = position,
     )
 
     fun toPublicMemberResponse(
         member: ClubMember,
         cardinals: List<ClubMemberCardinal>,
+        position: ClubPositionOptionResponse? = null,
     ) = ClubMemberPublicResponse(
         clubMemberId = member.id,
         name = resolveMemberName(member),
@@ -203,6 +206,7 @@ class ClubMapper(
         memberRole = member.memberRole,
         cardinals = toCardinalNumbers(cardinals),
         bio = resolveMemberBio(member),
+        position = position,
     )
 
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }

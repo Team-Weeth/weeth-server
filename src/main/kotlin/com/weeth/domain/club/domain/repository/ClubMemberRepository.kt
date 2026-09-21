@@ -520,6 +520,7 @@ interface ClubMemberRepository :
             )
         )
         AND (:keyword IS NULL OR COALESCE(cm.userProfile.name, cm.user.name) LIKE CONCAT('%', :keyword, '%'))
+        AND (:positionOptionId IS NULL OR cm.positionOption.id = :positionOptionId)
         ORDER BY
             (SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm) DESC,
             cm.id ASC
@@ -530,6 +531,7 @@ interface ClubMemberRepository :
         @Param("cardinalNumber") cardinalNumber: Int?,
         @Param("memberRole") memberRole: MemberRole?,
         @Param("keyword") keyword: String?,
+        @Param("positionOptionId") positionOptionId: Long?,
         pageable: Pageable,
     ): Slice<ClubMember>
 

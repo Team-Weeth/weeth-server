@@ -594,6 +594,33 @@ class GetClubMemberQueryServiceTest :
                     result.cardinals shouldBe listOf(7)
                     result.postCount shouldBe 5L
                     result.email shouldBe targetUser.emailValue
+                    result.position shouldBe null
+                }
+
+                it("포지션이 지정된 멤버는 응답에 position이 포함된다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+                    val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club, name = "백엔드")
+                    val targetMember =
+                        ClubMemberTestFixture
+                            .createActiveMember(
+                                id = clubMemberId,
+                                club = club,
+                                user = UserTestFixture.createActiveUser1(1L),
+                            ).also { it.assignPosition(option) }
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every { clubMemberReader.findPublicMemberDetail(clubId, clubMemberId) } returns targetMember
+                    every { clubMemberCardinalReader.findAllByClubMember(targetMember) } returns emptyList()
+                    every { postReader.countActiveByClubMemberIds(listOf(clubMemberId)) } returns 0L
+
+                    val result =
+                        service.findMemberDetail(
+                            clubId = clubId,
+                            userId = userId,
+                            clubMemberId = clubMemberId,
+                        )
+
+                    result.position?.name shouldBe "백엔드"
                 }
             }
 
@@ -648,7 +675,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, null, null, null, any())
+                        clubMemberReader.findPublicMembers(clubId, null, null, null, null, any())
                     } returns SliceImpl(listOf(member), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns
                         listOf(memberCardinal)
@@ -660,6 +687,7 @@ class GetClubMemberQueryServiceTest :
                             cardinalNumber = null,
                             memberRole = null,
                             keyword = null,
+                            positionOptionId = null,
                             page = 0,
                             size = 20,
                         )
@@ -679,7 +707,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, 7, null, null, capture(pageableSlot))
+                        clubMemberReader.findPublicMembers(clubId, 7, null, null, null, capture(pageableSlot))
                     } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -689,11 +717,12 @@ class GetClubMemberQueryServiceTest :
                         cardinalNumber = 7,
                         memberRole = null,
                         keyword = null,
+                        positionOptionId = null,
                         page = 0,
                         size = 20,
                     )
 
-                    verify(exactly = 1) { clubMemberReader.findPublicMembers(clubId, 7, null, null, any()) }
+                    verify(exactly = 1) { clubMemberReader.findPublicMembers(clubId, 7, null, null, null, any()) }
                 }
 
                 it("역할 필터를 Repository에 전달한다") {
@@ -701,7 +730,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, null, any())
+                        clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, null, null, any())
                     } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -711,13 +740,75 @@ class GetClubMemberQueryServiceTest :
                         cardinalNumber = null,
                         memberRole = MemberRole.ADMIN,
                         keyword = null,
+                        positionOptionId = null,
                         page = 0,
                         size = 20,
                     )
 
                     verify(
                         exactly = 1,
-                    ) { clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, null, any()) }
+                    ) { clubMemberReader.findPublicMembers(clubId, null, MemberRole.ADMIN, null, null, any()) }
+                }
+
+                it("포지션 필터를 Repository에 전달한다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every {
+                        clubMemberReader.findPublicMembers(clubId, null, null, null, 100L, any())
+                    } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
+                    every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
+
+                    service.findPublicMembers(
+                        clubId = clubId,
+                        userId = userId,
+                        cardinalNumber = null,
+                        memberRole = null,
+                        keyword = null,
+                        positionOptionId = 100L,
+                        page = 0,
+                        size = 20,
+                    )
+
+                    verify(
+                        exactly = 1,
+                    ) { clubMemberReader.findPublicMembers(clubId, null, null, null, 100L, any()) }
+                }
+
+                it("포지션이 지정된 멤버는 응답에 position이 포함된다") {
+                    val caller = ClubMemberTestFixture.createActiveMember(club = club)
+                    val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club, name = "백엔드")
+                    val member =
+                        ClubMemberTestFixture
+                            .createActiveMember(
+                                id = 10L,
+                                club = club,
+                                user = UserTestFixture.createActiveUser1(1L),
+                            ).also { it.assignPosition(option) }
+
+                    every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
+                    every {
+                        clubMemberReader.findPublicMembers(clubId, null, null, null, null, any())
+                    } returns SliceImpl(listOf(member), PageRequest.of(0, 20), false)
+                    every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
+                    every { clubPositionOptionReader.findAllByIdIn(listOf(100L)) } returns listOf(option)
+
+                    val result =
+                        service.findPublicMembers(
+                            clubId = clubId,
+                            userId = userId,
+                            cardinalNumber = null,
+                            memberRole = null,
+                            keyword = null,
+                            positionOptionId = null,
+                            page = 0,
+                            size = 20,
+                        )
+
+                    result.content
+                        .first()
+                        .position
+                        ?.name shouldBe "백엔드"
                 }
 
                 it("조회 결과가 없으면 빈 SliceResponse를 반환한다") {
@@ -725,7 +816,7 @@ class GetClubMemberQueryServiceTest :
 
                     every { clubMemberPolicy.getActiveMember(clubId, userId) } returns caller
                     every {
-                        clubMemberReader.findPublicMembers(clubId, null, null, null, any())
+                        clubMemberReader.findPublicMembers(clubId, null, null, null, null, any())
                     } returns SliceImpl(emptyList(), PageRequest.of(0, 20), false)
                     every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
 
@@ -736,6 +827,7 @@ class GetClubMemberQueryServiceTest :
                             cardinalNumber = null,
                             memberRole = null,
                             keyword = null,
+                            positionOptionId = null,
                             page = 0,
                             size = 20,
                         )
@@ -756,6 +848,7 @@ class GetClubMemberQueryServiceTest :
                             cardinalNumber = null,
                             memberRole = null,
                             keyword = null,
+                            positionOptionId = null,
                             page = 0,
                             size = 20,
                         )

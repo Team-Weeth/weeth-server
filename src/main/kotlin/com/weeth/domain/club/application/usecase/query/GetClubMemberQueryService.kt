@@ -98,7 +98,7 @@ class GetClubMemberQueryService(
 
     /**
      * 페이지 내 멤버들의 positionOption id를 모아 일괄 조회한다.
-     * 매퍼가 member.positionOption.name/colorHex를 행별로 직접 역참조하면 지연 로딩으로 N+1이 재도입되므로,
+     * 매퍼가 member.positionOption.name/color를 행별로 직접 역참조하면 지연 로딩으로 N+1이 재도입되므로,
      * 반드시 이 맵을 통해 미리 조회된 응답을 넘겨야 한다.
      */
     private fun loadPositionResponsesByOptionId(members: List<ClubMember>): Map<Long, ClubPositionOptionResponse> {
@@ -198,8 +198,9 @@ class GetClubMemberQueryService(
 
         val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
         val postCount = postReader.countActiveByClubMemberIds(listOf(clubMemberId))
+        val position = member.positionOption?.let { clubPositionOptionMapper.toResponse(it) }
 
-        return clubMapper.toMemberDetailResponse(member, cardinals, postCount)
+        return clubMapper.toMemberDetailResponse(member, cardinals, postCount, position)
     }
 
     fun findPublicMembers(
@@ -208,6 +209,7 @@ class GetClubMemberQueryService(
         cardinalNumber: Int?,
         memberRole: MemberRole?,
         keyword: String?,
+        positionOptionId: Long?,
         page: Int,
         size: Int,
     ): SliceResponse<ClubMemberPublicResponse> {
@@ -220,6 +222,7 @@ class GetClubMemberQueryService(
                 cardinalNumber = cardinalNumber,
                 memberRole = memberRole,
                 keyword = keyword?.trim()?.takeIf { it.isNotBlank() },
+                positionOptionId = positionOptionId,
                 pageable = pageable,
             )
 
@@ -229,10 +232,15 @@ class GetClubMemberQueryService(
             } else {
                 clubMemberCardinalReader.findAllByClubMembers(members.content).groupBy { it.clubMember.id }
             }
+        val positionResponseByOptionId = loadPositionResponsesByOptionId(members.content)
 
         return SliceResponse.from(
             members.map { member ->
-                clubMapper.toPublicMemberResponse(member, cardinalsByMemberId[member.id] ?: emptyList())
+                clubMapper.toPublicMemberResponse(
+                    member,
+                    cardinalsByMemberId[member.id] ?: emptyList(),
+                    member.positionOption?.id?.let { positionResponseByOptionId[it] },
+                )
             },
         )
     }
