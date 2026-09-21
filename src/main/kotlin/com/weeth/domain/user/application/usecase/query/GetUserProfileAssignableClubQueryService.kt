@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetUserProfileAssignableClubQueryService(
     private val clubMemberReader: ClubMemberReader,
     private val fileAccessUrlPort: FileAccessUrlPort,
 ) {
-    @Transactional(readOnly = true)
     fun findAll(userId: Long): UserProfileAssignableClubsResponse {
         val clubs =
             clubMemberReader

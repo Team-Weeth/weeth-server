@@ -5,7 +5,7 @@ import com.weeth.domain.penalty.application.dto.response.PenaltyRuleResponse
 import com.weeth.domain.penalty.application.usecase.query.GetPenaltyRuleQueryService
 import com.weeth.domain.user.application.dto.response.UserAttendedSessionResponse
 import com.weeth.domain.user.application.dto.response.UserMyPageResponse
-import com.weeth.domain.user.application.dto.response.UserMyPenaltyResponse
+import com.weeth.domain.user.application.dto.response.UserMyPenaltyListResponse
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.exception.UserErrorCode
 import com.weeth.domain.user.application.usecase.query.GetUserAttendanceQueryService
@@ -75,15 +75,20 @@ class ClubMemberMyPageController(
         )
 
     @GetMapping("/penalties")
-    @Operation(summary = "현재 동아리에서 나의 페널티 목록 조회")
+    @Operation(
+        summary = "현재 동아리에서 나의 페널티 목록 조회",
+        description = "cardinalNumber를 지정하면 해당 기수만 조회합니다. 미지정 시 전체 기수를 대상으로 합니다.",
+    )
     fun getMyPenalties(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
+        @RequestParam(required = false) cardinalNumber: Int?,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "5") pageSize: Int,
-    ): CommonResponse<SliceResponse<UserMyPenaltyResponse>> {
-        val response = getUserPenaltyQueryService.getMyPenalties(userId, clubId, pageNumber, pageSize)
+    ): CommonResponse<UserMyPenaltyListResponse> {
+        val response =
+            getUserPenaltyQueryService.getMyPenalties(userId, clubId, cardinalNumber, pageNumber, pageSize)
         return CommonResponse.success(UserResponseCode.USER_MY_PENALTIES_FIND_SUCCESS, response)
     }
 

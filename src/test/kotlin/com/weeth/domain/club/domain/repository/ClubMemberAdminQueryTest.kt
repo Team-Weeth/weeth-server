@@ -6,6 +6,7 @@ import com.weeth.domain.cardinal.domain.repository.CardinalRepository
 import com.weeth.domain.club.application.dto.request.ClubMemberSort
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
+import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.domain.entity.User
@@ -110,6 +111,7 @@ class ClubMemberAdminQueryTest(
                         clubId,
                         null,
                         null,
+                        null,
                         ClubMemberSort.CARDINAL_DESC.queryKey,
                         pageable,
                     )
@@ -129,11 +131,17 @@ class ClubMemberAdminQueryTest(
                         clubId,
                         null,
                         null,
+                        null,
                         ClubMemberSort.CARDINAL_ASC.queryKey,
                         pageable,
                     )
 
-                result.content.takeLast(2).map { it.user.name } shouldContainExactly listOf("나육기", "다칠기")
+                // 마추방(BANNED)은 기수와 무관하게 상태 우선순위로 맨 뒤로 밀리므로 별도로 확인한다.
+                result.content.map { it.user.name }.dropLast(1) shouldContainExactly
+                    listOf("가기수없음", "라대기", "나육기", "다칠기")
+                result.content
+                    .last()
+                    .user.name shouldBe "마추방"
             }
 
             it("NAME_ASC는 이름순으로 정렬한다") {
@@ -142,6 +150,7 @@ class ClubMemberAdminQueryTest(
                 val result =
                     clubMemberRepository.findAdminMembers(
                         clubId,
+                        null,
                         null,
                         null,
                         ClubMemberSort.NAME_ASC.queryKey,
@@ -160,6 +169,7 @@ class ClubMemberAdminQueryTest(
                         clubId,
                         null,
                         null,
+                        null,
                         ClubMemberSort.JOINED_DESC.queryKey,
                         pageable,
                     )
@@ -167,9 +177,38 @@ class ClubMemberAdminQueryTest(
                 // seed가 createdAt을 1분 간격으로 확정하므로 tie로 타이브레이커(id ASC)에 떨어질 일이 없다.
                 // 값이 실제로 서로 다른지 먼저 확인해, 정밀도가 바뀌면 순서가 아니라 여기서 실패하게 한다.
                 result.content.map { it.createdAt }.distinct() shouldHaveSize 5
-                result.content.map { it.createdAt } shouldBe result.content.map { it.createdAt }.sortedDescending()
+                // 추방 멤버(마추방)는 가장 최근 가입임에도 상태 우선순위 때문에 맨 뒤로 밀린다.
                 result.content.map { it.user.name } shouldContainExactly
-                    listOf("마추방", "라대기", "다칠기", "나육기", "가기수없음")
+                    listOf("라대기", "다칠기", "나육기", "가기수없음", "마추방")
+            }
+
+            it("탈퇴·추방 멤버는 정렬 기준과 무관하게 항상 맨 뒤로 정렬된다") {
+                val clubId = seed()
+                val club = clubRepository.findById(clubId).orElseThrow()
+                val leftUser =
+                    userRepository.save(
+                        User(name = "가나다", email = Email.from("admin-query-left@test.com"), status = Status.ACTIVE),
+                    )
+                clubMemberRepository.save(ClubMember(club = club, user = leftUser, memberStatus = MemberStatus.LEFT))
+                entityManager.flush()
+                entityManager.clear()
+
+                val result =
+                    clubMemberRepository.findAdminMembers(
+                        clubId,
+                        null,
+                        null,
+                        null,
+                        ClubMemberSort.NAME_ASC.queryKey,
+                        PageRequest.of(0, 10),
+                    )
+
+                val deprioritized = setOf(MemberStatus.BANNED, MemberStatus.LEFT)
+                val statuses = result.content.map { it.memberStatus }
+                val firstDeprioritizedIndex = statuses.indexOfFirst { it in deprioritized }
+
+                statuses.take(firstDeprioritizedIndex).none { it in deprioritized } shouldBe true
+                statuses.drop(firstDeprioritizedIndex).all { it in deprioritized } shouldBe true
             }
 
             it("가입 대기·추방 멤버도 목록에 포함된다") {
@@ -178,6 +217,7 @@ class ClubMemberAdminQueryTest(
                 val result =
                     clubMemberRepository.findAdminMembers(
                         clubId,
+                        null,
                         null,
                         null,
                         ClubMemberSort.NAME_ASC.queryKey,
@@ -202,6 +242,7 @@ class ClubMemberAdminQueryTest(
                         clubId,
                         7,
                         null,
+                        null,
                         ClubMemberSort.CARDINAL_DESC.queryKey,
                         pageable,
                     )
@@ -216,13 +257,13 @@ class ClubMemberAdminQueryTest(
                 val clubId = seed()
 
                 clubMemberRepository
-                    .findAdminMembers(clubId, null, "나육기", ClubMemberSort.CARDINAL_DESC.queryKey, pageable)
+                    .findAdminMembers(clubId, null, null, "나육기", ClubMemberSort.CARDINAL_DESC.queryKey, pageable)
                     .totalElements shouldBe 1
                 clubMemberRepository
-                    .findAdminMembers(clubId, null, "컴퓨터공학과", ClubMemberSort.CARDINAL_DESC.queryKey, pageable)
+                    .findAdminMembers(clubId, null, null, "컴퓨터공학과", ClubMemberSort.CARDINAL_DESC.queryKey, pageable)
                     .totalElements shouldBe 3
                 clubMemberRepository
-                    .findAdminMembers(clubId, null, "20240003", ClubMemberSort.CARDINAL_DESC.queryKey, pageable)
+                    .findAdminMembers(clubId, null, null, "20240003", ClubMemberSort.CARDINAL_DESC.queryKey, pageable)
                     .totalElements shouldBe 1
             }
 
@@ -233,6 +274,7 @@ class ClubMemberAdminQueryTest(
                     clubMemberRepository.findAdminMembers(
                         clubId,
                         6,
+                        null,
                         "나",
                         ClubMemberSort.CARDINAL_DESC.queryKey,
                         pageable,
@@ -244,6 +286,40 @@ class ClubMemberAdminQueryTest(
                     .user.name shouldBe "나육기"
             }
 
+            it("역할 필터는 해당 역할을 가진 멤버만 반환한다") {
+                val clubId = seed()
+                val admin =
+                    clubMemberRepository
+                        .findAdminMembers(
+                            clubId,
+                            null,
+                            null,
+                            "가기수없음",
+                            ClubMemberSort.NAME_ASC.queryKey,
+                            pageable,
+                        ).content
+                        .single()
+                admin.updateRole(MemberRole.ADMIN)
+                clubMemberRepository.save(admin)
+                entityManager.flush()
+                entityManager.clear()
+
+                val result =
+                    clubMemberRepository.findAdminMembers(
+                        clubId,
+                        null,
+                        MemberRole.ADMIN,
+                        null,
+                        ClubMemberSort.NAME_ASC.queryKey,
+                        pageable,
+                    )
+
+                result.totalElements shouldBe 1
+                result.content
+                    .single()
+                    .user.name shouldBe "가기수없음"
+            }
+
             it("페이지 경계에서 멤버가 중복되거나 누락되지 않는다") {
                 val clubId = seed()
 
@@ -251,6 +327,7 @@ class ClubMemberAdminQueryTest(
                     (0..2).map {
                         clubMemberRepository.findAdminMembers(
                             clubId,
+                            null,
                             null,
                             null,
                             ClubMemberSort.CARDINAL_DESC.queryKey,
@@ -268,7 +345,7 @@ class ClubMemberAdminQueryTest(
                 val clubId = seed()
                 val banned =
                     clubMemberRepository
-                        .findAdminMembers(clubId, null, "마추방", ClubMemberSort.NAME_ASC.queryKey, pageable)
+                        .findAdminMembers(clubId, null, null, "마추방", ClubMemberSort.NAME_ASC.queryKey, pageable)
                         .content
                         .single()
 

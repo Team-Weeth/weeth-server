@@ -21,7 +21,6 @@ class Penalty(
     cardinal: Cardinal,
     penaltyDescription: String,
     penaltyType: PenaltyType = PenaltyType.PENALTY,
-    score: Int = 1,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,20 +42,10 @@ class Penalty(
     var penaltyType: PenaltyType = penaltyType
         private set
 
-    var score: Int = score
-        private set
-
     var penaltyDescription: String = penaltyDescription
         private set
 
-    fun update(
-        penaltyDescription: String? = null,
-        score: Int? = null,
-    ) {
+    fun update(penaltyDescription: String? = null) {
         penaltyDescription?.let { this.penaltyDescription = it }
-        score?.let {
-            require(it > 0) { "페널티 점수는 1 이상이어야 합니다." }
-            this.score = it
-        }
     }
 }
