@@ -5,6 +5,7 @@ import com.weeth.domain.university.application.exception.CareerNetApiException
 import com.weeth.domain.university.application.mapper.UniversityMapper
 import com.weeth.domain.university.domain.model.MajorData
 import com.weeth.domain.university.domain.port.UniversityInfoPort
+import com.weeth.global.config.properties.UniversityProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -16,7 +17,11 @@ class GetUniversityQueryServiceTest :
     DescribeSpec({
         val universityInfoPort = mockk<UniversityInfoPort>()
         val universityMapper = mockk<UniversityMapper>()
-        val queryService = GetUniversityQueryService(universityInfoPort, universityMapper)
+        val universityProperties =
+            UniversityProperties(
+                manualMajors = listOf(UniversityProperties.ManualMajor(name = "인공지능학과", category = "공학계열")),
+            )
+        val queryService = GetUniversityQueryService(universityInfoPort, universityMapper, universityProperties)
 
         describe("getSchools") {
             context("커리어넷 API 오류 시") {

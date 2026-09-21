@@ -80,6 +80,11 @@ career-net:
   key: ${CAREER_NET_API_KEY}
   base-url: https://www.career.go.kr/cnet/openapi/getOpenApi
 
+university:
+  manual-majors:
+    - name: 인공지능학과
+      category: 공학계열
+
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL}
 
