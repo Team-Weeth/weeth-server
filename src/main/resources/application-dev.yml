@@ -51,7 +51,6 @@ cloud:
       auto: false
 
 # v3 에디터로 작성된 게시글 본문을 조회 시 Tiptap HTML 로 변환한다.
-# dev DB 의 동아리 TSID 는 운영과 다르므로 여기에 값을 두지 않고 환경 변수로만 켠다.
-#   LEGACY_CONTENT_CLUB_ID=<dev leets 동아리 TSID>
-#   LEGACY_CONTENT_EDITOR_MIGRATED_AT=2026-09-20T00:00:00
-# 두 값이 모두 있어야 변환이 동작하며, 없으면 본문을 그대로 내려준다.
+# 값은 설정 파일에 두지 않고 환경 변수로 주입한다.
+#   LEGACY_CONTENT_EDITOR_MIGRATED_AT=2026-09-20T00:00:00  (필수. 없으면 변환하지 않는다)
+#   LEGACY_CONTENT_CLUB_ID=<동아리 TSID>                    (선택. 비우면 동아리를 가리지 않는다)

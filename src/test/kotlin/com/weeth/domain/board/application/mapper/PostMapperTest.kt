@@ -202,6 +202,30 @@ class PostMapperTest :
             it("설정이 비어 있는 환경에서는 변환하지 않는다") {
                 render(mapper, legacyPost(isLegacy = true)) shouldBe "## 소제목"
             }
+
+            it("동아리를 지정하지 않아도 전환 시각만 있으면 변환한다") {
+                val clubAgnosticMapper =
+                    PostMapper(
+                        userInfoMapper,
+                        MarkdownToTiptapHtmlConverter(),
+                        LegacyContentProperties(clubId = null, editorMigratedAt = editorMigratedAt),
+                    )
+                val post =
+                    mockk<Post>().also {
+                        every { it.id } returns 300L
+                        every { it.title } returns "제목"
+                        every { it.content } returns "## 소제목"
+                        every { it.clubMember } returns authorMember
+                        every { it.board } returns board
+                        every { it.commentCount } returns 0
+                        every { it.likeCount } returns 0
+                        every { it.createdAt } returns now
+                        every { it.modifiedAt } returns now
+                        every { it.hasLegacyMarkdownContent(null, editorMigratedAt) } returns true
+                    }
+
+                render(clubAgnosticMapper, post) shouldBe "<h2>소제목</h2>"
+            }
         }
 
         describe("toDetailResponse") {

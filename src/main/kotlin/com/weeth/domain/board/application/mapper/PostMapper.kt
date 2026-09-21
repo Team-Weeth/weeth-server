@@ -27,10 +27,9 @@ class PostMapper(
      * 설정이 비어 있거나 v4에서 작성된 글이면 저장된 본문을 그대로 반환한다.
      */
     private fun renderContent(post: Post): String {
-        val clubId = legacyContentProperties.clubId ?: return post.content
         val editorMigratedAt = legacyContentProperties.editorMigratedAt ?: return post.content
 
-        return if (post.hasLegacyMarkdownContent(clubId, editorMigratedAt)) {
+        return if (post.hasLegacyMarkdownContent(legacyContentProperties.clubId, editorMigratedAt)) {
             markdownConverter.convert(post.content)
         } else {
             post.content

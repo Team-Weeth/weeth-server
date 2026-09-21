@@ -88,11 +88,18 @@ class Post(
      *
      * 본문만 봐서는 사용자가 의도한 `- 대시 문장`과 마크다운 리스트 마커를 구분할 수 없으므로,
      * 내용이 아니라 출처(이관된 동아리 + 에디터 전환 이전 작성)로 판정한다.
+     *
+     * [legacyClubId] 가 null 이면 동아리를 가리지 않고 작성 시점만으로 판정한다.
+     * 이관 데이터가 특정 동아리에 몰려 있지 않은 dev 같은 환경에서 쓰기 위한 것으로,
+     * 운영에서는 오판정 범위를 좁히기 위해 반드시 동아리를 지정한다.
      */
     fun hasLegacyMarkdownContent(
-        legacyClubId: Long,
+        legacyClubId: Long?,
         editorMigratedAt: LocalDateTime,
-    ): Boolean = board.club.id == legacyClubId && createdAt.isBefore(editorMigratedAt)
+    ): Boolean {
+        if (!createdAt.isBefore(editorMigratedAt)) return false
+        return legacyClubId == null || board.club.id == legacyClubId
+    }
 
     fun update(
         newTitle: String?,

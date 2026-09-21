@@ -104,4 +104,26 @@ class PostEntityTest :
             postOf(legacyClubId, editorMigratedAt)
                 .hasLegacyMarkdownContent(legacyClubId, editorMigratedAt) shouldBe false
         }
+
+        "hasLegacyMarkdownContent는 동아리를 지정하지 않으면 작성 시점만으로 판정한다" {
+            val editorMigratedAt = LocalDateTime.of(2026, 9, 20, 0, 0)
+
+            fun postOf(
+                clubId: Long,
+                createdAt: LocalDateTime,
+            ): Post {
+                val club = ClubTestFixture.createClub(id = clubId)
+                val post = PostTestFixture.create(board = BoardTestFixture.create(club = club))
+                ReflectionTestUtils.setField(post, "createdAt", createdAt)
+                return post
+            }
+
+            // 동아리가 달라도 전환 이전 글이면 변환 대상이다
+            postOf(999L, editorMigratedAt.minusDays(1))
+                .hasLegacyMarkdownContent(null, editorMigratedAt) shouldBe true
+
+            // 동아리를 가리지 않아도 작성 시점 조건은 그대로 적용된다
+            postOf(999L, editorMigratedAt.plusDays(1))
+                .hasLegacyMarkdownContent(null, editorMigratedAt) shouldBe false
+        }
     })
