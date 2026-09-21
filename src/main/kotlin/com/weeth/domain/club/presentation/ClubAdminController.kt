@@ -1,6 +1,7 @@
 package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberBulkPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberSort
@@ -269,6 +270,22 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         adminClubMemberUseCase.updateMemberPosition(clubId, userId, clubMemberId, request)
         return CommonResponse.success(ClubResponseCode.MEMBER_POSITION_UPDATED_SUCCESS)
+    }
+
+    @PatchMapping("/members/positions")
+    @Operation(
+        summary = "멤버 포지션 일괄 지정/해제",
+        description = "여러 멤버를 선택해 동일한 포지션으로 한 번에 지정하거나 해제합니다. positionOptionId가 null이면 포지션을 해제합니다.",
+    )
+    @ApiErrorCodeExample(ClubErrorCode::class)
+    fun updateMemberPositionBulk(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Valid @RequestBody request: ClubMemberBulkPositionUpdateRequest,
+    ): CommonResponse<Unit> {
+        adminClubMemberUseCase.updateMemberPositionBulk(clubId, userId, request)
+        return CommonResponse.success(ClubResponseCode.MEMBER_POSITION_BULK_UPDATED_SUCCESS)
     }
 
     @PatchMapping("/members/apply-ob")

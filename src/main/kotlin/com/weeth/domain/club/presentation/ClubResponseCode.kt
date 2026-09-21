@@ -38,4 +38,5 @@ enum class ClubResponseCode(
     POSITION_OPTIONS_SAVED_SUCCESS(11127, HttpStatus.OK, "포지션 옵션이 저장되었습니다."),
     POSITION_OPTIONS_FIND_SUCCESS(11129, HttpStatus.OK, "포지션 옵션 목록을 성공적으로 조회했습니다."),
     MEMBER_POSITION_UPDATED_SUCCESS(11130, HttpStatus.OK, "멤버 포지션이 변경되었습니다."),
+    MEMBER_POSITION_BULK_UPDATED_SUCCESS(11131, HttpStatus.OK, "멤버 포지션이 일괄 변경되었습니다."),
 }

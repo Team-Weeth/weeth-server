@@ -7,6 +7,7 @@ import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberBulkPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
@@ -270,5 +271,31 @@ class AdminClubMemberUseCase(
                 found
             }
         member.assignPosition(option) // 엔티티 자체의 check()가 타 동아리 옵션 지정을 최종 방어
+    }
+
+    /**
+     * 여러 멤버를 선택해 동일한 포지션으로 일괄 지정/해제하는 벌크 액션.
+     * 대상 중 하나라도 타 동아리 소속/미존재면 전체를 실패시키고 부분 반영하지 않는다.
+     */
+    @Transactional
+    fun updateMemberPositionBulk(
+        clubId: Long,
+        userId: Long,
+        request: ClubMemberBulkPositionUpdateRequest,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val distinctIds = request.clubMemberIds.distinct().sorted()
+        val members = clubMemberReader.findAllByIdsWithLock(distinctIds)
+        if (members.size != distinctIds.size) throw ClubMemberNotFoundException()
+        if (members.any { it.club.id != clubId }) throw ClubMemberNotInClubException()
+
+        val option =
+            request.positionOptionId?.let { optionId ->
+                val found = clubPositionOptionReader.findByIdOrNull(optionId) ?: throw PositionOptionNotFoundException()
+                if (found.club.id != clubId) throw PositionOptionNotInClubException()
+                found
+            }
+        members.forEach { it.assignPosition(option) }
     }
 }

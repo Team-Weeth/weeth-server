@@ -1,5 +1,6 @@
 package com.weeth.domain.club.presentation
 
+import com.weeth.domain.club.application.dto.request.ClubMemberBulkPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubPositionOptionRequest
 import com.weeth.domain.club.application.dto.request.SaveClubPositionOptionsRequest
@@ -236,6 +237,38 @@ class ClubAdminControllerTest :
                 response.code shouldBe ClubResponseCode.MEMBER_POSITION_UPDATED_SUCCESS.code
                 verify(exactly = 1) {
                     adminClubMemberUseCase.updateMemberPosition(clubId, userId, clubMemberId, request)
+                }
+            }
+        }
+
+        describe("updateMemberPositionBulk") {
+            it("포지션 일괄 지정 성공 코드를 반환한다") {
+                val request =
+                    ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L, 21L), positionOptionId = 100L)
+                every {
+                    adminClubMemberUseCase.updateMemberPositionBulk(clubId, userId, request)
+                } just Runs
+
+                val response = controller.updateMemberPositionBulk(userId, clubId, request)
+
+                response.code shouldBe ClubResponseCode.MEMBER_POSITION_BULK_UPDATED_SUCCESS.code
+                verify(exactly = 1) {
+                    adminClubMemberUseCase.updateMemberPositionBulk(clubId, userId, request)
+                }
+            }
+
+            it("positionOptionId가 null이면 일괄 해제 요청을 그대로 전달한다") {
+                val request =
+                    ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L, 21L), positionOptionId = null)
+                every {
+                    adminClubMemberUseCase.updateMemberPositionBulk(clubId, userId, request)
+                } just Runs
+
+                val response = controller.updateMemberPositionBulk(userId, clubId, request)
+
+                response.code shouldBe ClubResponseCode.MEMBER_POSITION_BULK_UPDATED_SUCCESS.code
+                verify(exactly = 1) {
+                    adminClubMemberUseCase.updateMemberPositionBulk(clubId, userId, request)
                 }
             }
         }
