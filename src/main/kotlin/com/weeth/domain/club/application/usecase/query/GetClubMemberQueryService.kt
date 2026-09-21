@@ -7,13 +7,17 @@ import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
 import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.mapper.ClubMapper
+import com.weeth.domain.club.application.mapper.ClubPositionOptionMapper
+import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.club.domain.repository.ClubPositionOptionReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.domain.repository.PenaltyReader
@@ -32,6 +36,8 @@ class GetClubMemberQueryService(
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val clubMapper: ClubMapper,
+    private val clubPositionOptionMapper: ClubPositionOptionMapper,
+    private val clubPositionOptionReader: ClubPositionOptionReader,
     private val userReader: UserReader,
     private val penaltyReader: PenaltyReader,
     private val postReader: PostReader,
@@ -59,7 +65,7 @@ class GetClubMemberQueryService(
                 pageable = pageable,
             )
 
-        // 기수와 최근 페널티는 조회된 페이지의 멤버에 대해서만 일괄 조회해 N+1을 피한다.
+        // 기수, 최근 페널티, 포지션은 조회된 페이지의 멤버에 대해서만 일괄 조회해 N+1을 피한다.
         val clubMemberIds = members.content.map { it.id }
         val cardinalsByMemberId =
             if (members.isEmpty) {
@@ -76,6 +82,7 @@ class GetClubMemberQueryService(
                     .groupBy { it.clubMember.id }
                     .mapValues { (_, penalties) -> penalties.first().createdAt }
             }
+        val positionResponseByOptionId = loadPositionResponsesByOptionId(members.content)
 
         return PageResponse.from(
             members.map { member ->
@@ -83,9 +90,24 @@ class GetClubMemberQueryService(
                     member,
                     cardinalsByMemberId[member.id] ?: emptyList(),
                     lastPenaltyAtByMemberId[member.id],
+                    member.positionOption?.id?.let { positionResponseByOptionId[it] },
                 )
             },
         )
+    }
+
+    /**
+     * 페이지 내 멤버들의 positionOption id를 모아 일괄 조회한다.
+     * 매퍼가 member.positionOption.name/colorHex를 행별로 직접 역참조하면 지연 로딩으로 N+1이 재도입되므로,
+     * 반드시 이 맵을 통해 미리 조회된 응답을 넘겨야 한다.
+     */
+    private fun loadPositionResponsesByOptionId(members: List<ClubMember>): Map<Long, ClubPositionOptionResponse> {
+        val optionIds = members.mapNotNull { it.positionOption?.id }.distinct()
+        if (optionIds.isEmpty()) return emptyMap()
+
+        return clubPositionOptionReader
+            .findAllByIdIn(optionIds)
+            .associate { it.id to clubPositionOptionMapper.toResponse(it) }
     }
 
     /**
@@ -103,7 +125,8 @@ class GetClubMemberQueryService(
         if (member.club.id != clubId) throw ClubMemberNotInClubException()
 
         val cardinals = clubMemberCardinalReader.findAllByClubMember(member)
-        return clubMapper.toMemberResponse(member, cardinals)
+        val position = member.positionOption?.let { clubPositionOptionMapper.toResponse(it) }
+        return clubMapper.toMemberResponse(member, cardinals, position = position)
     }
 
     fun findMyMemberProfile(

@@ -72,4 +72,13 @@ enum class ClubErrorCode(
 
     @ExplainError("생성하려는 동아리가 이미 있는 경우 발생합니다. 동아리 중복은 동일한 학교 안에 동일한 이름의 동아리가 있는지 검증합니다.")
     DUPLICATE_CLUB(21119, HttpStatus.CONFLICT, "이미 존재하는 동아리입니다."),
+
+    @ExplainError("포지션 옵션을 동아리당 최대 개수(6개)를 초과하여 저장하려 할 때 발생합니다.")
+    POSITION_OPTION_LIMIT_EXCEEDED(21120, HttpStatus.BAD_REQUEST, "포지션 옵션은 최대 6개까지 설정할 수 있습니다."),
+
+    @ExplainError("멤버에게 지정하려는 포지션 옵션 ID가 존재하지 않을 때 발생합니다.")
+    POSITION_OPTION_NOT_FOUND(21121, HttpStatus.NOT_FOUND, "존재하지 않는 포지션 옵션입니다."),
+
+    @ExplainError("다른 동아리 소속 포지션 옵션을 멤버에게 지정하려 할 때 발생합니다.")
+    POSITION_OPTION_NOT_IN_CLUB(21122, HttpStatus.BAD_REQUEST, "같은 동아리의 포지션 옵션만 지정할 수 있습니다."),
 }

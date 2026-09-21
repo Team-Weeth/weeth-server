@@ -9,6 +9,7 @@ import com.weeth.domain.club.application.dto.response.ClubMemberPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubUsingProfileResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
@@ -69,6 +70,7 @@ class ClubMapper(
         member: ClubMember,
         cardinals: List<ClubMemberCardinal>,
         lastPenaltyAt: java.time.LocalDateTime? = null,
+        position: ClubPositionOptionResponse? = null,
     ) = ClubMemberResponse(
         userId = member.user.id,
         clubMemberId = member.id,
@@ -90,6 +92,7 @@ class ClubMapper(
         profileImageUrl = resolveMemberProfileImage(member),
         bio = resolveMemberBio(member),
         joinedAt = member.createdAt,
+        position = position,
     )
 
     fun toMemberProfileResponse(

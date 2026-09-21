@@ -82,6 +82,11 @@ class ClubMember(
     var userProfile: UserProfile? = null
         private set
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "position_option_id", nullable = true)
+    var positionOption: ClubPositionOption? = null
+        private set
+
     @Column(name = "left_at", nullable = true)
     var leftAt: LocalDateTime? = null
         private set
@@ -194,6 +199,18 @@ class ClubMember(
     fun assignProfile(profile: UserProfile) {
         check(profile.user.id == user.id) { "본인 프로필만 사용할 수 있습니다." }
         this.userProfile = profile
+    }
+
+    /**
+     * 포지션 옵션을 지정하거나(옵션이 같은 동아리 소속일 때) 해제한다(null).
+     * 타 동아리 옵션 지정은 UseCase에서 먼저 걸러내는 것이 기본 경로이며,
+     * 이 check()는 엔티티 불변식을 지키기 위한 최종 방어선이다.
+     */
+    fun assignPosition(option: ClubPositionOption?) {
+        if (option != null) {
+            check(option.club.id == club.id) { "같은 동아리의 포지션만 지정할 수 있습니다." }
+        }
+        this.positionOption = option
     }
 
     fun decrementPenaltyCount() {

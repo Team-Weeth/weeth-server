@@ -7,6 +7,7 @@ import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
 import com.weeth.domain.club.application.exception.CannotBanLeadException
@@ -16,6 +17,8 @@ import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.LeadSelfTransferException
 import com.weeth.domain.club.application.exception.LeadTransferOnlyException
 import com.weeth.domain.club.application.exception.NotLeadException
+import com.weeth.domain.club.application.exception.PositionOptionNotFoundException
+import com.weeth.domain.club.application.exception.PositionOptionNotInClubException
 import com.weeth.domain.club.application.exception.SelfBanNotAllowedException
 import com.weeth.domain.club.application.exception.SelfRoleChangeNotAllowedException
 import com.weeth.domain.club.domain.entity.ClubMember
@@ -23,6 +26,7 @@ import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.club.domain.repository.ClubPositionOptionReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
@@ -46,6 +50,7 @@ class AdminClubMemberUseCase(
     private val attendanceInitializer: AttendanceInitializer,
     private val penaltyReader: PenaltyReader,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
+    private val clubPositionOptionReader: ClubPositionOptionReader,
 ) {
     @Transactional
     fun accept(
@@ -238,5 +243,32 @@ class AdminClubMemberUseCase(
             clubMemberCardinalRepository.saveAll(toAdd.map { ClubMemberCardinal.create(member, it) })
             attendanceInitializer.initializeForMemberCardinals(clubId, member, toAdd)
         }
+    }
+
+    /**
+     * 포지션 드롭다운 선택 시 즉시 저장(자동저장)되는 단일 목적 액션.
+     * [ClubMemberPositionUpdateRequest.positionOptionId]가 null이면 포지션을 해제한다.
+     */
+    @Transactional
+    fun updateMemberPosition(
+        clubId: Long,
+        userId: Long,
+        clubMemberId: Long,
+        request: ClubMemberPositionUpdateRequest,
+    ) {
+        clubPermissionPolicy.requireAdmin(clubId, userId)
+
+        val member =
+            clubMemberReader.findByIdWithLock(clubMemberId)
+                ?: throw ClubMemberNotFoundException()
+        if (member.club.id != clubId) throw ClubMemberNotInClubException()
+
+        val option =
+            request.positionOptionId?.let { optionId ->
+                val found = clubPositionOptionReader.findByIdOrNull(optionId) ?: throw PositionOptionNotFoundException()
+                if (found.club.id != clubId) throw PositionOptionNotInClubException()
+                found
+            }
+        member.assignPosition(option) // 엔티티 자체의 check()가 타 동아리 옵션 지정을 최종 방어
     }
 }

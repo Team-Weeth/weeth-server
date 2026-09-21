@@ -280,4 +280,63 @@ class ClubMemberTest :
                 member.updateRole(MemberRole.ADMIN)
             }
         }
+
+        "assignPosition — 같은 동아리의 포지션 옵션을 지정한다" {
+            val member = ClubMember(club = club, user = user)
+            val option =
+                ClubPositionOption.create(
+                    club = club,
+                    name = "백엔드",
+                    colorHex = "#4CAF50",
+                    displayOrder = 0,
+                )
+
+            member.assignPosition(option)
+
+            member.positionOption shouldBe option
+        }
+
+        "assignPosition — 다른 동아리의 포지션 옵션을 지정하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user)
+            val otherClub =
+                Club.create(
+                    name = "다른 동아리",
+                    code = "OTHER001",
+                    schoolName = "가천대학교",
+                    clubContact =
+                        ClubContact.from(
+                            email = "other@test.com",
+                            phoneNumber = "01000000001",
+                            primaryContact = PrimaryContact.PHONE,
+                        ),
+                )
+            val otherClubOption =
+                ClubPositionOption.create(
+                    club = otherClub,
+                    name = "프론트엔드",
+                    colorHex = "#FF5722",
+                    displayOrder = 0,
+                )
+
+            shouldThrow<IllegalStateException> {
+                member.assignPosition(otherClubOption)
+            }
+            member.positionOption shouldBe null
+        }
+
+        "assignPosition — null을 전달하면 포지션을 해제한다" {
+            val member = ClubMember(club = club, user = user)
+            val option =
+                ClubPositionOption.create(
+                    club = club,
+                    name = "백엔드",
+                    colorHex = "#4CAF50",
+                    displayOrder = 0,
+                )
+            member.assignPosition(option)
+
+            member.assignPosition(null)
+
+            member.positionOption shouldBe null
+        }
     })

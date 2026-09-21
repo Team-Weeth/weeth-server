@@ -7,14 +7,17 @@ import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.application.mapper.ClubMapper
+import com.weeth.domain.club.application.mapper.ClubPositionOptionMapper
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.club.domain.repository.ClubPositionOptionReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.club.fixture.ClubPositionOptionTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.penalty.domain.repository.PenaltyReader
@@ -48,7 +51,9 @@ class GetClubMemberQueryServiceTest :
         val userReader = mockk<UserReader>()
         val penaltyReader = mockk<PenaltyReader>()
         val postReader = mockk<PostReader>()
+        val clubPositionOptionReader = mockk<ClubPositionOptionReader>()
         val clubMapper = ClubMapper(fileAccessUrlPort)
+        val clubPositionOptionMapper = ClubPositionOptionMapper()
 
         val service =
             GetClubMemberQueryService(
@@ -57,6 +62,8 @@ class GetClubMemberQueryServiceTest :
                 clubMemberPolicy = clubMemberPolicy,
                 clubPermissionPolicy = clubPermissionPolicy,
                 clubMapper = clubMapper,
+                clubPositionOptionMapper = clubPositionOptionMapper,
+                clubPositionOptionReader = clubPositionOptionReader,
                 userReader = userReader,
                 penaltyReader = penaltyReader,
                 postReader = postReader,
@@ -71,6 +78,7 @@ class GetClubMemberQueryServiceTest :
                 userReader,
                 penaltyReader,
                 postReader,
+                clubPositionOptionReader,
             )
         }
 
@@ -363,6 +371,78 @@ class GetClubMemberQueryServiceTest :
                     pageableSlot.captured.pageNumber shouldBe 0
                     pageableSlot.captured.pageSize shouldBe 100
                 }
+
+                it("포지션이 미지정인 멤버는 position이 null이다") {
+                    val club = ClubTestFixture.createClub()
+                    val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
+                    val member = ClubTestFixture.createClubMember(club = club)
+
+                    every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                    every {
+                        clubMemberReader.findAdminMembers(1L, null, null, null, "CARDINAL_DESC", any())
+                    } returns PageImpl(listOf(member), PageRequest.of(0, 20), 1)
+                    every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
+                    every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+
+                    val result =
+                        service.findClubMembersForAdmin(
+                            clubId = 1L,
+                            userId = 99L,
+                            page = 0,
+                            size = 20,
+                            keyword = null,
+                            cardinalNumber = null,
+                            memberRole = null,
+                            sort = ClubMemberSort.CARDINAL_DESC,
+                        )
+
+                    result.content.first().position shouldBe null
+                    verify(exactly = 0) { clubPositionOptionReader.findAllByIdIn(any()) }
+                }
+
+                it("포지션이 지정된 멤버들을 일괄 조회(findAllByIdIn)로 매핑하고 행 단위로 역참조하지 않는다") {
+                    val club = ClubTestFixture.createClub(id = 1L)
+                    val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
+                    val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club, name = "백엔드")
+                    val member1 =
+                        ClubMemberTestFixture.createActiveMember(id = 10L, club = club).also {
+                            it.assignPosition(option)
+                        }
+                    val member2 =
+                        ClubMemberTestFixture.createActiveMember(id = 11L, club = club).also {
+                            it.assignPosition(option)
+                        }
+
+                    every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                    every {
+                        clubMemberReader.findAdminMembers(1L, null, null, null, "CARDINAL_DESC", any())
+                    } returns PageImpl(listOf(member1, member2), PageRequest.of(0, 20), 2)
+                    every {
+                        clubMemberCardinalReader.findAllByClubMembers(listOf(member1, member2))
+                    } returns emptyList()
+                    every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+                    every { clubPositionOptionReader.findAllByIdIn(listOf(100L)) } returns listOf(option)
+
+                    val result =
+                        service.findClubMembersForAdmin(
+                            clubId = 1L,
+                            userId = 99L,
+                            page = 0,
+                            size = 20,
+                            keyword = null,
+                            cardinalNumber = null,
+                            memberRole = null,
+                            sort = ClubMemberSort.CARDINAL_DESC,
+                        )
+
+                    result.content.map { it.position?.id } shouldBe listOf(100L, 100L)
+                    result.content
+                        .first()
+                        .position
+                        ?.name shouldBe "백엔드"
+                    // 멤버가 2명이어도 findAllByIdIn은 distinct id로 1회만 호출된다 (N+1 회피)
+                    verify(exactly = 1) { clubPositionOptionReader.findAllByIdIn(listOf(100L)) }
+                }
             }
         }
 
@@ -406,6 +486,27 @@ class GetClubMemberQueryServiceTest :
                     val result = service.findClubMemberDetailForAdmin(clubId = 1L, userId = 99L, clubMemberId = 5L)
 
                     result.warningCount shouldBe 1
+                }
+            }
+
+            context("포지션이 지정된 멤버를 조회하는 경우") {
+                it("position을 직접 resolve해서 반환한다") {
+                    val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club, name = "백엔드")
+                    val member =
+                        ClubMemberTestFixture.createActiveMember(id = 5L, club = club).also {
+                            it.assignPosition(option)
+                        }
+
+                    every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                    every { clubMemberReader.findAdminMemberDetail(5L) } returns member
+                    every { clubMemberCardinalReader.findAllByClubMember(member) } returns emptyList()
+
+                    val result = service.findClubMemberDetailForAdmin(clubId = 1L, userId = 99L, clubMemberId = 5L)
+
+                    result.position?.id shouldBe 100L
+                    result.position?.name shouldBe "백엔드"
+                    // 단건 조회는 페이지 일괄 조회 대상이 아니므로 findAllByIdIn을 쓰지 않는다
+                    verify(exactly = 0) { clubPositionOptionReader.findAllByIdIn(any()) }
                 }
             }
 

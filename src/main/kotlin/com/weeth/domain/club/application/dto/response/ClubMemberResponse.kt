@@ -49,4 +49,6 @@ data class ClubMemberResponse(
     val bio: String? = null,
     @field:Schema(description = "동아리 가입일", example = "2026-03-01T10:00:00")
     val joinedAt: LocalDateTime,
+    @field:Schema(description = "지정된 포지션 (없으면 null = 미지정)", nullable = true)
+    val position: ClubPositionOptionResponse? = null,
 )

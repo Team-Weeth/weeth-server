@@ -1,16 +1,21 @@
 package com.weeth.domain.club.presentation
 
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberSort
 import com.weeth.domain.club.application.dto.request.ClubUpdateRequest
+import com.weeth.domain.club.application.dto.request.SaveClubPositionOptionsRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.AdminClubMemberUseCase
+import com.weeth.domain.club.application.usecase.command.ManageClubPositionOptionUseCase
 import com.weeth.domain.club.application.usecase.command.ManageClubUseCase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
+import com.weeth.domain.club.application.usecase.query.GetClubPositionOptionQueryService
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.global.auth.annotation.CurrentUser
@@ -28,6 +33,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -40,8 +46,10 @@ import org.springframework.web.bind.annotation.RestController
 class ClubAdminController(
     private val manageClubUseCase: ManageClubUseCase,
     private val adminClubMemberUseCase: AdminClubMemberUseCase,
+    private val manageClubPositionOptionUseCase: ManageClubPositionOptionUseCase,
     private val getClubQueryService: GetClubQueryService,
     private val getClubMemberQueryService: GetClubMemberQueryService,
+    private val getClubPositionOptionQueryService: GetClubPositionOptionQueryService,
 ) {
     @GetMapping
     @Operation(summary = "동아리 상세 정보 조회")
@@ -246,6 +254,23 @@ class ClubAdminController(
         return CommonResponse.success(ClubResponseCode.MEMBER_CARDINAL_UPDATED_SUCCESS)
     }
 
+    @PatchMapping("/members/{clubMemberId}/position")
+    @Operation(
+        summary = "멤버 포지션 지정/해제",
+        description = "포지션 드롭다운 선택 시 즉시 저장되는 자동저장용 API입니다. positionOptionId가 null이면 포지션을 해제합니다.",
+    )
+    @ApiErrorCodeExample(ClubErrorCode::class)
+    fun updateMemberPosition(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @PathVariable clubMemberId: Long,
+        @Valid @RequestBody request: ClubMemberPositionUpdateRequest,
+    ): CommonResponse<Unit> {
+        adminClubMemberUseCase.updateMemberPosition(clubId, userId, clubMemberId, request)
+        return CommonResponse.success(ClubResponseCode.MEMBER_POSITION_UPDATED_SUCCESS)
+    }
+
     @PatchMapping("/members/apply-ob")
     @Operation(summary = "멤버 OB 기수 등록", deprecated = true)
     fun applyOb(
@@ -256,5 +281,33 @@ class ClubAdminController(
     ): CommonResponse<Unit> {
         adminClubMemberUseCase.applyOb(clubId, userId, requests)
         return CommonResponse.success(ClubResponseCode.MEMBER_APPLY_OB_SUCCESS)
+    }
+
+    @PutMapping("/positions")
+    @Operation(
+        summary = "포지션 옵션 전체 저장",
+        description = "요청 목록으로 동아리의 포지션 옵션 전체를 교체합니다. 옵션이 없던 동아리는 새로 생성됩니다.",
+    )
+    @ApiErrorCodeExample(ClubErrorCode::class)
+    fun savePositionOptions(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Valid @RequestBody request: SaveClubPositionOptionsRequest,
+    ): CommonResponse<Unit> {
+        manageClubPositionOptionUseCase.save(clubId, userId, request)
+        return CommonResponse.success(ClubResponseCode.POSITION_OPTIONS_SAVED_SUCCESS)
+    }
+
+    @GetMapping("/positions")
+    @Operation(summary = "포지션 옵션 목록 조회")
+    @ApiErrorCodeExample(ClubErrorCode::class)
+    fun getPositionOptions(
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+    ): CommonResponse<List<ClubPositionOptionResponse>> {
+        val options = getClubPositionOptionQueryService.findAll(clubId, userId)
+        return CommonResponse.success(ClubResponseCode.POSITION_OPTIONS_FIND_SUCCESS, options)
     }
 }
