@@ -1,8 +1,11 @@
 package com.weeth.domain.club.domain.entity
 
+import com.weeth.domain.club.domain.enums.PositionColor
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -21,7 +24,7 @@ class ClubPositionOption(
     club: Club,
     id: Long = 0L,
     name: String,
-    colorHex: String,
+    color: PositionColor,
     displayOrder: Int,
 ) : BaseEntity() {
     @Id
@@ -39,8 +42,9 @@ class ClubPositionOption(
     var name: String = name
         private set
 
-    @Column(name = "color_hex", nullable = false, length = 7)
-    var colorHex: String = colorHex
+    @Column(name = "color", nullable = false, length = 20)
+    @Enumerated(EnumType.STRING)
+    var color: PositionColor = color
         private set
 
     @Column(name = "display_order", nullable = false)
@@ -49,13 +53,13 @@ class ClubPositionOption(
 
     fun update(
         name: String,
-        colorHex: String,
+        color: PositionColor,
         displayOrder: Int,
     ) {
         require(name.isNotBlank()) { "포지션 이름은 비어 있을 수 없습니다." }
         require(name.length <= MAX_NAME_LENGTH) { "포지션 이름은 최대 ${MAX_NAME_LENGTH}자까지 입력할 수 있습니다." }
         this.name = name
-        this.colorHex = colorHex
+        this.color = color
         this.displayOrder = displayOrder
     }
 
@@ -66,7 +70,7 @@ class ClubPositionOption(
         fun create(
             club: Club,
             name: String,
-            colorHex: String,
+            color: PositionColor,
             displayOrder: Int,
         ): ClubPositionOption {
             require(name.isNotBlank()) { "포지션 이름은 비어 있을 수 없습니다." }
@@ -74,7 +78,7 @@ class ClubPositionOption(
             return ClubPositionOption(
                 club = club,
                 name = name,
-                colorHex = colorHex,
+                color = color,
                 displayOrder = displayOrder,
             )
         }

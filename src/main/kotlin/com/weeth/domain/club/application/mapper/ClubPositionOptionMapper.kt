@@ -10,7 +10,7 @@ class ClubPositionOptionMapper {
         ClubPositionOptionResponse(
             id = option.id,
             name = option.name,
-            colorHex = option.colorHex,
+            color = option.color,
             displayOrder = option.displayOrder,
         )
 

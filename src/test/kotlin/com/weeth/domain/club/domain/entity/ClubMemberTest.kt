@@ -2,6 +2,7 @@ package com.weeth.domain.club.domain.entity
 
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.enums.PositionColor
 import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -287,7 +288,7 @@ class ClubMemberTest :
                 ClubPositionOption.create(
                     club = club,
                     name = "백엔드",
-                    colorHex = "#4CAF50",
+                    color = PositionColor.PRIMARY,
                     displayOrder = 0,
                 )
 
@@ -314,7 +315,7 @@ class ClubMemberTest :
                 ClubPositionOption.create(
                     club = otherClub,
                     name = "프론트엔드",
-                    colorHex = "#FF5722",
+                    color = PositionColor.SECONDARY,
                     displayOrder = 0,
                 )
 
@@ -330,7 +331,7 @@ class ClubMemberTest :
                 ClubPositionOption.create(
                     club = club,
                     name = "백엔드",
-                    colorHex = "#4CAF50",
+                    color = PositionColor.PRIMARY,
                     displayOrder = 0,
                 )
             member.assignPosition(option)

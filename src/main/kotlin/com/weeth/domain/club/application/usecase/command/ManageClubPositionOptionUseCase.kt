@@ -8,7 +8,6 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubPositionOptionRepository
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.club.domain.vo.ColorHex
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -62,7 +61,7 @@ class ManageClubPositionOptionUseCase(
             ClubPositionOption.create(
                 club = club,
                 name = option.name,
-                colorHex = ColorHex(option.colorHex).value,
+                color = option.color,
                 displayOrder = index,
             )
         }

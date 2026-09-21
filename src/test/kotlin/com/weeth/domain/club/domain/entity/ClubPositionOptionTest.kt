@@ -1,5 +1,6 @@
 package com.weeth.domain.club.domain.entity
 
+import com.weeth.domain.club.domain.enums.PositionColor
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -14,12 +15,12 @@ class ClubPositionOptionTest :
                 ClubPositionOption.create(
                     club = club,
                     name = "백엔드",
-                    colorHex = "#4CAF50",
+                    color = PositionColor.PRIMARY,
                     displayOrder = 0,
                 )
 
             option.name shouldBe "백엔드"
-            option.colorHex shouldBe "#4CAF50"
+            option.color shouldBe PositionColor.PRIMARY
             option.displayOrder shouldBe 0
         }
 
@@ -28,7 +29,7 @@ class ClubPositionOptionTest :
                 ClubPositionOption.create(
                     club = club,
                     name = "12345678901",
-                    colorHex = "#4CAF50",
+                    color = PositionColor.PRIMARY,
                     displayOrder = 0,
                 )
             }
@@ -39,7 +40,7 @@ class ClubPositionOptionTest :
                 ClubPositionOption.create(
                     club = club,
                     name = "",
-                    colorHex = "#4CAF50",
+                    color = PositionColor.PRIMARY,
                     displayOrder = 0,
                 )
             }
@@ -50,14 +51,14 @@ class ClubPositionOptionTest :
                 ClubPositionOption.create(
                     club = club,
                     name = "백엔드",
-                    colorHex = "#4CAF50",
+                    color = PositionColor.PRIMARY,
                     displayOrder = 0,
                 )
 
-            option.update(name = "프론트엔드", colorHex = "#FF5722", displayOrder = 2)
+            option.update(name = "프론트엔드", color = PositionColor.SECONDARY, displayOrder = 2)
 
             option.name shouldBe "프론트엔드"
-            option.colorHex shouldBe "#FF5722"
+            option.color shouldBe PositionColor.SECONDARY
             option.displayOrder shouldBe 2
         }
 
@@ -66,12 +67,12 @@ class ClubPositionOptionTest :
                 ClubPositionOption.create(
                     club = club,
                     name = "백엔드",
-                    colorHex = "#4CAF50",
+                    color = PositionColor.PRIMARY,
                     displayOrder = 0,
                 )
 
             shouldThrow<IllegalArgumentException> {
-                option.update(name = "12345678901", colorHex = "#4CAF50", displayOrder = 0)
+                option.update(name = "12345678901", color = PositionColor.PRIMARY, displayOrder = 0)
             }
         }
     })

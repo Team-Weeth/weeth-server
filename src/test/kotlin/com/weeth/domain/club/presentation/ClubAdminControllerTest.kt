@@ -14,6 +14,7 @@ import com.weeth.domain.club.application.usecase.query.GetClubPositionOptionQuer
 import com.weeth.domain.club.application.usecase.query.GetClubQueryService
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.enums.PositionColor
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
@@ -176,7 +177,7 @@ class ClubAdminControllerTest :
             it("저장 성공 코드를 반환한다") {
                 val request =
                     SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "백엔드", colorHex = "#4CAF50")),
+                        options = listOf(ClubPositionOptionRequest(name = "백엔드", color = PositionColor.PRIMARY)),
                     )
                 every { manageClubPositionOptionUseCase.save(clubId, userId, request) } just Runs
 
@@ -191,8 +192,18 @@ class ClubAdminControllerTest :
             it("조회 성공 코드와 옵션 목록을 반환한다") {
                 val options =
                     listOf(
-                        ClubPositionOptionResponse(id = 1L, name = "백엔드", colorHex = "#4CAF50", displayOrder = 0),
-                        ClubPositionOptionResponse(id = 2L, name = "프론트엔드", colorHex = "#FF5722", displayOrder = 1),
+                        ClubPositionOptionResponse(
+                            id = 1L,
+                            name = "백엔드",
+                            color = PositionColor.PRIMARY,
+                            displayOrder = 0,
+                        ),
+                        ClubPositionOptionResponse(
+                            id = 2L,
+                            name = "프론트엔드",
+                            color = PositionColor.SECONDARY,
+                            displayOrder = 1,
+                        ),
                     )
                 every { getClubPositionOptionQueryService.findAll(clubId, userId) } returns options
 

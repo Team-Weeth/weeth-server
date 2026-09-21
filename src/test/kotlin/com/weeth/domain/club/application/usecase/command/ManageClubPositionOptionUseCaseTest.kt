@@ -4,6 +4,7 @@ import com.weeth.domain.club.application.dto.request.ClubPositionOptionRequest
 import com.weeth.domain.club.application.dto.request.SaveClubPositionOptionsRequest
 import com.weeth.domain.club.application.exception.PositionOptionLimitExceededException
 import com.weeth.domain.club.domain.entity.ClubPositionOption
+import com.weeth.domain.club.domain.enums.PositionColor
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubPositionOptionRepository
 import com.weeth.domain.club.domain.repository.ClubReader
@@ -57,8 +58,8 @@ class ManageClubPositionOptionUseCaseTest :
                     SaveClubPositionOptionsRequest(
                         options =
                             listOf(
-                                ClubPositionOptionRequest(name = "백엔드", colorHex = "#4CAF50"),
-                                ClubPositionOptionRequest(name = "프론트엔드", colorHex = "#FF5722"),
+                                ClubPositionOptionRequest(name = "백엔드", color = PositionColor.PRIMARY),
+                                ClubPositionOptionRequest(name = "프론트엔드", color = PositionColor.SECONDARY),
                             ),
                     ),
                 )
@@ -86,7 +87,7 @@ class ManageClubPositionOptionUseCaseTest :
                     1L,
                     10L,
                     SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "디자인", colorHex = "#9C27B0")),
+                        options = listOf(ClubPositionOptionRequest(name = "디자인", color = PositionColor.PURPLE)),
                     ),
                 )
 
@@ -107,7 +108,7 @@ class ManageClubPositionOptionUseCaseTest :
                     1L,
                     10L,
                     SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "디자인", colorHex = "#9C27B0")),
+                        options = listOf(ClubPositionOptionRequest(name = "디자인", color = PositionColor.PURPLE)),
                     ),
                 )
 
@@ -121,7 +122,7 @@ class ManageClubPositionOptionUseCaseTest :
                     1L,
                     10L,
                     SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "디자인", colorHex = "#9C27B0")),
+                        options = listOf(ClubPositionOptionRequest(name = "디자인", color = PositionColor.PURPLE)),
                     ),
                 )
 
@@ -129,7 +130,7 @@ class ManageClubPositionOptionUseCaseTest :
             }
 
             it("옵션이 6개를 초과하면 PositionOptionLimitExceededException이 발생하고 삭제/저장하지 않는다") {
-                val options = (1..7).map { ClubPositionOptionRequest(name = "옵션$it", colorHex = "#4CAF50") }
+                val options = (1..7).map { ClubPositionOptionRequest(name = "옵션$it", color = PositionColor.PRIMARY) }
 
                 shouldThrow<PositionOptionLimitExceededException> {
                     useCase.save(1L, 10L, SaveClubPositionOptionsRequest(options = options))
@@ -147,7 +148,7 @@ class ManageClubPositionOptionUseCaseTest :
                         1L,
                         20L,
                         SaveClubPositionOptionsRequest(
-                            options = listOf(ClubPositionOptionRequest(name = "백엔드", colorHex = "#4CAF50")),
+                            options = listOf(ClubPositionOptionRequest(name = "백엔드", color = PositionColor.PRIMARY)),
                         ),
                     )
                 }
