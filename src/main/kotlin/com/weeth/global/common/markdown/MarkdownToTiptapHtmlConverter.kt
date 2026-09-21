@@ -216,7 +216,6 @@ class MarkdownToTiptapHtmlConverter {
         restoreEmptyParagraphs(body)
         demoteUnsupportedHeadings(body)
         renameStrikethroughTags(body)
-        convertImagesToLinks(body)
         normalizeTaskLists(body)
         normalizeTables(body)
         listOf("li", "blockquote").forEach { tag ->
@@ -246,24 +245,6 @@ class MarkdownToTiptapHtmlConverter {
             ArrayList(heading.childNodes()).forEach { strong.appendChild(it) }
             paragraph.appendChild(strong)
             heading.replaceWith(paragraph)
-        }
-    }
-
-    /**
-     * weeth-client에는 Image 확장이 없어 `<img>`는 파싱 시 통째로 사라진다.
-     * 첨부 정보를 잃지 않도록 링크로 강등한다.
-     */
-    private fun convertImagesToLinks(body: Element) {
-        body.select("img").forEach { image ->
-            val source = image.attr("src")
-            if (source.isBlank()) {
-                image.remove()
-                return@forEach
-            }
-
-            val label = image.attr("alt").ifBlank { source }
-            val link = Element("a").attr("href", source).text(label)
-            image.replaceWith(link)
         }
     }
 
@@ -435,7 +416,9 @@ class MarkdownToTiptapHtmlConverter {
                     "th",
                     "td",
                     "a",
+                    "img",
                 ).addAttributes("a", "href")
+                .addAttributes("img", "src", "alt", "title")
                 // colwidth 는 Tiptap 테이블이 열 너비를 저장하는 속성이라 지우면 폭 조정이 사라진다
                 .addAttributes("th", "colspan", "rowspan", "colwidth")
                 .addAttributes("td", "colspan", "rowspan", "colwidth")
@@ -443,5 +426,6 @@ class MarkdownToTiptapHtmlConverter {
                 .addAttributes("li", "data-type", "data-checked")
                 .addAttributes("code", "class")
                 .addProtocols("a", "href", "http", "https", "mailto")
+                .addProtocols("img", "src", "http", "https")
     }
 }

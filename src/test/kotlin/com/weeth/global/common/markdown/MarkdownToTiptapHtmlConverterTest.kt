@@ -128,9 +128,9 @@ class MarkdownToTiptapHtmlConverterTest :
                     "<p><strong>제목4</strong></p><p><strong>제목5</strong></p>"
             }
 
-            it("Image 확장이 없으므로 이미지를 링크로 강등해 내용을 남긴다") {
+            it("마크다운 이미지를 Tiptap 이미지 태그로 유지한다") {
                 convert("![대체텍스트](https://img.com/a.png)") shouldBe
-                    "<p><a href=\"https://img.com/a.png\">대체텍스트</a></p>"
+                    "<p><img src=\"https://img.com/a.png\" alt=\"대체텍스트\"></p>"
             }
         }
 
