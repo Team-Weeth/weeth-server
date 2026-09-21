@@ -160,23 +160,30 @@ class GetClubMemberQueryService(
         return clubMapper.toMemberSummaryResponse(member, cardinals)
     }
 
+    /**
+     * keyword가 역할 라벨("부원"/"리더"/"운영진")과 정확히 일치하면 이름/학과/학번 검색 대신
+     * 해당 역할로만 필터링한다. 그 외에는 기존과 동일한 이름/학과/학번 부분일치 검색으로 동작한다.
+     */
     fun searchClubMembers(
         clubId: Long,
         userId: Long,
         keyword: String?,
         cardinalNumber: Int?,
-        memberRole: MemberRole?,
-    ): List<ClubMemberResponse> =
-        findClubMembersForAdmin(
+    ): List<ClubMemberResponse> {
+        val trimmedKeyword = keyword?.trim()?.takeIf { it.isNotBlank() }
+        val roleFromKeyword = trimmedKeyword?.let { ROLE_LABELS[it] }
+
+        return findClubMembersForAdmin(
             clubId = clubId,
             userId = userId,
             page = 0,
             size = MAX_SEARCH_SIZE,
-            keyword = keyword,
+            keyword = if (roleFromKeyword != null) null else trimmedKeyword,
             cardinalNumber = cardinalNumber,
-            memberRole = memberRole,
+            memberRole = roleFromKeyword,
             sort = ClubMemberSort.CARDINAL_DESC, // 검색은 기수 내림차순 고정
         ).content
+    }
 
     fun findMemberDetail(
         clubId: Long,
@@ -233,5 +240,11 @@ class GetClubMemberQueryService(
     companion object {
         private const val MAX_PAGE_SIZE = 100
         private const val MAX_SEARCH_SIZE = 50
+        private val ROLE_LABELS =
+            mapOf(
+                "부원" to MemberRole.USER,
+                "리더" to MemberRole.LEAD,
+                "운영진" to MemberRole.ADMIN,
+            )
     }
 }

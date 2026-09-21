@@ -142,11 +142,13 @@ class ClubAdminController(
     @Operation(
         summary = "동아리 멤버 검색",
         description = """
-            이름·학과·학번(keyword), 기수, 역할로 멤버를 검색합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.
+            이름·학과·학번·역할(keyword), 기수로 멤버를 검색합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.
+            keyword가 역할 라벨("부원"/"리더"/"운영진")과 정확히 일치하면 이름/학과/학번 대신 해당 역할로만 필터링합니다.
 
             사용 예시:
             - 이름 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=김
-            - 5기 + 역할로 검색: GET /api/v4/admin/clubs/xxx/members/search?cardinalNumber=5&memberRole=ADMIN
+            - 역할 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=운영진
+            - 5기 + 역할로 검색: GET /api/v4/admin/clubs/xxx/members/search?cardinalNumber=5&keyword=운영진
         """,
     )
     fun searchClubMembers(
@@ -155,7 +157,6 @@ class ClubAdminController(
         @TsidPathVariable clubId: Long,
         @RequestParam(required = false) keyword: String?,
         @RequestParam(required = false) cardinalNumber: Int?,
-        @RequestParam(required = false) memberRole: MemberRole?,
     ): CommonResponse<List<ClubMemberResponse>> {
         val members =
             getClubMemberQueryService.searchClubMembers(
@@ -163,7 +164,6 @@ class ClubAdminController(
                 userId = userId,
                 keyword = keyword,
                 cardinalNumber = cardinalNumber,
-                memberRole = memberRole,
             )
         return CommonResponse.success(ClubResponseCode.MEMBER_FIND_ALL_SUCCESS, members)
     }

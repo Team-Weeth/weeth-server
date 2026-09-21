@@ -88,7 +88,6 @@ class ClubAdminControllerTest :
                         userId = userId,
                         keyword = "홍길동",
                         cardinalNumber = null,
-                        memberRole = null,
                     )
                 } returns listOf(member)
 
@@ -98,7 +97,6 @@ class ClubAdminControllerTest :
                         clubId = clubId,
                         keyword = "홍길동",
                         cardinalNumber = null,
-                        memberRole = null,
                     )
 
                 response.code shouldBe ClubResponseCode.MEMBER_FIND_ALL_SUCCESS.code
@@ -136,7 +134,6 @@ class ClubAdminControllerTest :
                         userId = userId,
                         keyword = "김",
                         cardinalNumber = 5,
-                        memberRole = null,
                     )
                 } returns listOf(member)
 
@@ -146,7 +143,6 @@ class ClubAdminControllerTest :
                         clubId = clubId,
                         keyword = "김",
                         cardinalNumber = 5,
-                        memberRole = null,
                     )
 
                 response.code shouldBe ClubResponseCode.MEMBER_FIND_ALL_SUCCESS.code
@@ -160,7 +156,6 @@ class ClubAdminControllerTest :
                         userId = userId,
                         keyword = "존재하지않음",
                         cardinalNumber = null,
-                        memberRole = null,
                     )
                 } returns emptyList()
 
@@ -170,7 +165,6 @@ class ClubAdminControllerTest :
                         clubId = clubId,
                         keyword = "존재하지않음",
                         cardinalNumber = null,
-                        memberRole = null,
                     )
 
                 response.code shouldBe ClubResponseCode.MEMBER_FIND_ALL_SUCCESS.code

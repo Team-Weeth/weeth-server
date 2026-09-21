@@ -103,7 +103,6 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "홍길동",
                         cardinalNumber = null,
-                        memberRole = null,
                     )
 
                 result shouldHaveSize 1
@@ -130,7 +129,6 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "김",
                         cardinalNumber = 7,
-                        memberRole = null,
                     )
 
                 result shouldHaveSize 1
@@ -152,7 +150,6 @@ class GetClubMemberQueryServiceTest :
                         userId = 99L,
                         keyword = "존재하지않음",
                         cardinalNumber = null,
-                        memberRole = null,
                     )
 
                 result.shouldBeEmpty()
@@ -173,7 +170,6 @@ class GetClubMemberQueryServiceTest :
                     userId = 99L,
                     keyword = "김",
                     cardinalNumber = null,
-                    memberRole = null,
                 )
 
                 verify(exactly = 1) {
@@ -181,7 +177,7 @@ class GetClubMemberQueryServiceTest :
                 }
             }
 
-            it("역할로 멤버를 검색한다") {
+            it("keyword가 역할 라벨과 정확히 일치하면 이름 검색 대신 역할로 필터링한다") {
                 val club = ClubTestFixture.createClub()
                 val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
                 val member = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
@@ -197,9 +193,34 @@ class GetClubMemberQueryServiceTest :
                     service.searchClubMembers(
                         clubId = 1L,
                         userId = 99L,
-                        keyword = null,
+                        keyword = "운영진",
                         cardinalNumber = null,
-                        memberRole = MemberRole.ADMIN,
+                    )
+
+                result shouldHaveSize 1
+                verify(exactly = 1) {
+                    clubMemberReader.findAdminMembers(1L, null, MemberRole.ADMIN, null, "CARDINAL_DESC", any())
+                }
+            }
+
+            it("keyword가 역할 라벨과 부분일치만 해도 이름 검색으로 취급한다") {
+                val club = ClubTestFixture.createClub()
+                val admin = ClubTestFixture.createClubMember(club = club, memberRole = MemberRole.ADMIN)
+                val member = ClubTestFixture.createClubMember(club = club)
+
+                every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                every {
+                    clubMemberReader.findAdminMembers(1L, null, null, "김리더", "CARDINAL_DESC", any())
+                } returns PageImpl(listOf(member), PageRequest.of(0, 50), 1)
+                every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
+                every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+
+                val result =
+                    service.searchClubMembers(
+                        clubId = 1L,
+                        userId = 99L,
+                        keyword = "김리더",
+                        cardinalNumber = null,
                     )
 
                 result shouldHaveSize 1
