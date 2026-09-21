@@ -11,6 +11,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "post")
@@ -81,6 +82,17 @@ class Post(
     fun isOwnedBy(userId: Long): Boolean = clubMember.user.id == userId
 
     fun belongsToClub(clubId: Long): Boolean = board.club.id == clubId && !board.isDeleted
+
+    /**
+     * 본문이 v3 에디터가 저장한 마크다운 원문인지 판단한다.
+     *
+     * 본문만 봐서는 사용자가 의도한 `- 대시 문장`과 마크다운 리스트 마커를 구분할 수 없으므로,
+     * 내용이 아니라 출처(이관된 동아리 + 에디터 전환 이전 작성)로 판정한다.
+     */
+    fun hasLegacyMarkdownContent(
+        legacyClubId: Long,
+        editorMigratedAt: LocalDateTime,
+    ): Boolean = board.club.id == legacyClubId && createdAt.isBefore(editorMigratedAt)
 
     fun update(
         newTitle: String?,

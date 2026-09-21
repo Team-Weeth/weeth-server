@@ -54,3 +54,9 @@ cloud:
       auto: false
     stack:
       auto: false
+
+# v3 에디터로 작성된 게시글 본문을 조회 시 Tiptap HTML 로 변환한다.
+# 동아리 식별자를 설정 파일에 남기지 않기 위해 환경 변수로만 주입한다.
+#   LEGACY_CONTENT_CLUB_ID=<V3 -> V4 이관 대상 동아리 TSID>
+#   LEGACY_CONTENT_EDITOR_MIGRATED_AT=2026-09-20T00:00:00
+# 두 값이 모두 있어야 변환이 동작하며, 없으면 본문을 그대로 내려준다.

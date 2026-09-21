@@ -83,6 +83,11 @@ career-net:
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL}
 
+# v3 에디터(마크다운)로 작성된 게시글 본문을 조회 시 Tiptap HTML로 변환한다.
+# legacy-content.club-id 와 legacy-content.editor-migrated-at 이 모두 설정된 환경에서만 동작하며,
+# 여기(공통 설정)에는 두지 않는다. 값이 없는 local/test 에서는 본문을 그대로 내려준다.
+# 환경별 값은 application-{prod,dev}.yml 참고.
+
 notion:
   token: ${NOTION_TOKEN}
   version: ${NOTION_VERSION}

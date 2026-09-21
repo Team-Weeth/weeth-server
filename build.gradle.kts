@@ -38,6 +38,8 @@ val kotestVersion = "5.9.1"
 val mockkVersion = "1.13.14"
 val springmockkVersion = "4.0.2"
 val konsistVersion = "0.17.3"
+val commonmarkVersion = "0.24.0"
+val jsoupVersion = "1.18.3"
 dependencies {
     // --- Kotlin ---
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -83,6 +85,14 @@ dependencies {
 
     // --- Swagger (springdoc) ---
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion")
+
+    // --- Markdown → HTML 변환 (v3 에디터 본문의 Tiptap 이관용) ---
+    implementation("org.commonmark:commonmark:$commonmarkVersion")
+    implementation("org.commonmark:commonmark-ext-gfm-tables:$commonmarkVersion")
+    implementation("org.commonmark:commonmark-ext-gfm-strikethrough:$commonmarkVersion")
+    implementation("org.commonmark:commonmark-ext-task-list-items:$commonmarkVersion")
+    implementation("org.commonmark:commonmark-ext-autolink:$commonmarkVersion")
+    implementation("org.jsoup:jsoup:$jsoupVersion")
 
     // --- AWS SDK v2 (BOM) ---
     implementation(platform("software.amazon.awssdk:bom:$awsSdkBomVersion"))

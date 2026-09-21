@@ -13,6 +13,8 @@ import com.weeth.domain.user.application.dto.response.UserInfo
 import com.weeth.domain.user.application.mapper.UserInfoMapper
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserProfile
+import com.weeth.global.common.markdown.MarkdownToTiptapHtmlConverter
+import com.weeth.global.config.properties.LegacyContentProperties
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -25,7 +27,7 @@ class PostMapperTest :
     DescribeSpec({
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userInfoMapper = UserInfoMapper(fileAccessUrlPort)
-        val mapper = PostMapper(userInfoMapper)
+        val mapper = PostMapper(userInfoMapper, MarkdownToTiptapHtmlConverter(), LegacyContentProperties())
         val now = LocalDateTime.now()
         val user = mockk<User>()
         val board = mockk<Board>()
@@ -140,6 +142,65 @@ class PostMapperTest :
                 response.author.name shouldBe UserInfo.ANONYMOUS_USER_NAME
                 response.author.profileImageUrl shouldBe null
                 response.author.id shouldBe 7L
+            }
+        }
+
+        describe("v3 마크다운 본문 변환") {
+            val legacyClubId = 100L
+            val editorMigratedAt = LocalDateTime.of(2026, 9, 20, 0, 0)
+            val legacyMapper =
+                PostMapper(
+                    userInfoMapper,
+                    MarkdownToTiptapHtmlConverter(),
+                    LegacyContentProperties(clubId = legacyClubId, editorMigratedAt = editorMigratedAt),
+                )
+
+            fun legacyPost(isLegacy: Boolean) =
+                mockk<Post>().also {
+                    every { it.id } returns 200L
+                    every { it.title } returns "제목"
+                    every { it.content } returns "## 소제목"
+                    every { it.clubMember } returns authorMember
+                    every { it.board } returns board
+                    every { it.commentCount } returns 0
+                    every { it.likeCount } returns 0
+                    every { it.createdAt } returns now
+                    every { it.modifiedAt } returns now
+                    every { it.hasLegacyMarkdownContent(legacyClubId, editorMigratedAt) } returns isLegacy
+                }
+
+            fun render(
+                mapper: PostMapper,
+                post: Post,
+            ) = mapper
+                .toListResponse(post, files = emptyList(), now = now, isLiked = false, memberRole = MemberRole.USER)
+                .content
+                .trim()
+
+            it("이관 동아리의 에디터 전환 이전 글은 Tiptap HTML로 변환해 내려준다") {
+                render(legacyMapper, legacyPost(isLegacy = true)) shouldBe "<h2>소제목</h2>"
+            }
+
+            it("상세 응답에도 목록과 동일하게 변환이 적용된다") {
+                val detail =
+                    legacyMapper.toDetailResponse(
+                        legacyPost(isLegacy = true),
+                        comments = emptyList(),
+                        files = emptyList(),
+                        isLiked = false,
+                        now = now,
+                        memberRole = MemberRole.USER,
+                    )
+
+                detail.content.trim() shouldBe "<h2>소제목</h2>"
+            }
+
+            it("전환 이후 글이나 다른 동아리 글은 본문을 그대로 내려준다") {
+                render(legacyMapper, legacyPost(isLegacy = false)) shouldBe "## 소제목"
+            }
+
+            it("설정이 비어 있는 환경에서는 변환하지 않는다") {
+                render(mapper, legacyPost(isLegacy = true)) shouldBe "## 소제목"
             }
         }
 
