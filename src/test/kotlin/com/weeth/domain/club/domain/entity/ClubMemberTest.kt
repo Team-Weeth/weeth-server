@@ -2,6 +2,7 @@ package com.weeth.domain.club.domain.entity
 
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.enums.PositionColor
 import com.weeth.domain.club.domain.enums.PrimaryContact
 import com.weeth.domain.club.domain.vo.ClubContact
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -279,5 +280,64 @@ class ClubMemberTest :
             shouldThrow<IllegalStateException> {
                 member.updateRole(MemberRole.ADMIN)
             }
+        }
+
+        "assignPosition — 같은 동아리의 포지션 옵션을 지정한다" {
+            val member = ClubMember(club = club, user = user)
+            val option =
+                ClubPositionOption.create(
+                    club = club,
+                    name = "백엔드",
+                    color = PositionColor.PRIMARY,
+                    displayOrder = 0,
+                )
+
+            member.assignPosition(option)
+
+            member.positionOption shouldBe option
+        }
+
+        "assignPosition — 다른 동아리의 포지션 옵션을 지정하면 예외가 발생한다" {
+            val member = ClubMember(club = club, user = user)
+            val otherClub =
+                Club.create(
+                    name = "다른 동아리",
+                    code = "OTHER001",
+                    schoolName = "가천대학교",
+                    clubContact =
+                        ClubContact.from(
+                            email = "other@test.com",
+                            phoneNumber = "01000000001",
+                            primaryContact = PrimaryContact.PHONE,
+                        ),
+                )
+            val otherClubOption =
+                ClubPositionOption.create(
+                    club = otherClub,
+                    name = "프론트엔드",
+                    color = PositionColor.SECONDARY,
+                    displayOrder = 0,
+                )
+
+            shouldThrow<IllegalStateException> {
+                member.assignPosition(otherClubOption)
+            }
+            member.positionOption shouldBe null
+        }
+
+        "assignPosition — null을 전달하면 포지션을 해제한다" {
+            val member = ClubMember(club = club, user = user)
+            val option =
+                ClubPositionOption.create(
+                    club = club,
+                    name = "백엔드",
+                    color = PositionColor.PRIMARY,
+                    displayOrder = 0,
+                )
+            member.assignPosition(option)
+
+            member.assignPosition(null)
+
+            member.positionOption shouldBe null
         }
     })

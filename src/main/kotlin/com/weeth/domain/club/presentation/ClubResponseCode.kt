@@ -35,4 +35,8 @@ enum class ClubResponseCode(
     MEMBER_LIST_FIND_SUCCESS(11124, HttpStatus.OK, "멤버 목록을 성공적으로 조회했습니다."),
     MEMBER_DETAIL_FIND_SUCCESS(11125, HttpStatus.OK, "멤버 상세 정보를 성공적으로 조회했습니다."),
     MEMBER_POSTS_FIND_SUCCESS(11126, HttpStatus.OK, "멤버 게시글 목록을 성공적으로 조회했습니다."),
+    POSITION_OPTIONS_SAVED_SUCCESS(11127, HttpStatus.OK, "포지션 옵션이 저장되었습니다."),
+    POSITION_OPTIONS_FIND_SUCCESS(11128, HttpStatus.OK, "포지션 옵션 목록을 성공적으로 조회했습니다."),
+    MEMBER_POSITION_UPDATED_SUCCESS(11129, HttpStatus.OK, "멤버 포지션이 변경되었습니다."),
+    MEMBER_POSITION_BULK_UPDATED_SUCCESS(11130, HttpStatus.OK, "멤버 포지션이 일괄 변경되었습니다."),
 }

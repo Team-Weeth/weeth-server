@@ -81,7 +81,7 @@ class UniversityCacheIntegrationTest(
 
                     val result = getUniversityQueryService.getMajors()
 
-                    result shouldHaveSize 20
+                    result shouldHaveSize 21
                     verify(exactly = 1) { universityInfoPort.getMajors() }
                 }
             }

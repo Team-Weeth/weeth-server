@@ -16,4 +16,6 @@ data class ClubMemberPublicResponse(
     val cardinals: List<Int>,
     @field:Schema(description = "자기소개", example = "안녕하세요", nullable = true)
     val bio: String?,
+    @field:Schema(description = "포지션 (미지정이면 null)", nullable = true)
+    val position: ClubPositionOptionResponse? = null,
 )

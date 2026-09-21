@@ -77,6 +77,15 @@ interface ClubMemberRepository :
         @Param("profileId") profileId: Long,
     ): Int
 
+    // 포지션 옵션 삭제 전 참조를 끊어 끊어진 FK를 방지한다. ManageClubPositionOptionUseCase.save()는
+    // 대상 클럽의 기존 옵션을 항상 hard delete 후 재생성하므로(부분 update도 새 id로 재생성됨),
+    // ids는 "그 시점에 존재하던 클럽의 기존 옵션 id 전체"가 되어야 한다.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ClubMember cm SET cm.positionOption = null WHERE cm.positionOption.id IN :ids")
+    fun clearPositionOptionReferences(
+        @Param("ids") ids: List<Long>,
+    ): Int
+
     override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
         memberStatus: MemberStatus,
@@ -511,6 +520,7 @@ interface ClubMemberRepository :
             )
         )
         AND (:keyword IS NULL OR COALESCE(cm.userProfile.name, cm.user.name) LIKE CONCAT('%', :keyword, '%'))
+        AND (:positionOptionId IS NULL OR cm.positionOption.id = :positionOptionId)
         ORDER BY
             (SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm) DESC,
             cm.id ASC
@@ -521,6 +531,7 @@ interface ClubMemberRepository :
         @Param("cardinalNumber") cardinalNumber: Int?,
         @Param("memberRole") memberRole: MemberRole?,
         @Param("keyword") keyword: String?,
+        @Param("positionOptionId") positionOptionId: Long?,
         pageable: Pageable,
     ): Slice<ClubMember>
 
