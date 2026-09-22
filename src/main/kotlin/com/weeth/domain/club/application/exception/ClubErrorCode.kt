@@ -86,4 +86,11 @@ enum class ClubErrorCode(
 
     @ExplainError("다른 동아리 소속 포지션 옵션을 멤버에게 지정하려 할 때 발생합니다.")
     POSITION_OPTION_NOT_IN_CLUB(21122, HttpStatus.BAD_REQUEST, "같은 동아리의 포지션 옵션만 지정할 수 있습니다."),
+
+    @ExplainError("포지션 옵션 저장 요청에서 같은 id가 수정 목록과 삭제 목록에 동시에 포함되어 있을 때 발생합니다.")
+    POSITION_OPTION_UPDATE_DELETE_CONFLICT(
+        21123,
+        HttpStatus.BAD_REQUEST,
+        "동일한 포지션 옵션을 수정과 삭제에 동시에 요청할 수 없습니다.",
+    ),
 }

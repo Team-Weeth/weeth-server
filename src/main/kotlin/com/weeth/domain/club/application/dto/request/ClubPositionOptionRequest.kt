@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 
 data class ClubPositionOptionRequest(
+    @field:Schema(description = "포지션 옵션 ID (null=신규 생성, 값이 있으면 해당 id의 기존 옵션을 수정)", example = "1", nullable = true)
+    val id: Long?,
     @field:Schema(description = "포지션 이름 (최대 10자)", example = "백엔드")
     @field:NotBlank
     @field:Size(max = 10)

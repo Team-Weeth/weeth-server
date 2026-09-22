@@ -3,6 +3,8 @@ package com.weeth.domain.club.application.usecase.command
 import com.weeth.domain.club.application.dto.request.ClubPositionOptionRequest
 import com.weeth.domain.club.application.dto.request.SaveClubPositionOptionsRequest
 import com.weeth.domain.club.application.exception.PositionOptionLimitExceededException
+import com.weeth.domain.club.application.exception.PositionOptionNotFoundException
+import com.weeth.domain.club.application.exception.PositionOptionUpdateDeleteConflictException
 import com.weeth.domain.club.domain.entity.ClubPositionOption
 import com.weeth.domain.club.domain.enums.PositionColor
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
@@ -48,7 +50,7 @@ class ManageClubPositionOptionUseCaseTest :
         }
 
         describe("save") {
-            it("옵션이 없던 동아리는 요청 순서대로 전체 옵션을 새로 생성한다") {
+            it("id가 없는 옵션은 요청 순서대로 신규 생성된다") {
                 val optionsSlot = slot<List<ClubPositionOption>>()
                 every { clubPositionOptionRepository.saveAll(capture(optionsSlot)) } answers { firstArg() }
 
@@ -58,8 +60,8 @@ class ManageClubPositionOptionUseCaseTest :
                     SaveClubPositionOptionsRequest(
                         options =
                             listOf(
-                                ClubPositionOptionRequest(name = "백엔드", color = PositionColor.PRIMARY),
-                                ClubPositionOptionRequest(name = "프론트엔드", color = PositionColor.SECONDARY),
+                                ClubPositionOptionRequest(id = null, name = "백엔드", color = PositionColor.PRIMARY),
+                                ClubPositionOptionRequest(id = null, name = "프론트엔드", color = PositionColor.SECONDARY),
                             ),
                     ),
                 )
@@ -70,12 +72,11 @@ class ManageClubPositionOptionUseCaseTest :
                 saved[0].displayOrder shouldBe 0
                 saved[1].name shouldBe "프론트엔드"
                 saved[1].displayOrder shouldBe 1
-                // 옵션이 없던 동아리이므로 정리할 멤버 참조가 없다
                 verify(exactly = 0) { clubMemberRepository.clearPositionOptionReferences(any()) }
                 verify(exactly = 0) { clubPositionOptionRepository.deleteAllByIdInBatch(any()) }
             }
 
-            it("요청에 동일한 name이 남아있으면 기존 옵션 엔티티를 재사용해 id를 보존한다") {
+            it("id가 있는 옵션은 기존 엔티티를 재사용해 update만 호출하고 삭제/생성하지 않는다") {
                 val existingOption =
                     ClubPositionOptionTestFixture.createOption(
                         id = 50L,
@@ -92,33 +93,38 @@ class ManageClubPositionOptionUseCaseTest :
                     1L,
                     10L,
                     SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "백엔드", color = PositionColor.SECONDARY)),
+                        options =
+                            listOf(
+                                ClubPositionOptionRequest(id = 50L, name = "백엔드팀", color = PositionColor.SECONDARY),
+                            ),
                     ),
                 )
 
                 existingOption.id shouldBe 50L
+                existingOption.name shouldBe "백엔드팀"
                 existingOption.color shouldBe PositionColor.SECONDARY
                 existingOption.displayOrder shouldBe 0
-                // 이름이 그대로 유지된 옵션이므로 삭제도, 멤버 참조 정리도 일어나지 않는다
                 verify(exactly = 0) { clubMemberRepository.clearPositionOptionReferences(any()) }
                 verify(exactly = 0) { clubPositionOptionRepository.deleteAllByIdInBatch(any()) }
                 verify(exactly = 0) { clubPositionOptionRepository.saveAll(any<List<ClubPositionOption>>()) }
             }
 
-            it("요청에서 사라진 name의 기존 옵션만 삭제하고, 그 옵션을 참조하던 멤버만 정리한다") {
-                val keptOption =
-                    ClubPositionOptionTestFixture.createOption(id = 50L, club = club, name = "백엔드")
-                val removedOption =
-                    ClubPositionOptionTestFixture.createOption(id = 51L, club = club, name = "디자인")
+            it("deletedPositionIds에 있는 id만 멤버 참조 정리 후 삭제된다") {
+                val kept = ClubPositionOptionTestFixture.createOption(id = 50L, club = club, name = "백엔드")
+                val removed = ClubPositionOptionTestFixture.createOption(id = 51L, club = club, name = "디자인")
                 every {
                     clubPositionOptionRepository.findAllByClubIdOrderByDisplayOrderAsc(1L)
-                } returns listOf(keptOption, removedOption)
+                } returns listOf(kept, removed)
 
                 useCase.save(
                     1L,
                     10L,
                     SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "백엔드", color = PositionColor.PRIMARY)),
+                        options =
+                            listOf(
+                                ClubPositionOptionRequest(id = 50L, name = "백엔드", color = PositionColor.PRIMARY),
+                            ),
+                        deletedPositionIds = listOf(51L),
                     ),
                 )
 
@@ -126,7 +132,7 @@ class ManageClubPositionOptionUseCaseTest :
                 verify(exactly = 1) { clubPositionOptionRepository.deleteAllByIdInBatch(listOf(51L)) }
             }
 
-            it("혼합 시나리오: 유지·삭제·신규 생성이 각각 올바르게 처리된다") {
+            it("혼합 시나리오: 수정·삭제·신규 생성이 각각 올바르게 처리된다") {
                 val kept = ClubPositionOptionTestFixture.createOption(id = 50L, club = club, name = "백엔드")
                 val removed = ClubPositionOptionTestFixture.createOption(id = 51L, club = club, name = "디자인")
                 every {
@@ -141,9 +147,10 @@ class ManageClubPositionOptionUseCaseTest :
                     SaveClubPositionOptionsRequest(
                         options =
                             listOf(
-                                ClubPositionOptionRequest(name = "백엔드", color = PositionColor.SECONDARY),
-                                ClubPositionOptionRequest(name = "기획", color = PositionColor.PURPLE),
+                                ClubPositionOptionRequest(id = 50L, name = "백엔드", color = PositionColor.SECONDARY),
+                                ClubPositionOptionRequest(id = null, name = "기획", color = PositionColor.PURPLE),
                             ),
+                        deletedPositionIds = listOf(51L),
                     ),
                 )
 
@@ -155,22 +162,74 @@ class ManageClubPositionOptionUseCaseTest :
                 verify(exactly = 1) { clubPositionOptionRepository.deleteAllByIdInBatch(listOf(51L)) }
             }
 
-            it("기존 옵션이 없으면 멤버 참조 정리를 호출하지 않는다") {
-                every { clubPositionOptionRepository.findAllByClubIdOrderByDisplayOrderAsc(1L) } returns emptyList()
+            it("같은 id가 options(수정)와 deletedPositionIds(삭제)에 동시에 있으면 예외가 발생하고 아무 것도 변경하지 않는다") {
+                val existing = ClubPositionOptionTestFixture.createOption(id = 50L, club = club, name = "백엔드")
+                every {
+                    clubPositionOptionRepository.findAllByClubIdOrderByDisplayOrderAsc(1L)
+                } returns listOf(existing)
 
-                useCase.save(
-                    1L,
-                    10L,
-                    SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "디자인", color = PositionColor.PURPLE)),
-                    ),
-                )
+                shouldThrow<PositionOptionUpdateDeleteConflictException> {
+                    useCase.save(
+                        1L,
+                        10L,
+                        SaveClubPositionOptionsRequest(
+                            options =
+                                listOf(
+                                    ClubPositionOptionRequest(id = 50L, name = "백엔드", color = PositionColor.PRIMARY),
+                                ),
+                            deletedPositionIds = listOf(50L),
+                        ),
+                    )
+                }
 
                 verify(exactly = 0) { clubMemberRepository.clearPositionOptionReferences(any()) }
+                verify(exactly = 0) { clubPositionOptionRepository.deleteAllByIdInBatch(any()) }
+                verify(exactly = 0) { clubPositionOptionRepository.saveAll(any<List<ClubPositionOption>>()) }
+            }
+
+            it("options의 id가 이 동아리에 존재하지 않으면 PositionOptionNotFoundException이 발생한다") {
+                every { clubPositionOptionRepository.findAllByClubIdOrderByDisplayOrderAsc(1L) } returns emptyList()
+
+                shouldThrow<PositionOptionNotFoundException> {
+                    useCase.save(
+                        1L,
+                        10L,
+                        SaveClubPositionOptionsRequest(
+                            options =
+                                listOf(
+                                    ClubPositionOptionRequest(id = 999L, name = "백엔드", color = PositionColor.PRIMARY),
+                                ),
+                        ),
+                    )
+                }
+
+                verify(exactly = 0) { clubPositionOptionRepository.saveAll(any<List<ClubPositionOption>>()) }
+            }
+
+            it("deletedPositionIds의 id가 이 동아리에 존재하지 않으면 PositionOptionNotFoundException이 발생하고 아무 것도 삭제하지 않는다") {
+                every { clubPositionOptionRepository.findAllByClubIdOrderByDisplayOrderAsc(1L) } returns emptyList()
+
+                shouldThrow<PositionOptionNotFoundException> {
+                    useCase.save(
+                        1L,
+                        10L,
+                        SaveClubPositionOptionsRequest(options = emptyList(), deletedPositionIds = listOf(999L)),
+                    )
+                }
+
+                verify(exactly = 0) { clubMemberRepository.clearPositionOptionReferences(any()) }
+                verify(exactly = 0) { clubPositionOptionRepository.deleteAllByIdInBatch(any()) }
             }
 
             it("옵션이 6개를 초과하면 PositionOptionLimitExceededException이 발생하고 아무 것도 변경하지 않는다") {
-                val options = (1..7).map { ClubPositionOptionRequest(name = "옵션$it", color = PositionColor.PRIMARY) }
+                val options =
+                    (1..7).map {
+                        ClubPositionOptionRequest(
+                            id = null,
+                            name = "옵션$it",
+                            color = PositionColor.PRIMARY,
+                        )
+                    }
 
                 shouldThrow<PositionOptionLimitExceededException> {
                     useCase.save(1L, 10L, SaveClubPositionOptionsRequest(options = options))
@@ -189,7 +248,10 @@ class ManageClubPositionOptionUseCaseTest :
                         1L,
                         20L,
                         SaveClubPositionOptionsRequest(
-                            options = listOf(ClubPositionOptionRequest(name = "백엔드", color = PositionColor.PRIMARY)),
+                            options =
+                                listOf(
+                                    ClubPositionOptionRequest(id = null, name = "백엔드", color = PositionColor.PRIMARY),
+                                ),
                         ),
                     )
                 }
