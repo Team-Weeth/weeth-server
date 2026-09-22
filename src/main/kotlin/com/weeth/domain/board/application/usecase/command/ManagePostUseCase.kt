@@ -3,6 +3,7 @@ package com.weeth.domain.board.application.usecase.command
 import com.weeth.domain.board.application.dto.request.CreatePostRequest
 import com.weeth.domain.board.application.dto.request.UpdatePostRequest
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
+import com.weeth.domain.board.application.event.NoticeCreatedEvent
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostNotFoundException
@@ -10,6 +11,7 @@ import com.weeth.domain.board.application.exception.PostNotOwnedException
 import com.weeth.domain.board.application.mapper.PostMapper
 import com.weeth.domain.board.domain.entity.Board
 import com.weeth.domain.board.domain.entity.Post
+import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.club.domain.entity.ClubMember
@@ -19,6 +21,7 @@ import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import com.weeth.domain.file.application.mapper.FileMapper
 import com.weeth.domain.file.domain.enums.FileOwnerType
 import com.weeth.domain.file.domain.repository.FileRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -31,6 +34,7 @@ class ManagePostUseCase(
     private val fileRepository: FileRepository,
     private val fileMapper: FileMapper,
     private val postMapper: PostMapper,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional
     fun save(
@@ -59,6 +63,7 @@ class ManagePostUseCase(
 
         val savedPost = postRepository.save(post)
         savePostFiles(savedPost, request.files)
+        publishNoticeCreatedEventIfNeeded(clubId, board, savedPost, userId)
         return postMapper.toSaveResponse(savedPost)
     }
 
@@ -152,5 +157,25 @@ class ManagePostUseCase(
 
     private fun deletePostFiles(postId: Long) {
         fileRepository.hardDeleteActiveByOwnerTypeAndOwnerId(FileOwnerType.POST, postId)
+    }
+
+    private fun publishNoticeCreatedEventIfNeeded(
+        clubId: Long,
+        board: Board,
+        post: Post,
+        authorUserId: Long,
+    ) {
+        if (board.type != BoardType.NOTICE) {
+            return
+        }
+        eventPublisher.publishEvent(
+            NoticeCreatedEvent(
+                clubId = clubId,
+                boardId = board.id,
+                postId = post.id,
+                title = post.title,
+                authorUserId = authorUserId,
+            ),
+        )
     }
 }
