@@ -3,6 +3,7 @@ package com.weeth.domain.club.application.dto.response
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDateTime
 
 /**
  * 동아리 멤버 목록 조회(관리자용) API에 사용
@@ -36,6 +37,18 @@ data class ClubMemberResponse(
     val absenceCount: Int,
     @field:Schema(description = "출석률 (%)", example = "83")
     val attendanceRate: Int,
-    @field:Schema(description = "패널티 횟수", example = "1")
+    @field:Schema(description = "페널티 횟수", example = "1")
     val penaltyCount: Int,
+    @field:Schema(description = "경고 횟수 (동아리 경고 기능 비활성화 시 null)", example = "1", nullable = true)
+    val warningCount: Int? = null,
+    @field:Schema(description = "최근 페널티 일시 (없으면 null)", nullable = true)
+    val lastPenaltyAt: LocalDateTime? = null,
+    @field:Schema(description = "프로필 이미지 URL", example = "https://cdn.weeth.com/profile/1.png", nullable = true)
+    val profileImageUrl: String? = null,
+    @field:Schema(description = "자기소개", example = "안녕하세요", nullable = true)
+    val bio: String? = null,
+    @field:Schema(description = "동아리 가입일", example = "2026-03-01T10:00:00")
+    val joinedAt: LocalDateTime,
+    @field:Schema(description = "지정된 포지션 (없으면 null = 미지정)", nullable = true)
+    val position: ClubPositionOptionResponse? = null,
 )

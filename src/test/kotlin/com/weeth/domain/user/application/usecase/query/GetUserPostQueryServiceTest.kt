@@ -4,7 +4,10 @@ import com.weeth.domain.board.domain.entity.Post
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.board.fixture.BoardTestFixture
 import com.weeth.domain.board.fixture.PostTestFixture
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
+import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
+import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.application.exception.UserPageNotFoundException
 import com.weeth.domain.user.application.mapper.UserPostMapper
@@ -102,6 +105,86 @@ class GetUserPostQueryServiceTest :
             it("pageSize가 최대값을 초과하면 예외를 던진다") {
                 shouldThrow<UserPageNotFoundException> {
                     queryService.getMyPosts(userId = 1L, clubId = 100L, pageNumber = 0, pageSize = 51)
+                }
+            }
+        }
+
+        describe("getMemberPosts") {
+            val club = ClubTestFixture.createClub(id = 100L, name = "Leets")
+            val board = BoardTestFixture.create(id = 10L, club = club, name = "자유게시판")
+
+            context("활성 멤버의 게시글을 조회하는 경우") {
+                it("게시글 목록을 SliceResponse로 반환한다") {
+                    val requester = ClubTestFixture.createClubMember(club = club)
+                    val targetMember =
+                        ClubTestFixture.createClubMember(
+                            club = club,
+                            user = UserTestFixture.createActiveUser1(2L),
+                        )
+                    val targetMemberId = 55L
+                    ReflectionTestUtils.setField(targetMember, "id", targetMemberId)
+                    val post =
+                        PostTestFixture
+                            .create(
+                                title = "제목",
+                                content = "내용",
+                                clubMember = targetMember,
+                                board = board,
+                            ).withId(200L)
+                    val pageable = PageRequest.of(0, 20)
+
+                    every { clubMemberPolicy.getActiveMember(100L, 1L) } returns requester
+                    every { clubMemberPolicy.getMemberInClub(100L, targetMemberId) } returns targetMember
+                    every { postReader.findActivePostsByClubMemberId(targetMemberId, pageable) } returns
+                        SliceImpl(listOf(post), pageable, false)
+
+                    val result =
+                        queryService.getMemberPosts(
+                            requesterId = 1L,
+                            clubId = 100L,
+                            targetClubMemberId = targetMemberId,
+                            pageNumber = 0,
+                            pageSize = 20,
+                        )
+
+                    result.content shouldHaveSize 1
+                    result.hasNext shouldBe false
+                }
+            }
+
+            context("대상 멤버가 비활성인 경우") {
+                it("ClubMemberNotFoundException을 던진다") {
+                    val requester = ClubTestFixture.createClubMember(club = club)
+                    val bannedMember = ClubMemberTestFixture.createBannedMember(club = club)
+
+                    every { clubMemberPolicy.getActiveMember(100L, 1L) } returns requester
+                    every { clubMemberPolicy.getMemberInClub(100L, 55L) } returns bannedMember
+
+                    shouldThrow<ClubMemberNotFoundException> {
+                        queryService.getMemberPosts(
+                            requesterId = 1L,
+                            clubId = 100L,
+                            targetClubMemberId = 55L,
+                            pageNumber = 0,
+                            pageSize = 20,
+                        )
+                    }
+                }
+            }
+
+            context("호출자가 비활성인 경우") {
+                it("MemberNotActiveException을 던진다") {
+                    every { clubMemberPolicy.getActiveMember(100L, 1L) } throws MemberNotActiveException()
+
+                    shouldThrow<MemberNotActiveException> {
+                        queryService.getMemberPosts(
+                            requesterId = 1L,
+                            clubId = 100L,
+                            targetClubMemberId = 55L,
+                            pageNumber = 0,
+                            pageSize = 20,
+                        )
+                    }
                 }
             }
         }

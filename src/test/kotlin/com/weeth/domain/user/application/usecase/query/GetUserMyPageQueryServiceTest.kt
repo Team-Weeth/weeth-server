@@ -3,6 +3,7 @@ package com.weeth.domain.user.application.usecase.query
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.board.domain.repository.PostReader
+import com.weeth.domain.club.application.mapper.ClubPositionOptionMapper
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -31,6 +32,7 @@ class GetUserMyPageQueryServiceTest :
         val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userMyPageMapper = UserMyPageMapper(fileAccessUrlPort)
+        val clubPositionOptionMapper = ClubPositionOptionMapper()
         val queryService =
             GetUserMyPageQueryService(
                 userReader = userReader,
@@ -39,6 +41,7 @@ class GetUserMyPageQueryServiceTest :
                 attendanceReader = attendanceReader,
                 clubMemberPolicy = clubMemberPolicy,
                 userMyPageMapper = userMyPageMapper,
+                clubPositionOptionMapper = clubPositionOptionMapper,
             )
 
         beforeTest {
@@ -123,6 +126,7 @@ class GetUserMyPageQueryServiceTest :
                 result.currentProfile?.profileImageUrl shouldBe "https://cdn.test/profile.png"
                 result.currentProfile?.headerImageUrl shouldBe "https://cdn.test/header.png"
                 result.currentProfile?.bio shouldBe "안녕하세요"
+                result.position shouldBe null
             }
         }
     }) {

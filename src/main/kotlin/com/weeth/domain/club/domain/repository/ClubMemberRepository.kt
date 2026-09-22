@@ -7,6 +7,7 @@ import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
@@ -76,6 +77,15 @@ interface ClubMemberRepository :
         @Param("profileId") profileId: Long,
     ): Int
 
+    // 포지션 옵션 삭제 전 참조를 끊어 끊어진 FK를 방지한다. ManageClubPositionOptionUseCase.save()는
+    // 요청에 name이 그대로 남은 옵션은 재사용(id 유지)하고, name이 사라진 옵션만 삭제하므로
+    // ids는 "이번 저장으로 실제 삭제되는(= name이 요청에서 사라진) 옵션 id"만 전달되어야 한다.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ClubMember cm SET cm.positionOption = null WHERE cm.positionOption.id IN :ids")
+    fun clearPositionOptionReferences(
+        @Param("ids") ids: List<Long>,
+    ): Int
+
     override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
         memberStatus: MemberStatus,
@@ -107,6 +117,91 @@ interface ClubMemberRepository :
     override fun findAllByClubId(
         @Param("clubId") clubId: Long,
     ): List<ClubMember>
+
+    // 기수 정렬은 별도 엔티티(ClubMemberCardinal)의 최대 기수번호 기준이라 Pageable의 Sort로 표현할 수 없다.
+    // 정렬 옵션을 파라미터로 분기하므로 인덱스가 아닌 filesort를 타지만, 동아리 단위 멤버 수라 문제되지 않는다.
+    @Query(
+        value = """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user user
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.club.id = :clubId
+        AND (
+            :cardinalNumber IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM ClubMemberCardinal cmc
+                WHERE cmc.clubMember = cm
+                AND cmc.cardinal.cardinalNumber = :cardinalNumber
+            )
+        )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
+        AND (
+            :keyword IS NULL
+            OR user.name LIKE CONCAT('%', :keyword, '%')
+            OR user.department LIKE CONCAT('%', :keyword, '%')
+            OR user.studentId LIKE CONCAT('%', :keyword, '%')
+        )
+        ORDER BY
+            CASE WHEN cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.BANNED
+                OR cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.LEFT
+                THEN 1 ELSE 0 END ASC,
+            CASE WHEN :sortKey = 'CARDINAL_DESC' THEN (
+                SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm
+            ) END DESC,
+            CASE WHEN :sortKey = 'CARDINAL_ASC' THEN (
+                SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm
+            ) END ASC,
+            CASE WHEN :sortKey = 'NAME_ASC' THEN user.name END ASC,
+            CASE WHEN :sortKey = 'JOINED_DESC' THEN cm.createdAt END DESC,
+            CASE WHEN :sortKey = 'PENALTY_DESC' THEN cm.penaltyCount END DESC,
+            cm.id ASC
+        """,
+        countQuery = """
+        SELECT COUNT(cm)
+        FROM ClubMember cm
+        JOIN cm.user user
+        WHERE cm.club.id = :clubId
+        AND (
+            :cardinalNumber IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM ClubMemberCardinal cmc
+                WHERE cmc.clubMember = cm
+                AND cmc.cardinal.cardinalNumber = :cardinalNumber
+            )
+        )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
+        AND (
+            :keyword IS NULL
+            OR user.name LIKE CONCAT('%', :keyword, '%')
+            OR user.department LIKE CONCAT('%', :keyword, '%')
+            OR user.studentId LIKE CONCAT('%', :keyword, '%')
+        )
+        """,
+    )
+    override fun findAdminMembers(
+        @Param("clubId") clubId: Long,
+        @Param("cardinalNumber") cardinalNumber: Int?,
+        @Param("memberRole") memberRole: MemberRole?,
+        @Param("keyword") keyword: String?,
+        @Param("sortKey") sortKey: String,
+        pageable: Pageable,
+    ): Page<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.id = :clubMemberId
+        """,
+    )
+    override fun findAdminMemberDetail(
+        @Param("clubMemberId") clubMemberId: Long,
+    ): ClubMember?
 
     override fun findAllByUserId(userId: Long): List<ClubMember>
 
@@ -405,4 +500,54 @@ interface ClubMemberRepository :
         @Param("clubId") clubId: Long,
         @Param("userIds") userIds: List<Long>,
     ): List<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.club.id = :clubId
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
+        AND (
+            :cardinalNumber IS NULL
+            OR EXISTS (
+                SELECT 1
+                FROM ClubMemberCardinal cmc
+                WHERE cmc.clubMember = cm
+                AND cmc.cardinal.cardinalNumber = :cardinalNumber
+            )
+        )
+        AND (:keyword IS NULL OR COALESCE(cm.userProfile.name, cm.user.name) LIKE CONCAT('%', :keyword, '%'))
+        AND (:positionOptionId IS NULL OR cm.positionOption.id = :positionOptionId)
+        ORDER BY
+            (SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm) DESC,
+            cm.id ASC
+        """,
+    )
+    override fun findPublicMembers(
+        @Param("clubId") clubId: Long,
+        @Param("cardinalNumber") cardinalNumber: Int?,
+        @Param("memberRole") memberRole: MemberRole?,
+        @Param("keyword") keyword: String?,
+        @Param("positionOptionId") positionOptionId: Long?,
+        pageable: Pageable,
+    ): Slice<ClubMember>
+
+    @Query(
+        """
+        SELECT cm
+        FROM ClubMember cm
+        JOIN FETCH cm.user
+        LEFT JOIN FETCH cm.userProfile
+        WHERE cm.id = :clubMemberId
+        AND cm.club.id = :clubId
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        """,
+    )
+    override fun findPublicMemberDetail(
+        @Param("clubId") clubId: Long,
+        @Param("clubMemberId") clubMemberId: Long,
+    ): ClubMember?
 }

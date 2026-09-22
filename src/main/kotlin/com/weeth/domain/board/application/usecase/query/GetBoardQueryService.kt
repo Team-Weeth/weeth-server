@@ -1,5 +1,6 @@
 package com.weeth.domain.board.application.usecase.query
 
+import com.weeth.domain.board.application.dto.response.AdminBoardListResponse
 import com.weeth.domain.board.application.dto.response.BoardConfigResponse
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.dto.response.BoardListResponse
@@ -9,6 +10,7 @@ import com.weeth.domain.board.application.mapper.BoardMapper
 import com.weeth.domain.board.domain.enums.BoardType
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
+import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import org.springframework.stereotype.Service
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 class GetBoardQueryService(
     private val boardRepository: BoardRepository,
     private val postRepository: PostRepository,
+    private val clubReader: ClubReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val boardMapper: BoardMapper,
@@ -63,9 +66,10 @@ class GetBoardQueryService(
     fun findAllBoardsForAdmin(
         clubId: Long,
         userId: Long,
-    ): List<BoardDetailResponse> {
+    ): AdminBoardListResponse {
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
+        val club = clubReader.getClubById(clubId)
         val boards = boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId)
         val boardIds = boards.map { it.id }
         val postCountMap =
@@ -80,7 +84,14 @@ class GetBoardQueryService(
         val otherBoards = otherList.map { boardMapper.toDetailResponseForAdmin(it, postCountMap[it.id] ?: 0) }
         val totalPostCount = postCountMap.values.sum()
 
-        return noticeBoards + virtualAllBoardForAdmin(totalPostCount) + otherBoards
+        val activeBoardCount = boards.count { !it.isDeleted }
+
+        return AdminBoardListResponse(
+            boards = noticeBoards + virtualAllBoardForAdmin(totalPostCount) + otherBoards,
+            activeBoardCount = activeBoardCount,
+            maxBoardCount = club.maxBoardCount,
+            canCreateBoard = club.canAddBoard(activeBoardCount),
+        )
     }
 
     fun checkBoardNameDuplicate(

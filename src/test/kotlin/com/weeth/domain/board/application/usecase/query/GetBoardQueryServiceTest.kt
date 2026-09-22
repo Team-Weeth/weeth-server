@@ -7,9 +7,11 @@ import com.weeth.domain.board.domain.repository.BoardPostCount
 import com.weeth.domain.board.domain.repository.BoardRepository
 import com.weeth.domain.board.domain.repository.PostRepository
 import com.weeth.domain.board.fixture.BoardTestFixture
+import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldHaveSize
@@ -25,16 +27,25 @@ class GetBoardQueryServiceTest :
         val postRepository = mockk<PostRepository>()
         val clubMemberPolicy = mockk<ClubMemberPolicy>(relaxed = true)
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
+        val clubReader = mockk<ClubReader>()
         val boardMapper = BoardMapper()
         val queryService =
-            GetBoardQueryService(boardRepository, postRepository, clubMemberPolicy, clubPermissionPolicy, boardMapper)
+            GetBoardQueryService(
+                boardRepository,
+                postRepository,
+                clubReader,
+                clubMemberPolicy,
+                clubPermissionPolicy,
+                boardMapper,
+            )
 
         val clubId = 1L
         val userId = 10L
 
         beforeTest {
-            clearMocks(boardRepository, postRepository, clubMemberPolicy, clubPermissionPolicy)
+            clearMocks(boardRepository, postRepository, clubReader, clubMemberPolicy, clubPermissionPolicy)
             every { postRepository.countActivePostsByBoardIds(any()) } returns emptyList()
+            every { clubReader.getClubById(clubId) } returns ClubTestFixture.createClub()
         }
 
         describe("findBoards") {
@@ -107,8 +118,11 @@ class GetBoardQueryServiceTest :
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
                 // 가상 전체 게시판 포함: 전체, 일반, 삭제됨
-                result shouldHaveSize 3
-                result.map { it.name } shouldBe listOf("전체", "일반", "삭제됨")
+                result.boards shouldHaveSize 3
+                result.boards.map { it.name } shouldBe listOf("전체", "일반", "삭제됨")
+                result.activeBoardCount shouldBe 1
+                result.maxBoardCount shouldBe 4
+                result.canCreateBoard shouldBe true
             }
 
             it("활성 게시판과 비공개 게시판도 모두 포함해 반환한다") {
@@ -124,8 +138,8 @@ class GetBoardQueryServiceTest :
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
                 // NOTICE 타입인 운영 → noticeBoards 먼저, 가상 전체 다음, 나머지 순
-                result shouldHaveSize 3
-                result.map { it.name } shouldBe listOf("운영", "전체", "일반")
+                result.boards shouldHaveSize 3
+                result.boards.map { it.name } shouldBe listOf("운영", "전체", "일반")
             }
 
             it("게시판별 활성 게시글 수를 포함해 반환한다") {
@@ -136,7 +150,7 @@ class GetBoardQueryServiceTest :
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
-                result.first().postCount shouldBe 5
+                result.boards.first().postCount shouldBe 5
             }
 
             it("가상 전체 게시판은 기본 설명을 포함한다") {
@@ -144,7 +158,7 @@ class GetBoardQueryServiceTest :
 
                 val result = queryService.findAllBoardsForAdmin(clubId, userId)
 
-                result.first().description shouldBe "모든 게시글을 확인할 수 있는 게시판입니다."
+                result.boards.first().description shouldBe "모든 게시글을 확인할 수 있는 게시판입니다."
             }
 
             it("게시판이 없으면 postRepository를 호출하지 않는다") {

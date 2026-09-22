@@ -1,7 +1,9 @@
 package com.weeth.domain.schedule.presentation
 
+import com.weeth.domain.schedule.application.dto.response.ScheduleDetailResponse
 import com.weeth.domain.schedule.application.dto.response.ScheduleResponse
 import com.weeth.domain.schedule.application.usecase.query.GetScheduleQueryService
+import com.weeth.domain.schedule.domain.enums.Type
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.response.CommonResponse
 import com.weeth.global.common.web.TsidParam
@@ -11,6 +13,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -28,16 +31,32 @@ class ScheduleController(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
+        @RequestParam cardinal: Int,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) start: LocalDateTime,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) end: LocalDateTime,
     ): CommonResponse<List<ScheduleResponse>> =
         CommonResponse.success(
             ScheduleResponseCode.SCHEDULE_MONTHLY_FIND_SUCCESS,
-            getScheduleQueryService.findMonthly(clubId, userId, start, end),
+            getScheduleQueryService.findMonthly(clubId, userId, cardinal, start, end),
         )
 
+    @GetMapping("/{id}")
+    @Operation(summary = "일정 상세 조회")
+    fun findDetail(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+        @PathVariable id: Long,
+        @RequestParam type: Type,
+    ): CommonResponse<ScheduleDetailResponse> =
+        CommonResponse.success(
+            ScheduleResponseCode.SCHEDULE_DETAIL_FIND_SUCCESS,
+            getScheduleQueryService.findDetail(clubId, userId, id, type),
+        )
+
+    @Deprecated("사용하지 않는 API")
     @GetMapping("/yearly")
-    @Operation(summary = "연도별 일정 조회")
+    @Operation(summary = "연도별 일정 조회", deprecated = true)
     fun findByYearly(
         @TsidParam
         @TsidPathVariable clubId: Long,

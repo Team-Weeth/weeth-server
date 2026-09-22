@@ -81,6 +81,18 @@ class User(
     var privacyAgreed: Boolean = false
         private set
 
+    @Column(nullable = false)
+    var telPublic: Boolean = true
+        private set
+
+    @Column(nullable = false)
+    var emailPublic: Boolean = true
+        private set
+
+    @Column(nullable = false)
+    var studentInfoPublic: Boolean = true
+        private set
+
     val emailValue: String
         get() = email.value
 
@@ -138,6 +150,16 @@ class User(
             require(it.isNotBlank()) { "학과는 공백일 수 없습니다." }
             this.department = it
         }
+    }
+
+    fun updatePrivacy(
+        telPublic: Boolean? = null,
+        emailPublic: Boolean? = null,
+        studentInfoPublic: Boolean? = null,
+    ) {
+        telPublic?.let { this.telPublic = it }
+        emailPublic?.let { this.emailPublic = it }
+        studentInfoPublic?.let { this.studentInfoPublic = it }
     }
 
     fun agreeTerms(

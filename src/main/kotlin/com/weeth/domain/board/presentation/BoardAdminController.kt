@@ -3,6 +3,7 @@ package com.weeth.domain.board.presentation
 import com.weeth.domain.board.application.dto.request.CreateBoardRequest
 import com.weeth.domain.board.application.dto.request.ReorderBoardsRequest
 import com.weeth.domain.board.application.dto.request.UpdateBoardRequest
+import com.weeth.domain.board.application.dto.response.AdminBoardListResponse
 import com.weeth.domain.board.application.dto.response.BoardDetailResponse
 import com.weeth.domain.board.application.dto.response.BoardNameDuplicateResponse
 import com.weeth.domain.board.application.exception.BoardErrorCode
@@ -42,7 +43,7 @@ class BoardAdminController(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-    ): CommonResponse<List<BoardDetailResponse>> =
+    ): CommonResponse<AdminBoardListResponse> =
         CommonResponse.success(
             BoardResponseCode.BOARD_FIND_ALL_SUCCESS,
             getBoardQueryService.findAllBoardsForAdmin(clubId, userId),

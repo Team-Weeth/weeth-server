@@ -5,6 +5,7 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 
 interface ClubMemberReader {
     fun findByIdWithLock(clubMemberId: Long): ClubMember?
@@ -28,6 +29,28 @@ interface ClubMemberReader {
     ): ClubMember?
 
     fun findAllByClubId(clubId: Long): List<ClubMember>
+
+    /**
+     * 어드민 멤버 관리 목록. 상태와 무관하게 동아리의 모든 멤버를 대상으로 한다.
+     *
+     * @param cardinalNumber null이면 기수 필터 없음
+     * @param memberRole null이면 역할 필터 없음
+     * @param keyword null이면 검색 없음. 이름·학과·학번을 대상으로 부분 일치 검색한다.
+     * @param sortKey `ClubMemberSort`의 이름. 기수 정렬은 멤버의 최신(최대) 기수번호 기준이며,
+     *   어떤 값이든 마지막 타이브레이커는 `clubMemberId ASC`다.
+     *   BANNED·LEFT 멤버는 sortKey와 무관하게 항상 맨 뒤로 밀린다.
+     */
+    fun findAdminMembers(
+        clubId: Long,
+        cardinalNumber: Int?,
+        memberRole: MemberRole?,
+        keyword: String?,
+        sortKey: String,
+        pageable: Pageable,
+    ): Page<ClubMember>
+
+    /** 어드민 멤버 상세. 상태와 무관하게 조회하며 프로필까지 함께 가져온다. */
+    fun findAdminMemberDetail(clubMemberId: Long): ClubMember?
 
     fun findAllByUserId(userId: Long): List<ClubMember>
 
@@ -102,4 +125,18 @@ interface ClubMemberReader {
         clubId: Long,
         userIds: List<Long>,
     ): List<ClubMember>
+
+    fun findPublicMembers(
+        clubId: Long,
+        cardinalNumber: Int?,
+        memberRole: MemberRole?,
+        keyword: String?,
+        positionOptionId: Long?,
+        pageable: Pageable,
+    ): Slice<ClubMember>
+
+    fun findPublicMemberDetail(
+        clubId: Long,
+        clubMemberId: Long,
+    ): ClubMember?
 }

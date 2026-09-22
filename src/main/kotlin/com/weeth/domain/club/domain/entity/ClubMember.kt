@@ -65,6 +65,10 @@ class ClubMember(
     var penaltyCount: Int = 0
         private set
 
+    @Column(nullable = false)
+    var warningCount: Int = 0
+        private set
+
     @Column(length = 500)
     var profileImageStorageKey: String? = null
         private set
@@ -76,6 +80,11 @@ class ClubMember(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_profile_id", nullable = true)
     var userProfile: UserProfile? = null
+        private set
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "position_option_id", nullable = true)
+    var positionOption: ClubPositionOption? = null
         private set
 
     @Column(name = "left_at", nullable = true)
@@ -159,7 +168,7 @@ class ClubMember(
     }
 
     fun incrementPenaltyCount() {
-        penaltyCount++
+        penaltyCount += 1
     }
 
     fun resetPenaltyCount() {
@@ -167,7 +176,7 @@ class ClubMember(
     }
 
     fun recalculatePenaltyCount(count: Int) {
-        require(count >= 0) { "패널티 수는 0 이상이어야 합니다." }
+        require(count >= 0) { "페널티 수는 0 이상이어야 합니다." }
         penaltyCount = count
     }
 
@@ -192,14 +201,45 @@ class ClubMember(
         this.userProfile = profile
     }
 
+    /**
+     * 포지션 옵션을 지정하거나(옵션이 같은 동아리 소속일 때) 해제한다(null).
+     * 타 동아리 옵션 지정은 UseCase에서 먼저 걸러내는 것이 기본 경로이며,
+     * 이 check()는 엔티티 불변식을 지키기 위한 최종 방어선이다.
+     */
+    fun assignPosition(option: ClubPositionOption?) {
+        if (option != null) {
+            check(option.club.id == club.id) { "같은 동아리의 포지션만 지정할 수 있습니다." }
+        }
+        this.positionOption = option
+    }
+
     fun decrementPenaltyCount() {
         if (penaltyCount > 0) {
             penaltyCount--
         }
     }
 
+    fun incrementWarningCount(): Int {
+        warningCount += 1
+        var convertedCount = 0
+        // 경고 2회마다 패널티 1회로 자동 전환
+        while (warningCount >= WARNING_TO_PENALTY_THRESHOLD) {
+            warningCount -= WARNING_TO_PENALTY_THRESHOLD
+            penaltyCount += 1
+            convertedCount++
+        }
+        return convertedCount
+    }
+
+    fun decrementWarningCount() {
+        if (warningCount > 0) {
+            warningCount--
+        }
+    }
+
     companion object {
         private const val RETENTION_DAYS = 30L
+        const val WARNING_TO_PENALTY_THRESHOLD = 2
 
         fun create(
             club: Club,

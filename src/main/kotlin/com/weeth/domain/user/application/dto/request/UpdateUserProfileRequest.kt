@@ -25,4 +25,10 @@ data class UpdateUserProfileRequest(
     @field:Schema(description = "학과", example = "컴퓨터공학과")
     @field:Size(min = 1)
     val department: String? = null,
+    @field:Schema(description = "전화번호 공개 여부 (null=변경 안 함)", nullable = true)
+    val telPublic: Boolean? = null,
+    @field:Schema(description = "이메일 공개 여부 (null=변경 안 함)", nullable = true)
+    val emailPublic: Boolean? = null,
+    @field:Schema(description = "학과·학번 공개 여부 (null=변경 안 함)", nullable = true)
+    val studentInfoPublic: Boolean? = null,
 )

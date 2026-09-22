@@ -4,6 +4,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.application.exception.AutoPenaltyDeleteNotAllowedException
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
+import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -30,7 +31,10 @@ class DeletePenaltyUseCase(
         val lockedMember =
             clubMemberRepository.findByIdWithLock(penalty.clubMember.id)
                 ?: throw PenaltyNotFoundException()
-        lockedMember.decrementPenaltyCount()
+        when (penalty.penaltyType) {
+            PenaltyType.PENALTY -> lockedMember.decrementPenaltyCount()
+            PenaltyType.WARNING -> lockedMember.decrementWarningCount()
+        }
 
         penaltyRepository.delete(penalty)
     }

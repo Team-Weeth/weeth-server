@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetUserAttendanceQueryService(
     private val attendanceReader: AttendanceReader,
     private val clubMemberPolicy: ClubMemberPolicy,
@@ -21,7 +22,6 @@ class GetUserAttendanceQueryService(
         private const val MAX_PAGE_SIZE = 50
     }
 
-    @Transactional(readOnly = true)
     fun getAttendedSessions(
         userId: Long,
         clubId: Long,

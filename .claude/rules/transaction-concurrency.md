@@ -4,7 +4,7 @@ Use the `concurrency-safety` skill when changing transaction boundaries, lock be
 
 ## Transaction Placement
 
-- `@Transactional` goes on **UseCase** methods only — Command: `@Transactional`, Query: `@Transactional(readOnly = true)`
+- `@Transactional` goes on **UseCase** only — Command UseCase: `@Transactional` on each method; Query Service: `@Transactional(readOnly = true)` at the **class level** (not method level)
 - Domain Services must NOT have `@Transactional`; UseCase owns transaction boundaries
 - Keep transactions short — no external I/O (S3, HTTP) inside transactions
 

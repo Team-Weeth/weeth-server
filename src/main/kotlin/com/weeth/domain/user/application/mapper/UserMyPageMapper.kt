@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.mapper
 
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.application.dto.response.UserMyPageCurrentProfileResponse
@@ -21,14 +22,24 @@ class UserMyPageMapper(
         user: User,
         postCount: Long,
         attendedSessionCount: Long,
+        penaltyCount: Int,
+        warningCount: Int?,
         usingProfileMembers: List<ClubMember>,
         currentProfile: UserProfile? = null,
+        position: ClubPositionOptionResponse? = null,
     ): UserMyPageResponse =
         UserMyPageResponse(
             user = toInfoResponse(user),
-            stats = UserMyPageStatsResponse(postCount = postCount, attendedSessionCount = attendedSessionCount),
+            stats =
+                UserMyPageStatsResponse(
+                    postCount = postCount,
+                    attendedSessionCount = attendedSessionCount,
+                    penaltyCount = penaltyCount,
+                    warningCount = warningCount,
+                ),
             usingProfiles = toUsingProfiles(usingProfileMembers),
             currentProfile = currentProfile?.let(::toCurrentProfile),
+            position = position,
         )
 
     private fun toInfoResponse(user: User): UserMyPageInfoResponse =
@@ -39,6 +50,9 @@ class UserMyPageMapper(
             school = user.school,
             department = user.department,
             studentId = user.studentId,
+            telPublic = user.telPublic,
+            emailPublic = user.emailPublic,
+            studentInfoPublic = user.studentInfoPublic,
         )
 
     private fun toUsingProfiles(members: List<ClubMember>): List<UserMyPageUsingProfileResponse> =

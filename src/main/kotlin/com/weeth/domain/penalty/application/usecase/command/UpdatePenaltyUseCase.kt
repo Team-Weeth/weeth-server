@@ -4,7 +4,6 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.application.dto.request.UpdatePenaltyRequest
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,12 +21,10 @@ class UpdatePenaltyUseCase(
         clubPermissionPolicy.requireAdmin(clubId, userId)
 
         val penalty =
-            penaltyRepository.findByIdOrNull(request.penaltyId)
+            penaltyRepository.findByIdWithLock(request.penaltyId)
                 ?: throw PenaltyNotFoundException()
         if (penalty.clubMember.club.id != clubId) throw PenaltyNotFoundException()
 
-        if (!request.penaltyDescription.isNullOrBlank()) {
-            penalty.update(request.penaltyDescription)
-        }
+        penalty.update(penaltyDescription = request.penaltyDescription?.takeIf { it.isNotBlank() })
     }
 }

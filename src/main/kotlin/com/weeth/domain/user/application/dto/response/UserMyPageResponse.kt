@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.dto.response
 
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class UserMyPageResponse(
@@ -11,6 +12,8 @@ data class UserMyPageResponse(
     val usingProfiles: List<UserMyPageUsingProfileResponse>,
     @field:Schema(description = "현재 동아리에서 사용 중인 멀티프로필", nullable = true)
     val currentProfile: UserMyPageCurrentProfileResponse? = null,
+    @field:Schema(description = "현재 동아리에서 지정된 포지션 (미지정이면 null)", nullable = true)
+    val position: ClubPositionOptionResponse? = null,
 )
 
 data class UserMyPageInfoResponse(
@@ -26,6 +29,12 @@ data class UserMyPageInfoResponse(
     val department: String? = null,
     @field:Schema(description = "학번", example = "20201234", nullable = true)
     val studentId: String? = null,
+    @field:Schema(description = "전화번호 공개 여부", example = "true")
+    val telPublic: Boolean,
+    @field:Schema(description = "이메일 공개 여부", example = "true")
+    val emailPublic: Boolean,
+    @field:Schema(description = "학과·학번 공개 여부", example = "true")
+    val studentInfoPublic: Boolean,
 )
 
 data class UserMyPageStatsResponse(
@@ -33,6 +42,10 @@ data class UserMyPageStatsResponse(
     val postCount: Long,
     @field:Schema(description = "출석한 세션 수", example = "8")
     val attendedSessionCount: Long,
+    @field:Schema(description = "패널티 횟수", example = "2")
+    val penaltyCount: Int,
+    @field:Schema(description = "경고 횟수. 경고 기능을 사용하지 않는 동아리는 null", example = "1", nullable = true)
+    val warningCount: Int?,
 )
 
 data class UserMyPageUsingProfileResponse(

@@ -80,6 +80,9 @@ career-net:
   key: ${CAREER_NET_API_KEY}
   base-url: https://www.career.go.kr/cnet/openapi/getOpenApi
 
+university:
+  manual-majors-json: ${UNIVERSITY_MANUAL_MAJORS:[]}
+
 slack:
   webhook-url: ${SLACK_WEBHOOK_URL}
 

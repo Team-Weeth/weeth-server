@@ -20,6 +20,7 @@ class Penalty(
     clubMember: ClubMember,
     cardinal: Cardinal,
     penaltyDescription: String,
+    penaltyType: PenaltyType = PenaltyType.PENALTY,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -38,13 +39,13 @@ class Penalty(
         private set
 
     @Enumerated(EnumType.STRING)
-    var penaltyType: PenaltyType = PenaltyType.PENALTY
+    var penaltyType: PenaltyType = penaltyType
         private set
 
     var penaltyDescription: String = penaltyDescription
         private set
 
-    fun update(penaltyDescription: String) {
-        this.penaltyDescription = penaltyDescription
+    fun update(penaltyDescription: String? = null) {
+        penaltyDescription?.let { this.penaltyDescription = it }
     }
 }

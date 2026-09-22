@@ -3,10 +3,13 @@ package com.weeth.domain.club.application.mapper
 import com.weeth.domain.club.application.dto.response.ClubCreateResponse
 import com.weeth.domain.club.application.dto.response.ClubDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubInfoResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
+import com.weeth.domain.club.application.dto.response.ClubMemberPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
 import com.weeth.domain.club.application.dto.response.ClubMembershipStatusResponse
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import com.weeth.domain.club.application.dto.response.ClubPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubUsingProfileResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
@@ -66,6 +69,8 @@ class ClubMapper(
     fun toMemberResponse(
         member: ClubMember,
         cardinals: List<ClubMemberCardinal>,
+        lastPenaltyAt: java.time.LocalDateTime? = null,
+        position: ClubPositionOptionResponse? = null,
     ) = ClubMemberResponse(
         userId = member.user.id,
         clubMemberId = member.id,
@@ -82,6 +87,12 @@ class ClubMapper(
         absenceCount = member.attendanceStats.absenceCount,
         attendanceRate = member.attendanceStats.attendanceRate,
         penaltyCount = member.penaltyCount,
+        warningCount = if (member.club.warningEnabled) member.warningCount else null,
+        lastPenaltyAt = lastPenaltyAt,
+        profileImageUrl = resolveMemberProfileImage(member),
+        bio = resolveMemberBio(member),
+        joinedAt = member.createdAt,
+        position = position,
     )
 
     fun toMemberProfileResponse(
@@ -162,7 +173,53 @@ class ClubMapper(
             clubName = club.name,
         )
 
+    fun toMemberDetailResponse(
+        member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+        postCount: Long,
+        position: ClubPositionOptionResponse? = null,
+    ) = ClubMemberDetailResponse(
+        clubMemberId = member.id,
+        name = resolveMemberName(member),
+        profileImageUrl = resolveMemberProfileImage(member),
+        headerImageUrl = member.userProfile?.headerImageStorageKey?.let { fileAccessUrlPort.resolve(it) },
+        memberRole = member.memberRole,
+        cardinals = toCardinalNumbers(cardinals),
+        bio = resolveMemberBio(member),
+        tel = member.user.telValue.takeIf { member.user.telPublic },
+        email =
+            member.user.emailValue.takeIf { member.user.emailPublic },
+        studentId = member.user.studentId.takeIf { member.user.studentInfoPublic },
+        department = member.user.department.takeIf { member.user.studentInfoPublic },
+        postCount = postCount,
+        position = position,
+    )
+
+    fun toPublicMemberResponse(
+        member: ClubMember,
+        cardinals: List<ClubMemberCardinal>,
+        position: ClubPositionOptionResponse? = null,
+    ) = ClubMemberPublicResponse(
+        clubMemberId = member.id,
+        name = resolveMemberName(member),
+        profileImageUrl = resolveMemberProfileImage(member),
+        memberRole = member.memberRole,
+        cardinals = toCardinalNumbers(cardinals),
+        bio = resolveMemberBio(member),
+        position = position,
+    )
+
     private fun resolveClubImage(storageKey: String?): String? = storageKey?.let { fileAccessUrlPort.resolve(it) }
+
+    // 멀티프로필 도입 이후 멤버가 동아리에서 노출하는 프로필은 userProfile이다.
+    // ClubMember의 동명 필드는 멀티프로필 이전 데이터라 fallback으로만 사용한다.
+    private fun resolveMemberName(member: ClubMember): String = member.userProfile?.name ?: member.user.name
+
+    private fun resolveMemberProfileImage(member: ClubMember): String? =
+        (member.userProfile?.profileImageStorageKey ?: member.profileImageStorageKey)
+            ?.let { fileAccessUrlPort.resolve(it) }
+
+    private fun resolveMemberBio(member: ClubMember): String? = member.userProfile?.bio ?: member.bio
 
     private fun toUsingProfileResponse(member: ClubMember): ClubUsingProfileResponse? =
         member.userProfile?.let { profile ->

@@ -264,4 +264,20 @@ interface PostRepository :
         @Param("clubId") clubId: Long,
         pageable: Pageable,
     ): Slice<Post>
+
+    @EntityGraph(attributePaths = ["board", "board.club"])
+    @Query(
+        value = """
+        SELECT p
+        FROM Post p
+        WHERE p.clubMember.id = :clubMemberId
+          AND p.isDeleted = false
+          AND p.board.isDeleted = false
+        ORDER BY p.createdAt DESC, p.id DESC
+        """,
+    )
+    override fun findActivePostsByClubMemberId(
+        @Param("clubMemberId") clubMemberId: Long,
+        pageable: Pageable,
+    ): Slice<Post>
 }

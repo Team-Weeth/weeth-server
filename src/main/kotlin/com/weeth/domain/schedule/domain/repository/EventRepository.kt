@@ -40,4 +40,22 @@ interface EventRepository :
         @Param("end") end: LocalDateTime,
         @Param("start") start: LocalDateTime,
     ): List<Event>
+
+    @Query(
+        "SELECT e FROM Event e WHERE e.club.id = :clubId AND e.cardinal = :cardinal AND e.start <= :end AND e.end >= :start ORDER BY e.start ASC",
+    )
+    fun findByClubIdAndCardinalAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(
+        @Param("clubId") clubId: Long,
+        @Param("cardinal") cardinal: Int,
+        @Param("end") end: LocalDateTime,
+        @Param("start") start: LocalDateTime,
+    ): List<Event>
+
+    override fun findByClubIdAndCardinalAndDateRange(
+        clubId: Long,
+        cardinal: Int,
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): List<Event> =
+        findByClubIdAndCardinalAndStartLessThanEqualAndEndGreaterThanEqualOrderByStartAsc(clubId, cardinal, end, start)
 }

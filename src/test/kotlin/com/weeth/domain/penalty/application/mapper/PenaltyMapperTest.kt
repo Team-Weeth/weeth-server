@@ -3,15 +3,18 @@ package com.weeth.domain.penalty.application.mapper
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.penalty.domain.entity.Penalty
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
+import io.mockk.mockk
 import java.time.LocalDateTime
 
 class PenaltyMapperTest :
     DescribeSpec({
-        val mapper = PenaltyMapper()
+        val fileAccessUrlPort = mockk<FileAccessUrlPort>()
+        val mapper = PenaltyMapper(fileAccessUrlPort)
 
         describe("toResponse") {
             it("멤버 상태를 응답에 포함한다") {

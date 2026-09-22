@@ -7,15 +7,20 @@ import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
 import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.application.dto.request.ClubMemberApplyObRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberBulkPositionUpdateRequest
+import com.weeth.domain.club.application.dto.request.ClubMemberPositionUpdateRequest
 import com.weeth.domain.club.application.dto.request.ClubMemberRoleUpdateRequest
 import com.weeth.domain.club.application.dto.request.UpdateMemberCardinalRequest
 import com.weeth.domain.club.application.exception.CannotBanLeadException
 import com.weeth.domain.club.application.exception.CardinalRemovalHasAttendanceException
+import com.weeth.domain.club.application.exception.ClubMemberNotFoundException
 import com.weeth.domain.club.application.exception.ClubMemberNotInClubException
 import com.weeth.domain.club.application.exception.LeadSelfTransferException
 import com.weeth.domain.club.application.exception.LeadTransferOnlyException
 import com.weeth.domain.club.application.exception.MemberNotActiveException
 import com.weeth.domain.club.application.exception.NotLeadException
+import com.weeth.domain.club.application.exception.PositionOptionNotFoundException
+import com.weeth.domain.club.application.exception.PositionOptionNotInClubException
 import com.weeth.domain.club.application.exception.SelfBanNotAllowedException
 import com.weeth.domain.club.application.exception.SelfRoleChangeNotAllowedException
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
@@ -23,10 +28,12 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberReader
+import com.weeth.domain.club.domain.repository.ClubPositionOptionReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
+import com.weeth.domain.club.fixture.ClubPositionOptionTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.penalty.domain.repository.PenaltyReader
 import com.weeth.domain.session.domain.repository.SessionReader
@@ -52,6 +59,7 @@ class AdminClubMemberUseCaseTest :
         val attendanceInitializer = mockk<AttendanceInitializer>(relaxed = true)
         val penaltyReader = mockk<PenaltyReader>(relaxed = true)
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>(relaxed = true)
+        val clubPositionOptionReader = mockk<ClubPositionOptionReader>(relaxed = true)
         val useCase =
             AdminClubMemberUseCase(
                 clubMemberPolicy,
@@ -64,6 +72,7 @@ class AdminClubMemberUseCaseTest :
                 attendanceInitializer,
                 penaltyReader,
                 clubMemberCardinalRepository,
+                clubPositionOptionReader,
             )
         val club = ClubTestFixture.createClub(id = 1L)
         val adminMember = ClubMemberTestFixture.createAdminMember(club = club)
@@ -80,6 +89,7 @@ class AdminClubMemberUseCaseTest :
                 attendanceInitializer,
                 penaltyReader,
                 clubMemberCardinalRepository,
+                clubPositionOptionReader,
             )
             every {
                 attendanceRepository.saveAll(
@@ -585,6 +595,258 @@ class AdminClubMemberUseCaseTest :
                 shouldThrow<ClubMemberNotInClubException> {
                     useCase.updateCardinals(1L, 10L, 20L, UpdateMemberCardinalRequest(cardinalIds = listOf(1L)))
                 }
+            }
+        }
+
+        describe("updateMemberPosition") {
+            it("같은 동아리 소속 포지션 옵션을 지정하면 저장된다") {
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findByIdWithLock(20L) } returns member
+                every { clubPositionOptionReader.findByIdOrNull(100L) } returns option
+
+                useCase.updateMemberPosition(
+                    1L,
+                    10L,
+                    20L,
+                    ClubMemberPositionUpdateRequest(positionOptionId = 100L),
+                )
+
+                member.positionOption shouldBe option
+            }
+
+            it("positionOptionId가 null이면 포지션을 해제한다") {
+                val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club)
+                val member =
+                    ClubMemberTestFixture.createActiveMember(id = 20L, club = club).also {
+                        it.assignPosition(option)
+                    }
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findByIdWithLock(20L) } returns member
+
+                useCase.updateMemberPosition(
+                    1L,
+                    10L,
+                    20L,
+                    ClubMemberPositionUpdateRequest(positionOptionId = null),
+                )
+
+                member.positionOption shouldBe null
+                verify(exactly = 0) { clubPositionOptionReader.findByIdOrNull(any()) }
+            }
+
+            it("존재하지 않는 포지션 옵션이면 예외가 발생한다") {
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findByIdWithLock(20L) } returns member
+                every { clubPositionOptionReader.findByIdOrNull(999L) } returns null
+
+                shouldThrow<PositionOptionNotFoundException> {
+                    useCase.updateMemberPosition(
+                        1L,
+                        10L,
+                        20L,
+                        ClubMemberPositionUpdateRequest(positionOptionId = 999L),
+                    )
+                }
+            }
+
+            it("다른 동아리 소속 포지션 옵션을 지정하면 예외가 발생한다") {
+                val otherClub = ClubTestFixture.createClub(id = 2L, code = "OTHER")
+                val member = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                val otherClubOption = ClubPositionOptionTestFixture.createOption(id = 100L, club = otherClub)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findByIdWithLock(20L) } returns member
+                every { clubPositionOptionReader.findByIdOrNull(100L) } returns otherClubOption
+
+                shouldThrow<PositionOptionNotInClubException> {
+                    useCase.updateMemberPosition(
+                        1L,
+                        10L,
+                        20L,
+                        ClubMemberPositionUpdateRequest(positionOptionId = 100L),
+                    )
+                }
+                member.positionOption shouldBe null
+            }
+
+            it("존재하지 않는 멤버면 예외가 발생한다") {
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findByIdWithLock(20L) } returns null
+
+                shouldThrow<ClubMemberNotFoundException> {
+                    useCase.updateMemberPosition(
+                        1L,
+                        10L,
+                        20L,
+                        ClubMemberPositionUpdateRequest(positionOptionId = 100L),
+                    )
+                }
+            }
+
+            it("다른 동아리 소속 멤버면 예외가 발생한다") {
+                val otherClubMember = ClubMemberTestFixture.createActiveMember(id = 20L)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findByIdWithLock(20L) } returns otherClubMember
+
+                shouldThrow<ClubMemberNotInClubException> {
+                    useCase.updateMemberPosition(
+                        1L,
+                        10L,
+                        20L,
+                        ClubMemberPositionUpdateRequest(positionOptionId = 100L),
+                    )
+                }
+            }
+
+            it("관리자 권한이 없으면 requireAdmin에서 예외가 전파된다") {
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } throws RuntimeException("관리자 아님")
+
+                shouldThrow<RuntimeException> {
+                    useCase.updateMemberPosition(
+                        1L,
+                        10L,
+                        20L,
+                        ClubMemberPositionUpdateRequest(positionOptionId = 100L),
+                    )
+                }
+                verify(exactly = 0) { clubMemberReader.findByIdWithLock(any()) }
+            }
+        }
+
+        describe("updateMemberPositionBulk") {
+            it("여러 멤버에게 동일한 포지션을 일괄 지정한다") {
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                val member2 = ClubMemberTestFixture.createActiveMember(id = 21L, club = club)
+                val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L, 21L)) } returns listOf(member1, member2)
+                every { clubPositionOptionReader.findByIdOrNull(100L) } returns option
+
+                useCase.updateMemberPositionBulk(
+                    1L,
+                    10L,
+                    ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L, 21L), positionOptionId = 100L),
+                )
+
+                member1.positionOption shouldBe option
+                member2.positionOption shouldBe option
+            }
+
+            it("중복 id는 제거하고 정렬된 순서로 락을 조회한다") {
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                val member2 = ClubMemberTestFixture.createActiveMember(id = 21L, club = club)
+                val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L, 21L)) } returns listOf(member1, member2)
+                every { clubPositionOptionReader.findByIdOrNull(100L) } returns option
+
+                useCase.updateMemberPositionBulk(
+                    1L,
+                    10L,
+                    ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(21L, 20L, 21L), positionOptionId = 100L),
+                )
+
+                verify(exactly = 1) { clubMemberReader.findAllByIdsWithLock(listOf(20L, 21L)) }
+            }
+
+            it("positionOptionId가 null이면 대상 멤버 전원의 포지션을 해제한다") {
+                val option = ClubPositionOptionTestFixture.createOption(id = 100L, club = club)
+                val member1 =
+                    ClubMemberTestFixture.createActiveMember(id = 20L, club = club).also { it.assignPosition(option) }
+                val member2 =
+                    ClubMemberTestFixture.createActiveMember(id = 21L, club = club).also { it.assignPosition(option) }
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L, 21L)) } returns listOf(member1, member2)
+
+                useCase.updateMemberPositionBulk(
+                    1L,
+                    10L,
+                    ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L, 21L), positionOptionId = null),
+                )
+
+                member1.positionOption shouldBe null
+                member2.positionOption shouldBe null
+                verify(exactly = 0) { clubPositionOptionReader.findByIdOrNull(any()) }
+            }
+
+            it("존재하지 않는 멤버 id가 포함되면 예외가 발생하고 부분 반영되지 않는다") {
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L, 21L)) } returns listOf(member1)
+
+                shouldThrow<ClubMemberNotFoundException> {
+                    useCase.updateMemberPositionBulk(
+                        1L,
+                        10L,
+                        ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L, 21L), positionOptionId = 100L),
+                    )
+                }
+                verify(exactly = 0) { clubPositionOptionReader.findByIdOrNull(any()) }
+            }
+
+            it("다른 동아리 소속 멤버가 포함되면 예외가 발생하고 부분 반영되지 않는다") {
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                val otherClubMember = ClubMemberTestFixture.createActiveMember(id = 21L)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L, 21L)) } returns
+                    listOf(member1, otherClubMember)
+
+                shouldThrow<ClubMemberNotInClubException> {
+                    useCase.updateMemberPositionBulk(
+                        1L,
+                        10L,
+                        ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L, 21L), positionOptionId = 100L),
+                    )
+                }
+                member1.positionOption shouldBe null
+            }
+
+            it("존재하지 않는 포지션 옵션이면 예외가 발생하고 부분 반영되지 않는다") {
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member1)
+                every { clubPositionOptionReader.findByIdOrNull(999L) } returns null
+
+                shouldThrow<PositionOptionNotFoundException> {
+                    useCase.updateMemberPositionBulk(
+                        1L,
+                        10L,
+                        ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L), positionOptionId = 999L),
+                    )
+                }
+            }
+
+            it("다른 동아리 소속 포지션 옵션이면 예외가 발생하고 부분 반영되지 않는다") {
+                val otherClub = ClubTestFixture.createClub(id = 2L, code = "OTHER")
+                val member1 = ClubMemberTestFixture.createActiveMember(id = 20L, club = club)
+                val otherClubOption = ClubPositionOptionTestFixture.createOption(id = 100L, club = otherClub)
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+                every { clubMemberReader.findAllByIdsWithLock(listOf(20L)) } returns listOf(member1)
+                every { clubPositionOptionReader.findByIdOrNull(100L) } returns otherClubOption
+
+                shouldThrow<PositionOptionNotInClubException> {
+                    useCase.updateMemberPositionBulk(
+                        1L,
+                        10L,
+                        ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L), positionOptionId = 100L),
+                    )
+                }
+                member1.positionOption shouldBe null
+            }
+
+            it("관리자 권한이 없으면 requireAdmin에서 예외가 전파된다") {
+                every { clubPermissionPolicy.requireAdmin(1L, 10L) } throws RuntimeException("관리자 아님")
+
+                shouldThrow<RuntimeException> {
+                    useCase.updateMemberPositionBulk(
+                        1L,
+                        10L,
+                        ClubMemberBulkPositionUpdateRequest(clubMemberIds = listOf(20L), positionOptionId = 100L),
+                    )
+                }
+                verify(exactly = 0) { clubMemberReader.findAllByIdsWithLock(any()) }
             }
         }
     })
