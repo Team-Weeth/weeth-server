@@ -49,8 +49,16 @@ class SavePenaltyUseCase(
                 clubMemberRepository.findByIdWithLock(clubMember.id)
                     ?: throw PenaltyNotFoundException()
             when (penalty.penaltyType) {
-                PenaltyType.PENALTY -> lockedMember.incrementPenaltyCount(request.score)
-                PenaltyType.WARNING -> lockedMember.incrementWarningCount(request.score)
+                PenaltyType.PENALTY -> {
+                    lockedMember.incrementPenaltyCount()
+                }
+
+                PenaltyType.WARNING -> {
+                    val convertedCount = lockedMember.incrementWarningCount()
+                    repeat(convertedCount) {
+                        penaltyRepository.save(mapper.toAutoConvertedPenalty(lockedMember, cardinal))
+                    }
+                }
             }
         }
     }

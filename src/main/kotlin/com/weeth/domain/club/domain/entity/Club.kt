@@ -74,6 +74,16 @@ class Club(
     var penaltyRule: String? = null
         private set
 
+    /**
+     * 이 동아리가 보유할 수 있는 활성 게시판 수.
+     *
+     * 요금제별 차등을 위해 club 단위로 관리한다. 상수로 두면 전 동아리가 같은 값을 쓰게 되고,
+     * 운영상 예외(예: 마이그레이션으로 게시판이 늘어난 동아리)를 개별 조정할 수 없다.
+     */
+    @Column(name = "max_board_count", nullable = false)
+    var maxBoardCount: Int = DEFAULT_MAX_BOARD_COUNT
+        private set
+
     // todo: 동아리 삭제 지원
 
     fun update(
@@ -147,6 +157,25 @@ class Club(
         this.backgroundImageStorageKey = null
     }
 
+    /**
+     * 활성 게시판을 하나 더 만들 수 있는지 판단한다.
+     *
+     * @param currentActiveCount 삭제되지 않은 게시판 수
+     */
+    fun canAddBoard(currentActiveCount: Int): Boolean = currentActiveCount < maxBoardCount
+
+    /**
+     * 게시판 상한을 조정한다.
+     *
+     * 현재 보유 수보다 낮게 내리는 것 자체는 막지 않는다. 기존 게시판을 강제로 지울 수는 없고,
+     * 상한 검사는 생성 시점에만 이루어지므로 "더 만들 수 없다"는 의미로 동작하면 충분하다.
+     */
+    fun changeMaxBoardCount(count: Int) {
+        require(count >= MIN_BOARD_COUNT) { "게시판 상한은 ${MIN_BOARD_COUNT}개 이상이어야 합니다." }
+        require(count <= MAX_BOARD_COUNT_LIMIT) { "게시판 상한은 ${MAX_BOARD_COUNT_LIMIT}개 이하여야 합니다." }
+        this.maxBoardCount = count
+    }
+
     @PrePersist
     fun assignIdIfAbsent() {
         if (id == 0L) {
@@ -157,6 +186,15 @@ class Club(
     companion object {
         private const val MAX_DESCRIPTION_LENGTH = 30
         private const val MAX_PENALTY_RULE_LENGTH = 500
+
+        /** 신규 동아리 기본 상한. 요금제 도입 전까지는 모든 동아리가 이 값으로 생성된다. */
+        const val DEFAULT_MAX_BOARD_COUNT = 4
+
+        /** 공지사항은 동아리 생성 시 자동 제공되므로 최소 1개는 보장한다. */
+        private const val MIN_BOARD_COUNT = 1
+
+        /** 무한정 늘어나 목록 UI가 무너지는 것을 막는 안전장치. */
+        private const val MAX_BOARD_COUNT_LIMIT = 30
 
         fun create(
             name: String,

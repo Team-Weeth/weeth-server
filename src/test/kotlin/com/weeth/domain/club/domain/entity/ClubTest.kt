@@ -144,4 +144,46 @@ class ClubTest :
                 Club.create(name = "리츠", code = "LEETS001", schoolName = "", clubContact = defaultContact)
             }
         }
+
+        "게시판 상한 — 신규 동아리는 기본값을 갖는다" {
+            val club = Club.create(name = "리츠", code = "LEETS010", schoolName = "가천대학교", clubContact = defaultContact)
+
+            club.maxBoardCount shouldBe Club.DEFAULT_MAX_BOARD_COUNT
+        }
+
+        "게시판 상한 — 미만이면 추가할 수 있고 도달하면 막는다" {
+            val club = Club.create(name = "리츠", code = "LEETS011", schoolName = "가천대학교", clubContact = defaultContact)
+
+            club.canAddBoard(Club.DEFAULT_MAX_BOARD_COUNT - 1) shouldBe true
+            club.canAddBoard(Club.DEFAULT_MAX_BOARD_COUNT) shouldBe false
+        }
+
+        "게시판 상한 — 이미 초과한 상태에서도 추가를 막는다" {
+            // V3 마이그레이션처럼 SQL로 직접 생성해 상한을 넘긴 경우
+            val club = Club.create(name = "리츠", code = "LEETS012", schoolName = "가천대학교", clubContact = defaultContact)
+
+            club.canAddBoard(Club.DEFAULT_MAX_BOARD_COUNT + 1) shouldBe false
+        }
+
+        "게시판 상한 — 조정하면 그 값이 적용된다" {
+            val club = Club.create(name = "리츠", code = "LEETS013", schoolName = "가천대학교", clubContact = defaultContact)
+
+            club.changeMaxBoardCount(12)
+
+            club.maxBoardCount shouldBe 12
+            club.canAddBoard(11) shouldBe true
+            club.canAddBoard(12) shouldBe false
+        }
+
+        "게시판 상한 — 1 미만으로는 내릴 수 없다" {
+            val club = Club.create(name = "리츠", code = "LEETS014", schoolName = "가천대학교", clubContact = defaultContact)
+
+            shouldThrow<IllegalArgumentException> { club.changeMaxBoardCount(0) }
+        }
+
+        "게시판 상한 — 안전 상한을 넘길 수 없다" {
+            val club = Club.create(name = "리츠", code = "LEETS015", schoolName = "가천대학교", clubContact = defaultContact)
+
+            shouldThrow<IllegalArgumentException> { club.changeMaxBoardCount(31) }
+        }
     })

@@ -6,10 +6,12 @@ import com.weeth.domain.club.application.dto.response.ClubMemberDetailResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberProfileResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberPublicResponse
 import com.weeth.domain.club.application.dto.response.ClubMemberSummaryResponse
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import com.weeth.domain.club.application.dto.response.ProfileStatusResponse
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.club.application.usecase.command.ManageClubMemberUsecase
 import com.weeth.domain.club.application.usecase.query.GetClubMemberQueryService
+import com.weeth.domain.club.application.usecase.query.GetClubPositionOptionQueryService
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.user.application.dto.response.UserMyPostResponse
 import com.weeth.domain.user.application.usecase.query.GetUserPostQueryService
@@ -43,6 +45,7 @@ class ClubMemberController(
     private val manageClubMemberUsecase: ManageClubMemberUsecase,
     private val getClubMemberQueryService: GetClubMemberQueryService,
     private val getUserPostQueryService: GetUserPostQueryService,
+    private val getClubPositionOptionQueryService: GetClubPositionOptionQueryService,
 ) {
     @PostMapping("/{clubId}/join")
     @Operation(summary = "동아리 가입")
@@ -146,7 +149,7 @@ class ClubMemberController(
     @GetMapping("/{clubId}/members")
     @Operation(
         summary = "동아리 멤버 목록 조회",
-        description = "기수·역할 필터와 무한스크롤 페이지네이션을 지원합니다. 활성 멤버만 조회됩니다.",
+        description = "기수·역할·포지션 필터와 무한스크롤 페이지네이션을 지원합니다. 활성 멤버만 조회됩니다.",
     )
     fun getMembers(
         @TsidParam
@@ -155,6 +158,7 @@ class ClubMemberController(
         @RequestParam(required = false) cardinalNumber: Int?,
         @RequestParam(required = false) memberRole: MemberRole?,
         @RequestParam(required = false) keyword: String?,
+        @RequestParam(required = false) positionOptionId: Long?,
         @RequestParam(defaultValue = "0") pageNumber: Int,
         @RequestParam(defaultValue = "20") pageSize: Int,
     ): CommonResponse<SliceResponse<ClubMemberPublicResponse>> {
@@ -165,10 +169,22 @@ class ClubMemberController(
                 cardinalNumber = cardinalNumber,
                 memberRole = memberRole,
                 keyword = keyword,
+                positionOptionId = positionOptionId,
                 page = pageNumber,
                 size = pageSize,
             )
         return CommonResponse.success(ClubResponseCode.MEMBER_LIST_FIND_SUCCESS, response)
+    }
+
+    @GetMapping("/{clubId}/positions")
+    @Operation(summary = "포지션 옵션 목록 조회", description = "멤버 목록 필터용 포지션 옵션을 조회합니다. 활성 멤버만 조회할 수 있습니다.")
+    fun getPositionOptions(
+        @TsidParam
+        @TsidPathVariable clubId: Long,
+        @Parameter(hidden = true) @CurrentUser userId: Long,
+    ): CommonResponse<List<ClubPositionOptionResponse>> {
+        val options = getClubPositionOptionQueryService.findAllForMember(clubId, userId)
+        return CommonResponse.success(ClubResponseCode.POSITION_OPTIONS_FIND_PUBLIC_SUCCESS, options)
     }
 
     @PostMapping("/{clubId}/members/me/cardinals")

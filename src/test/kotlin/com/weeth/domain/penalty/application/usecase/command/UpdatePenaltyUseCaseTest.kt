@@ -1,12 +1,9 @@
 package com.weeth.domain.penalty.application.usecase.command
 
-import com.weeth.domain.cardinal.fixture.CardinalTestFixture
-import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.penalty.application.dto.request.UpdatePenaltyRequest
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
-import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
 import com.weeth.domain.penalty.fixture.PenaltyTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -20,17 +17,15 @@ import io.mockk.verify
 class UpdatePenaltyUseCaseTest :
     DescribeSpec({
         val penaltyRepository = mockk<PenaltyRepository>()
-        val clubMemberRepository = mockk<ClubMemberRepository>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
         val useCase =
             UpdatePenaltyUseCase(
                 penaltyRepository = penaltyRepository,
-                clubMemberRepository = clubMemberRepository,
                 clubPermissionPolicy = clubPermissionPolicy,
             )
 
         beforeTest {
-            clearMocks(penaltyRepository, clubMemberRepository, clubPermissionPolicy)
+            clearMocks(penaltyRepository, clubPermissionPolicy)
         }
 
         describe("update") {
@@ -45,7 +40,6 @@ class UpdatePenaltyUseCaseTest :
                             UpdatePenaltyRequest(
                                 penaltyId = 1L,
                                 penaltyDescription = "수정됨",
-                                score = null,
                             ),
                     )
                 }
@@ -68,7 +62,6 @@ class UpdatePenaltyUseCaseTest :
                             UpdatePenaltyRequest(
                                 penaltyId = 1L,
                                 penaltyDescription = "수정됨",
-                                score = null,
                             ),
                     )
                 }
@@ -88,13 +81,12 @@ class UpdatePenaltyUseCaseTest :
                             UpdatePenaltyRequest(
                                 penaltyId = 1L,
                                 penaltyDescription = "수정됨",
-                                score = null,
                             ),
                     )
                 }
             }
 
-            it("페널티 설명만 수정한다") {
+            it("페널티 설명을 수정한다") {
                 val penalty = PenaltyTestFixture.createPenalty(penaltyDescription = "원래 사유")
                 every { clubPermissionPolicy.requireAdmin(any(), any()) } returns penalty.clubMember
                 every { penaltyRepository.findByIdWithLock(1L) } returns penalty
@@ -106,94 +98,14 @@ class UpdatePenaltyUseCaseTest :
                         UpdatePenaltyRequest(
                             penaltyId = 1L,
                             penaltyDescription = "수정된 사유",
-                            score = null,
                         ),
                 )
 
                 penalty.penaltyDescription shouldBe "수정된 사유"
-                penalty.score shouldBe 1
             }
 
-            it("페널티 점수만 수정한다") {
-                val penalty =
-                    PenaltyTestFixture.createPenalty(
-                        penaltyType = PenaltyType.PENALTY,
-                        score = 2,
-                    )
-                val clubMember = penalty.clubMember
-                every { clubPermissionPolicy.requireAdmin(any(), any()) } returns clubMember
-                every { penaltyRepository.findByIdWithLock(any()) } returns penalty
-                every { clubMemberRepository.findByIdWithLock(any()) } returns clubMember
-
-                useCase.update(
-                    clubId = penalty.clubMember.club.id,
-                    userId = 1L,
-                    request =
-                        UpdatePenaltyRequest(
-                            penaltyId = 1L,
-                            penaltyDescription = null,
-                            score = 4,
-                        ),
-                )
-
-                penalty.score shouldBe 4
-                verify {
-                    clubMemberRepository.findByIdWithLock(clubMember.id)
-                }
-            }
-
-            it("페널티 점수 증가 시 clubMember의 penaltyCount를 증가시킨다") {
-                val penalty =
-                    PenaltyTestFixture.createPenalty(
-                        penaltyType = PenaltyType.PENALTY,
-                        score = 2,
-                    )
-                val clubMember = penalty.clubMember
-                every { clubPermissionPolicy.requireAdmin(any(), any()) } returns clubMember
-                every { penaltyRepository.findByIdWithLock(any()) } returns penalty
-                every { clubMemberRepository.findByIdWithLock(any()) } returns clubMember
-
-                useCase.update(
-                    clubId = penalty.clubMember.club.id,
-                    userId = 1L,
-                    request =
-                        UpdatePenaltyRequest(
-                            penaltyId = 1L,
-                            penaltyDescription = null,
-                            score = 5,
-                        ),
-                )
-
-                penalty.score shouldBe 5
-            }
-
-            it("경고 점수 변경 시 clubMember의 warningCount를 조정한다") {
-                val penalty =
-                    PenaltyTestFixture.createWarning(
-                        penaltyDescription = "경고",
-                        score = 1,
-                    )
-                val clubMember = penalty.clubMember
-                every { clubPermissionPolicy.requireAdmin(any(), any()) } returns clubMember
-                every { penaltyRepository.findByIdWithLock(any()) } returns penalty
-                every { clubMemberRepository.findByIdWithLock(any()) } returns clubMember
-
-                useCase.update(
-                    clubId = penalty.clubMember.club.id,
-                    userId = 1L,
-                    request =
-                        UpdatePenaltyRequest(
-                            penaltyId = 1L,
-                            penaltyDescription = null,
-                            score = 3,
-                        ),
-                )
-
-                penalty.score shouldBe 3
-            }
-
-            it("점수가 변경되지 않으면 clubMember를 조회하지 않는다") {
-                val penalty = PenaltyTestFixture.createPenalty(score = 2)
+            it("설명이 null이면 변경하지 않는다") {
+                val penalty = PenaltyTestFixture.createPenalty(penaltyDescription = "원래 사유")
                 every { clubPermissionPolicy.requireAdmin(any(), any()) } returns penalty.clubMember
                 every { penaltyRepository.findByIdWithLock(any()) } returns penalty
 
@@ -203,40 +115,11 @@ class UpdatePenaltyUseCaseTest :
                     request =
                         UpdatePenaltyRequest(
                             penaltyId = 1L,
-                            penaltyDescription = "수정된 사유",
-                            score = 2,
+                            penaltyDescription = null,
                         ),
                 )
 
-                verify(exactly = 0) {
-                    clubMemberRepository.findByIdWithLock(any())
-                }
-            }
-
-            it("페널티 설명과 점수를 모두 수정한다") {
-                val penalty =
-                    PenaltyTestFixture.createPenalty(
-                        penaltyDescription = "원래 사유",
-                        score = 1,
-                    )
-                val clubMember = penalty.clubMember
-                every { clubPermissionPolicy.requireAdmin(any(), any()) } returns clubMember
-                every { penaltyRepository.findByIdWithLock(any()) } returns penalty
-                every { clubMemberRepository.findByIdWithLock(any()) } returns clubMember
-
-                useCase.update(
-                    clubId = penalty.clubMember.club.id,
-                    userId = 1L,
-                    request =
-                        UpdatePenaltyRequest(
-                            penaltyId = 1L,
-                            penaltyDescription = "수정된 사유",
-                            score = 3,
-                        ),
-                )
-
-                penalty.penaltyDescription shouldBe "수정된 사유"
-                penalty.score shouldBe 3
+                penalty.penaltyDescription shouldBe "원래 사유"
             }
 
             it("공백만 있는 페널티 설명은 무시한다") {
@@ -251,7 +134,6 @@ class UpdatePenaltyUseCaseTest :
                         UpdatePenaltyRequest(
                             penaltyId = 1L,
                             penaltyDescription = "   ",
-                            score = null,
                         ),
                 )
 

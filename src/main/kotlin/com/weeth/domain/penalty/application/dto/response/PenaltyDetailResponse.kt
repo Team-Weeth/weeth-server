@@ -11,8 +11,6 @@ data class PenaltyDetailResponse(
     val cardinal: Int?,
     @field:Schema(description = "페널티 사유", example = "정기모임 무단 불참")
     val penaltyDescription: String,
-    @field:Schema(description = "페널티 점수", example = "1")
-    val score: Int,
     @field:Schema(description = "페널티 부여 일시", example = "2026-02-19T01:00:00")
     val time: LocalDateTime,
     @field:Schema(description = "페널티 유형 (PENALTY: 패널티, WARNING: 경고)", example = "PENALTY")

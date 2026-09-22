@@ -50,7 +50,8 @@ class ManageBoardUseCase(
         // TODO: MVP 제약 — 공지사항은 클럽 생성 시 자동 제공되므로 직접 생성 불가. 다중 NOTICE 지원 시 제거
         if (request.type == BoardType.NOTICE) throw BoardLimitExceededException()
 
-        if (boardRepository.countByClubIdAndIsDeletedFalse(clubId) >= MAX_BOARD_COUNT) {
+        // 상한은 club마다 다를 수 있으므로(요금제 차등) 판정은 Club 엔티티가 한다.
+        if (!club.canAddBoard(boardRepository.countByClubIdAndIsDeletedFalse(clubId))) {
             throw BoardLimitExceededException()
         }
 
@@ -175,8 +176,4 @@ class ManageBoardUseCase(
 
     private fun findBoard(boardId: Long): Board =
         boardRepository.findByIdAndIsDeletedFalse(boardId) ?: throw BoardNotFoundException()
-
-    companion object {
-        private const val MAX_BOARD_COUNT = 4
-    }
 }

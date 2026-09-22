@@ -77,6 +77,15 @@ interface ClubMemberRepository :
         @Param("profileId") profileId: Long,
     ): Int
 
+    // 포지션 옵션 삭제 전 참조를 끊어 끊어진 FK를 방지한다. ManageClubPositionOptionUseCase.save()는
+    // 요청에 name이 그대로 남은 옵션은 재사용(id 유지)하고, name이 사라진 옵션만 삭제하므로
+    // ids는 "이번 저장으로 실제 삭제되는(= name이 요청에서 사라진) 옵션 id"만 전달되어야 한다.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE ClubMember cm SET cm.positionOption = null WHERE cm.positionOption.id IN :ids")
+    fun clearPositionOptionReferences(
+        @Param("ids") ids: List<Long>,
+    ): Int
+
     override fun findAllByClubIdAndMemberStatus(
         clubId: Long,
         memberStatus: MemberStatus,
@@ -127,6 +136,7 @@ interface ClubMemberRepository :
                 AND cmc.cardinal.cardinalNumber = :cardinalNumber
             )
         )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
         AND (
             :keyword IS NULL
             OR user.name LIKE CONCAT('%', :keyword, '%')
@@ -134,6 +144,9 @@ interface ClubMemberRepository :
             OR user.studentId LIKE CONCAT('%', :keyword, '%')
         )
         ORDER BY
+            CASE WHEN cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.BANNED
+                OR cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.LEFT
+                THEN 1 ELSE 0 END ASC,
             CASE WHEN :sortKey = 'CARDINAL_DESC' THEN (
                 SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm
             ) END DESC,
@@ -159,6 +172,7 @@ interface ClubMemberRepository :
                 AND cmc.cardinal.cardinalNumber = :cardinalNumber
             )
         )
+        AND (:memberRole IS NULL OR cm.memberRole = :memberRole)
         AND (
             :keyword IS NULL
             OR user.name LIKE CONCAT('%', :keyword, '%')
@@ -170,6 +184,7 @@ interface ClubMemberRepository :
     override fun findAdminMembers(
         @Param("clubId") clubId: Long,
         @Param("cardinalNumber") cardinalNumber: Int?,
+        @Param("memberRole") memberRole: MemberRole?,
         @Param("keyword") keyword: String?,
         @Param("sortKey") sortKey: String,
         pageable: Pageable,
@@ -520,6 +535,7 @@ interface ClubMemberRepository :
             )
         )
         AND (:keyword IS NULL OR COALESCE(cm.userProfile.name, cm.user.name) LIKE CONCAT('%', :keyword, '%'))
+        AND (:positionOptionId IS NULL OR cm.positionOption.id = :positionOptionId)
         ORDER BY
             (SELECT MAX(c.cardinal.cardinalNumber) FROM ClubMemberCardinal c WHERE c.clubMember = cm) DESC,
             cm.id ASC
@@ -530,6 +546,7 @@ interface ClubMemberRepository :
         @Param("cardinalNumber") cardinalNumber: Int?,
         @Param("memberRole") memberRole: MemberRole?,
         @Param("keyword") keyword: String?,
+        @Param("positionOptionId") positionOptionId: Long?,
         pageable: Pageable,
     ): Slice<ClubMember>
 

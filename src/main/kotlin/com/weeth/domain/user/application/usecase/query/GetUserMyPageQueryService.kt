@@ -3,6 +3,8 @@ package com.weeth.domain.user.application.usecase.query
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.board.domain.repository.PostReader
+import com.weeth.domain.club.application.mapper.ClubPositionOptionMapper
+import com.weeth.domain.club.domain.entity.ClubPositionOption
 import com.weeth.domain.club.domain.enums.MemberStatus
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
+@Transactional(readOnly = true)
 class GetUserMyPageQueryService(
     private val userReader: UserReader,
     private val clubMemberReader: ClubMemberReader,
@@ -21,8 +24,8 @@ class GetUserMyPageQueryService(
     private val attendanceReader: AttendanceReader,
     private val clubMemberPolicy: ClubMemberPolicy,
     private val userMyPageMapper: UserMyPageMapper,
+    private val clubPositionOptionMapper: ClubPositionOptionMapper,
 ) {
-    @Transactional(readOnly = true)
     fun getMyPage(
         userId: Long,
         clubId: Long,
@@ -34,6 +37,7 @@ class GetUserMyPageQueryService(
             penaltyCount = currentMember.penaltyCount,
             warningCount = if (currentMember.club.warningEnabled) currentMember.warningCount else null,
             currentProfile = currentMember.userProfile,
+            positionOption = currentMember.positionOption,
         )
     }
 
@@ -43,6 +47,7 @@ class GetUserMyPageQueryService(
         penaltyCount: Int,
         warningCount: Int?,
         currentProfile: UserProfile?,
+        positionOption: ClubPositionOption?,
     ): UserMyPageResponse {
         val user = userReader.getById(userId)
         val clubMembers = clubMemberReader.findAllByUserIdWithClubAndUserProfile(userId)
@@ -62,6 +67,7 @@ class GetUserMyPageQueryService(
             warningCount = warningCount,
             usingProfileMembers = usingProfileMembers,
             currentProfile = currentProfile,
+            position = positionOption?.let(clubPositionOptionMapper::toResponse),
         )
     }
 

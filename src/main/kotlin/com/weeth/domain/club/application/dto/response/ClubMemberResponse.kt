@@ -39,6 +39,8 @@ data class ClubMemberResponse(
     val attendanceRate: Int,
     @field:Schema(description = "페널티 횟수", example = "1")
     val penaltyCount: Int,
+    @field:Schema(description = "경고 횟수 (동아리 경고 기능 비활성화 시 null)", example = "1", nullable = true)
+    val warningCount: Int? = null,
     @field:Schema(description = "최근 페널티 일시 (없으면 null)", nullable = true)
     val lastPenaltyAt: LocalDateTime? = null,
     @field:Schema(description = "프로필 이미지 URL", example = "https://cdn.weeth.com/profile/1.png", nullable = true)
@@ -47,4 +49,6 @@ data class ClubMemberResponse(
     val bio: String? = null,
     @field:Schema(description = "동아리 가입일", example = "2026-03-01T10:00:00")
     val joinedAt: LocalDateTime,
+    @field:Schema(description = "지정된 포지션 (없으면 null = 미지정)", nullable = true)
+    val position: ClubPositionOptionResponse? = null,
 )
