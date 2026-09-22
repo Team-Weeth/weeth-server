@@ -66,4 +66,39 @@ class ManageNotificationTokenUseCaseTest :
                 }
             }
         }
+
+        describe("deactivateInvalidTokens") {
+            it("발송 시작 시각 이전 등록 invalid token만 비활성화한다") {
+                val sendStartedAt = LocalDateTime.of(2026, 9, 22, 10, 0)
+                every {
+                    notificationTokenRepository.deactivateInvalidTokens(
+                        listOf("invalid-token"),
+                        sendStartedAt,
+                    )
+                } returns 1
+
+                useCase.deactivateInvalidTokens(
+                    invalidTokens = listOf("invalid-token"),
+                    registeredBeforeOrAt = sendStartedAt,
+                )
+
+                verify(exactly = 1) {
+                    notificationTokenRepository.deactivateInvalidTokens(
+                        invalidTokens = listOf("invalid-token"),
+                        registeredBeforeOrAt = sendStartedAt,
+                    )
+                }
+            }
+
+            it("invalid token이 없으면 비활성화 쿼리를 실행하지 않는다") {
+                useCase.deactivateInvalidTokens(
+                    invalidTokens = emptyList(),
+                    registeredBeforeOrAt = LocalDateTime.of(2026, 9, 22, 10, 0),
+                )
+
+                verify(exactly = 0) {
+                    notificationTokenRepository.deactivateInvalidTokens(any(), any())
+                }
+            }
+        }
     })

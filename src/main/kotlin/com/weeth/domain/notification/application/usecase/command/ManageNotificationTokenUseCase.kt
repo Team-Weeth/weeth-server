@@ -37,4 +37,18 @@ class ManageNotificationTokenUseCase(
             token = NotificationToken.normalizeToken(request.token),
         )
     }
+
+    @Transactional
+    fun deactivateInvalidTokens(
+        invalidTokens: List<String>,
+        registeredBeforeOrAt: LocalDateTime,
+    ) {
+        if (invalidTokens.isEmpty()) {
+            return
+        }
+        notificationTokenRepository.deactivateInvalidTokens(
+            invalidTokens = invalidTokens,
+            registeredBeforeOrAt = registeredBeforeOrAt,
+        )
+    }
 }
