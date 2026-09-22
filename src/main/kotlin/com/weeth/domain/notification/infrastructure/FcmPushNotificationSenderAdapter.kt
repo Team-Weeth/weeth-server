@@ -20,18 +20,21 @@ class FcmPushNotificationSenderAdapter(
             return PushNotificationResult()
         }
 
-        val response =
-            firebaseMessagingProvider
-                .getObject()
-                .sendEachForMulticast(command.toMulticastMessage())
+        val firebaseMessaging = firebaseMessagingProvider.getObject()
         val invalidTokens =
-            response.responses.mapIndexedNotNull { index, sendResponse ->
-                if (sendResponse.isSuccessful) {
-                    null
-                } else {
-                    sendResponse.exception
-                        .takeIf { it.isInvalidTokenError() }
-                        ?.let { command.tokens[index] }
+            command.tokens.chunked(MAX_MULTICAST_TOKENS).flatMap { tokens ->
+                val response =
+                    firebaseMessaging.sendEachForMulticast(
+                        command.copy(tokens = tokens).toMulticastMessage(),
+                    )
+                response.responses.mapIndexedNotNull { index, sendResponse ->
+                    if (sendResponse.isSuccessful) {
+                        null
+                    } else {
+                        sendResponse.exception
+                            .takeIf { it.isInvalidTokenError() }
+                            ?.let { tokens[index] }
+                    }
                 }
             }
 
@@ -52,9 +55,9 @@ class FcmPushNotificationSenderAdapter(
             .build()
 
     private fun FirebaseMessagingException?.isInvalidTokenError(): Boolean =
-        this?.messagingErrorCode in
-            setOf(
-                MessagingErrorCode.UNREGISTERED,
-                MessagingErrorCode.INVALID_ARGUMENT,
-            )
+        this?.messagingErrorCode == MessagingErrorCode.UNREGISTERED
+
+    private companion object {
+        const val MAX_MULTICAST_TOKENS = 500
+    }
 }

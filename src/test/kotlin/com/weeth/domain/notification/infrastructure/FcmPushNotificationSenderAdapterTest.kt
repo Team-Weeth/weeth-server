@@ -52,6 +52,32 @@ class FcmPushNotificationSenderAdapterTest :
                 result.invalidTokens shouldBe emptyList()
                 verify(exactly = 0) { firebaseMessagingProvider.getObject() }
             }
+
+            it("token이 500개를 초과하면 500개씩 나누어 발송한다") {
+                val batchResponse = mockk<BatchResponse>()
+                every { batchResponse.responses } returns emptyList()
+                every { firebaseMessaging.sendEachForMulticast(any()) } returns batchResponse
+
+                adapter.sendMulticast(createCommand(tokens = (1..501).map { "token-$it" }))
+
+                verify(exactly = 2) { firebaseMessaging.sendEachForMulticast(any()) }
+            }
+
+            it("INVALID_ARGUMENT 응답은 invalid token으로 수집하지 않는다") {
+                val batchResponse = mockk<BatchResponse>()
+                val failedResponse = mockk<SendResponse>()
+                val exception = mockk<FirebaseMessagingException>()
+
+                every { firebaseMessaging.sendEachForMulticast(any()) } returns batchResponse
+                every { batchResponse.responses } returns listOf(failedResponse)
+                every { failedResponse.isSuccessful } returns false
+                every { failedResponse.exception } returns exception
+                every { exception.messagingErrorCode } returns MessagingErrorCode.INVALID_ARGUMENT
+
+                val result = adapter.sendMulticast(createCommand(tokens = listOf("active-token")))
+
+                result.invalidTokens shouldBe emptyList()
+            }
         }
     }) {
     private companion object {
