@@ -63,7 +63,7 @@ class FcmPushNotificationSenderAdapterTest :
                 verify(exactly = 2) { firebaseMessaging.sendEachForMulticast(any()) }
             }
 
-            it("INVALID_ARGUMENT 응답은 invalid token으로 수집하지 않는다") {
+            it("유효한 payload에서 INVALID_ARGUMENT 응답 token을 invalid token으로 수집한다") {
                 val batchResponse = mockk<BatchResponse>()
                 val failedResponse = mockk<SendResponse>()
                 val exception = mockk<FirebaseMessagingException>()
@@ -76,7 +76,34 @@ class FcmPushNotificationSenderAdapterTest :
 
                 val result = adapter.sendMulticast(createCommand(tokens = listOf("active-token")))
 
-                result.invalidTokens shouldBe emptyList()
+                result.invalidTokens shouldContainExactly listOf("active-token")
+            }
+
+            it("중간 배치 발송이 실패해도 다음 배치를 계속 발송하고 이전 invalid token을 반환한다") {
+                val firstBatchResponse = mockk<BatchResponse>()
+                val lastBatchResponse = mockk<BatchResponse>()
+                val invalidResponse = mockk<SendResponse>()
+                val exception = mockk<FirebaseMessagingException>()
+                var invocationCount = 0
+
+                every { firstBatchResponse.responses } returns listOf(invalidResponse)
+                every { lastBatchResponse.responses } returns emptyList()
+                every { invalidResponse.isSuccessful } returns false
+                every { invalidResponse.exception } returns exception
+                every { exception.messagingErrorCode } returns MessagingErrorCode.UNREGISTERED
+                every { firebaseMessaging.sendEachForMulticast(any()) } answers {
+                    invocationCount++
+                    when (invocationCount) {
+                        1 -> firstBatchResponse
+                        2 -> throw RuntimeException("temporary FCM failure")
+                        else -> lastBatchResponse
+                    }
+                }
+
+                val result = adapter.sendMulticast(createCommand(tokens = (1..1001).map { "token-$it" }))
+
+                verify(exactly = 3) { firebaseMessaging.sendEachForMulticast(any()) }
+                result.invalidTokens shouldContainExactly listOf("token-1")
             }
         }
     }) {

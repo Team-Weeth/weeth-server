@@ -8,6 +8,7 @@ import com.google.firebase.messaging.Notification
 import com.weeth.domain.notification.domain.port.PushNotificationSenderPort
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.stereotype.Component
 
@@ -15,19 +16,22 @@ import org.springframework.stereotype.Component
 class FcmPushNotificationSenderAdapter(
     private val firebaseMessagingProvider: ObjectProvider<FirebaseMessaging>,
 ) : PushNotificationSenderPort {
+    private val log = LoggerFactory.getLogger(javaClass)
+
     override fun sendMulticast(command: PushNotificationCommand): PushNotificationResult {
         if (command.tokens.isEmpty()) {
             return PushNotificationResult()
         }
 
         val firebaseMessaging = firebaseMessagingProvider.getObject()
-        val invalidTokens =
-            command.tokens.chunked(MAX_MULTICAST_TOKENS).flatMap { tokens ->
-                val response =
-                    firebaseMessaging.sendEachForMulticast(
-                        command.copy(tokens = tokens).toMulticastMessage(),
-                    )
-                response.responses.mapIndexedNotNull { index, sendResponse ->
+        val invalidTokens = mutableListOf<String>()
+        command.tokens.chunked(MAX_MULTICAST_TOKENS).forEach { tokens ->
+            runCatching {
+                firebaseMessaging.sendEachForMulticast(
+                    command.copy(tokens = tokens).toMulticastMessage(),
+                )
+            }.onSuccess { response ->
+                response.responses.mapIndexedNotNullTo(invalidTokens) { index, sendResponse ->
                     if (sendResponse.isSuccessful) {
                         null
                     } else {
@@ -36,7 +40,14 @@ class FcmPushNotificationSenderAdapter(
                             ?.let { tokens[index] }
                     }
                 }
+            }.onFailure { exception ->
+                log.warn(
+                    "FCM multicast 배치 발송 실패. tokenCount={}",
+                    tokens.size,
+                    exception,
+                )
             }
+        }
 
         return PushNotificationResult(invalidTokens = invalidTokens)
     }
@@ -55,9 +66,14 @@ class FcmPushNotificationSenderAdapter(
             .build()
 
     private fun FirebaseMessagingException?.isInvalidTokenError(): Boolean =
-        this?.messagingErrorCode == MessagingErrorCode.UNREGISTERED
+        this?.messagingErrorCode in INVALID_TOKEN_ERROR_CODES
 
     private companion object {
         const val MAX_MULTICAST_TOKENS = 500
+        val INVALID_TOKEN_ERROR_CODES =
+            setOf(
+                MessagingErrorCode.UNREGISTERED,
+                MessagingErrorCode.INVALID_ARGUMENT,
+            )
     }
 }
