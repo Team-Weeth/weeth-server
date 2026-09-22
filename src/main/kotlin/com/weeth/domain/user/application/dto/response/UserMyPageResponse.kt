@@ -1,5 +1,6 @@
 package com.weeth.domain.user.application.dto.response
 
+import com.weeth.domain.club.application.dto.response.ClubPositionOptionResponse
 import io.swagger.v3.oas.annotations.media.Schema
 
 data class UserMyPageResponse(
@@ -11,6 +12,8 @@ data class UserMyPageResponse(
     val usingProfiles: List<UserMyPageUsingProfileResponse>,
     @field:Schema(description = "현재 동아리에서 사용 중인 멀티프로필", nullable = true)
     val currentProfile: UserMyPageCurrentProfileResponse? = null,
+    @field:Schema(description = "현재 동아리에서 지정된 포지션 (미지정이면 null)", nullable = true)
+    val position: ClubPositionOptionResponse? = null,
 )
 
 data class UserMyPageInfoResponse(
