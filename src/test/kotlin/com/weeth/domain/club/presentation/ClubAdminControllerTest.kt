@@ -177,7 +177,10 @@ class ClubAdminControllerTest :
             it("저장 성공 코드를 반환한다") {
                 val request =
                     SaveClubPositionOptionsRequest(
-                        options = listOf(ClubPositionOptionRequest(name = "백엔드", color = PositionColor.PRIMARY)),
+                        options =
+                            listOf(
+                                ClubPositionOptionRequest(id = null, name = "백엔드", color = PositionColor.PRIMARY),
+                            ),
                     )
                 every { manageClubPositionOptionUseCase.save(clubId, userId, request) } just Runs
 

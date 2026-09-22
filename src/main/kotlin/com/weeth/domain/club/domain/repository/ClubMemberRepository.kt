@@ -78,8 +78,8 @@ interface ClubMemberRepository :
     ): Int
 
     // 포지션 옵션 삭제 전 참조를 끊어 끊어진 FK를 방지한다. ManageClubPositionOptionUseCase.save()는
-    // 대상 클럽의 기존 옵션을 항상 hard delete 후 재생성하므로(부분 update도 새 id로 재생성됨),
-    // ids는 "그 시점에 존재하던 클럽의 기존 옵션 id 전체"가 되어야 한다.
+    // 요청에 name이 그대로 남은 옵션은 재사용(id 유지)하고, name이 사라진 옵션만 삭제하므로
+    // ids는 "이번 저장으로 실제 삭제되는(= name이 요청에서 사라진) 옵션 id"만 전달되어야 한다.
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE ClubMember cm SET cm.positionOption = null WHERE cm.positionOption.id IN :ids")
     fun clearPositionOptionReferences(

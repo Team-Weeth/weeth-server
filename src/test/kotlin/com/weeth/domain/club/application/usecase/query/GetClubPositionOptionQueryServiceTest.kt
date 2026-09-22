@@ -2,6 +2,7 @@ package com.weeth.domain.club.application.usecase.query
 
 import com.weeth.domain.club.application.mapper.ClubPositionOptionMapper
 import com.weeth.domain.club.domain.repository.ClubPositionOptionReader
+import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubPositionOptionTestFixture
@@ -17,20 +18,24 @@ class GetClubPositionOptionQueryServiceTest :
     DescribeSpec({
         val clubPositionOptionReader = mockk<ClubPositionOptionReader>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>()
+        val clubMemberPolicy = mockk<ClubMemberPolicy>()
         val clubPositionOptionMapper = ClubPositionOptionMapper()
         val queryService =
             GetClubPositionOptionQueryService(
                 clubPositionOptionReader = clubPositionOptionReader,
                 clubPermissionPolicy = clubPermissionPolicy,
+                clubMemberPolicy = clubMemberPolicy,
                 clubPositionOptionMapper = clubPositionOptionMapper,
             )
 
         val club = ClubTestFixture.createClub(id = 1L)
         val adminMember = ClubMemberTestFixture.createAdminMember(club = club)
+        val activeMember = ClubMemberTestFixture.createActiveMember(club = club)
 
         beforeTest {
-            clearMocks(clubPositionOptionReader, clubPermissionPolicy)
+            clearMocks(clubPositionOptionReader, clubPermissionPolicy, clubMemberPolicy)
             every { clubPermissionPolicy.requireAdmin(1L, 10L) } returns adminMember
+            every { clubMemberPolicy.getActiveMember(1L, 10L) } returns activeMember
         }
 
         describe("findAll") {
@@ -75,6 +80,41 @@ class GetClubPositionOptionQueryServiceTest :
                 queryService.findAll(1L, 10L)
 
                 verify(exactly = 1) { clubPermissionPolicy.requireAdmin(1L, 10L) }
+            }
+        }
+
+        describe("findAllForMember") {
+            it("displayOrder 오름차순으로 조회된 옵션을 응답 DTO로 변환한다") {
+                val optionA =
+                    ClubPositionOptionTestFixture.createOption(
+                        id = 1L,
+                        club = club,
+                        name = "백엔드",
+                        displayOrder = 0,
+                    )
+                val optionB =
+                    ClubPositionOptionTestFixture.createOption(
+                        id = 2L,
+                        club = club,
+                        name = "프론트엔드",
+                        displayOrder = 1,
+                    )
+                every { clubPositionOptionReader.findAllByClubIdOrderByDisplayOrderAsc(1L) } returns
+                    listOf(optionA, optionB)
+
+                val responses = queryService.findAllForMember(1L, 10L)
+
+                responses.size shouldBe 2
+                responses[0].name shouldBe "백엔드"
+                responses[1].name shouldBe "프론트엔드"
+            }
+
+            it("활성 멤버 권한을 먼저 검증한다") {
+                every { clubPositionOptionReader.findAllByClubIdOrderByDisplayOrderAsc(1L) } returns emptyList()
+
+                queryService.findAllForMember(1L, 10L)
+
+                verify(exactly = 1) { clubMemberPolicy.getActiveMember(1L, 10L) }
             }
         }
     })

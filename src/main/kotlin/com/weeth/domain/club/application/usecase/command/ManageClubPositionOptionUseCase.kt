@@ -2,7 +2,8 @@ package com.weeth.domain.club.application.usecase.command
 
 import com.weeth.domain.club.application.dto.request.SaveClubPositionOptionsRequest
 import com.weeth.domain.club.application.exception.PositionOptionLimitExceededException
-import com.weeth.domain.club.domain.entity.Club
+import com.weeth.domain.club.application.exception.PositionOptionNotFoundException
+import com.weeth.domain.club.application.exception.PositionOptionUpdateDeleteConflictException
 import com.weeth.domain.club.domain.entity.ClubPositionOption
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubPositionOptionRepository
@@ -13,12 +14,11 @@ import org.springframework.transaction.annotation.Transactional
 
 /**
  * 동아리 멤버 관리 페이지에서 사용할 포지션(직책) 옵션 관리 유스케이스.
- * 요청받은 전체 목록으로 기존 옵션을 완전히 교체(upsert)한다 — 옵션이 없던 동아리는 새로 생기고,
- * 이미 있던 동아리는 전체가 교체된다.
  *
- * 주의: 교체는 id-diff가 아닌 hard delete 후 재생성이므로, 이름/색만 바뀌는 옵션도 새 id를 받는다.
- * 따라서 save() 호출 시점에 존재하던 옵션을 참조 중인 ClubMember.positionOption은 항상 끊어지므로,
- * 삭제 전에 반드시 해당 멤버들의 참조를 먼저 정리(clear)한다.
+ * 요청의 `options`는 추가/수정만 표현한다 — `id`가 있으면 그 id의 기존 옵션을 재사용(update)해
+ * ClubMember.positionOption 참조를 보존하고, `id`가 없으면 신규 생성한다.
+ * 삭제는 `deletedPositionIds`로 명시적으로만 이루어지며, 그 옵션을 참조 중이던 멤버의 참조를
+ * 먼저 정리(clear)한 뒤 삭제한다.
  */
 @Service
 class ManageClubPositionOptionUseCase(
@@ -35,16 +35,33 @@ class ManageClubPositionOptionUseCase(
     ) {
         clubPermissionPolicy.requireAdmin(clubId, userId)
         validateOptionCount(request)
+        validateNoUpdateDeleteConflict(request)
 
         val club = clubReader.getClubById(clubId)
+        val existingById =
+            clubPositionOptionRepository
+                .findAllByClubIdOrderByDisplayOrderAsc(
+                    clubId,
+                ).associateBy { it.id }
 
-        val existingOptionIds = clubPositionOptionRepository.findAllByClubIdOrderByDisplayOrderAsc(clubId).map { it.id }
-        if (existingOptionIds.isNotEmpty()) {
-            clubMemberRepository.clearPositionOptionReferences(existingOptionIds)
+        if (request.deletedPositionIds.isNotEmpty()) {
+            request.deletedPositionIds.forEach { id -> existingById[id] ?: throw PositionOptionNotFoundException() }
+            clubMemberRepository.clearPositionOptionReferences(request.deletedPositionIds)
+            clubPositionOptionRepository.deleteAllByIdInBatch(request.deletedPositionIds)
         }
 
-        clubPositionOptionRepository.hardDeleteAllByClubId(clubId)
-        clubPositionOptionRepository.saveAll(buildPositionOptions(club, request))
+        val newOptions = mutableListOf<ClubPositionOption>()
+        request.options.forEachIndexed { index, optionRequest ->
+            if (optionRequest.id != null) {
+                val existing = existingById[optionRequest.id] ?: throw PositionOptionNotFoundException()
+                existing.update(optionRequest.name, optionRequest.color, index)
+            } else {
+                newOptions += ClubPositionOption.create(club, optionRequest.name, optionRequest.color, index)
+            }
+        }
+        if (newOptions.isNotEmpty()) {
+            clubPositionOptionRepository.saveAll(newOptions)
+        }
     }
 
     private fun validateOptionCount(request: SaveClubPositionOptionsRequest) {
@@ -53,16 +70,10 @@ class ManageClubPositionOptionUseCase(
         }
     }
 
-    private fun buildPositionOptions(
-        club: Club,
-        request: SaveClubPositionOptionsRequest,
-    ): List<ClubPositionOption> =
-        request.options.mapIndexed { index, option ->
-            ClubPositionOption.create(
-                club = club,
-                name = option.name,
-                color = option.color,
-                displayOrder = index,
-            )
+    private fun validateNoUpdateDeleteConflict(request: SaveClubPositionOptionsRequest) {
+        val updatedIds = request.options.mapNotNullTo(mutableSetOf()) { it.id }
+        if (updatedIds.any { it in request.deletedPositionIds }) {
+            throw PositionOptionUpdateDeleteConflictException()
         }
+    }
 }
