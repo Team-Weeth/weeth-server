@@ -5,7 +5,7 @@ import com.weeth.domain.university.application.dto.response.SchoolResponse
 import com.weeth.domain.university.application.mapper.UniversityMapper
 import com.weeth.domain.university.domain.model.MajorData
 import com.weeth.domain.university.domain.port.UniversityInfoPort
-import com.weeth.global.config.properties.UniversityProperties
+import com.weeth.global.config.properties.UniversityManualMajorConfig
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 class GetUniversityQueryService(
     private val universityInfoPort: UniversityInfoPort,
     private val universityMapper: UniversityMapper,
-    private val universityProperties: UniversityProperties,
+    private val universityManualMajorConfig: UniversityManualMajorConfig,
 ) {
     @Cacheable(value = ["schools"], key = "'all'")
     fun getSchools(): List<SchoolResponse> =
@@ -31,7 +31,7 @@ class GetUniversityQueryService(
         val majors = universityInfoPort.getMajors()
         val existingNames = majors.map { it.name }.toSet()
         val manualAdditions =
-            universityProperties.manualMajors
+            universityManualMajorConfig.manualMajors
                 .filter { it.name !in existingNames }
                 .map { MajorData(name = it.name, category = it.category) }
 

@@ -23,7 +23,13 @@ import org.springframework.test.context.ActiveProfiles
     - 각 테스트 전 캐시를 초기화하여 테스트 간 간섭을 방지합니다.
     - 성능 벤치마크는 UniversityRealApiCacheTest에서 실제 API를 사용해 측정합니다.
  */
-@SpringBootTest
+@SpringBootTest(
+    properties =
+        [
+            "university.manual-majors-json=" +
+                "[{\"name\":\"인공지능학과\",\"category\":\"공학계열\"}]",
+        ],
+)
 @ActiveProfiles("test")
 @Import(TestContainersConfig::class)
 class UniversityCacheIntegrationTest(
