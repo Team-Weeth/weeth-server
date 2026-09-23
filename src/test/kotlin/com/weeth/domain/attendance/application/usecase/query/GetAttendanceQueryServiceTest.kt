@@ -5,6 +5,8 @@ import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.entity.Attendance
 import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.cardinal.fixture.CardinalTestFixture
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
@@ -31,6 +33,7 @@ class GetAttendanceQueryServiceTest :
         val sessionReader = mockk<SessionReader>()
         val attendanceRepository = mockk<AttendanceRepository>()
         val attendanceMapper = AttendanceMapper()
+        val cardinalReader = mockk<CardinalReader>()
 
         val queryService =
             GetAttendanceQueryService(
@@ -40,7 +43,125 @@ class GetAttendanceQueryServiceTest :
                 sessionReader,
                 attendanceRepository,
                 attendanceMapper,
+                cardinalReader,
             )
+
+        beforeTest {
+            clearMocks(
+                clubMemberPolicy,
+                clubPermissionPolicy,
+                clubMemberCardinalPolicy,
+                sessionReader,
+                attendanceRepository,
+                cardinalReader,
+            )
+        }
+
+        describe("선택 기수 출석") {
+            it("다른 기수 누적값을 쓰지 않고 ATTEND와 ABSENT만 집계한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                repeat(9) { member.attend() }
+                val cardinal = CardinalTestFixture.createCardinal(club = member.club, cardinalNumber = 7)
+                val session = SessionTestFixture.createSession(club = member.club, cardinal = 7)
+                val records =
+                    listOf(
+                        Attendance.create(session, member).also { it.attend() },
+                        Attendance.create(session, member).also { it.absent() },
+                        Attendance.create(session, member),
+                    )
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { cardinalReader.findByClubIdAndCardinalNumber(member.club.id, 7) } returns cardinal
+                every { attendanceRepository.findAllByClubMemberIdAndCardinal(member.id, 7) } returns records
+
+                val result = queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id, 7)
+
+                result.cardinalNumber shouldBe 7
+                result.attendanceCount shouldBe 1
+                result.absenceCount shouldBe 1
+                result.total shouldBe 2
+                result.attendanceRate shouldBe 50
+                result.attendances shouldHaveSize 3
+                member.attendanceStats.attendanceCount shouldBe 9
+                verify(exactly = 0) { clubMemberCardinalPolicy.getCurrentCardinal(any()) }
+            }
+
+            it("존재하는 기수에 내 기록이 없으면 빈 목록과 0퍼센트이다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { cardinalReader.findByClubIdAndCardinalNumber(member.club.id, 7) } returns
+                    CardinalTestFixture.createCardinal(club = member.club, cardinalNumber = 7)
+                every { attendanceRepository.findAllByClubMemberIdAndCardinal(member.id, 7) } returns emptyList()
+
+                val result = queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id, 7)
+                result.total shouldBe 0
+                result.attendanceRate shouldBe 0
+                result.attendances shouldHaveSize 0
+            }
+
+            it("동아리에 존재하지 않는 기수이면 조회하지 않고 404 도메인 예외이다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { cardinalReader.findByClubIdAndCardinalNumber(member.club.id, 999) } returns null
+
+                shouldThrow<CardinalNotFoundException> {
+                    queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id, 999)
+                }
+                shouldThrow<CardinalNotFoundException> {
+                    queryService.findAttendance(member.club.id, member.user.id, 999)
+                }
+                verify(exactly = 0) { attendanceRepository.findAllByClubMemberIdAndCardinal(any(), any()) }
+            }
+
+            it("소속 기수 없는 멤버의 기수 생략 상세는 기존 기수 없음 예외를 유지한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { clubMemberCardinalPolicy.getCurrentCardinal(member) } throws CardinalNotFoundException()
+                shouldThrow<CardinalNotFoundException> {
+                    queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id)
+                }
+                verify(exactly = 0) { attendanceRepository.findAllByClubMemberIdAndCardinal(any(), any()) }
+            }
+
+            it("요약은 선택 기수 통계를 반환하고 다른 기수의 오늘 세션을 노출하지 않는다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                member.attend()
+                val selected = SessionTestFixture.createSession(club = member.club, cardinal = 7)
+                val today = SessionTestFixture.createSession(club = member.club, cardinal = 8)
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { cardinalReader.findByClubIdAndCardinalNumber(member.club.id, 7) } returns
+                    CardinalTestFixture.createCardinal(club = member.club, cardinalNumber = 7)
+                every { attendanceRepository.findAllByClubMemberIdAndCardinal(member.id, 7) } returns
+                    listOf(Attendance.create(selected, member).also { it.absent() })
+                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns
+                    listOf(Attendance.create(today, member))
+
+                val result = queryService.findAttendance(member.club.id, member.user.id, 7)
+                result.cardinalNumber shouldBe 7
+                result.attendanceRate shouldBe 0
+                result.sessionId shouldBe null
+                member.attendanceStats.attendanceRate shouldBe 100
+            }
+
+            it("요약은 선택 기수의 오늘 세션을 반환한다") {
+                val member = ClubMemberTestFixture.createActiveMember()
+                val otherCardinalToday = SessionTestFixture.createSession(id = 20L, club = member.club, cardinal = 8)
+                val selectedToday = SessionTestFixture.createSession(id = 21L, club = member.club, cardinal = 7)
+                val selectedAttendance = Attendance.create(selectedToday, member).also { it.attend() }
+                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
+                every { cardinalReader.findByClubIdAndCardinalNumber(member.club.id, 7) } returns
+                    CardinalTestFixture.createCardinal(club = member.club, cardinalNumber = 7)
+                every { attendanceRepository.findAllByClubMemberIdAndCardinal(member.id, 7) } returns
+                    listOf(selectedAttendance)
+                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns
+                    listOf(Attendance.create(otherCardinalToday, member), selectedAttendance)
+
+                val result = queryService.findAttendance(member.club.id, member.user.id, 7)
+                result.cardinalNumber shouldBe 7
+                result.attendanceRate shouldBe 100
+                result.sessionId shouldBe 21L
+                result.status shouldBe AttendanceStatus.ATTEND
+            }
+        }
 
         describe("findAttendance") {
             beforeTest {
@@ -170,7 +291,11 @@ class GetAttendanceQueryServiceTest :
                         cardinal = 8,
                         title = "2주차",
                     )
-                val attendances = listOf(Attendance.create(session1, member), Attendance.create(session2, member))
+                val attendances =
+                    listOf(
+                        Attendance.create(session1, member).also { it.attend() },
+                        Attendance.create(session2, member),
+                    )
 
                 every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
                 every { clubMemberCardinalPolicy.getCurrentCardinal(member) } returns cardinal
@@ -178,9 +303,9 @@ class GetAttendanceQueryServiceTest :
 
                 val result = queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id)
 
-                result.attendanceCount shouldBe 2
-                result.absenceCount shouldBe 1
-                result.total shouldBe 3
+                result.attendanceCount shouldBe 1
+                result.absenceCount shouldBe 0
+                result.total shouldBe 1
                 result.attendances shouldHaveSize 2
                 result.attendances.map { it.title } shouldBe listOf("1주차", "2주차")
             }

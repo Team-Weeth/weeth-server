@@ -1,5 +1,6 @@
 package com.weeth.domain.club.application.usecase.query
 
+import com.weeth.domain.attendance.domain.repository.AttendanceReader
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.club.application.dto.request.ClubMemberSort
 import com.weeth.domain.club.application.dto.response.ClubMemberDetailResponse
@@ -20,6 +21,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.club.domain.repository.ClubPositionOptionReader
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
+import com.weeth.domain.club.domain.vo.ClubAttendanceStats
 import com.weeth.domain.penalty.domain.repository.PenaltyReader
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.common.response.PageResponse
@@ -41,6 +43,7 @@ class GetClubMemberQueryService(
     private val userReader: UserReader,
     private val penaltyReader: PenaltyReader,
     private val postReader: PostReader,
+    private val attendanceReader: AttendanceReader,
 ) {
     fun findClubMembersForAdmin(
         clubId: Long,
@@ -65,8 +68,19 @@ class GetClubMemberQueryService(
                 pageable = pageable,
             )
 
-        // 기수, 최근 페널티, 포지션은 조회된 페이지의 멤버에 대해서만 일괄 조회해 N+1을 피한다.
+        // 기수, 최근 페널티, 포지션, 기수별 출석 집계는 조회된 페이지의 멤버에 대해서만 일괄 조회해 N+1을 피한다.
         val clubMemberIds = members.content.map { it.id }
+        val attendanceStatsByMemberId =
+            if (cardinalNumber == null || members.isEmpty) {
+                emptyMap()
+            } else {
+                attendanceReader
+                    .countByClubIdAndMemberIdsAndCardinal(clubId, clubMemberIds, cardinalNumber)
+                    .associate {
+                        it.clubMemberId to
+                            ClubAttendanceStats.fromCounts(it.attendanceCount.toInt(), it.absenceCount.toInt())
+                    }
+            }
         val cardinalsByMemberId =
             if (members.isEmpty) {
                 emptyMap()
@@ -91,6 +105,13 @@ class GetClubMemberQueryService(
                     cardinalsByMemberId[member.id] ?: emptyList(),
                     lastPenaltyAtByMemberId[member.id],
                     member.positionOption?.id?.let { positionResponseByOptionId[it] },
+                    attendanceStats =
+                        if (cardinalNumber == null) {
+                            member.attendanceStats
+                        } else {
+                            // 해당 기수 기록이 없는 멤버는 누적값 대신 0 통계로 보여야 한다.
+                            attendanceStatsByMemberId[member.id] ?: ClubAttendanceStats()
+                        },
                 )
             },
         )
