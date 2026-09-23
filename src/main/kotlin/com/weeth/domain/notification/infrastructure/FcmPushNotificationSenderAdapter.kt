@@ -26,11 +26,11 @@ class FcmPushNotificationSenderAdapter(
         val firebaseMessaging = firebaseMessagingProvider.getObject()
         val invalidTokens = mutableListOf<String>()
         command.tokens.chunked(MAX_MULTICAST_TOKENS).forEach { tokens ->
-            runCatching {
-                firebaseMessaging.sendEachForMulticast(
-                    command.copy(tokens = tokens).toMulticastMessage(),
-                )
-            }.onSuccess { response ->
+            try {
+                val response =
+                    firebaseMessaging.sendEachForMulticast(
+                        command.copy(tokens = tokens).toMulticastMessage(),
+                    )
                 response.responses.mapIndexedNotNullTo(invalidTokens) { index, sendResponse ->
                     if (sendResponse.isSuccessful) {
                         null
@@ -40,7 +40,7 @@ class FcmPushNotificationSenderAdapter(
                             ?.let { tokens[index] }
                     }
                 }
-            }.onFailure { exception ->
+            } catch (exception: Exception) {
                 log.warn(
                     "FCM multicast 배치 발송 실패. tokenCount={}",
                     tokens.size,

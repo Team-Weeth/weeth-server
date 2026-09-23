@@ -6,6 +6,7 @@ import com.google.firebase.messaging.FirebaseMessagingException
 import com.google.firebase.messaging.MessagingErrorCode
 import com.google.firebase.messaging.SendResponse
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.shouldBe
@@ -104,6 +105,14 @@ class FcmPushNotificationSenderAdapterTest :
 
                 verify(exactly = 3) { firebaseMessaging.sendEachForMulticast(any()) }
                 result.invalidTokens shouldContainExactly listOf("token-1")
+            }
+
+            it("FCM 발송 중 JVM Error는 삼키지 않고 전파한다") {
+                every { firebaseMessaging.sendEachForMulticast(any()) } throws AssertionError("fatal error")
+
+                shouldThrow<AssertionError> {
+                    adapter.sendMulticast(createCommand(tokens = listOf("token-1")))
+                }
             }
         }
     }) {
