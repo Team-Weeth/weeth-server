@@ -6,6 +6,8 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryRes
 import com.weeth.domain.attendance.application.exception.AttendanceNotFoundException
 import com.weeth.domain.attendance.application.mapper.AttendanceMapper
 import com.weeth.domain.attendance.domain.repository.AttendanceRepository
+import com.weeth.domain.cardinal.application.exception.CardinalNotFoundException
+import com.weeth.domain.cardinal.domain.repository.CardinalReader
 import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
@@ -23,6 +25,7 @@ class GetAttendanceQueryService(
     private val sessionReader: SessionReader,
     private val attendanceRepository: AttendanceRepository,
     private val attendanceMapper: AttendanceMapper,
+    private val cardinalReader: CardinalReader,
 ) {
     fun findAttendance(
         clubId: Long,
@@ -56,15 +59,21 @@ class GetAttendanceQueryService(
     fun findAllDetailsByCurrentCardinal(
         clubId: Long,
         userId: Long,
+        cardinalNumber: Int? = null,
     ): AttendanceDetailResponse {
         val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
-        val currentCardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
+        val selectedCardinal =
+            if (cardinalNumber == null) {
+                clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
+            } else {
+                cardinalReader.findByClubIdAndCardinalNumber(clubId, cardinalNumber)
+                    ?: throw CardinalNotFoundException()
+            }
         val responses =
             attendanceRepository
-                .findAllByClubMemberIdAndCardinal(clubMember.id, currentCardinal.cardinalNumber)
-                .map(attendanceMapper::toResponse)
+                .findAllByClubMemberIdAndCardinal(clubMember.id, selectedCardinal.cardinalNumber)
 
-        return attendanceMapper.toDetailResponse(clubMember, responses)
+        return attendanceMapper.toDetailResponse(selectedCardinal.cardinalNumber, responses)
     }
 
     fun findAllAttendanceBySession(
