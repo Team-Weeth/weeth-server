@@ -30,28 +30,16 @@ class GetAttendanceQueryService(
     fun findAttendance(
         clubId: Long,
         userId: Long,
-        cardinalNumber: Int? = null,
     ): AttendanceSummaryResponse {
         val clubMember = clubMemberPolicy.getActiveMember(clubId, userId)
-        val stats =
-            if (cardinalNumber == null) {
-                clubMember.attendanceStats
-            } else {
-                cardinalReader.findByClubIdAndCardinalNumber(clubId, cardinalNumber)
-                    ?: throw CardinalNotFoundException()
-                attendanceMapper.toStats(
-                    attendanceRepository.findAllByClubMemberIdAndCardinal(clubMember.id, cardinalNumber),
-                )
-            }
         val now = LocalDateTime.now()
         val today = now.toLocalDate()
         val todayAttendances =
-            attendanceRepository
-                .findTodayByClubMemberId(
-                    clubMember.id,
-                    today.atStartOfDay(),
-                    today.plusDays(1).atStartOfDay(),
-                ).filter { cardinalNumber == null || it.session.cardinal == cardinalNumber }
+            attendanceRepository.findTodayByClubMemberId(
+                clubMember.id,
+                today.atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
+            )
 
         val todayAttendance =
             when {
@@ -65,7 +53,7 @@ class GetAttendanceQueryService(
                 }
             }
 
-        return attendanceMapper.toSummaryResponse(clubMember, todayAttendance, stats, cardinalNumber)
+        return attendanceMapper.toSummaryResponse(clubMember, todayAttendance)
     }
 
     fun findAllDetailsByCurrentCardinal(

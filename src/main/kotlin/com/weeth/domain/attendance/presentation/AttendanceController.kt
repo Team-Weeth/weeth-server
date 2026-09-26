@@ -53,23 +53,17 @@ class AttendanceController(
         summary = "내 출석 요약 조회",
         description = """
             출석을 진행하기 전 오늘의 출석 유무를 확인하기 위해서 사용됩니다.(대시보드, 출석 페이지).
-            cardinalNumber를 지정하면 해당 기수의 출석률과 오늘 출석만 반환합니다.
-            생략하면 기존 전체 기수 누적 출석률과 오늘 출석을 반환합니다.
-            미결은 출석률 분모에서 제외하며, 확정 기록이 없으면 0입니다.
-            오늘의 출석이 없는 경우 status를 포함한 세션 필드는 null로 반환됩니다.
+            출석률은 상시 표시되며, 오늘의 출석이 없는 경우 status를 포함한 필드는 null로 반환됩니다.
             """,
     )
-    @ApiErrorCodeExample(AttendanceErrorCode::class, CardinalErrorCode::class)
     fun find(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
-        @Parameter(description = "기수 번호 (기수 ID가 아님). 생략 시 전체 기수 누적 요약")
-        @RequestParam(required = false) cardinalNumber: Int? = null,
     ): CommonResponse<AttendanceSummaryResponse> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_SUCCESS,
-            getAttendanceQueryService.findAttendance(clubId, userId, cardinalNumber),
+            getAttendanceQueryService.findAttendance(clubId, userId),
         )
 
     @GetMapping("/detail")

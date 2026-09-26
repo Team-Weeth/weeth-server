@@ -19,6 +19,4 @@ data class AttendanceSummaryResponse(
     val end: LocalDateTime?,
     @field:Schema(description = "정기모임 장소", example = "공학관 401호")
     val location: String?,
-    @field:Schema(description = "조회한 기수 번호. null이면 기존 전체 기수 누적 요약", example = "7", nullable = true)
-    val cardinalNumber: Int? = null,
 )

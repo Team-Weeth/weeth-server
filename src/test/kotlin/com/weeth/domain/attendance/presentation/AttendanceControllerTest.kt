@@ -1,7 +1,6 @@
 package com.weeth.domain.attendance.presentation
 
 import com.weeth.domain.attendance.application.dto.response.AttendanceDetailResponse
-import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.usecase.command.ManageAttendanceUseCase
 import com.weeth.domain.attendance.application.usecase.command.SubscribeAttendanceSseUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
@@ -56,23 +55,6 @@ class AttendanceControllerTest :
                 .andExpect(jsonPath("$.code").value(AttendanceResponseCode.ATTENDANCE_FIND_ALL_SUCCESS.code))
                 .andExpect(jsonPath("$.data.cardinalNumber").value(7))
                 .andExpect(jsonPath("$.data.attendanceRate").value(50))
-        }
-        it("요약에도 선택 기수 쿼리를 전달한다") {
-            every { service.findAttendance(1L, 10L, 7) } returns
-                AttendanceSummaryResponse(50, null, null, null, null, null, null, 7)
-            mvc
-                .perform(get("/api/v4/clubs/1/attendances").param("cardinalNumber", "7"))
-                .andExpect(status().isOk)
-                .andExpect(jsonPath("$.data.cardinalNumber").value(7))
-                .andExpect(jsonPath("$.data.attendanceRate").value(50))
-        }
-        it("요약 기수 생략은 누적 요약 호출을 유지한다") {
-            every { service.findAttendance(1L, 10L, null) } returns
-                AttendanceSummaryResponse(80, null, null, null, null, null, null)
-            mvc
-                .perform(get("/api/v4/clubs/1/attendances"))
-                .andExpect(status().isOk)
-                .andExpect(jsonPath("$.data.attendanceRate").value(80))
         }
         it("기수 생략 요청도 기존 경로로 처리한다") {
             every { service.findAllDetailsByCurrentCardinal(1L, 10L, null) } returns

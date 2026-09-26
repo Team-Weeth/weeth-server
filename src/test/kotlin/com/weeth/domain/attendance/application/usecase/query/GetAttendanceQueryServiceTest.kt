@@ -106,9 +106,6 @@ class GetAttendanceQueryServiceTest :
                 shouldThrow<CardinalNotFoundException> {
                     queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id, 999)
                 }
-                shouldThrow<CardinalNotFoundException> {
-                    queryService.findAttendance(member.club.id, member.user.id, 999)
-                }
                 verify(exactly = 0) { attendanceRepository.findAllByClubMemberIdAndCardinal(any(), any()) }
             }
 
@@ -120,46 +117,6 @@ class GetAttendanceQueryServiceTest :
                     queryService.findAllDetailsByCurrentCardinal(member.club.id, member.user.id)
                 }
                 verify(exactly = 0) { attendanceRepository.findAllByClubMemberIdAndCardinal(any(), any()) }
-            }
-
-            it("요약은 선택 기수 통계를 반환하고 다른 기수의 오늘 세션을 노출하지 않는다") {
-                val member = ClubMemberTestFixture.createActiveMember()
-                member.attend()
-                val selected = SessionTestFixture.createSession(club = member.club, cardinal = 7)
-                val today = SessionTestFixture.createSession(club = member.club, cardinal = 8)
-                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
-                every { cardinalReader.findByClubIdAndCardinalNumber(member.club.id, 7) } returns
-                    CardinalTestFixture.createCardinal(club = member.club, cardinalNumber = 7)
-                every { attendanceRepository.findAllByClubMemberIdAndCardinal(member.id, 7) } returns
-                    listOf(Attendance.create(selected, member).also { it.absent() })
-                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns
-                    listOf(Attendance.create(today, member))
-
-                val result = queryService.findAttendance(member.club.id, member.user.id, 7)
-                result.cardinalNumber shouldBe 7
-                result.attendanceRate shouldBe 0
-                result.sessionId shouldBe null
-                member.attendanceStats.attendanceRate shouldBe 100
-            }
-
-            it("요약은 선택 기수의 오늘 세션을 반환한다") {
-                val member = ClubMemberTestFixture.createActiveMember()
-                val otherCardinalToday = SessionTestFixture.createSession(id = 20L, club = member.club, cardinal = 8)
-                val selectedToday = SessionTestFixture.createSession(id = 21L, club = member.club, cardinal = 7)
-                val selectedAttendance = Attendance.create(selectedToday, member).also { it.attend() }
-                every { clubMemberPolicy.getActiveMember(member.club.id, member.user.id) } returns member
-                every { cardinalReader.findByClubIdAndCardinalNumber(member.club.id, 7) } returns
-                    CardinalTestFixture.createCardinal(club = member.club, cardinalNumber = 7)
-                every { attendanceRepository.findAllByClubMemberIdAndCardinal(member.id, 7) } returns
-                    listOf(selectedAttendance)
-                every { attendanceRepository.findTodayByClubMemberId(member.id, any(), any()) } returns
-                    listOf(Attendance.create(otherCardinalToday, member), selectedAttendance)
-
-                val result = queryService.findAttendance(member.club.id, member.user.id, 7)
-                result.cardinalNumber shouldBe 7
-                result.attendanceRate shouldBe 100
-                result.sessionId shouldBe 21L
-                result.status shouldBe AttendanceStatus.ATTEND
             }
         }
 
