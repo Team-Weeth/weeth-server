@@ -1,0 +1,74 @@
+name: Backmerge
+
+# hotfix처럼 dev를 거치지 않고 main에 들어간 변경을 dev로 되돌려 보내는 PR을 연다.
+# dev → main 릴리즈 머지는 main 쪽에 머지 커밋만 남으므로(--no-merges 0건) 건너뛴다.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: backmerge
+  cancel-in-progress: false
+
+env:
+  # 조직 설정상 GITHUB_TOKEN으로 PR 생성이 막혀 있으면 BACKMERGE_TOKEN(PAT/App 토큰)을 등록해 사용
+  BACKMERGE_TOKEN: ${{ secrets.BACKMERGE_TOKEN || github.token }}
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          token: ${{ env.BACKMERGE_TOKEN }}
+
+      - name: Open backmerge PR
+        env:
+          GH_TOKEN: ${{ env.BACKMERGE_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          missing=$(git rev-list --count --no-merges "origin/dev..$GITHUB_SHA")
+          if [[ "$missing" -eq 0 ]]; then
+            echo "dev already contains all non-merge commits of main. Skip."
+            exit 0
+          fi
+
+          # 이미 열린 백머지 PR이 있으면 그 브랜치를 fast-forward (충돌 해결 커밋이 있으면 코멘트만 남김)
+          existing=$(gh pr list --base dev --state open --json headRefName,number \
+            -q '[.[] | select(.headRefName | startswith("chore/backmerge-"))][0] // empty | "\(.number) \(.headRefName)"')
+          if [[ -n "$existing" ]]; then
+            read -r pr_number branch <<<"$existing"
+            if git push origin "$GITHUB_SHA:refs/heads/$branch"; then
+              echo "Fast-forwarded $branch (#$pr_number) to ${GITHUB_SHA::7}"
+            else
+              gh pr comment "$pr_number" --body "main에 새 커밋(\`${GITHUB_SHA::7}\`)이 추가됐지만 이 브랜치로 fast-forward 할 수 없습니다. \`git merge origin/main\`으로 직접 반영해 주세요."
+            fi
+            exit 0
+          fi
+
+          # main을 head로 직접 PR을 열면 웹 충돌 해결 시 dev 내용이 main에 커밋되므로 별도 브랜치를 쓴다
+          branch="chore/backmerge-${GITHUB_SHA::7}"
+          git push origin "$GITHUB_SHA:refs/heads/$branch"
+
+          commits=$(git log --no-merges --format='- %s (%h)' "origin/dev..$GITHUB_SHA")
+          body=$(cat <<EOF
+          ## 📌 Summary
+          main에만 반영된 변경을 dev로 백머지합니다.
+
+          ## 📝 Commits
+          ${commits}
+
+          > 충돌이 있으면 이 브랜치에서 \`git merge origin/dev\`로 해결하고, **Merge commit** 방식으로 머지해 주세요.
+          EOF
+          )
+          gh pr create --base dev --head "$branch" \
+            --title "chore: backmerge main into dev (${GITHUB_SHA::7})" \
+            --body "$body"

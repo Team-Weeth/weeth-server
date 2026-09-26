@@ -1,0 +1,46 @@
+name: Release Create
+
+# main 머지 시점에 draft 릴리즈를 만든다. Publish는 사람이 하고, publish 이벤트로 deploy-prod.yml이 실행된다.
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "버전 증가 단위"
+        type: choice
+        options: [minor, patch, major]
+        default: minor
+
+permissions:
+  contents: write
+  pull-requests: read
+
+# 연속 머지 시 draft 갱신이 겹치지 않도록 직렬화
+concurrency:
+  group: release-create
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+
+      - name: Create or update draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TARGET_SHA: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
+          BUMP_INPUT: ${{ inputs.bump }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: bash .github/scripts/release-draft.sh

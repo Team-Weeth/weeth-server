@@ -11,7 +11,27 @@ env:
   IMAGE_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
 
 jobs:
+  # main에 머지되지 않은 커밋(예: dev를 타깃으로 publish된 릴리즈)이 운영에 나가지 않도록 차단
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify release commit is on main
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Release $TAG_NAME ($GITHUB_SHA) is not on main. Aborting prod deploy."
+            exit 1
+          fi
+
   build:
+    needs: verify
     runs-on: ubuntu-latest
 
     steps:

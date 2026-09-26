@@ -1,0 +1,27 @@
+# PR head 브랜치 접두사 → 유형 라벨 (릴리즈 노트 분류용, 버전 판정과 무관)
+# 브랜치 규칙: .claude/skills/git-prepare/SKILL.md
+
+"✨ Feature":
+  - head-branch: ["^feat/"]
+
+"🐞 BugFix":
+  - head-branch: ["^fix/"]
+
+"🔨 Refactor":
+  - head-branch: ["^refactor/"]
+
+"⚙ Setting":
+  - head-branch: ["^chore/"]
+
+"📃 Docs":
+  - head-branch: ["^docs/"]
+
+"✅ Test":
+  - head-branch: ["^test/"]
+
+"🚑 Hotfix":
+  - head-branch: ["^hotfix/"]
+
+# dev → main 릴리즈 PR (릴리즈 노트에서 제외)
+"🚀 Release":
+  - head-branch: ["^dev$", "^release/"]
