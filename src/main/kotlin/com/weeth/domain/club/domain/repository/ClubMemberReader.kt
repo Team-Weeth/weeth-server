@@ -72,6 +72,11 @@ interface ClubMemberReader {
 
     fun countActiveByClubId(clubId: Long): Long
 
+    fun findActiveUserIdsByClubIdExcludingUserId(
+        clubId: Long,
+        excludedUserId: Long,
+    ): List<Long>
+
     fun countActiveByClubIds(clubIds: List<Long>): List<ClubMemberCount>
 
     fun findActiveByClubIdAndKeyword(

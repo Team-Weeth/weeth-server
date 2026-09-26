@@ -3,6 +3,7 @@ package com.weeth.domain.board.application.usecase.command
 import com.weeth.domain.board.application.dto.request.CreatePostRequest
 import com.weeth.domain.board.application.dto.request.UpdatePostRequest
 import com.weeth.domain.board.application.dto.response.PostSaveResponse
+import com.weeth.domain.board.application.event.NoticeCreatedEvent
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.CategoryAccessDeniedException
 import com.weeth.domain.board.application.exception.PostNotFoundException
@@ -36,6 +37,8 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
 import io.mockk.verify
+import org.springframework.context.ApplicationEventPublisher
+import org.springframework.test.util.ReflectionTestUtils
 
 class ManagePostUseCaseTest :
     DescribeSpec({
@@ -46,6 +49,7 @@ class ManagePostUseCaseTest :
         val fileRepository = mockk<FileRepository>()
         val fileMapper = mockk<FileMapper>()
         val postMapper = mockk<PostMapper>()
+        val eventPublisher = mockk<ApplicationEventPublisher>()
 
         val useCase =
             ManagePostUseCase(
@@ -56,6 +60,7 @@ class ManagePostUseCaseTest :
                 fileRepository,
                 fileMapper,
                 postMapper,
+                eventPublisher,
             )
 
         fun createUploadedPostFile(
@@ -80,6 +85,7 @@ class ManagePostUseCaseTest :
                 fileRepository,
                 fileMapper,
                 postMapper,
+                eventPublisher,
             )
             every { postRepository.save(any()) } answers { firstArg() }
             every { fileMapper.toFileList(any(), any(), any()) } returns emptyList()
@@ -88,6 +94,7 @@ class ManagePostUseCaseTest :
             every { postMapper.toSaveResponse(any()) } returns PostSaveResponse(id = 1L, boardId = 1L)
             every { fileRepository.delete(any()) } just runs
             every { clubMemberCardinalReader.findLatestCardinalByClubMember(any()) } returns null
+            every { eventPublisher.publishEvent(any<Any>()) } just runs
         }
 
         describe("save") {
@@ -101,6 +108,31 @@ class ManagePostUseCaseTest :
 
                 result.id shouldBe 1L
                 verify(exactly = 1) { postRepository.save(any<Post>()) }
+                verify(exactly = 0) { eventPublisher.publishEvent(any<Any>()) }
+            }
+
+            it("공지 게시판에 게시글을 저장하면 공지 알림 이벤트를 발행한다") {
+                val board = BoardTestFixture.create(id = 10L, name = "공지", type = BoardType.NOTICE)
+                val request = CreatePostRequest(title = "중간고사 기간 공지", content = "시험 기간 운영 시간을 안내합니다.")
+
+                every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(10L, 1L) } returns board
+                every { postRepository.save(any()) } answers {
+                    firstArg<Post>().also { ReflectionTestUtils.setField(it, "id", 100L) }
+                }
+
+                useCase.save(1L, 10L, request, 1L)
+
+                verify(exactly = 1) {
+                    eventPublisher.publishEvent(
+                        match<NoticeCreatedEvent> {
+                            it.clubId == 1L &&
+                                it.boardId == 10L &&
+                                it.postId == 100L &&
+                                it.title == "중간고사 기간 공지" &&
+                                it.authorUserId == 1L
+                        },
+                    )
+                }
             }
 
             it("ADMIN 전용 게시판에 일반 사용자가 작성하면 예외를 던진다") {
