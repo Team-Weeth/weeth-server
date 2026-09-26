@@ -8,6 +8,8 @@
 #   BUMP_INPUT  (선택) major|minor|patch — 지정 시 브랜치/라벨 판정을 건너뛴다 (workflow_dispatch)
 #   HEAD_REF    (선택) 머지된 PR의 head 브랜치
 #   PR_LABELS   (선택) 머지된 PR의 라벨 JSON 배열
+#   PR_NUMBER   (선택) 머지된 PR 번호 (Slack 알림 표시용)
+#   SLACK_WEBHOOK_URL (선택) 설정 시 draft 생성/갱신을 Slack으로 알린다
 set -euo pipefail
 
 SEMVER_RE='^v?[0-9]+\.[0-9]+\.[0-9]+$'
@@ -70,6 +72,38 @@ generate_notes() {
   gh api "repos/$GH_REPO/releases/generate-notes" "${args[@]}" -q .body
 }
 
+# Slack mrkdwn 제어 문자 이스케이프
+# bash 5.2+ 는 ${s//x/y} 의 y에서 &를 매칭 문자열로 치환하므로(patsub_replacement) sed를 쓴다
+slack_escape() { sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' <<<"$1"; }
+
+# 알림 실패가 draft 생성을 실패로 만들지 않도록 경고만 남긴다
+notify_slack() {
+  [[ -z "${SLACK_WEBHOOK_URL:-}" ]] && return 0
+  local payload
+  payload=$(jq -nc --arg text "$1" '{text: $text}')
+  if ! curl -fsS --max-time 10 -H 'Content-Type: application/json' -d "$payload" "$SLACK_WEBHOOK_URL" >/dev/null; then
+    echo "::warning::Slack 알림 전송 실패"
+  fi
+}
+
+draft_message() {
+  local tag="$1" bump="$2" draft_tag="$3" url="$4" trigger action
+  if [[ -n "${PR_NUMBER:-}" ]]; then
+    trigger="<https://github.com/$GH_REPO/pull/$PR_NUMBER|#$PR_NUMBER> $(slack_escape "${HEAD_REF:-}")"
+  else
+    trigger="수동 실행"
+  fi
+  if [[ -z "$draft_tag" ]]; then
+    action="생성"
+  elif [[ "$draft_tag" == "$tag" ]]; then
+    action="갱신"
+  else
+    action="갱신 ($draft_tag → $tag)"
+  fi
+  printf '📦 *%s* draft %s (%s · %s)\n확인 후 Publish: <%s|%s draft 열기>' \
+    "$tag" "$action" "$bump" "$trigger" "$url" "$tag"
+}
+
 main() {
   : "${TARGET_SHA:?TARGET_SHA is required}"
   : "${GH_REPO:?GH_REPO is required}"
@@ -81,7 +115,7 @@ main() {
     bump=$(resolve_bump "${HEAD_REF:-}" "$(jq -r '.[]?' <<<"${PR_LABELS:-[]}")")
   fi
 
-  local prev_tag draft_tag version tag notes
+  local prev_tag draft_tag version tag notes out url
   prev_tag=$(latest_published_tag)
   version=$(next_version "${prev_tag:-v0.0.0}" "$bump")
 
@@ -93,12 +127,16 @@ main() {
   notes=$(generate_notes "$tag" "$prev_tag")
 
   if [[ -n "$draft_tag" ]]; then
-    gh release edit "$draft_tag" --draft --tag "$tag" --target "$TARGET_SHA" --title "$tag" --notes "$notes" >/dev/null
+    out=$(gh release edit "$draft_tag" --draft --tag "$tag" --target "$TARGET_SHA" --title "$tag" --notes "$notes")
     echo "Updated draft $draft_tag → $tag (bump=$bump, prev=${prev_tag:-none}, target=$TARGET_SHA)"
   else
-    gh release create "$tag" --draft --target "$TARGET_SHA" --title "$tag" --notes "$notes" >/dev/null
+    out=$(gh release create "$tag" --draft --target "$TARGET_SHA" --title "$tag" --notes "$notes")
     echo "Created draft $tag (bump=$bump, prev=${prev_tag:-none}, target=$TARGET_SHA)"
   fi
+
+  # gh release create/edit 는 릴리즈 URL을 출력한다. draft는 untagged-* 주소라 못 얻으면 목록 페이지로 대신한다
+  url=$({ grep -E '^https://' <<<"$out" || true; } | tail -1)
+  notify_slack "$(draft_message "$tag" "$bump" "$draft_tag" "${url:-https://github.com/$GH_REPO/releases}")"
 
   if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
     {

@@ -43,4 +43,6 @@ jobs:
           BUMP_INPUT: ${{ inputs.bump }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: bash .github/scripts/release-draft.sh
