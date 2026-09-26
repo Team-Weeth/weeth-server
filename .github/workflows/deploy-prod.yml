@@ -11,7 +11,27 @@ env:
   IMAGE_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
 
 jobs:
+  # main에 머지되지 않은 커밋(예: dev를 타깃으로 publish된 릴리즈)이 운영에 나가지 않도록 차단
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify release commit is on main
+        env:
+          TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Release $TAG_NAME ($GITHUB_SHA) is not on main. Aborting prod deploy."
+            exit 1
+          fi
+
   build:
+    needs: verify
     runs-on: ubuntu-latest
 
     steps:
@@ -89,3 +109,43 @@ jobs:
             DOMAIN="${{ secrets.PROD_DOMAIN }}" \
             DEPLOY_DIR="$DEPLOY_DIR" \
             "$DEPLOY_DIR/scripts/deploy.sh"
+
+  # 어느 단계에서 끝나든 결과를 Slack으로 알린다 (SLACK_WEBHOOK_URL 미설정 시 건너뜀)
+  notify:
+    needs: [verify, build, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Notify Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          VERIFY_RESULT: ${{ needs.verify.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        run: |
+          if [[ -z "${SLACK_WEBHOOK_URL:-}" ]]; then
+            echo "SLACK_WEBHOOK_URL is not set. Skip."
+            exit 0
+          fi
+
+          if [[ "$DEPLOY_RESULT" == "success" ]]; then
+            text="✅ *$TAG_NAME* 운영 배포 완료 · <$RELEASE_URL|릴리즈 노트>"
+          else
+            # 처음으로 성공하지 못한 단계 (이후 단계는 skipped)
+            stage=deploy result=$DEPLOY_RESULT
+            for s in verify:$VERIFY_RESULT build:$BUILD_RESULT; do
+              if [[ "${s#*:}" != "success" ]]; then
+                stage=${s%%:*} result=${s#*:}
+                break
+              fi
+            done
+            text="❌ *$TAG_NAME* 운영 배포 실패 ($stage: $result) · <$RUN_URL|Actions 로그>"
+          fi
+
+          payload=$(jq -nc --arg text "$text" '{text: $text}')
+          curl -fsS --max-time 10 -H 'Content-Type: application/json' -d "$payload" "$SLACK_WEBHOOK_URL" >/dev/null \
+            || echo "::warning::Slack 알림 전송 실패"
