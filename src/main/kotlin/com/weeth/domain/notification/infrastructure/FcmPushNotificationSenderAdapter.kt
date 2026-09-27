@@ -25,22 +25,26 @@ class FcmPushNotificationSenderAdapter(
 
         val firebaseMessaging = firebaseMessagingProvider.getObject()
         val invalidTokens = mutableListOf<String>()
+        var successCount = 0
+        var failureCount = 0
         command.tokens.chunked(MAX_MULTICAST_TOKENS).forEach { tokens ->
             try {
                 val response =
                     firebaseMessaging.sendEachForMulticast(
                         command.copy(tokens = tokens).toMulticastMessage(),
                     )
-                response.responses.mapIndexedNotNullTo(invalidTokens) { index, sendResponse ->
+                response.responses.forEachIndexed { index, sendResponse ->
                     if (sendResponse.isSuccessful) {
-                        null
+                        successCount++
                     } else {
+                        failureCount++
                         sendResponse.exception
                             .takeIf { it.isInvalidTokenError() }
-                            ?.let { tokens[index] }
+                            ?.let { invalidTokens += tokens[index] }
                     }
                 }
             } catch (exception: Exception) {
+                failureCount += tokens.size
                 log.warn(
                     "FCM multicast 배치 발송 실패. tokenCount={}",
                     tokens.size,
@@ -48,6 +52,15 @@ class FcmPushNotificationSenderAdapter(
                 )
             }
         }
+
+        log.info(
+            "FCM multicast 발송 완료. type={}, requestedCount={}, successCount={}, failureCount={}, invalidTokenCount={}",
+            command.data["type"] ?: UNKNOWN_NOTIFICATION_TYPE,
+            command.tokens.size,
+            successCount,
+            failureCount,
+            invalidTokens.size,
+        )
 
         return PushNotificationResult(invalidTokens = invalidTokens)
     }
@@ -70,6 +83,7 @@ class FcmPushNotificationSenderAdapter(
 
     private companion object {
         const val MAX_MULTICAST_TOKENS = 500
+        const val UNKNOWN_NOTIFICATION_TYPE = "UNKNOWN"
         val INVALID_TOKEN_ERROR_CODES =
             setOf(
                 MessagingErrorCode.UNREGISTERED,

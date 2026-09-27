@@ -1,5 +1,9 @@
 package com.weeth.domain.notification.infrastructure
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import com.google.firebase.messaging.BatchResponse
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.firebase.messaging.FirebaseMessagingException
@@ -14,6 +18,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.ObjectProvider
 
 class FcmPushNotificationSenderAdapterTest :
@@ -45,6 +50,36 @@ class FcmPushNotificationSenderAdapterTest :
 
                 result.invalidTokens shouldContainExactly listOf("invalid-token")
                 verify(exactly = 1) { firebaseMessaging.sendEachForMulticast(any()) }
+            }
+
+            it("FCM 발송 결과를 알림 유형과 건수로 로깅한다") {
+                val batchResponse = mockk<BatchResponse>()
+                val successResponse = mockk<SendResponse>()
+                val failedResponse = mockk<SendResponse>()
+                val exception = mockk<FirebaseMessagingException>()
+                val logger = LoggerFactory.getLogger(FcmPushNotificationSenderAdapter::class.java) as Logger
+                val appender = ListAppender<ILoggingEvent>().apply { start() }
+
+                every { firebaseMessaging.sendEachForMulticast(any()) } returns batchResponse
+                every { batchResponse.responses } returns listOf(successResponse, failedResponse)
+                every { successResponse.isSuccessful } returns true
+                every { failedResponse.isSuccessful } returns false
+                every { failedResponse.exception } returns exception
+                every { exception.messagingErrorCode } returns MessagingErrorCode.UNREGISTERED
+                logger.addAppender(appender)
+
+                try {
+                    adapter.sendMulticast(createCommand(tokens = listOf("active-token", "invalid-token")))
+                } finally {
+                    logger.detachAppender(appender)
+                    appender.stop()
+                }
+
+                appender.list
+                    .single { it.level == Level.INFO }
+                    .formattedMessage shouldBe
+                    "FCM multicast 발송 완료. type=NOTICE_CREATED, requestedCount=2, successCount=1, " +
+                    "failureCount=1, invalidTokenCount=1"
             }
 
             it("token이 비어 있으면 FirebaseMessaging을 호출하지 않는다") {
