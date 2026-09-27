@@ -100,7 +100,7 @@ draft_message() {
   else
     action="갱신 ($draft_tag → $tag)"
   fi
-  printf '📦 *%s* draft %s (%s · %s)\n확인 후 Publish: <%s|%s draft 열기>' \
+  printf '🚀 *%s* draft %s (%s · %s)\n확인 후 Publish: <%s|%s draft 열기>' \
     "$tag" "$action" "$bump" "$trigger" "$url" "$tag"
 }
 

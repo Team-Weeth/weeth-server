@@ -125,22 +125,22 @@ assert_eq "시크릿 없으면 전송 안 함" \
   "$(run_main PUBLISHED=v1.2.0 HEAD_REF=dev >/dev/null; grep -c '^curl ' "$STUB_DIR/log")" 0
 assert_eq "릴리즈 PR draft 생성 메시지" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 HEAD_REF=dev PR_NUMBER=130)" \
-  $'📦 *v1.3.0* draft 생성 (minor · <https://github.com/o/r/pull/130|#130> dev)\n확인 후 Publish: <https://github.com/o/r/releases/tag/untagged-1|v1.3.0 draft 열기>'
+  $'🚀 *v1.3.0* draft 생성 (minor · <https://github.com/o/r/pull/130|#130> dev)\n확인 후 Publish: <https://github.com/o/r/releases/tag/untagged-1|v1.3.0 draft 열기>'
 assert_eq "draft URL 을 못 얻으면 Releases 목록으로 폴백" \
   "$(slack_text $WEBHOOK STUB_NO_URL=1 PUBLISHED=v1.2.0 HEAD_REF=dev PR_NUMBER=130 | tail -1)" \
   '확인 후 Publish: <https://github.com/o/r/releases|v1.3.0 draft 열기>'
 assert_eq "draft 버전이 바뀌면 이전 → 새 태그 표시" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 DRAFTS=v1.2.1 HEAD_REF=dev PR_NUMBER=131 | head -1)" \
-  '📦 *v1.3.0* draft 갱신 (v1.2.1 → v1.3.0) (minor · <https://github.com/o/r/pull/131|#131> dev)'
+  '🚀 *v1.3.0* draft 갱신 (v1.2.1 → v1.3.0) (minor · <https://github.com/o/r/pull/131|#131> dev)'
 assert_eq "같은 버전 draft 갱신" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 DRAFTS=v1.3.0 HEAD_REF=hotfix/b PR_NUMBER=132 | head -1)" \
-  '📦 *v1.3.0* draft 갱신 (patch · <https://github.com/o/r/pull/132|#132> hotfix/b)'
+  '🚀 *v1.3.0* draft 갱신 (patch · <https://github.com/o/r/pull/132|#132> hotfix/b)'
 assert_eq "workflow_dispatch 는 수동 실행 표시" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 BUMP_INPUT=major PR_LABELS=null | head -1)" \
-  '📦 *v2.0.0* draft 생성 (major · 수동 실행)'
+  '🚀 *v2.0.0* draft 생성 (major · 수동 실행)'
 assert_eq "브랜치명의 <>& 이스케이프" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 HEAD_REF='hotfix/a<b>&c' PR_NUMBER=1 | head -1)" \
-  '📦 *v1.2.1* draft 생성 (patch · <https://github.com/o/r/pull/1|#1> hotfix/a&lt;b&gt;&amp;c)'
+  '🚀 *v1.2.1* draft 생성 (patch · <https://github.com/o/r/pull/1|#1> hotfix/a&lt;b&gt;&amp;c)'
 assert_eq "Slack 전송 실패해도 draft 생성은 성공" \
   "$(run_main $WEBHOOK CURL_FAIL=1 PUBLISHED=v1.2.0 HEAD_REF=dev)" \
   "gh release create v1.3.0 --draft --target abc --title v1.3.0 --notes NOTES"
