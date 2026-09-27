@@ -87,7 +87,7 @@ class NotificationControllerTest :
                         title = "새 공지가 등록되었습니다",
                         body = "중간고사 기간 공지",
                         targetPath = "/clubs/1/boards/10/posts/100",
-                        clubId = 1L,
+                        clubId = "1",
                         boardId = 10L,
                         postId = 100L,
                         isRead = false,

@@ -6,6 +6,7 @@ import com.weeth.domain.notification.domain.entity.UserNotification
 import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.notification.domain.repository.UserNotificationReader
 import com.weeth.domain.user.fixture.UserTestFixture
+import com.weeth.global.common.id.TsidBase62Encoder
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
@@ -56,6 +57,7 @@ class GetNotificationQueryServiceTest :
                 result.content.size shouldBe 1
                 result.content.first().title shouldBe "새 공지가 등록되었습니다"
                 result.content.first().targetPath shouldBe "/clubs/1/boards/10/posts/100"
+                result.content.first().clubId shouldBe TsidBase62Encoder.encode(1L)
                 result.pageNumber shouldBe 0
                 result.pageSize shouldBe 20
                 result.totalElements shouldBe 1L

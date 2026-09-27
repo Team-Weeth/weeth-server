@@ -6,6 +6,7 @@ import com.weeth.domain.notification.domain.entity.UserNotification
 import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.notification.domain.repository.UserNotificationRepository
 import com.weeth.domain.user.domain.repository.UserReader
+import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -45,7 +46,7 @@ class CreateNoticeNotificationUseCase(
     }
 
     private fun createTargetPath(event: NoticeCreatedEvent): String =
-        "/clubs/${event.clubId}/boards/${event.boardId}/posts/${event.postId}"
+        "/clubs/${TsidBase62Encoder.encode(event.clubId)}/boards/${event.boardId}/posts/${event.postId}"
 
     private companion object {
         const val NOTICE_NOTIFICATION_TITLE = "새 공지가 등록되었습니다"

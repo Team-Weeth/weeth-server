@@ -15,8 +15,8 @@ data class NotificationResponse(
     val body: String,
     @field:Schema(description = "알림 클릭 시 이동할 웹 내부 경로", example = "/clubs/1/boards/10/posts/100")
     val targetPath: String,
-    @field:Schema(description = "동아리 ID", example = "1")
-    val clubId: Long,
+    @field:Schema(description = "동아리 ID", example = "1A2b3C")
+    val clubId: String,
     @field:Schema(description = "게시판 ID", example = "10")
     val boardId: Long,
     @field:Schema(description = "게시글 ID", example = "100")

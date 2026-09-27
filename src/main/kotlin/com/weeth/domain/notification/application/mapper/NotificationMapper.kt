@@ -2,6 +2,7 @@ package com.weeth.domain.notification.application.mapper
 
 import com.weeth.domain.notification.application.dto.response.NotificationResponse
 import com.weeth.domain.notification.domain.entity.UserNotification
+import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 
 @Component
@@ -13,7 +14,7 @@ class NotificationMapper {
             title = notification.title,
             body = notification.body,
             targetPath = notification.targetPath,
-            clubId = notification.clubId,
+            clubId = TsidBase62Encoder.encode(notification.clubId),
             boardId = notification.boardId,
             postId = notification.postId,
             isRead = notification.isRead,

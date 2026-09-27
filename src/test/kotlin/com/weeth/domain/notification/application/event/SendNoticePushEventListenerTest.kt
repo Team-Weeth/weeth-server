@@ -44,7 +44,7 @@ class SendNoticePushEventListenerTest :
 
         describe("handle") {
             it("저장된 공지 알림 대상자의 활성 토큰으로 푸시를 발송하고 invalid token을 비활성화한다") {
-                val event = createEvent()
+                val event = createEvent(clubId = 62L)
                 every {
                     userNotificationReader.findTargetUserIdsByTypeAndPostId(NotificationType.NOTICE_CREATED, 100L)
                 } returns listOf(2L, 3L)
@@ -62,10 +62,10 @@ class SendNoticePushEventListenerTest :
                                 it.body == "중간고사 기간 공지" &&
                                 it.tokens == listOf("token-2", "token-3") &&
                                 it.data["type"] == "NOTICE_CREATED" &&
-                                it.data["clubId"] == "1" &&
+                                it.data["clubId"] == "10" &&
                                 it.data["boardId"] == "10" &&
                                 it.data["postId"] == "100" &&
-                                it.data["targetPath"] == "/clubs/1/boards/10/posts/100"
+                                it.data["targetPath"] == "/clubs/10/boards/10/posts/100"
                         },
                     )
                 }
@@ -107,9 +107,9 @@ class SendNoticePushEventListenerTest :
         }
     }) {
     private companion object {
-        fun createEvent(): NoticeCreatedEvent =
+        fun createEvent(clubId: Long = 1L): NoticeCreatedEvent =
             NoticeCreatedEvent(
-                clubId = 1L,
+                clubId = clubId,
                 boardId = 10L,
                 postId = 100L,
                 title = "중간고사 기간 공지",

@@ -7,6 +7,7 @@ import com.weeth.domain.notification.domain.port.PushNotificationSenderPort
 import com.weeth.domain.notification.domain.repository.NotificationTokenReader
 import com.weeth.domain.notification.domain.repository.UserNotificationReader
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
+import com.weeth.global.common.id.TsidBase62Encoder
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
@@ -68,7 +69,7 @@ class SendNoticePushEventListener(
             data =
                 mapOf(
                     "type" to NotificationType.NOTICE_CREATED.name,
-                    "clubId" to event.clubId.toString(),
+                    "clubId" to TsidBase62Encoder.encode(event.clubId),
                     "boardId" to event.boardId.toString(),
                     "postId" to event.postId.toString(),
                     "targetPath" to targetPath,
@@ -77,7 +78,7 @@ class SendNoticePushEventListener(
     }
 
     private fun createTargetPath(event: NoticeCreatedEvent): String =
-        "/clubs/${event.clubId}/boards/${event.boardId}/posts/${event.postId}"
+        "/clubs/${TsidBase62Encoder.encode(event.clubId)}/boards/${event.boardId}/posts/${event.postId}"
 
     private companion object {
         const val NOTICE_CREATED_NOTIFICATION_TITLE = "새 공지가 등록되었습니다"
