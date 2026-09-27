@@ -34,8 +34,11 @@ CREATE TABLE user_notification (
         FOREIGN KEY (user_id) REFERENCES users (user_id)
 );
 
-CREATE INDEX idx_user_notification_user_club_read_created
-    ON user_notification (user_id, club_id, is_read, created_at DESC);
+CREATE INDEX idx_user_notification_user_club_created
+    ON user_notification (user_id, club_id, created_at DESC);
+
+CREATE INDEX idx_user_notification_user_club_read
+    ON user_notification (user_id, club_id, is_read);
 
 CREATE INDEX idx_user_notification_notice_post
     ON user_notification (post_id, type);

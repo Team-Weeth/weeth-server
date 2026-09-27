@@ -64,7 +64,7 @@ class FcmPushNotificationSenderAdapterTest :
                 verify(exactly = 2) { firebaseMessaging.sendEachForMulticast(any()) }
             }
 
-            it("유효한 payload에서 INVALID_ARGUMENT 응답 token을 invalid token으로 수집한다") {
+            it("INVALID_ARGUMENT 응답 token은 비활성화 대상에서 제외한다") {
                 val batchResponse = mockk<BatchResponse>()
                 val failedResponse = mockk<SendResponse>()
                 val exception = mockk<FirebaseMessagingException>()
@@ -77,7 +77,23 @@ class FcmPushNotificationSenderAdapterTest :
 
                 val result = adapter.sendMulticast(createCommand(tokens = listOf("active-token")))
 
-                result.invalidTokens shouldContainExactly listOf("active-token")
+                result.invalidTokens shouldBe emptyList()
+            }
+
+            it("SENDER_ID_MISMATCH 응답 token을 invalid token으로 수집한다") {
+                val batchResponse = mockk<BatchResponse>()
+                val failedResponse = mockk<SendResponse>()
+                val exception = mockk<FirebaseMessagingException>()
+
+                every { firebaseMessaging.sendEachForMulticast(any()) } returns batchResponse
+                every { batchResponse.responses } returns listOf(failedResponse)
+                every { failedResponse.isSuccessful } returns false
+                every { failedResponse.exception } returns exception
+                every { exception.messagingErrorCode } returns MessagingErrorCode.SENDER_ID_MISMATCH
+
+                val result = adapter.sendMulticast(createCommand(tokens = listOf("mismatched-token")))
+
+                result.invalidTokens shouldContainExactly listOf("mismatched-token")
             }
 
             it("중간 배치 발송이 실패해도 다음 배치를 계속 발송하고 이전 invalid token을 반환한다") {

@@ -73,7 +73,7 @@ class FcmPushNotificationSenderAdapter(
         val INVALID_TOKEN_ERROR_CODES =
             setOf(
                 MessagingErrorCode.UNREGISTERED,
-                MessagingErrorCode.INVALID_ARGUMENT,
+                MessagingErrorCode.SENDER_ID_MISMATCH,
             )
     }
 }
