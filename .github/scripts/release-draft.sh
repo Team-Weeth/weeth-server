@@ -90,7 +90,8 @@ draft_message() {
   else
     action="갱신 ($draft_tag → $tag)"
   fi
-  printf '🚀 *%s* draft %s\n확인 후 Publish: <%s|%s draft 열기>' "$tag" "$action" "$url" "$tag"
+  # 한 채널에 여러 저장소 알림이 모이므로 저장소 이름을 앞에 붙인다
+  printf '🚀 *[%s]* %s draft %s\n확인 후 Publish: <%s|%s draft 열기>' "${GH_REPO#*/}" "$tag" "$action" "$url" "$tag"
 }
 
 main() {

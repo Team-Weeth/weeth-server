@@ -125,16 +125,16 @@ assert_eq "시크릿 없으면 전송 안 함" \
   "$(run_main PUBLISHED=v1.2.0 HEAD_REF=dev >/dev/null; grep -c '^curl ' "$STUB_DIR/log")" 0
 assert_eq "draft 생성 메시지" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 HEAD_REF=dev)" \
-  $'🚀 *v1.3.0* draft 생성\n확인 후 Publish: <https://github.com/o/r/releases/tag/untagged-1|v1.3.0 draft 열기>'
+  $'🚀 *[r]* v1.3.0 draft 생성\n확인 후 Publish: <https://github.com/o/r/releases/tag/untagged-1|v1.3.0 draft 열기>'
 assert_eq "draft URL 을 못 얻으면 Releases 목록으로 폴백" \
   "$(slack_text $WEBHOOK STUB_NO_URL=1 PUBLISHED=v1.2.0 HEAD_REF=dev | tail -1)" \
   '확인 후 Publish: <https://github.com/o/r/releases|v1.3.0 draft 열기>'
 assert_eq "draft 버전이 바뀌면 이전 → 새 태그 표시" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 DRAFTS=v1.2.1 HEAD_REF=dev | head -1)" \
-  '🚀 *v1.3.0* draft 갱신 (v1.2.1 → v1.3.0)'
+  '🚀 *[r]* v1.3.0 draft 갱신 (v1.2.1 → v1.3.0)'
 assert_eq "같은 버전 draft 갱신" \
   "$(slack_text $WEBHOOK PUBLISHED=v1.2.0 DRAFTS=v1.3.0 HEAD_REF=hotfix/b | head -1)" \
-  '🚀 *v1.3.0* draft 갱신'
+  '🚀 *[r]* v1.3.0 draft 갱신'
 assert_eq "Slack 전송 실패해도 draft 생성은 성공" \
   "$(run_main $WEBHOOK CURL_FAIL=1 PUBLISHED=v1.2.0 HEAD_REF=dev)" \
   "gh release create v1.3.0 --draft --target abc --title v1.3.0 --notes NOTES"
