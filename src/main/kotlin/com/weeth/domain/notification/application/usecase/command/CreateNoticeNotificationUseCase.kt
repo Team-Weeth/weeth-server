@@ -4,7 +4,7 @@ import com.weeth.domain.board.application.event.NoticeCreatedEvent
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.notification.domain.entity.UserNotification
 import com.weeth.domain.notification.domain.enums.NotificationType
-import com.weeth.domain.notification.domain.repository.UserNotificationRepository
+import com.weeth.domain.notification.domain.port.UserNotificationBulkWriter
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Service
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional
 class CreateNoticeNotificationUseCase(
     private val clubMemberReader: ClubMemberReader,
     private val userReader: UserReader,
-    private val userNotificationRepository: UserNotificationRepository,
+    private val userNotificationBulkWriter: UserNotificationBulkWriter,
 ) {
     @Transactional
     fun execute(event: NoticeCreatedEvent) {
@@ -42,7 +42,7 @@ class CreateNoticeNotificationUseCase(
                 )
             }
 
-        userNotificationRepository.saveAll(notifications)
+        userNotificationBulkWriter.saveAll(notifications)
     }
 
     private fun createTargetPath(event: NoticeCreatedEvent): String =

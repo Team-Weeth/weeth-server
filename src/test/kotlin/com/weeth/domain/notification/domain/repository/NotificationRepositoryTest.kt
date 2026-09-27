@@ -4,6 +4,8 @@ import com.weeth.config.TestContainersConfig
 import com.weeth.domain.notification.domain.entity.NotificationToken
 import com.weeth.domain.notification.domain.entity.UserNotification
 import com.weeth.domain.notification.domain.enums.NotificationType
+import com.weeth.domain.notification.domain.port.UserNotificationBulkWriter
+import com.weeth.domain.notification.infrastructure.JdbcUserNotificationBulkWriterAdapter
 import com.weeth.domain.user.domain.repository.UserRepository
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.StringSpec
@@ -15,11 +17,12 @@ import org.springframework.context.annotation.Import
 import java.time.LocalDateTime
 
 @DataJpaTest
-@Import(TestContainersConfig::class)
+@Import(TestContainersConfig::class, JdbcUserNotificationBulkWriterAdapter::class)
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class NotificationRepositoryTest(
     private val notificationTokenRepository: NotificationTokenRepository,
     private val userNotificationRepository: UserNotificationRepository,
+    private val userNotificationBulkWriter: UserNotificationBulkWriter,
     private val userRepository: UserRepository,
 ) : StringSpec({
 
@@ -98,6 +101,26 @@ class NotificationRepositoryTest(
                 userNotificationRepository.findTargetUserIdsByTypeAndPostId(
                     type = NotificationType.NOTICE_CREATED,
                     postId = 100L,
+                )
+
+            result shouldContainExactlyInAnyOrder listOf(user1.id, user2.id)
+        }
+
+        "bulk writer는 여러 공지 알림을 JDBC batch로 저장한다" {
+            val user1 = userRepository.save(UserTestFixture.createActiveUser1())
+            val user2 = userRepository.save(UserTestFixture.createActiveUser2())
+
+            userNotificationBulkWriter.saveAll(
+                listOf(
+                    createNoticeNotification(user1, postId = 300L),
+                    createNoticeNotification(user2, postId = 300L),
+                ),
+            )
+
+            val result =
+                userNotificationRepository.findTargetUserIdsByTypeAndPostId(
+                    type = NotificationType.NOTICE_CREATED,
+                    postId = 300L,
                 )
 
             result shouldContainExactlyInAnyOrder listOf(user1.id, user2.id)

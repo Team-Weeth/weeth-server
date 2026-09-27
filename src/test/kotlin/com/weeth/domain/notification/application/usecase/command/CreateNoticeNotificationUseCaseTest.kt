@@ -4,7 +4,7 @@ import com.weeth.domain.board.application.event.NoticeCreatedEvent
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.notification.domain.entity.UserNotification
 import com.weeth.domain.notification.domain.enums.NotificationType
-import com.weeth.domain.notification.domain.repository.UserNotificationRepository
+import com.weeth.domain.notification.domain.port.UserNotificationBulkWriter
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.DescribeSpec
@@ -20,12 +20,12 @@ class CreateNoticeNotificationUseCaseTest :
     DescribeSpec({
         val clubMemberReader = mockk<ClubMemberReader>()
         val userReader = mockk<UserReader>()
-        val userNotificationRepository = mockk<UserNotificationRepository>()
-        val useCase = CreateNoticeNotificationUseCase(clubMemberReader, userReader, userNotificationRepository)
+        val userNotificationBulkWriter = mockk<UserNotificationBulkWriter>()
+        val useCase = CreateNoticeNotificationUseCase(clubMemberReader, userReader, userNotificationBulkWriter)
 
         beforeTest {
-            clearMocks(clubMemberReader, userReader, userNotificationRepository)
-            every { userNotificationRepository.saveAll(any<List<UserNotification>>()) } answers { firstArg() }
+            clearMocks(clubMemberReader, userReader, userNotificationBulkWriter)
+            every { userNotificationBulkWriter.saveAll(any()) } returns Unit
         }
 
         describe("execute") {
@@ -41,7 +41,7 @@ class CreateNoticeNotificationUseCaseTest :
                 useCase.execute(event)
 
                 verify(exactly = 1) {
-                    userNotificationRepository.saveAll(capture(notificationsSlot))
+                    userNotificationBulkWriter.saveAll(capture(notificationsSlot))
                 }
                 notificationsSlot.captured.map { it.user.id } shouldContainExactlyInAnyOrder listOf(2L, 3L)
                 notificationsSlot.captured.forEach {
@@ -61,7 +61,7 @@ class CreateNoticeNotificationUseCaseTest :
                 useCase.execute(createEvent(authorUserId = 1L))
 
                 verify(exactly = 0) { userReader.findAllByIds(any()) }
-                verify(exactly = 0) { userNotificationRepository.saveAll(any<List<UserNotification>>()) }
+                verify(exactly = 0) { userNotificationBulkWriter.saveAll(any()) }
             }
         }
     }) {
