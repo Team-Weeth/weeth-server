@@ -35,7 +35,13 @@ class CreateNoticeNotificationUseCaseTest :
                 val user3 = UserTestFixture.createRegisteredUser(3L)
                 val notificationsSlot = slot<List<UserNotification>>()
 
-                every { clubMemberReader.findActiveUserIdsByClubIdExcludingUserId(62L, 1L) } returns listOf(2L, 3L)
+                every {
+                    clubMemberReader.findActiveUserIdsByClubIdExcludingUserId(
+                        clubId = 62L,
+                        cardinalNumber = 7,
+                        excludedUserId = 1L,
+                    )
+                } returns listOf(2L, 3L)
                 every { userReader.findAllByIds(listOf(2L, 3L)) } returns listOf(user2, user3)
 
                 useCase.execute(event)
@@ -56,7 +62,13 @@ class CreateNoticeNotificationUseCaseTest :
             }
 
             it("알림 대상 ACTIVE 멤버가 없으면 알림을 저장하지 않는다") {
-                every { clubMemberReader.findActiveUserIdsByClubIdExcludingUserId(1L, 1L) } returns emptyList()
+                every {
+                    clubMemberReader.findActiveUserIdsByClubIdExcludingUserId(
+                        clubId = 1L,
+                        cardinalNumber = 7,
+                        excludedUserId = 1L,
+                    )
+                } returns emptyList()
 
                 useCase.execute(createEvent(authorUserId = 1L))
 
@@ -74,6 +86,7 @@ class CreateNoticeNotificationUseCaseTest :
                 clubId = clubId,
                 boardId = 10L,
                 postId = 100L,
+                cardinalNumber = 7,
                 title = "중간고사 기간 공지",
                 authorUserId = authorUserId,
             )

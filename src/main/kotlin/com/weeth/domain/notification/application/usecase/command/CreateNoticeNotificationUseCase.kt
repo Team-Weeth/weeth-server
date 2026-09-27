@@ -21,6 +21,7 @@ class CreateNoticeNotificationUseCase(
         val targetUserIds =
             clubMemberReader.findActiveUserIdsByClubIdExcludingUserId(
                 clubId = event.clubId,
+                cardinalNumber = event.cardinalNumber,
                 excludedUserId = event.authorUserId,
             )
         if (targetUserIds.isEmpty()) {

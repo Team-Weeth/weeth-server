@@ -173,6 +173,7 @@ class ManagePostUseCase(
                 clubId = clubId,
                 boardId = board.id,
                 postId = post.id,
+                cardinalNumber = post.cardinalNumber,
                 title = post.title,
                 authorUserId = authorUserId,
             ),

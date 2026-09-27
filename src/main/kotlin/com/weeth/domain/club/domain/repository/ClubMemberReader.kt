@@ -74,6 +74,7 @@ interface ClubMemberReader {
 
     fun findActiveUserIdsByClubIdExcludingUserId(
         clubId: Long,
+        cardinalNumber: Int?,
         excludedUserId: Long,
     ): List<Long>
 

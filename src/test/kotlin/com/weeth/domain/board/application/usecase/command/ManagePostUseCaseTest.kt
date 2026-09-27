@@ -114,8 +114,16 @@ class ManagePostUseCaseTest :
             it("공지 게시판에 게시글을 저장하면 공지 알림 이벤트를 발행한다") {
                 val board = BoardTestFixture.create(id = 10L, name = "공지", type = BoardType.NOTICE)
                 val request = CreatePostRequest(title = "중간고사 기간 공지", content = "시험 기간 운영 시간을 안내합니다.")
+                val member = ClubMemberTestFixture.createActiveMember()
+                val memberCardinal =
+                    ClubMemberCardinalTestFixture.create(
+                        clubMember = member,
+                        cardinal = CardinalTestFixture.createCardinal(cardinalNumber = 7),
+                    )
 
                 every { boardRepository.findByIdAndClubIdAndIsDeletedFalse(10L, 1L) } returns board
+                every { clubMemberPolicy.getActiveMember(1L, 1L) } returns member
+                every { clubMemberCardinalReader.findLatestCardinalByClubMember(member) } returns memberCardinal
                 every { postRepository.save(any()) } answers {
                     firstArg<Post>().also { ReflectionTestUtils.setField(it, "id", 100L) }
                 }
@@ -128,6 +136,7 @@ class ManagePostUseCaseTest :
                             it.clubId == 1L &&
                                 it.boardId == 10L &&
                                 it.postId == 100L &&
+                                it.cardinalNumber == 7 &&
                                 it.title == "중간고사 기간 공지" &&
                                 it.authorUserId == 1L
                         },

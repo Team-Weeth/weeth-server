@@ -112,6 +112,7 @@ class SendNoticePushEventListenerTest :
                 clubId = clubId,
                 boardId = 10L,
                 postId = 100L,
+                cardinalNumber = 7,
                 title = "중간고사 기간 공지",
                 authorUserId = 1L,
             )
