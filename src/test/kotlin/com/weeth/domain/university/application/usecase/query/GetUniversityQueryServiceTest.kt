@@ -1,10 +1,12 @@
 package com.weeth.domain.university.application.usecase.query
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.weeth.domain.university.application.dto.response.MajorResponse
 import com.weeth.domain.university.application.exception.CareerNetApiException
 import com.weeth.domain.university.application.mapper.UniversityMapper
 import com.weeth.domain.university.domain.model.MajorData
 import com.weeth.domain.university.domain.port.UniversityInfoPort
+import com.weeth.global.config.properties.UniversityManualMajorConfig
 import com.weeth.global.config.properties.UniversityProperties
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
@@ -17,11 +19,12 @@ class GetUniversityQueryServiceTest :
     DescribeSpec({
         val universityInfoPort = mockk<UniversityInfoPort>()
         val universityMapper = mockk<UniversityMapper>()
-        val universityProperties =
-            UniversityProperties(
-                manualMajors = listOf(UniversityProperties.ManualMajor(name = "인공지능학과", category = "공학계열")),
+        val universityManualMajorConfig =
+            UniversityManualMajorConfig(
+                UniversityProperties("""[{"name":"인공지능학과","category":"공학계열"}]"""),
+                jacksonObjectMapper(),
             )
-        val queryService = GetUniversityQueryService(universityInfoPort, universityMapper, universityProperties)
+        val queryService = GetUniversityQueryService(universityInfoPort, universityMapper, universityManualMajorConfig)
 
         describe("getSchools") {
             context("커리어넷 API 오류 시") {

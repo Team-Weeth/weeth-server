@@ -1,5 +1,7 @@
 package com.weeth.domain.club.application.usecase.query
 
+import com.weeth.domain.attendance.domain.repository.AttendanceReader
+import com.weeth.domain.attendance.domain.repository.MemberAttendanceCount
 import com.weeth.domain.board.domain.repository.PostReader
 import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.club.application.dto.request.ClubMemberSort
@@ -52,6 +54,7 @@ class GetClubMemberQueryServiceTest :
         val penaltyReader = mockk<PenaltyReader>()
         val postReader = mockk<PostReader>()
         val clubPositionOptionReader = mockk<ClubPositionOptionReader>()
+        val attendanceReader = mockk<AttendanceReader>()
         val clubMapper = ClubMapper(fileAccessUrlPort)
         val clubPositionOptionMapper = ClubPositionOptionMapper()
 
@@ -67,6 +70,7 @@ class GetClubMemberQueryServiceTest :
                 userReader = userReader,
                 penaltyReader = penaltyReader,
                 postReader = postReader,
+                attendanceReader = attendanceReader,
             )
 
         beforeTest {
@@ -79,7 +83,147 @@ class GetClubMemberQueryServiceTest :
                 penaltyReader,
                 postReader,
                 clubPositionOptionReader,
+                attendanceReader,
             )
+            every { attendanceReader.countByClubIdAndMemberIdsAndCardinal(any(), any(), any()) } returns emptyList()
+        }
+
+        describe("기수별 관리자 출석 통계") {
+            it("페이지 멤버 통계를 한 번에 집계하며 기록 없는 멤버는 누적값 대신 0을 반환한다") {
+                val club = ClubTestFixture.createClub(id = 1L)
+                val admin = ClubMemberTestFixture.createAdminMember(club = club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 10L, club = club)
+                val emptyMember = ClubMemberTestFixture.createActiveMember(id = 11L, club = club)
+                repeat(9) {
+                    member.attend()
+                    emptyMember.attend()
+                }
+                val members = listOf(member, emptyMember)
+
+                every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                every { clubMemberReader.findAdminMembers(1L, 7, null, null, "CARDINAL_DESC", any()) } returns
+                    PageImpl(members, PageRequest.of(0, 20), 2)
+                every { clubMemberCardinalReader.findAllByClubMembers(members) } returns emptyList()
+                every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+                val count = mockk<MemberAttendanceCount>()
+                every { count.clubMemberId } returns 10L
+                every { count.attendanceCount } returns 1L
+                every { count.absenceCount } returns 2L
+                every { attendanceReader.countByClubIdAndMemberIdsAndCardinal(1L, listOf(10L, 11L), 7) } returns
+                    listOf(count)
+
+                val result =
+                    service.findClubMembersForAdmin(
+                        clubId = 1L,
+                        userId = 99L,
+                        page = 0,
+                        size = 20,
+                        keyword = null,
+                        cardinalNumber = 7,
+                        memberRole = null,
+                        sort = ClubMemberSort.CARDINAL_DESC,
+                    )
+
+                result.content[0].attendanceCount shouldBe 1
+                result.content[0].absenceCount shouldBe 2
+                result.content[0].attendanceRate shouldBe 33
+                result.content[1].attendanceCount shouldBe 0
+                result.content[1].absenceCount shouldBe 0
+                result.content[1].attendanceRate shouldBe 0
+                // 기수 조회는 멤버 누적 카운터를 변경하지 않는다
+                member.attendanceStats.attendanceCount shouldBe 9
+                emptyMember.attendanceStats.attendanceCount shouldBe 9
+                verify(exactly = 1) { attendanceReader.countByClubIdAndMemberIdsAndCardinal(any(), any(), any()) }
+            }
+
+            it("기수를 지정하지 않으면 누적 카운터를 반환하고 집계 쿼리를 실행하지 않는다") {
+                val club = ClubTestFixture.createClub(id = 1L)
+                val admin = ClubMemberTestFixture.createAdminMember(club = club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 10L, club = club)
+                repeat(3) { member.attend() }
+                member.absent()
+
+                every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                every { clubMemberReader.findAdminMembers(1L, null, null, null, "CARDINAL_DESC", any()) } returns
+                    PageImpl(listOf(member), PageRequest.of(0, 20), 1)
+                every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
+                every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+
+                val result =
+                    service.findClubMembersForAdmin(
+                        clubId = 1L,
+                        userId = 99L,
+                        page = 0,
+                        size = 20,
+                        keyword = null,
+                        cardinalNumber = null,
+                        memberRole = null,
+                        sort = ClubMemberSort.CARDINAL_DESC,
+                    )
+
+                result.content[0].attendanceCount shouldBe 3
+                result.content[0].absenceCount shouldBe 1
+                result.content[0].attendanceRate shouldBe 75
+                verify(exactly = 0) { attendanceReader.countByClubIdAndMemberIdsAndCardinal(any(), any(), any()) }
+            }
+
+            it("페이지가 비어 있으면 기수를 지정해도 집계 쿼리를 실행하지 않는다") {
+                val club = ClubTestFixture.createClub(id = 1L)
+                val admin = ClubMemberTestFixture.createAdminMember(club = club)
+
+                every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                every { clubMemberReader.findAdminMembers(1L, 7, null, null, "CARDINAL_DESC", any()) } returns
+                    PageImpl(emptyList(), PageRequest.of(0, 20), 0)
+                every { clubMemberCardinalReader.findAllByClubMembers(emptyList()) } returns emptyList()
+
+                val result =
+                    service.findClubMembersForAdmin(
+                        clubId = 1L,
+                        userId = 99L,
+                        page = 0,
+                        size = 20,
+                        keyword = null,
+                        cardinalNumber = 7,
+                        memberRole = null,
+                        sort = ClubMemberSort.CARDINAL_DESC,
+                    )
+
+                result.content.shouldBeEmpty()
+                verify(exactly = 0) { attendanceReader.countByClubIdAndMemberIdsAndCardinal(any(), any(), any()) }
+            }
+
+            it("검색도 기수 지정 시 해당 기수 집계를 사용한다") {
+                val club = ClubTestFixture.createClub(id = 1L)
+                val admin = ClubMemberTestFixture.createAdminMember(club = club)
+                val member = ClubMemberTestFixture.createActiveMember(id = 10L, club = club)
+                repeat(9) { member.attend() }
+
+                every { clubPermissionPolicy.requireAdmin(1L, 99L) } returns admin
+                every { clubMemberReader.findAdminMembers(1L, 7, null, "홍길동", "CARDINAL_DESC", any()) } returns
+                    PageImpl(listOf(member), PageRequest.of(0, 50), 1)
+                every { clubMemberCardinalReader.findAllByClubMembers(listOf(member)) } returns emptyList()
+                every { penaltyReader.findByClubMemberIds(any()) } returns emptyList()
+                val count = mockk<MemberAttendanceCount>()
+                every { count.clubMemberId } returns 10L
+                every { count.attendanceCount } returns 2L
+                every { count.absenceCount } returns 2L
+                every { attendanceReader.countByClubIdAndMemberIdsAndCardinal(1L, listOf(10L), 7) } returns
+                    listOf(count)
+
+                val result =
+                    service.searchClubMembers(
+                        clubId = 1L,
+                        userId = 99L,
+                        keyword = "홍길동",
+                        cardinalNumber = 7,
+                    )
+
+                result shouldHaveSize 1
+                result[0].attendanceCount shouldBe 2
+                result[0].absenceCount shouldBe 2
+                result[0].attendanceRate shouldBe 50
+                verify(exactly = 1) { attendanceReader.countByClubIdAndMemberIdsAndCardinal(1L, listOf(10L), 7) }
+            }
         }
 
         describe("searchClubMembers") {

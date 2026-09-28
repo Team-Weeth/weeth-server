@@ -5,7 +5,9 @@ set -euo pipefail
 : "${APP_IMAGE:?APP_IMAGE is required}"
 : "${DOMAIN:?DOMAIN is required}"
 : "${DEPLOY_DIR:=/opt/weeth/prod}"
-: "${HEALTH_CHECK_TIMEOUT_SECONDS:=120}"
+# 기동에만 1분 이상 걸리고(컨텍스트 초기화 ~41s + JPA 초기화), DB 마이그레이션이 동반되는
+# 릴리스에서는 Flyway 실행 시간이 더 붙는다. 정상 기동 중인 컨테이너가 롤백되지 않도록 여유를 둔다.
+: "${HEALTH_CHECK_TIMEOUT_SECONDS:=300}"
 : "${HEALTH_CHECK_INTERVAL_SECONDS:=3}"
 : "${HEALTH_CHECK_CURL_CONNECT_TIMEOUT_SECONDS:=2}"
 : "${HEALTH_CHECK_CURL_MAX_TIME_SECONDS:=5}"
