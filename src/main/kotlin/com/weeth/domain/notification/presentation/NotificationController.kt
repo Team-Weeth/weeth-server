@@ -39,7 +39,7 @@ class NotificationController(
     private val getNotificationQueryService: GetNotificationQueryService,
 ) {
     @PostMapping("/notifications/tokens")
-    @Operation(summary = "웹 알림 토큰 등록")
+    @Operation(summary = "푸시 알림 토큰 등록")
     fun registerToken(
         @Valid @RequestBody request: RegisterNotificationTokenRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -49,7 +49,7 @@ class NotificationController(
     }
 
     @PostMapping("/notifications/tokens/revoke")
-    @Operation(summary = "웹 알림 토큰 해제")
+    @Operation(summary = "푸시 알림 토큰 해제")
     fun revokeToken(
         @Valid @RequestBody request: RevokeNotificationTokenRequest,
         @Parameter(hidden = true) @CurrentUser userId: Long,

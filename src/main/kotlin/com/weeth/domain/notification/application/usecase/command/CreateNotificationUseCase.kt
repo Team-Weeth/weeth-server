@@ -22,8 +22,11 @@ class CreateNotificationUseCase(
     ) {
         if (targetUserIds.isEmpty()) return
 
+        val users = userReader.findAllByIds(targetUserIds)
+        if (users.isEmpty()) return
+
         val notifications =
-            userReader.findAllByIds(targetUserIds).map { user ->
+            users.map { user ->
                 UserNotification.create(
                     user = user,
                     type = content.type,
@@ -37,6 +40,6 @@ class CreateNotificationUseCase(
             }
 
         userNotificationBulkWriter.saveAll(notifications)
-        eventPublisher.publishEvent(NotificationCreatedEvent(content, targetUserIds))
+        eventPublisher.publishEvent(NotificationCreatedEvent(content, users.map { it.id }))
     }
 }

@@ -58,6 +58,18 @@ class CreateNotificationUseCaseTest :
             verify(exactly = 0) { bulkWriter.saveAll(any()) }
             verify(exactly = 0) { eventPublisher.publishEvent(any<Any>()) }
         }
+
+        "실제로 조회된 사용자만 푸시 발송 대상으로 전달한다" {
+            val eventSlot = slot<NotificationCreatedEvent>()
+            every { userReader.findAllByIds(listOf(2L, 3L)) } returns
+                listOf(UserTestFixture.createActiveUser2(2L))
+            every { bulkWriter.saveAll(any()) } returns Unit
+            every { eventPublisher.publishEvent(capture(eventSlot)) } returns Unit
+
+            useCase.execute(createContent("공지"), listOf(2L, 3L))
+
+            eventSlot.captured.targetUserIds shouldBe listOf(2L)
+        }
     }) {
     private companion object {
         fun createContent(body: String) =
