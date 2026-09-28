@@ -106,7 +106,7 @@ class AttendanceMapperTest :
         }
 
         describe("toDetailResponse") {
-            it("사용자 + Response 리스트를 DetailResponse로 매핑(total = attend + absence)") {
+            it("조회 기록의 상태만으로 통계를 계산하고 누적값은 사용하지 않는다") {
                 val base = LocalDate.now()
                 val m1 = createOneDaySession(base.minusDays(2), 1, 1000, "D-2")
                 val m2 = createOneDaySession(base.minusDays(1), 1, 1001, "D-1", club = m1.club)
@@ -114,17 +114,19 @@ class AttendanceMapperTest :
                 repeat(3) { member.attend() }
                 repeat(2) { member.absent() }
 
-                val a1 = createAttendance(m1, member)
-                val a2 = createAttendance(m2, member)
+                val a1 = createAttendance(m1, member).also { it.attend() }
+                val a2 = createAttendance(m2, member).also { it.absent() }
 
                 val r1 = mapper.toResponse(a1)
                 val r2 = mapper.toResponse(a2)
 
-                val detail = mapper.toDetailResponse(member, listOf(r1, r2))
+                val detail = mapper.toDetailResponse(1, listOf(a1, a2))
 
                 detail.shouldNotBeNull()
                 detail.attendances shouldBe listOf(r1, r2)
-                detail.total shouldBe member.attendanceStats.attendanceCount + member.attendanceStats.absenceCount
+                detail.total shouldBe 2
+                detail.attendanceRate shouldBe 50
+                detail.cardinalNumber shouldBe 1
             }
         }
 
