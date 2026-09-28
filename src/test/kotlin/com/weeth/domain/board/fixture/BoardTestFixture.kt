@@ -41,4 +41,16 @@ object BoardTestFixture {
             type = BoardType.NOTICE,
             config = BoardConfig(writePermission = MemberRole.ADMIN),
         )
+
+    fun createFeedbackBoard(
+        club: Club = ClubTestFixture.createClub(),
+        name: String = "사용성/버그 제보",
+        description: String = "서비스 사용성과 버그를 제보하는 게시판입니다.",
+    ): Board =
+        create(
+            club = club,
+            name = name,
+            description = description,
+            type = BoardType.FEEDBACK,
+        )
 }

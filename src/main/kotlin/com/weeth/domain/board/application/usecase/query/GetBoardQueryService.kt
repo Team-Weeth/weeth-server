@@ -84,7 +84,8 @@ class GetBoardQueryService(
         val otherBoards = otherList.map { boardMapper.toDetailResponseForAdmin(it, postCountMap[it.id] ?: 0) }
         val totalPostCount = postCountMap.values.sum()
 
-        val activeBoardCount = boards.count { !it.isDeleted }
+        // FEEDBACK처럼 상한에 포함되지 않는 게시판은 제외해야 canCreateBoard가 생성 API 판정과 일치한다.
+        val activeBoardCount = boards.count { !it.isDeleted && it.countsTowardBoardLimit }
 
         return AdminBoardListResponse(
             boards = noticeBoards + virtualAllBoardForAdmin(totalPostCount) + otherBoards,
