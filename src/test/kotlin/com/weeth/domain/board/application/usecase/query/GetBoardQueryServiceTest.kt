@@ -14,6 +14,7 @@ import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
+import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import io.mockk.clearMocks
@@ -121,6 +122,22 @@ class GetBoardQueryServiceTest :
                 result.boards shouldHaveSize 3
                 result.boards.map { it.name } shouldBe listOf("전체", "일반", "삭제됨")
                 result.activeBoardCount shouldBe 1
+                result.maxBoardCount shouldBe 4
+                result.canCreateBoard shouldBe true
+            }
+
+            it("FEEDBACK 게시판은 목록에는 포함하되 활성 게시판 수와 생성 가능 여부 계산에서는 제외한다") {
+                val generalBoards =
+                    List(3) { BoardTestFixture.create(id = it + 1L, name = "일반$it", type = BoardType.GENERAL) }
+                val feedbackBoard = BoardTestFixture.createFeedbackBoard()
+
+                every { boardRepository.findAllByClubIdOrderByDisplayOrderAscIdAsc(clubId) } returns
+                    generalBoards + feedbackBoard
+
+                val result = queryService.findAllBoardsForAdmin(clubId, userId)
+
+                result.boards.map { it.type } shouldContain BoardType.FEEDBACK
+                result.activeBoardCount shouldBe 3
                 result.maxBoardCount shouldBe 4
                 result.canCreateBoard shouldBe true
             }
