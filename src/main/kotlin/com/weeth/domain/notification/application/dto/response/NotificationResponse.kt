@@ -1,5 +1,6 @@
 package com.weeth.domain.notification.application.dto.response
 
+import com.weeth.domain.notification.domain.enums.NotificationReferenceType
 import com.weeth.domain.notification.domain.enums.NotificationType
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
@@ -17,10 +18,10 @@ data class NotificationResponse(
     val targetPath: String,
     @field:Schema(description = "동아리 ID", example = "1A2b3C")
     val clubId: String,
-    @field:Schema(description = "게시판 ID", example = "10")
-    val boardId: Long,
-    @field:Schema(description = "게시글 ID", example = "100")
-    val postId: Long,
+    @field:Schema(description = "알림 참조 유형", example = "POST")
+    val referenceType: NotificationReferenceType,
+    @field:Schema(description = "알림 참조 ID", example = "100")
+    val referenceId: Long,
     @field:Schema(description = "읽음 여부", example = "false")
     val isRead: Boolean,
     @field:Schema(description = "알림 생성 시각", example = "2026-09-21T10:00:00")

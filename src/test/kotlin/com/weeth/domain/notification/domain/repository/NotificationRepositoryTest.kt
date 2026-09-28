@@ -3,6 +3,8 @@ package com.weeth.domain.notification.domain.repository
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.notification.domain.entity.NotificationToken
 import com.weeth.domain.notification.domain.entity.UserNotification
+import com.weeth.domain.notification.domain.enums.NotificationPlatform
+import com.weeth.domain.notification.domain.enums.NotificationReferenceType
 import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.notification.domain.port.UserNotificationBulkWriter
 import com.weeth.domain.notification.infrastructure.JdbcUserNotificationBulkWriterAdapter
@@ -31,21 +33,27 @@ class NotificationRepositoryTest(
             val user2 = userRepository.save(UserTestFixture.createActiveUser2())
             val excludedUser = userRepository.save(UserTestFixture.createRegisteredUser())
             val registeredAt = LocalDateTime.of(2026, 9, 21, 10, 0)
-            val inactiveToken = NotificationToken.create(user1, "inactive-token", registeredAt)
+            val inactiveToken =
+                NotificationToken.create(
+                    user1,
+                    "inactive-token",
+                    NotificationPlatform.WEB,
+                    registeredAt,
+                )
 
             inactiveToken.deactivate()
             notificationTokenRepository.saveAll(
                 listOf(
-                    NotificationToken.create(user1, "active-token-1", registeredAt),
+                    NotificationToken.create(user1, "active-token-1", NotificationPlatform.WEB, registeredAt),
                     inactiveToken,
-                    NotificationToken.create(user2, "active-token-2", registeredAt),
-                    NotificationToken.create(excludedUser, "excluded-token", registeredAt),
+                    NotificationToken.create(user2, "active-token-2", NotificationPlatform.IOS, registeredAt),
+                    NotificationToken.create(excludedUser, "excluded-token", NotificationPlatform.WEB, registeredAt),
                 ),
             )
 
-            val result = notificationTokenRepository.findActiveTokensByUserIds(listOf(user1.id, user2.id))
+            val result = notificationTokenRepository.findActiveTargetsByUserIds(listOf(user1.id, user2.id))
 
-            result shouldContainExactlyInAnyOrder listOf("active-token-1", "active-token-2")
+            result.map { it.token } shouldContainExactlyInAnyOrder listOf("active-token-1", "active-token-2")
         }
 
         "registerToken은 토큰을 새로 저장하고 같은 토큰 재등록 시 소유자와 상태를 갱신한다" {
@@ -54,13 +62,24 @@ class NotificationRepositoryTest(
             val firstRegisteredAt = LocalDateTime.of(2026, 9, 21, 10, 0)
             val secondRegisteredAt = LocalDateTime.of(2026, 9, 21, 10, 5)
 
-            notificationTokenRepository.registerToken(user1.id, "fcm-token", firstRegisteredAt)
-            notificationTokenRepository.registerToken(user2.id, "fcm-token", secondRegisteredAt)
+            notificationTokenRepository.registerToken(
+                user1.id,
+                "fcm-token",
+                NotificationPlatform.WEB.name,
+                firstRegisteredAt,
+            )
+            notificationTokenRepository.registerToken(
+                user2.id,
+                "fcm-token",
+                NotificationPlatform.IOS.name,
+                secondRegisteredAt,
+            )
 
             val result = notificationTokenRepository.findByToken("fcm-token")
 
             result?.user?.id shouldBe user2.id
             result?.isActive shouldBe true
+            result?.platform shouldBe NotificationPlatform.IOS
             result?.lastRegisteredAt shouldBe secondRegisteredAt
             notificationTokenRepository.findAll().size shouldBe 1
         }
@@ -68,8 +87,20 @@ class NotificationRepositoryTest(
         "deactivateInvalidTokens는 발송 시작 시각 이전에 등록된 토큰만 비활성화한다" {
             val user = userRepository.save(UserTestFixture.createActiveUser1())
             val sendStartedAt = LocalDateTime.of(2026, 9, 21, 10, 0)
-            val oldToken = NotificationToken.create(user, "old-invalid-token", sendStartedAt.minusMinutes(1))
-            val newToken = NotificationToken.create(user, "newly-registered-token", sendStartedAt.plusMinutes(1))
+            val oldToken =
+                NotificationToken.create(
+                    user,
+                    "old-invalid-token",
+                    NotificationPlatform.WEB,
+                    sendStartedAt.minusMinutes(1),
+                )
+            val newToken =
+                NotificationToken.create(
+                    user,
+                    "newly-registered-token",
+                    NotificationPlatform.WEB,
+                    sendStartedAt.plusMinutes(1),
+                )
 
             notificationTokenRepository.saveAll(listOf(oldToken, newToken))
 
@@ -84,28 +115,6 @@ class NotificationRepositoryTest(
             notificationTokenRepository.findByToken("newly-registered-token")?.isActive shouldBe true
         }
 
-        "findTargetUserIdsByTypeAndPostId는 저장된 공지 알림 대상 사용자 id만 조회한다" {
-            val user1 = userRepository.save(UserTestFixture.createActiveUser1())
-            val user2 = userRepository.save(UserTestFixture.createActiveUser2())
-            val otherUser = userRepository.save(UserTestFixture.createRegisteredUser())
-
-            userNotificationRepository.saveAll(
-                listOf(
-                    createNoticeNotification(user1, postId = 100L),
-                    createNoticeNotification(user2, postId = 100L),
-                    createNoticeNotification(otherUser, postId = 200L),
-                ),
-            )
-
-            val result =
-                userNotificationRepository.findTargetUserIdsByTypeAndPostId(
-                    type = NotificationType.NOTICE_CREATED,
-                    postId = 100L,
-                )
-
-            result shouldContainExactlyInAnyOrder listOf(user1.id, user2.id)
-        }
-
         "bulk writer는 여러 공지 알림을 JDBC batch로 저장한다" {
             val user1 = userRepository.save(UserTestFixture.createActiveUser1())
             val user2 = userRepository.save(UserTestFixture.createActiveUser2())
@@ -117,13 +126,9 @@ class NotificationRepositoryTest(
                 ),
             )
 
-            val result =
-                userNotificationRepository.findTargetUserIdsByTypeAndPostId(
-                    type = NotificationType.NOTICE_CREATED,
-                    postId = 300L,
-                )
+            val result = userNotificationRepository.findAll().filter { it.referenceId == 300L }
 
-            result shouldContainExactlyInAnyOrder listOf(user1.id, user2.id)
+            result.map { it.user.id } shouldContainExactlyInAnyOrder listOf(user1.id, user2.id)
         }
     }) {
     private companion object {
@@ -138,8 +143,8 @@ class NotificationRepositoryTest(
                 body = "중간고사 기간 공지",
                 targetPath = "/clubs/1/boards/10/posts/$postId",
                 clubId = 1L,
-                boardId = 10L,
-                postId = postId,
+                referenceType = NotificationReferenceType.POST,
+                referenceId = postId,
             )
     }
 }

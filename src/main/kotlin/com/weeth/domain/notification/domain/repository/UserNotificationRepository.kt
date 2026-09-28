@@ -1,7 +1,6 @@
 package com.weeth.domain.notification.domain.repository
 
 import com.weeth.domain.notification.domain.entity.UserNotification
-import com.weeth.domain.notification.domain.enums.NotificationType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
@@ -13,19 +12,6 @@ import java.time.LocalDateTime
 interface UserNotificationRepository :
     JpaRepository<UserNotification, Long>,
     UserNotificationReader {
-    @Query(
-        """
-        SELECT un.user.id
-        FROM UserNotification un
-        WHERE un.type = :type
-        AND un.postId = :postId
-        """,
-    )
-    override fun findTargetUserIdsByTypeAndPostId(
-        @Param("type") type: NotificationType,
-        @Param("postId") postId: Long,
-    ): List<Long>
-
     override fun countByUserIdAndClubIdAndIsReadFalse(
         userId: Long,
         clubId: Long,

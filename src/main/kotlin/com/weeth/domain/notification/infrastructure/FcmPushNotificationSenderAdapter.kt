@@ -19,7 +19,7 @@ class FcmPushNotificationSenderAdapter(
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun sendMulticast(command: PushNotificationCommand): PushNotificationResult {
-        if (command.tokens.isEmpty()) {
+        if (command.targets.isEmpty()) {
             return PushNotificationResult()
         }
 
@@ -27,11 +27,11 @@ class FcmPushNotificationSenderAdapter(
         val invalidTokens = mutableListOf<String>()
         var successCount = 0
         var failureCount = 0
-        command.tokens.chunked(MAX_MULTICAST_TOKENS).forEach { tokens ->
+        command.targets.chunked(MAX_MULTICAST_TOKENS).forEach { targets ->
             try {
                 val response =
                     firebaseMessaging.sendEachForMulticast(
-                        command.copy(tokens = tokens).toMulticastMessage(),
+                        command.copy(targets = targets).toMulticastMessage(),
                     )
                 response.responses.forEachIndexed { index, sendResponse ->
                     if (sendResponse.isSuccessful) {
@@ -40,14 +40,14 @@ class FcmPushNotificationSenderAdapter(
                         failureCount++
                         sendResponse.exception
                             .takeIf { it.isInvalidTokenError() }
-                            ?.let { invalidTokens += tokens[index] }
+                            ?.let { invalidTokens += targets[index].token }
                     }
                 }
             } catch (exception: Exception) {
-                failureCount += tokens.size
+                failureCount += targets.size
                 log.warn(
                     "FCM multicast 배치 발송 실패. tokenCount={}",
-                    tokens.size,
+                    targets.size,
                     exception,
                 )
             }
@@ -56,7 +56,7 @@ class FcmPushNotificationSenderAdapter(
         log.info(
             "FCM multicast 발송 완료. type={}, requestedCount={}, successCount={}, failureCount={}, invalidTokenCount={}",
             command.data["type"] ?: UNKNOWN_NOTIFICATION_TYPE,
-            command.tokens.size,
+            command.targets.size,
             successCount,
             failureCount,
             invalidTokens.size,
@@ -68,7 +68,7 @@ class FcmPushNotificationSenderAdapter(
     private fun PushNotificationCommand.toMulticastMessage(): MulticastMessage =
         MulticastMessage
             .builder()
-            .addAllTokens(tokens)
+            .addAllTokens(targets.map { it.token })
             .setNotification(
                 Notification
                     .builder()

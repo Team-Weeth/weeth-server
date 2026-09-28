@@ -2,6 +2,7 @@ package com.weeth.domain.notification.application.usecase.command
 
 import com.weeth.domain.notification.application.dto.request.RegisterNotificationTokenRequest
 import com.weeth.domain.notification.application.dto.request.RevokeNotificationTokenRequest
+import com.weeth.domain.notification.domain.enums.NotificationPlatform
 import com.weeth.domain.notification.domain.repository.NotificationTokenRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
@@ -23,7 +24,7 @@ class ManageNotificationTokenUseCaseTest :
         beforeTest {
             clearMocks(userReader, notificationTokenRepository)
             every {
-                notificationTokenRepository.registerToken(any(), any(), any())
+                notificationTokenRepository.registerToken(any(), any(), any(), any())
             } returns 1
             every {
                 notificationTokenRepository.deactivateByUserIdAndToken(any(), any())
@@ -45,6 +46,7 @@ class ManageNotificationTokenUseCaseTest :
                     notificationTokenRepository.registerToken(
                         userId = 10L,
                         token = "fcm-token",
+                        platform = NotificationPlatform.WEB.name,
                         registeredAt = any<LocalDateTime>(),
                     )
                 }

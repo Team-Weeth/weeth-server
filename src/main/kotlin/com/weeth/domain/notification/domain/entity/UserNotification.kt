@@ -1,5 +1,6 @@
 package com.weeth.domain.notification.domain.entity
 
+import com.weeth.domain.notification.domain.enums.NotificationReferenceType
 import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
@@ -15,6 +16,8 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.LocalDateTime
 
 @Entity
@@ -30,8 +33,8 @@ import java.time.LocalDateTime
             columnList = "user_id, club_id, is_read",
         ),
         Index(
-            name = "idx_user_notification_notice_post",
-            columnList = "post_id, type",
+            name = "idx_user_notification_type_reference",
+            columnList = "type, reference_type, reference_id",
         ),
     ],
 )
@@ -42,8 +45,8 @@ class UserNotification(
     body: String,
     targetPath: String,
     clubId: Long,
-    boardId: Long,
-    postId: Long,
+    referenceType: NotificationReferenceType,
+    referenceId: Long,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -57,6 +60,7 @@ class UserNotification(
         private set
 
     @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
     @Column(nullable = false, length = 30)
     var type: NotificationType = type
         private set
@@ -66,7 +70,7 @@ class UserNotification(
         private set
 
     @Column(nullable = false, length = MAX_BODY_LENGTH)
-    var body: String = normalizeRequired(body, "알림 내용", MAX_BODY_LENGTH)
+    var body: String = normalizeDisplayText(body, "알림 내용", MAX_BODY_LENGTH)
         private set
 
     @Column(name = "target_path", nullable = false, length = MAX_TARGET_PATH_LENGTH)
@@ -77,12 +81,14 @@ class UserNotification(
     var clubId: Long = clubId
         private set
 
-    @Column(name = "board_id", nullable = false)
-    var boardId: Long = boardId
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(name = "reference_type", nullable = false, length = 30)
+    var referenceType: NotificationReferenceType = referenceType
         private set
 
-    @Column(name = "post_id", nullable = false)
-    var postId: Long = postId
+    @Column(name = "reference_id", nullable = false)
+    var referenceId: Long = referenceId
         private set
 
     @Column(name = "is_read", nullable = false)
@@ -103,7 +109,7 @@ class UserNotification(
 
     companion object {
         private const val MAX_TITLE_LENGTH = 100
-        private const val MAX_BODY_LENGTH = 200
+        private const val MAX_BODY_LENGTH = 255
         private const val MAX_TARGET_PATH_LENGTH = 255
 
         fun create(
@@ -113,8 +119,8 @@ class UserNotification(
             body: String,
             targetPath: String,
             clubId: Long,
-            boardId: Long,
-            postId: Long,
+            referenceType: NotificationReferenceType,
+            referenceId: Long,
         ): UserNotification =
             UserNotification(
                 user = user,
@@ -123,8 +129,8 @@ class UserNotification(
                 body = body,
                 targetPath = targetPath,
                 clubId = clubId,
-                boardId = boardId,
-                postId = postId,
+                referenceType = referenceType,
+                referenceId = referenceId,
             )
 
         private fun normalizeRequired(
@@ -136,6 +142,16 @@ class UserNotification(
             require(normalized.isNotBlank()) { "${label}은 공백일 수 없습니다." }
             require(normalized.length <= maxLength) { "${label}은 ${maxLength}자를 초과할 수 없습니다." }
             return normalized
+        }
+
+        private fun normalizeDisplayText(
+            value: String,
+            label: String,
+            maxLength: Int,
+        ): String {
+            val normalized = value.trim()
+            require(normalized.isNotBlank()) { "${label}은 공백일 수 없습니다." }
+            return if (normalized.length <= maxLength) normalized else normalized.take(maxLength - 1) + "…"
         }
     }
 }

@@ -34,8 +34,8 @@ class JdbcUserNotificationBulkWriterAdapterTest :
                 body = "중간고사 기간 공지",
                 targetPath = "/clubs/10/boards/10/posts/100",
                 clubId = 62L,
-                boardId = 10L,
-                postId = 100L,
+                referenceType = com.weeth.domain.notification.domain.enums.NotificationReferenceType.POST,
+                referenceId = 100L,
             )
     }
 }

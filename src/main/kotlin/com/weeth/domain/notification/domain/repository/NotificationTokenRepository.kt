@@ -1,6 +1,7 @@
 package com.weeth.domain.notification.domain.repository
 
 import com.weeth.domain.notification.domain.entity.NotificationToken
+import com.weeth.domain.notification.domain.vo.PushTarget
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -18,6 +19,7 @@ interface NotificationTokenRepository :
             INSERT INTO notification_token (
                 user_id,
                 token,
+                platform,
                 is_active,
                 last_registered_at,
                 created_at,
@@ -26,6 +28,7 @@ interface NotificationTokenRepository :
             VALUES (
                 :userId,
                 :token,
+                :platform,
                 true,
                 :registeredAt,
                 :registeredAt,
@@ -33,6 +36,7 @@ interface NotificationTokenRepository :
             )
             ON DUPLICATE KEY UPDATE
                 user_id = :userId,
+                platform = :platform,
                 is_active = true,
                 last_registered_at = :registeredAt,
                 modified_at = :registeredAt
@@ -42,20 +46,21 @@ interface NotificationTokenRepository :
     fun registerToken(
         @Param("userId") userId: Long,
         @Param("token") token: String,
+        @Param("platform") platform: String,
         @Param("registeredAt") registeredAt: LocalDateTime,
     ): Int
 
     @Query(
         """
-        SELECT nt.token
+        SELECT new com.weeth.domain.notification.domain.vo.PushTarget(nt.token, nt.platform)
         FROM NotificationToken nt
         WHERE nt.user.id IN :userIds
         AND nt.isActive = true
         """,
     )
-    override fun findActiveTokensByUserIds(
+    override fun findActiveTargetsByUserIds(
         @Param("userIds") userIds: List<Long>,
-    ): List<String>
+    ): List<PushTarget>
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(

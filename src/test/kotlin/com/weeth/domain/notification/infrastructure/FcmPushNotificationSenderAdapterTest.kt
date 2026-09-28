@@ -172,7 +172,13 @@ class FcmPushNotificationSenderAdapterTest :
             PushNotificationCommand(
                 title = "새 공지가 등록되었습니다",
                 body = "중간고사 기간 공지",
-                tokens = tokens,
+                targets =
+                    tokens.map {
+                        com.weeth.domain.notification.domain.vo.PushTarget(
+                            it,
+                            com.weeth.domain.notification.domain.enums.NotificationPlatform.WEB,
+                        )
+                    },
                 data =
                     mapOf(
                         "type" to "NOTICE_CREATED",

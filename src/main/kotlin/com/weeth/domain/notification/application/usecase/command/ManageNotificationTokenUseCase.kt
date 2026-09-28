@@ -23,6 +23,7 @@ class ManageNotificationTokenUseCase(
         notificationTokenRepository.registerToken(
             userId = user.id,
             token = NotificationToken.normalizeToken(request.token),
+            platform = request.platform.name,
             registeredAt = LocalDateTime.now(),
         )
     }

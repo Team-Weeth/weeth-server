@@ -1,9 +1,12 @@
 package com.weeth.domain.notification.domain.entity
 
+import com.weeth.domain.notification.domain.enums.NotificationPlatform
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
@@ -13,6 +16,8 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
+import org.hibernate.annotations.JdbcTypeCode
+import org.hibernate.type.SqlTypes
 import java.time.LocalDateTime
 
 @Entity
@@ -34,6 +39,7 @@ import java.time.LocalDateTime
 class NotificationToken(
     user: User,
     token: String,
+    platform: NotificationPlatform,
     registeredAt: LocalDateTime,
 ) : BaseEntity() {
     @Id
@@ -51,6 +57,12 @@ class NotificationToken(
     var token: String = normalizeToken(token)
         private set
 
+    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.VARCHAR)
+    @Column(nullable = false, length = 20)
+    var platform: NotificationPlatform = platform
+        private set
+
     @Column(name = "is_active", nullable = false)
     var isActive: Boolean = true
         private set
@@ -61,9 +73,11 @@ class NotificationToken(
 
     fun reactivate(
         user: User,
+        platform: NotificationPlatform,
         registeredAt: LocalDateTime,
     ) {
         this.user = user
+        this.platform = platform
         isActive = true
         lastRegisteredAt = registeredAt
     }
@@ -78,11 +92,13 @@ class NotificationToken(
         fun create(
             user: User,
             token: String,
+            platform: NotificationPlatform,
             registeredAt: LocalDateTime,
         ): NotificationToken =
             NotificationToken(
                 user = user,
                 token = token,
+                platform = platform,
                 registeredAt = registeredAt,
             )
 

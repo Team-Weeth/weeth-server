@@ -29,8 +29,8 @@ class JdbcUserNotificationBulkWriterAdapter(
                         statement.setString(parameterIndex++, notification.body)
                         statement.setString(parameterIndex++, notification.targetPath)
                         statement.setLong(parameterIndex++, notification.clubId)
-                        statement.setLong(parameterIndex++, notification.boardId)
-                        statement.setLong(parameterIndex++, notification.postId)
+                        statement.setString(parameterIndex++, notification.referenceType.name)
+                        statement.setLong(parameterIndex++, notification.referenceId)
                         statement.setBoolean(parameterIndex++, notification.isRead)
                         notification.readAt?.let { statement.setObject(parameterIndex++, it) }
                             ?: statement.setNull(parameterIndex++, Types.TIMESTAMP)
@@ -46,7 +46,7 @@ class JdbcUserNotificationBulkWriterAdapter(
             """
             INSERT INTO user_notification (
                 user_id, type, title, body, target_path,
-                club_id, board_id, post_id, is_read, read_at,
+                club_id, reference_type, reference_id, is_read, read_at,
                 created_at, modified_at
             ) VALUES
             """

@@ -1,5 +1,6 @@
 package com.weeth.domain.notification.domain.entity
 
+import com.weeth.domain.notification.domain.enums.NotificationPlatform
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -15,15 +16,21 @@ class NotificationTokenTest :
                 NotificationToken.create(
                     user = previousUser,
                     token = "fcm-token",
+                    platform = NotificationPlatform.WEB,
                     registeredAt = LocalDateTime.of(2026, 9, 21, 10, 0),
                 )
             val reRegisteredAt = LocalDateTime.of(2026, 9, 21, 10, 5)
 
             token.deactivate()
-            token.reactivate(user = currentUser, registeredAt = reRegisteredAt)
+            token.reactivate(
+                user = currentUser,
+                platform = NotificationPlatform.IOS,
+                registeredAt = reRegisteredAt,
+            )
 
             token.user shouldBe currentUser
             token.isActive shouldBe true
+            token.platform shouldBe NotificationPlatform.IOS
             token.lastRegisteredAt shouldBe reRegisteredAt
         }
     })
