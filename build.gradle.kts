@@ -88,6 +88,9 @@ dependencies {
     implementation(platform("software.amazon.awssdk:bom:$awsSdkBomVersion"))
     implementation("software.amazon.awssdk:s3")
 
+    // --- Firebase Admin SDK ---
+    implementation("com.google.firebase:firebase-admin:9.8.0")
+
     // --- Test (starter-test는 유지하되 mockito는 제외) ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
