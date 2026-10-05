@@ -10,6 +10,8 @@ data class BoardListResponse(
     val name: String,
     @field:Schema(description = "게시판 타입")
     val type: BoardType,
+    @field:Schema(description = "비공개 게시판 여부")
+    val isPrivate: Boolean,
     @field:Schema(description = "게시판 설정")
     val boardConfig: BoardConfigResponse,
 )

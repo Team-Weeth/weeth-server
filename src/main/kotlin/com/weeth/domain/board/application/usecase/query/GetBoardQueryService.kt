@@ -35,7 +35,6 @@ class GetBoardQueryService(
         val realBoards =
             boardRepository
                 .findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
-                .filter { it.isAccessibleBy(member.memberRole) }
 
         // 공지사항 고정 첫 번째, 전체(가상) 두 번째, 나머지는 displayOrder 순
         val memberRole = member.memberRole
@@ -118,7 +117,8 @@ class GetBoardQueryService(
                 id = null,
                 name = "전체",
                 type = BoardType.ALL,
-                boardConfig = BoardConfigResponse(canWrite = false, canComment = false),
+                isPrivate = false,
+                boardConfig = BoardConfigResponse(canRead = true, canWrite = false, canComment = false),
             )
 
         private fun virtualAllBoardForAdmin(totalPostCount: Int) =
