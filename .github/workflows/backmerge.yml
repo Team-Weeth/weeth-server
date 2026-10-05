@@ -1,7 +1,8 @@
 name: Backmerge
 
 # hotfix처럼 dev를 거치지 않고 main에 들어간 변경을 dev로 되돌려 보내는 PR을 연다.
-# dev → main 릴리즈 머지는 main 쪽에 머지 커밋만 남으므로(--no-merges 0건) 건너뛴다.
+# main을 dev에 머지해도 dev 트리가 그대로면(일반 dev → main 릴리즈 머지) 건너뛴다.
+# 커밋 수가 아닌 머지 결과로 판정해야 릴리즈 머지 커밋에서만 생긴 충돌 해결 변경도 놓치지 않는다.
 on:
   push:
     branches: [main]
@@ -35,15 +36,17 @@ jobs:
         run: |
           set -euo pipefail
 
-          missing=$(git rev-list --count --no-merges "origin/dev..$GITHUB_SHA")
-          if [[ "$missing" -eq 0 ]]; then
-            echo "dev already contains all non-merge commits of main. Skip."
+          # merge-tree는 충돌 시 exit 1 → 백머지 필요로 본다
+          if merged=$(git merge-tree --write-tree origin/dev "$GITHUB_SHA") &&
+            [[ "$(head -1 <<<"$merged")" == "$(git rev-parse 'origin/dev^{tree}')" ]]; then
+            echo "Merging main into dev changes nothing. Skip."
             exit 0
           fi
 
           # 이미 열린 백머지 PR이 있으면 그 브랜치를 fast-forward (충돌 해결 커밋이 있으면 코멘트만 남김)
-          existing=$(gh pr list --base dev --state open --json headRefName,number \
-            -q '[.[] | select(.headRefName | startswith("chore/backmerge-"))][0] // empty | "\(.number) \(.headRefName)"')
+          # fork PR이 같은 이름의 브랜치를 쓰면 origin에 push해도 그 PR은 갱신되지 않으므로 같은 저장소 PR만 본다
+          existing=$(gh pr list --base dev --state open --limit 100 --json headRefName,number,isCrossRepository \
+            -q '[.[] | select((.isCrossRepository | not) and (.headRefName | startswith("chore/backmerge-")))][0] // empty | "\(.number) \(.headRefName)"')
           if [[ -n "$existing" ]]; then
             read -r pr_number branch <<<"$existing"
             if git push origin "$GITHUB_SHA:refs/heads/$branch"; then
@@ -59,6 +62,8 @@ jobs:
           git push origin "$GITHUB_SHA:refs/heads/$branch"
 
           commits=$(git log --no-merges --format='- %s (%h)' "origin/dev..$GITHUB_SHA")
+          # 머지 커밋의 충돌 해결분만 빠진 경우엔 non-merge 커밋이 없으므로 머지 커밋을 보여준다
+          [[ -z "$commits" ]] && commits=$(git log --merges --format='- %s (%h)' "origin/dev..$GITHUB_SHA")
           body=$(cat <<EOF
           ## 📌 Summary
           main에만 반영된 변경을 dev로 백머지합니다.

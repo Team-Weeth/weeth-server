@@ -1,7 +1,8 @@
 name: PR Labeler
 
+# fork PR에도 라벨을 쓰려면 쓰기 토큰이 필요하다. labeler는 PR 코드를 checkout/실행하지 않으므로 pull_request_target이 안전하다
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, reopened, synchronize]
 
 permissions:
@@ -12,7 +13,7 @@ jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/labeler@v5
+      - uses: actions/labeler@v6
         with:
           configuration-path: .github/labeler.yml
           # 수동으로 붙인 라벨(💥 Breaking, 🩹 Patch 등)은 유지
