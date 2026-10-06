@@ -1,0 +1,48 @@
+package com.weeth.domain.notification.domain.repository
+
+import com.weeth.domain.notification.domain.entity.UserNotification
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
+import org.springframework.data.jpa.repository.Query
+import org.springframework.data.repository.query.Param
+import java.time.LocalDateTime
+
+interface UserNotificationRepository :
+    JpaRepository<UserNotification, Long>,
+    UserNotificationReader {
+    override fun countByUserIdAndClubIdAndIsReadFalse(
+        userId: Long,
+        clubId: Long,
+    ): Long
+
+    override fun findByUserIdAndClubIdAndId(
+        userId: Long,
+        clubId: Long,
+        notificationId: Long,
+    ): UserNotification?
+
+    override fun findAllByUserIdAndClubIdOrderByCreatedAtDesc(
+        userId: Long,
+        clubId: Long,
+        pageable: Pageable,
+    ): Page<UserNotification>
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query(
+        """
+        UPDATE UserNotification un
+        SET un.isRead = true,
+            un.readAt = :readAt
+        WHERE un.user.id = :userId
+        AND un.clubId = :clubId
+        AND un.isRead = false
+        """,
+    )
+    fun markAllReadByUserIdAndClubId(
+        @Param("userId") userId: Long,
+        @Param("clubId") clubId: Long,
+        @Param("readAt") readAt: LocalDateTime,
+    ): Int
+}

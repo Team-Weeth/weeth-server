@@ -13,6 +13,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import org.springframework.core.MethodParameter
+import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
@@ -50,8 +51,11 @@ class AttendanceControllerTest :
             every { service.findAllDetailsByCurrentCardinal(1L, 10L, 7) } returns
                 AttendanceDetailResponse(1, 2, 1, emptyList(), 7, 50)
             mvc
-                .perform(get("/api/v4/clubs/1/attendances/detail").param("cardinalNumber", "7"))
-                .andExpect(status().isOk)
+                .perform(
+                    get("/api/v4/clubs/1/attendances/detail")
+                        .param("cardinalNumber", "7")
+                        .accept(MediaType.APPLICATION_JSON),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.code").value(AttendanceResponseCode.ATTENDANCE_FIND_ALL_SUCCESS.code))
                 .andExpect(jsonPath("$.data.cardinalNumber").value(7))
                 .andExpect(jsonPath("$.data.attendanceRate").value(50))
@@ -60,20 +64,28 @@ class AttendanceControllerTest :
             every { service.findAllDetailsByCurrentCardinal(1L, 10L, null) } returns
                 AttendanceDetailResponse(0, 0, 0, emptyList(), 8, 0)
             mvc
-                .perform(get("/api/v4/clubs/1/attendances/detail"))
-                .andExpect(status().isOk)
+                .perform(
+                    get("/api/v4/clubs/1/attendances/detail")
+                        .accept(MediaType.APPLICATION_JSON),
+                ).andExpect(status().isOk)
                 .andExpect(jsonPath("$.data.cardinalNumber").value(8))
         }
         it("없는 기수는 공통 응답 21000과 404이다") {
             every { service.findAllDetailsByCurrentCardinal(1L, 10L, 999) } throws CardinalNotFoundException()
             mvc
-                .perform(get("/api/v4/clubs/1/attendances/detail").param("cardinalNumber", "999"))
-                .andExpect(status().isNotFound)
+                .perform(
+                    get("/api/v4/clubs/1/attendances/detail")
+                        .param("cardinalNumber", "999")
+                        .accept(MediaType.APPLICATION_JSON),
+                ).andExpect(status().isNotFound)
                 .andExpect(jsonPath("$.code").value(21000))
         }
         it("문자열 기수는 400이다") {
             mvc
-                .perform(get("/api/v4/clubs/1/attendances/detail").param("cardinalNumber", "abc"))
-                .andExpect(status().isBadRequest)
+                .perform(
+                    get("/api/v4/clubs/1/attendances/detail")
+                        .param("cardinalNumber", "abc")
+                        .accept(MediaType.APPLICATION_JSON),
+                ).andExpect(status().isBadRequest)
         }
     })
