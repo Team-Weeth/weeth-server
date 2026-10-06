@@ -37,6 +37,7 @@ class PostMapperTest :
 
         every { board.id } returns 10L
         every { board.name } returns "일반 게시판"
+        every { board.isAccessibleBy(any()) } returns true
         every { board.canWriteBy(any()) } returns true
         every { board.isCommentEnabled } returns true
 
