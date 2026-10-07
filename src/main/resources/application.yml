@@ -73,6 +73,7 @@ management:
 
 app:
   file:
+    url-provider: ${APP_FILE_URL_PROVIDER:S3} # S3 | CDN
     cdn-base-url: ${CDN_BASE_URL:}
     presigned-url-expiration-minutes: 5
 
