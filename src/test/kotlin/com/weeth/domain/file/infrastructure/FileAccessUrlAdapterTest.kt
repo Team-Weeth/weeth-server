@@ -1,6 +1,7 @@
 package com.weeth.domain.file.infrastructure
 
 import com.weeth.global.config.properties.AwsS3Properties
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 
@@ -31,12 +32,17 @@ class FileAccessUrlAdapterTest :
                 result shouldBe "https://cdn.example.com/POST/2026-02/file.png"
             }
 
-            it("cdn base url이 없으면 storageKey를 그대로 반환한다") {
-                val adapter = CdnFileAccessUrlAdapter("")
+            it("cdn base url 끝의 슬래시를 정규화한다") {
+                val adapter = CdnFileAccessUrlAdapter("https://cdn.example.com/")
 
                 val result = adapter.resolve("POST/2026-02/file.png")
 
-                result shouldBe "POST/2026-02/file.png"
+                result shouldBe "https://cdn.example.com/POST/2026-02/file.png"
+            }
+
+            it("cdn base url이 비어 있으면 생성 시 예외가 발생한다") {
+                shouldThrow<IllegalArgumentException> { CdnFileAccessUrlAdapter("") }
+                shouldThrow<IllegalArgumentException> { CdnFileAccessUrlAdapter(" / ") }
             }
         }
     })

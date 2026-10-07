@@ -10,7 +10,7 @@ data class FileResponse(
     val fileName: String,
     @field:Schema(
         description = "조회용 파일 URL",
-        example = "https://bucket.s3.ap-northeast-2.amazonaws.com/POST/2026-02/uuid_profile-image.png",
+        example = "https://cdn.weeth.kr/POST/2026-02/uuid_profile-image.png",
     )
     val fileUrl: String,
     @field:Schema(description = "저장소 키", example = "POST/2026-02/uuid_profile-image.png")
