@@ -1,0 +1,34 @@
+# generate-notes API 카테고리 설정 (release-create.yml 에서 사용)
+changelog:
+  exclude:
+    labels:
+      - "🚀 Release"
+  categories:
+    - title: "💥 Breaking Changes"
+      labels: ["💥 Breaking"]
+    - title: "🚑 Hotfixes"
+      labels: ["🚑 Hotfix"]
+    - title: "✨ Features"
+      labels: ["✨ Feature"]
+    - title: "🐞 Bug Fixes"
+      labels: ["🐞 BugFix"]
+    - title: "🔐 Security"
+      labels: ["🔐 Security"]
+    - title: "🔨 Refactors"
+      labels: ["🔨 Refactor"]
+    - title: "✅ Tests"
+      labels: ["✅ Test"]
+    - title: "📃 Docs"
+      labels: ["📃 Docs"]
+    - title: "🌏 Deploy"
+      labels: ["🌏 Deploy"]
+    - title: "⚙ Settings"
+      labels: ["⚙ Setting"]
+    - title: "💻 Cross Browsing"
+      labels: ["💻 CrossBrowsing"]
+    - title: "📬 API"
+      labels: ["📬 API"]
+    - title: "🤖 Agent"
+      labels: ["🤖 Agent"]
+    - title: "🧩 Others"
+      labels: ["*"]
