@@ -6,7 +6,9 @@ import com.weeth.domain.attendance.application.dto.response.AttendanceResponse
 import com.weeth.domain.attendance.application.dto.response.AttendanceSummaryResponse
 import com.weeth.domain.attendance.application.dto.response.QrTokenResponse
 import com.weeth.domain.attendance.domain.entity.Attendance
+import com.weeth.domain.attendance.domain.enums.AttendanceStatus
 import com.weeth.domain.club.domain.entity.ClubMember
+import com.weeth.domain.club.domain.vo.ClubAttendanceStats
 import com.weeth.domain.session.domain.entity.Session
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
@@ -28,14 +30,24 @@ class AttendanceMapper {
         )
 
     fun toDetailResponse(
-        clubMember: ClubMember,
-        attendances: List<AttendanceResponse>,
-    ): AttendanceDetailResponse =
-        AttendanceDetailResponse(
-            attendanceCount = clubMember.attendanceStats.attendanceCount,
-            total = clubMember.attendanceStats.attendanceCount + clubMember.attendanceStats.absenceCount,
-            absenceCount = clubMember.attendanceStats.absenceCount,
-            attendances = attendances,
+        cardinalNumber: Int,
+        attendances: List<Attendance>,
+    ): AttendanceDetailResponse {
+        val stats = toStats(attendances)
+        return AttendanceDetailResponse(
+            attendanceCount = stats.attendanceCount,
+            total = stats.attendanceCount + stats.absenceCount,
+            absenceCount = stats.absenceCount,
+            attendances = attendances.map(::toResponse),
+            cardinalNumber = cardinalNumber,
+            attendanceRate = stats.attendanceRate,
+        )
+    }
+
+    fun toStats(attendances: List<Attendance>): ClubAttendanceStats =
+        ClubAttendanceStats.fromCounts(
+            attendances.count { it.status == AttendanceStatus.ATTEND },
+            attendances.count { it.status == AttendanceStatus.ABSENT },
         )
 
     fun toResponse(attendance: Attendance): AttendanceResponse =

@@ -22,6 +22,25 @@ import java.time.LocalDateTime
 interface AttendanceRepository :
     JpaRepository<Attendance, Long>,
     AttendanceReader {
+    @Query(
+        """
+        SELECT a.clubMember.id AS clubMemberId,
+               SUM(CASE WHEN a.status = com.weeth.domain.attendance.domain.enums.AttendanceStatus.ATTEND THEN 1 ELSE 0 END) AS attendanceCount,
+               SUM(CASE WHEN a.status = com.weeth.domain.attendance.domain.enums.AttendanceStatus.ABSENT THEN 1 ELSE 0 END) AS absenceCount
+        FROM Attendance a
+        WHERE a.clubMember.club.id = :clubId
+          AND a.session.club.id = :clubId
+          AND a.clubMember.id IN :clubMemberIds
+          AND a.session.cardinal = :cardinalNumber
+        GROUP BY a.clubMember.id
+        """,
+    )
+    override fun countByClubIdAndMemberIdsAndCardinal(
+        @Param("clubId") clubId: Long,
+        @Param("clubMemberIds") clubMemberIds: List<Long>,
+        @Param("cardinalNumber") cardinalNumber: Int,
+    ): List<MemberAttendanceCount>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query(

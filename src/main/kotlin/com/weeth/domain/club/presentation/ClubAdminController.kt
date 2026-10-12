@@ -111,7 +111,11 @@ class ClubAdminController(
     @GetMapping("/members")
     @Operation(
         summary = "동아리 멤버 목록 조회",
-        description = "기수·역할 필터, 이름·학과·학번 검색, 정렬, 페이지네이션을 지원합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.",
+        description = """
+            기수·역할 필터, 이름·학과·학번 검색, 정렬, 페이지네이션을 지원합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.
+            cardinalNumber 지정 시 출석 횟수·결석 횟수·출석률은 해당 기수 기준이며, 생략하면 누적값입니다.
+            페널티 통계는 기존 누적값을 유지합니다.
+        """,
     )
     fun getClubMembers(
         @Parameter(hidden = true) @CurrentUser userId: Long,
@@ -144,6 +148,7 @@ class ClubAdminController(
         description = """
             이름·학과·학번·역할(keyword), 기수로 멤버를 검색합니다. 가입 대기·추방·탈퇴 멤버도 포함됩니다.
             keyword가 역할 라벨("부원"/"리더"/"운영진")과 정확히 일치하면 이름/학과/학번 대신 해당 역할로만 필터링합니다.
+            cardinalNumber 지정 시 출석 통계는 해당 기수 기준, 생략 시 누적값입니다.
 
             사용 예시:
             - 이름 검색: GET /api/v4/admin/clubs/xxx/members/search?keyword=김

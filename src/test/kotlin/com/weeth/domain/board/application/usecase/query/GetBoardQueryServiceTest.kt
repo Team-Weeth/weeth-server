@@ -49,7 +49,7 @@ class GetBoardQueryServiceTest :
         }
 
         describe("findBoards") {
-            it("일반 사용자에게는 공개 게시판만 반환하고 전체 게시판은 항상 포함한다") {
+            it("일반 사용자에게도 비공개 게시판을 잠금 상태로 반환한다") {
                 val noticeBoard = BoardTestFixture.create(name = "공지사항", type = BoardType.NOTICE)
                 val publicBoard = BoardTestFixture.create(name = "일반", type = BoardType.GENERAL)
                 val privateBoard =
@@ -64,9 +64,14 @@ class GetBoardQueryServiceTest :
 
                 val result = queryService.findBoards(clubId, userId)
 
-                // 공지사항, 전체(가상), 일반 — 비공개 운영은 제외
-                result shouldHaveSize 3
-                result.map { it.name } shouldBe listOf("공지사항", "전체", "일반")
+                result shouldHaveSize 4
+                result.map { it.name } shouldBe listOf("공지사항", "전체", "일반", "운영")
+
+                val lockedBoard = result.first { it.name == "운영" }
+                lockedBoard.isPrivate shouldBe true
+                lockedBoard.boardConfig.canRead shouldBe false
+                lockedBoard.boardConfig.canWrite shouldBe false
+                lockedBoard.boardConfig.canComment shouldBe false
             }
 
             it("관리자에게는 비공개 게시판도 포함하고 순서는 공지사항 → 전체 → 나머지다") {
@@ -86,6 +91,7 @@ class GetBoardQueryServiceTest :
 
                 result shouldHaveSize 4
                 result.map { it.name } shouldBe listOf("공지사항", "전체", "일반", "운영")
+                result.first { it.name == "운영" }.boardConfig.canRead shouldBe true
             }
 
             it("전체 게시판은 항상 id가 null이고 type이 ALL이다") {
@@ -101,6 +107,8 @@ class GetBoardQueryServiceTest :
                 val virtualAll = result.first { it.type == BoardType.ALL }
                 virtualAll.id shouldBe null
                 virtualAll.name shouldBe "전체"
+                virtualAll.isPrivate shouldBe false
+                virtualAll.boardConfig.canRead shouldBe true
             }
         }
 

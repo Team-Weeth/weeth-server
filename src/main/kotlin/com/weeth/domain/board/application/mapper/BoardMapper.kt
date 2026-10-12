@@ -16,6 +16,7 @@ class BoardMapper {
         id = board.id,
         name = board.name,
         type = board.type,
+        isPrivate = board.config.isPrivate,
         boardConfig = BoardConfigResponse.of(board, memberRole),
     )
 

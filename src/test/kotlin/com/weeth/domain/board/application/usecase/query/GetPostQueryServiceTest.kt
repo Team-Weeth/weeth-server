@@ -148,7 +148,7 @@ class GetPostQueryServiceTest :
                         comments = comments,
                         fileUrls = fileResponses,
                         isNew = false,
-                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
+                        boardConfig = BoardConfigResponse(canRead = true, canWrite = true, canComment = true),
                     )
 
                 every { clubMemberPolicy.getActiveMember(actualClubId, userId) } returns member
@@ -298,7 +298,7 @@ class GetPostQueryServiceTest :
                         like = PostLikeResponse(isLiked = false, likeCount = 0),
                         fileUrls = emptyList(),
                         isNew = true,
-                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
+                        boardConfig = BoardConfigResponse(canRead = true, canWrite = true, canComment = true),
                     )
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
@@ -351,7 +351,7 @@ class GetPostQueryServiceTest :
                         like = PostLikeResponse(isLiked = false, likeCount = 0),
                         fileUrls = emptyList(),
                         isNew = false,
-                        boardConfig = BoardConfigResponse(canWrite = true, canComment = true),
+                        boardConfig = BoardConfigResponse(canRead = true, canWrite = true, canComment = true),
                     )
 
                 every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member

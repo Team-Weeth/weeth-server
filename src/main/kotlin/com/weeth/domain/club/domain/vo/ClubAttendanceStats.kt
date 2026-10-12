@@ -21,6 +21,13 @@ class ClubAttendanceStats(
     var attendanceRate: Int = attendanceRate
         private set
 
+    companion object {
+        fun fromCounts(
+            attendanceCount: Int,
+            absenceCount: Int,
+        ): ClubAttendanceStats = ClubAttendanceStats().apply { recalculate(attendanceCount, absenceCount) }
+    }
+
     fun reset() {
         attendanceCount = 0
         absenceCount = 0

@@ -7,6 +7,7 @@ import com.weeth.domain.attendance.application.exception.AttendanceErrorCode
 import com.weeth.domain.attendance.application.usecase.command.ManageAttendanceUseCase
 import com.weeth.domain.attendance.application.usecase.command.SubscribeAttendanceSseUseCase
 import com.weeth.domain.attendance.application.usecase.query.GetAttendanceQueryService
+import com.weeth.domain.cardinal.application.exception.CardinalErrorCode
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.ApiErrorCodeExample
 import com.weeth.global.common.response.CommonResponse
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
@@ -65,15 +67,25 @@ class AttendanceController(
         )
 
     @GetMapping("/detail")
-    @Operation(summary = "내 출석 상세 내역 조회")
+    @Operation(
+        summary = "내 기수별 출석 상세 내역 조회",
+        description = """
+            cardinalNumber 생략 시 본인 최신 소속 기수입니다.
+            기록과 통계는 동일 기수 기준이며 미결은 total/출석률 분모에서 제외합니다.
+            동아리에 존재하는 기수에 내 기록이 없으면 빈 목록과 0 통계를 반환합니다.
+        """,
+    )
+    @ApiErrorCodeExample(AttendanceErrorCode::class, CardinalErrorCode::class)
     fun findAll(
         @TsidParam
         @TsidPathVariable clubId: Long,
         @Parameter(hidden = true) @CurrentUser userId: Long,
+        @Parameter(description = "기수 번호 (기수 ID가 아님). 생략 시 본인 최신 소속 기수")
+        @RequestParam(required = false) cardinalNumber: Int? = null,
     ): CommonResponse<AttendanceDetailResponse> =
         CommonResponse.success(
             AttendanceResponseCode.ATTENDANCE_FIND_ALL_SUCCESS,
-            getAttendanceQueryService.findAllDetailsByCurrentCardinal(clubId, userId),
+            getAttendanceQueryService.findAllDetailsByCurrentCardinal(clubId, userId, cardinalNumber),
         )
 
     @GetMapping("/stream", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])

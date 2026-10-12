@@ -17,6 +17,7 @@ import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.vo.ClubAttendanceStats
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.id.TsidBase62Encoder
@@ -71,6 +72,8 @@ class ClubMapper(
         cardinals: List<ClubMemberCardinal>,
         lastPenaltyAt: java.time.LocalDateTime? = null,
         position: ClubPositionOptionResponse? = null,
+        // 기수 지정 조회는 집계된 기수별 통계를, 생략 시에는 멤버 누적 카운터를 사용한다.
+        attendanceStats: ClubAttendanceStats = member.attendanceStats,
     ) = ClubMemberResponse(
         userId = member.user.id,
         clubMemberId = member.id,
@@ -83,9 +86,9 @@ class ClubMapper(
         cardinals = toCardinalNumbers(cardinals),
         memberStatus = member.memberStatus,
         memberRole = member.memberRole,
-        attendanceCount = member.attendanceStats.attendanceCount,
-        absenceCount = member.attendanceStats.absenceCount,
-        attendanceRate = member.attendanceStats.attendanceRate,
+        attendanceCount = attendanceStats.attendanceCount,
+        absenceCount = attendanceStats.absenceCount,
+        attendanceRate = attendanceStats.attendanceRate,
         penaltyCount = member.penaltyCount,
         warningCount = if (member.club.warningEnabled) member.warningCount else null,
         lastPenaltyAt = lastPenaltyAt,

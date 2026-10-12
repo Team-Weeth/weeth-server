@@ -7,6 +7,12 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 
 interface AttendanceReader {
+    fun countByClubIdAndMemberIdsAndCardinal(
+        clubId: Long,
+        clubMemberIds: List<Long>,
+        cardinalNumber: Int,
+    ): List<MemberAttendanceCount>
+
     fun countByClubMemberIdsAndStatus(
         clubMemberIds: List<Long>,
         status: AttendanceStatus,

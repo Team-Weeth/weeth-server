@@ -29,6 +29,7 @@ class DashboardMapperTest :
 
         val board = mockk<Board>()
         every { board.id } returns 10L
+        every { board.isAccessibleBy(any()) } returns true
         every { board.canWriteBy(any()) } returns true
         every { board.isCommentEnabled } returns true
 
