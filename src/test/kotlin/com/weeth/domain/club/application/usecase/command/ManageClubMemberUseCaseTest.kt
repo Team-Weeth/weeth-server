@@ -20,6 +20,8 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.user.application.exception.UserInActiveException
+import com.weeth.domain.user.domain.entity.UserProfile
+import com.weeth.domain.user.domain.repository.UserProfileRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
@@ -39,6 +41,7 @@ class ManageClubMemberUseCaseTest :
     DescribeSpec({
         val clubRepository = mockk<ClubRepository>()
         val clubMemberRepository = mockk<ClubMemberRepository>()
+        val userProfileRepository = mockk<UserProfileRepository>()
         val clubMemberCardinalRepository = mockk<ClubMemberCardinalRepository>(relaxed = true)
         val cardinalReader = mockk<CardinalReader>()
         val attendanceInitializer = mockk<AttendanceInitializer>(relaxed = true)
@@ -52,6 +55,7 @@ class ManageClubMemberUseCaseTest :
             ManageClubMemberUsecase(
                 clubRepository = clubRepository,
                 clubMemberRepository = clubMemberRepository,
+                userProfileRepository = userProfileRepository,
                 clubMemberCardinalRepository = clubMemberCardinalRepository,
                 cardinalReader = cardinalReader,
                 attendanceInitializer = attendanceInitializer,
@@ -66,6 +70,7 @@ class ManageClubMemberUseCaseTest :
             clearMocks(
                 clubRepository,
                 clubMemberRepository,
+                userProfileRepository,
                 clubMemberCardinalRepository,
                 cardinalReader,
                 attendanceInitializer,
@@ -75,6 +80,7 @@ class ManageClubMemberUseCaseTest :
                 clubActivityDeletionPolicy,
             )
             every { clubMemberRepository.save(any()) } answers { firstArg() }
+            every { userProfileRepository.save(any()) } answers { firstArg() }
         }
 
         describe("setInitialCardinals") {
@@ -274,6 +280,33 @@ class ManageClubMemberUseCaseTest :
                     )
 
                     verify(exactly = 1) { clubMemberRepository.save(any()) }
+                }
+
+                it("가입 즉시 기본 프로필이 생성되어 멤버에 할당된다") {
+                    val targetClub = ClubTestFixture.createClub(code = "JOIN-CODE")
+                    val user = UserTestFixture.createRegisteredUser(name = "홍길동")
+
+                    every { clubRepository.getClubById(1L) } returns targetClub
+                    every { userReader.getByIdWithLock(10L) } returns user
+                    every { clubMemberRepository.findByClubIdAndUserId(1L, 10L) } returns null
+                    justRun { clubJoinPolicy.validateJoinLimit(10L) }
+
+                    useCase.join(
+                        clubId = 1L,
+                        userId = 10L,
+                        request = ClubJoinRequest(code = "JOIN-CODE"),
+                    )
+
+                    verify(exactly = 1) {
+                        userProfileRepository.save(
+                            match<UserProfile> { it.name == "홍길동" && it.user == user },
+                        )
+                    }
+                    verify(exactly = 1) {
+                        clubMemberRepository.save(
+                            match { it.userProfile != null },
+                        )
+                    }
                 }
             }
 

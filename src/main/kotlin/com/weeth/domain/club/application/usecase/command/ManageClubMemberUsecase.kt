@@ -20,6 +20,8 @@ import com.weeth.domain.club.domain.service.ClubCodePolicy
 import com.weeth.domain.club.domain.service.ClubJoinPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.user.application.exception.UserInActiveException
+import com.weeth.domain.user.domain.entity.UserProfile
+import com.weeth.domain.user.domain.repository.UserProfileRepository
 import com.weeth.domain.user.domain.repository.UserReader
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,6 +35,7 @@ import java.time.LocalDateTime
 class ManageClubMemberUsecase(
     private val clubRepository: ClubRepository,
     private val clubMemberRepository: ClubMemberRepository,
+    private val userProfileRepository: UserProfileRepository,
     private val clubMemberCardinalRepository: ClubMemberCardinalRepository,
     private val cardinalReader: CardinalReader,
     private val attendanceInitializer: AttendanceInitializer,
@@ -75,6 +78,12 @@ class ManageClubMemberUsecase(
                 ).apply {
                     accept()
                 }
+
+        val defaultProfile =
+            userProfileRepository.save(
+                UserProfile.create(user = user, name = user.name.take(UserProfile.MAX_NAME_LENGTH)),
+            )
+        member.assignProfile(defaultProfile)
 
         clubMemberRepository.save(member)
     }
