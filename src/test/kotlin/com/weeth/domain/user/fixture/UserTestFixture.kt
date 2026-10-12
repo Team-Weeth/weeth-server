@@ -34,9 +34,12 @@ object UserTestFixture {
             status = Status.WAITING,
         ).applyId(id)
 
-    fun createRegisteredUser(id: Long = 0L): User =
+    fun createRegisteredUser(
+        id: Long = 0L,
+        name: String = "등록완료",
+    ): User =
         User(
-            name = "등록완료",
+            name = name,
             email = Email.from("registered@test.com"),
             status = Status.ACTIVE,
         ).apply {
