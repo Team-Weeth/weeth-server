@@ -81,7 +81,7 @@ class ManageClubMemberUsecase(
 
         val defaultProfile =
             userProfileRepository.save(
-                UserProfile.create(user = user, name = user.name.take(PROFILE_NAME_MAX_LENGTH)),
+                UserProfile.create(user = user, name = user.name.take(UserProfile.MAX_NAME_LENGTH)),
             )
         member.assignProfile(defaultProfile)
 
@@ -132,9 +132,5 @@ class ManageClubMemberUsecase(
         val now = LocalDateTime.now(clock)
         clubActivityDeletionPolicy.markMemberActivitiesDeleted(member, now)
         member.leave(now)
-    }
-
-    companion object {
-        private const val PROFILE_NAME_MAX_LENGTH = 20
     }
 }
