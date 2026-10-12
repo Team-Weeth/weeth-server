@@ -48,7 +48,7 @@ class DashboardMapper(
     fun toMyInfoResponse(clubMember: ClubMember) =
         DashboardMyInfoResponse(
             userInfo = userInfoMapper.toClubMemberAuthorInfo(clubMember),
-            bio = clubMember.bio,
+            bio = clubMember.userProfile?.bio ?: clubMember.bio,
         )
 
     fun toHomeResponse(
