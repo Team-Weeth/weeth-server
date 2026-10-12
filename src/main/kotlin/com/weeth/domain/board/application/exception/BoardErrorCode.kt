@@ -59,4 +59,7 @@ enum class BoardErrorCode(
 
     @ExplainError("게시판 생성 중 동시 요청이 많아 락 획득에 실패했을 때 발생합니다.")
     BOARD_CREATE_LOCK_TIMEOUT(20416, HttpStatus.TOO_MANY_REQUESTS, "잠시 후 다시 시도해주세요."),
+
+    @ExplainError("운영진이 직접 제공하는 게시판 타입(FEEDBACK)으로 게시판 생성을 시도할 때 발생합니다.")
+    BOARD_TYPE_NOT_CREATABLE(20417, HttpStatus.BAD_REQUEST, "생성할 수 없는 게시판 타입입니다."),
 }

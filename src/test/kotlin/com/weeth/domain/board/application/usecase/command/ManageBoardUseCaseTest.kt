@@ -7,6 +7,7 @@ import com.weeth.domain.board.application.exception.BoardCreateLockTimeoutExcept
 import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
+import com.weeth.domain.board.application.exception.BoardTypeNotCreatableException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
@@ -45,6 +46,9 @@ class ManageBoardUseCaseTest :
         val clubId = club.id
         val userId = 10L
 
+        fun generalBoards(count: Int) =
+            List(count) { BoardTestFixture.create(id = it + 1L, club = club, name = "게시판$it") }
+
         beforeTest {
             clearMocks(boardRepository, clubReader, clubPermissionPolicy)
             every { boardRepository.save(any()) } answers { firstArg() }
@@ -53,7 +57,7 @@ class ManageBoardUseCaseTest :
             every { boardRepository.findMaxDisplayOrderByClubId(clubId) } returns -1
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(any(), any()) } returns false
             every { boardRepository.existsByClubIdAndNameAndIsDeletedFalseAndIdNot(any(), any(), any()) } returns false
-            every { boardRepository.countByClubIdAndIsDeletedFalse(any()) } returns 0
+            every { boardRepository.findAllActiveByClubId(any()) } returns emptyList()
         }
 
         describe("create") {
@@ -130,7 +134,8 @@ class ManageBoardUseCaseTest :
             }
 
             it("club의 게시판 상한에 도달하면 예외를 던진다") {
-                every { boardRepository.countByClubIdAndIsDeletedFalse(clubId) } returns Club.DEFAULT_MAX_BOARD_COUNT
+                every { boardRepository.findAllActiveByClubId(clubId) } returns
+                    generalBoards(Club.DEFAULT_MAX_BOARD_COUNT)
                 val request =
                     CreateBoardRequest(
                         name = "초과 게시판",
@@ -154,7 +159,8 @@ class ManageBoardUseCaseTest :
                         changeMaxBoardCount(Club.DEFAULT_MAX_BOARD_COUNT + 2)
                     }
                 every { clubReader.getClubByIdForUpdate(clubId) } returns relaxedClub
-                every { boardRepository.countByClubIdAndIsDeletedFalse(clubId) } returns Club.DEFAULT_MAX_BOARD_COUNT
+                every { boardRepository.findAllActiveByClubId(clubId) } returns
+                    generalBoards(Club.DEFAULT_MAX_BOARD_COUNT)
                 every { boardRepository.existsByClubIdAndNameAndIsDeletedFalse(clubId, "추가 게시판") } returns false
                 val request =
                     CreateBoardRequest(
@@ -167,6 +173,36 @@ class ManageBoardUseCaseTest :
                     )
 
                 shouldNotThrowAny { useCase.create(clubId, request, userId) }
+            }
+
+            it("FEEDBACK 게시판은 상한 계산에서 제외되어 상한 직전까지 일반 게시판을 만들 수 있다") {
+                val boards =
+                    generalBoards(Club.DEFAULT_MAX_BOARD_COUNT - 1) +
+                        BoardTestFixture.createFeedbackBoard(club = club)
+                every { boardRepository.findAllActiveByClubId(clubId) } returns boards
+                val request =
+                    CreateBoardRequest(
+                        name = "마지막 게시판",
+                        description = "마지막 게시판 설명",
+                        type = BoardType.GENERAL,
+                    )
+
+                shouldNotThrowAny { useCase.create(clubId, request, userId) }
+                verify(exactly = 1) { boardRepository.save(any()) }
+            }
+
+            it("FEEDBACK 타입으로 생성을 요청하면 BoardTypeNotCreatableException을 던지고 저장하지 않는다") {
+                val request =
+                    CreateBoardRequest(
+                        name = "제보 게시판",
+                        description = "사용성/버그 제보 게시판",
+                        type = BoardType.FEEDBACK,
+                    )
+
+                shouldThrow<BoardTypeNotCreatableException> {
+                    useCase.create(clubId, request, userId)
+                }
+                verify(exactly = 0) { boardRepository.save(any()) }
             }
 
             it("같은 클럽에 동일한 이름의 게시판이 이미 있으면 예외를 던진다") {

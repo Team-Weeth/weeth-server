@@ -123,4 +123,17 @@ class BoardEntityTest :
                 Board(club = club, name = "전체", description = "전체 게시판 설명", type = BoardType.ALL)
             }
         }
+
+        "FEEDBACK 게시판은 상한과 통합 피드에서 제외되고, 일반·공지 게시판은 포함된다" {
+            val feedback = BoardTestFixture.createFeedbackBoard()
+            val general = BoardTestFixture.create(type = BoardType.GENERAL)
+            val notice = BoardTestFixture.createNoticeBoard()
+
+            feedback.countsTowardBoardLimit shouldBe false
+            feedback.isIncludedInAllFeed shouldBe false
+            general.countsTowardBoardLimit shouldBe true
+            general.isIncludedInAllFeed shouldBe true
+            notice.countsTowardBoardLimit shouldBe true
+            notice.isIncludedInAllFeed shouldBe true
+        }
     })
