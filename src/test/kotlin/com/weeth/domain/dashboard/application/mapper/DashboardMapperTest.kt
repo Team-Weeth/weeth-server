@@ -34,15 +34,17 @@ class DashboardMapperTest :
         every { board.isCommentEnabled } returns true
 
         describe("toMyInfoResponse") {
-            it("사용 중인 멀티프로필 기준으로 userInfo를 반환한다") {
+            it("사용 중인 멀티프로필 기준으로 userInfo와 bio를 반환한다") {
                 val user = UserTestFixture.createActiveUser1(10L)
                 val member = ClubTestFixture.createClubMember(user = user)
                 member.updateProfileImageUrl("CLUB_MEMBER_PROFILE/legacy.png")
+                member.updateBio("레거시 소개글")
                 val userProfile =
                     UserProfile.create(
                         user = user,
                         name = "대시 프로필",
                         profileImageStorageKey = "USER_PROFILE_IMAGE/dashboard.png",
+                        bio = "프로필 소개글",
                     )
                 member.assignProfile(userProfile)
 
@@ -57,12 +59,14 @@ class DashboardMapperTest :
                 response.userInfo.name shouldBe "대시 프로필"
                 response.userInfo.profileImageUrl shouldBe "https://cdn/dashboard-profile.png"
                 response.userInfo.role shouldBe MemberRole.USER
+                response.bio shouldBe "프로필 소개글"
             }
 
-            it("사용 중인 멀티프로필이 없으면 기본 사용자 정보로 반환한다") {
+            it("사용 중인 멀티프로필이 없으면 기본 사용자 정보와 레거시 bio로 반환한다") {
                 val user = UserTestFixture.createActiveUser1(10L)
                 val member = ClubTestFixture.createClubMember(user = user)
                 member.updateProfileImageUrl("CLUB_MEMBER_PROFILE/default.png")
+                member.updateBio("레거시 소개글")
 
                 every { fileAccessUrlPort.resolve("CLUB_MEMBER_PROFILE/default.png") } returns
                     "https://cdn/default-profile.png"
@@ -73,6 +77,7 @@ class DashboardMapperTest :
                 response.userInfo.name shouldBe "적순"
                 response.userInfo.profileImageUrl shouldBe "https://cdn/default-profile.png"
                 response.userInfo.role shouldBe MemberRole.USER
+                response.bio shouldBe "레거시 소개글"
             }
         }
 
