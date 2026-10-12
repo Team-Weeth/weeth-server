@@ -71,7 +71,7 @@ class UserProfile(
     fun isOwnedBy(userId: Long): Boolean = user.id == userId
 
     companion object {
-        private const val MAX_NAME_LENGTH = 20
+        const val MAX_NAME_LENGTH = 20
         private const val MAX_STORAGE_KEY_LENGTH = 500
         private const val MAX_BIO_LENGTH = 30
 
