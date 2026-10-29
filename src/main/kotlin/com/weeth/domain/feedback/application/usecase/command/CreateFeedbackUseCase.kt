@@ -22,15 +22,16 @@ class CreateFeedbackUseCase(
         userId: Long,
     ) {
         val member = clubMemberPolicy.getActiveMember(clubId, userId)
-        // @Valid(@NotNull)로 컨트롤러 진입 전 검증되므로 이 지점에서는 항상 non-null이다.
+        // @Valid(@NotNull/@NotBlank)로 컨트롤러 진입 전 검증되므로 이 지점에서는 항상 non-null이다.
         val channel = requireNotNull(request.channel) { "피드백 채널은 필수입니다." }
+        val content = requireNotNull(request.content) { "피드백 내용은 필수입니다." }
 
         val feedback =
             Feedback.create(
                 user = member.user,
                 clubId = clubId,
                 channel = channel,
-                content = request.content,
+                content = content,
             )
         feedbackRepository.save(feedback)
 

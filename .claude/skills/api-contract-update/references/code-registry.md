@@ -26,7 +26,7 @@
 | 12 | dashboard | 11200~ | 21200~ | - |
 | 13 | university | 11300~ | - | 31300~ |
 | 14 | notification | 11400~ | 21400~ | - |
-| 15 | feedback | 11500~ | - | - |
+| 15 | feedback | 11500~ | 21500~ | - |
 | 90 | jwt/auth | - | 29000~ | - |
 | 99 | common | - | - | 39900~ |
 
@@ -37,5 +37,10 @@
 - Irregulars:
   - schedule's error enum is `EventErrorCode`.
   - JWT codes live in `global/auth/jwt/application/exception/JwtErrorCode`.
+  - feedback's error enum `FeedbackErrorCode` (and `InvalidFeedbackContentException`) live in
+    `domain/exception/`, not `application/exception/`, because the validation it backs is thrown
+    directly from the `Feedback` entity (`Feedback.create`). Keeping it under `domain/` avoids a
+    domain→application import that the Konsist architecture gate (`ArchitectureTest.kt`) would
+    otherwise flag as new baseline debt.
 
 Before assigning a code, inspect the existing enum and choose the next unused sequence for that domain/category.

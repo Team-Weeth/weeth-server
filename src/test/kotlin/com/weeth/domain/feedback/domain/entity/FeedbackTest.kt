@@ -1,6 +1,7 @@
 package com.weeth.domain.feedback.domain.entity
 
 import com.weeth.domain.feedback.domain.enums.FeedbackChannel
+import com.weeth.domain.feedback.domain.exception.InvalidFeedbackContentException
 import com.weeth.domain.user.fixture.UserTestFixture
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
@@ -25,8 +26,8 @@ class FeedbackTest :
             feedback.content shouldBe "내용입니다."
         }
 
-        "create는 내용이 공백뿐이면 예외를 던진다" {
-            shouldThrow<IllegalArgumentException> {
+        "create는 내용이 공백뿐이면 InvalidFeedbackContentException을 던진다" {
+            shouldThrow<InvalidFeedbackContentException> {
                 Feedback.create(
                     user = user,
                     clubId = 10L,
@@ -36,8 +37,21 @@ class FeedbackTest :
             }
         }
 
-        "create는 내용이 1000자를 초과하면 예외를 던진다" {
-            shouldThrow<IllegalArgumentException> {
+        "create는 내용이 전각 공백(U+3000)뿐이면 InvalidFeedbackContentException을 던진다" {
+            // `@NotBlank`는 U+3000을 공백으로 인식하지 못해 DTO 검증을 통과하므로,
+            // 엔티티 단계에서 Kotlin의 isBlank()로 최종 검증해야 한다.
+            shouldThrow<InvalidFeedbackContentException> {
+                Feedback.create(
+                    user = user,
+                    clubId = 10L,
+                    channel = FeedbackChannel.CHAT,
+                    content = "　　",
+                )
+            }
+        }
+
+        "create는 내용이 1000자를 초과하면 InvalidFeedbackContentException을 던진다" {
+            shouldThrow<InvalidFeedbackContentException> {
                 Feedback.create(
                     user = user,
                     clubId = 10L,

@@ -2,12 +2,15 @@ package com.weeth.domain.feedback.presentation
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.weeth.domain.feedback.application.usecase.command.CreateFeedbackUseCase
+import com.weeth.domain.feedback.domain.exception.FeedbackErrorCode
+import com.weeth.domain.feedback.domain.exception.InvalidFeedbackContentException
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.CommonExceptionHandler
 import com.weeth.global.common.id.TsidBase62Encoder
 import com.weeth.global.common.web.TsidPathVariableArgumentResolver
 import io.kotest.core.spec.style.DescribeSpec
 import io.mockk.clearMocks
+import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import org.springframework.core.MethodParameter
@@ -91,6 +94,30 @@ class FeedbackControllerTest :
                             .accept(MediaType.APPLICATION_JSON)
                             .content("""{"content":"내용입니다.","channel":"INVALID"}"""),
                     ).andExpect(status().isBadRequest)
+            }
+
+            it("content가 누락되면 400을 반환한다") {
+                mvc
+                    .perform(
+                        post("/api/v4/clubs/$clubPathId/feedbacks")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .content("""{"channel":"CHAT"}"""),
+                    ).andExpect(status().isBadRequest)
+            }
+
+            it("유스케이스가 InvalidFeedbackContentException을 던지면 400과 코드 21500을 반환한다") {
+                // U+3000(전각 공백)은 @NotBlank를 통과해 유스케이스까지 도달하는 입력이다.
+                every { createFeedbackUseCase.execute(1L, any(), 10L) } throws InvalidFeedbackContentException()
+
+                mvc
+                    .perform(
+                        post("/api/v4/clubs/$clubPathId/feedbacks")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON)
+                            .content("""{"content":"　　","channel":"CHAT"}"""),
+                    ).andExpect(status().isBadRequest)
+                    .andExpect(jsonPath("$.code").value(FeedbackErrorCode.INVALID_FEEDBACK_CONTENT.code))
             }
         }
     })

@@ -1,6 +1,7 @@
 package com.weeth.domain.feedback.domain.entity
 
 import com.weeth.domain.feedback.domain.enums.FeedbackChannel
+import com.weeth.domain.feedback.domain.exception.InvalidFeedbackContentException
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
@@ -73,8 +74,12 @@ class Feedback private constructor(
             content: String,
         ): Feedback {
             val normalized = content.trim()
-            require(normalized.isNotBlank()) { "피드백 내용은 공백일 수 없습니다." }
-            require(normalized.length <= MAX_CONTENT_LENGTH) { "피드백 내용은 ${MAX_CONTENT_LENGTH}자를 초과할 수 없습니다." }
+            // `@NotBlank`는 U+3000(전각 공백) 등 일부 유니코드 공백을 공백으로 인식하지 못해,
+            // 요청 DTO 검증을 통과하더라도 여기서 최종적으로 걸러내야 한다. 검증 실패는
+            // IllegalArgumentException이 아닌 도메인 예외로 던져 CommonExceptionHandler가 400으로 매핑하게 한다.
+            if (normalized.isBlank() || normalized.length > MAX_CONTENT_LENGTH) {
+                throw InvalidFeedbackContentException()
+            }
             return Feedback(
                 user = user,
                 clubId = clubId,
