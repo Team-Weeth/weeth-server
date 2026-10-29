@@ -1,4 +1,4 @@
-package com.weeth.domain.feedback.domain.exception
+package com.weeth.domain.feedback.application.exception
 
 import com.weeth.global.common.exception.BaseException
 

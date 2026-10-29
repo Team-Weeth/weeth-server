@@ -5,6 +5,7 @@ import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.feedback.application.dto.request.CreateFeedbackRequest
 import com.weeth.domain.feedback.application.event.FeedbackCreatedEvent
+import com.weeth.domain.feedback.application.exception.InvalidFeedbackContentException
 import com.weeth.domain.feedback.domain.entity.Feedback
 import com.weeth.domain.feedback.domain.enums.FeedbackChannel
 import com.weeth.domain.feedback.domain.repository.FeedbackRepository
@@ -63,6 +64,19 @@ class CreateFeedbackUseCaseTest :
 
                 shouldThrow<MemberNotActiveException> {
                     useCase.execute(clubId, request, userId)
+                }
+
+                verify(exactly = 0) { feedbackRepository.save(any()) }
+                verify(exactly = 0) { eventPublisher.publishEvent(any<Any>()) }
+            }
+
+            it("내용이 전각 공백뿐이면 저장과 이벤트 발행 없이 InvalidFeedbackContentException을 던진다") {
+                val member = ClubMemberTestFixture.createActiveMember(id = 10L)
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                val invalidRequest = CreateFeedbackRequest(content = "　　", channel = FeedbackChannel.CHAT)
+
+                shouldThrow<InvalidFeedbackContentException> {
+                    useCase.execute(clubId, invalidRequest, userId)
                 }
 
                 verify(exactly = 0) { feedbackRepository.save(any()) }

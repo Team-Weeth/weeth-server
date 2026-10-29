@@ -2,8 +2,8 @@ package com.weeth.domain.feedback.presentation
 
 import com.weeth.domain.club.application.exception.ClubErrorCode
 import com.weeth.domain.feedback.application.dto.request.CreateFeedbackRequest
+import com.weeth.domain.feedback.application.exception.FeedbackErrorCode
 import com.weeth.domain.feedback.application.usecase.command.CreateFeedbackUseCase
-import com.weeth.domain.feedback.domain.exception.FeedbackErrorCode
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.auth.jwt.application.exception.JwtErrorCode
 import com.weeth.global.common.exception.ApiErrorCodeExample

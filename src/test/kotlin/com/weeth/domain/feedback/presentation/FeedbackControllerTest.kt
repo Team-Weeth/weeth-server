@@ -1,9 +1,9 @@
 package com.weeth.domain.feedback.presentation
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.weeth.domain.feedback.application.exception.FeedbackErrorCode
+import com.weeth.domain.feedback.application.exception.InvalidFeedbackContentException
 import com.weeth.domain.feedback.application.usecase.command.CreateFeedbackUseCase
-import com.weeth.domain.feedback.domain.exception.FeedbackErrorCode
-import com.weeth.domain.feedback.domain.exception.InvalidFeedbackContentException
 import com.weeth.global.auth.annotation.CurrentUser
 import com.weeth.global.common.exception.CommonExceptionHandler
 import com.weeth.global.common.id.TsidBase62Encoder

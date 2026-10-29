@@ -1,7 +1,6 @@
 package com.weeth.domain.feedback.domain.entity
 
 import com.weeth.domain.feedback.domain.enums.FeedbackChannel
-import com.weeth.domain.feedback.domain.exception.InvalidFeedbackContentException
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.global.common.entity.BaseEntity
 import jakarta.persistence.Column
@@ -67,24 +66,30 @@ class Feedback private constructor(
     companion object {
         const val MAX_CONTENT_LENGTH = 1000
 
+        /**
+         * 피드백 내용이 유효한지 판단한다. 앞뒤 공백 제거 후 공백뿐이거나(유니코드 공백 포함,
+         * Kotlin `isBlank()` 기준) [MAX_CONTENT_LENGTH]를 초과하면 유효하지 않다.
+         *
+         * `@NotBlank`는 U+3000(전각 공백) 등 일부 유니코드 공백을 공백으로 인식하지 못해
+         * 요청 DTO 검증을 통과할 수 있으므로, UseCase가 저장 전에 이 메서드로 최종 확인한다.
+         */
+        fun isValidContent(content: String): Boolean {
+            val normalized = content.trim()
+            return normalized.isNotBlank() && normalized.length <= MAX_CONTENT_LENGTH
+        }
+
         fun create(
             user: User,
             clubId: Long,
             channel: FeedbackChannel,
             content: String,
         ): Feedback {
-            val normalized = content.trim()
-            // `@NotBlank`는 U+3000(전각 공백) 등 일부 유니코드 공백을 공백으로 인식하지 못해,
-            // 요청 DTO 검증을 통과하더라도 여기서 최종적으로 걸러내야 한다. 검증 실패는
-            // IllegalArgumentException이 아닌 도메인 예외로 던져 CommonExceptionHandler가 400으로 매핑하게 한다.
-            if (normalized.isBlank() || normalized.length > MAX_CONTENT_LENGTH) {
-                throw InvalidFeedbackContentException()
-            }
+            require(isValidContent(content)) { "피드백 내용이 올바르지 않습니다." }
             return Feedback(
                 user = user,
                 clubId = clubId,
                 channel = channel,
-                content = normalized,
+                content = content.trim(),
             )
         }
     }
