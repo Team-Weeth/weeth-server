@@ -31,7 +31,13 @@
       "Write(**/*.key)",
       "Write(**/*.p8)",
       "Write(**/*secret*)",
-      "Write(**/*credential*)"
+      "Write(**/*credential*)",
+      "Bash(gh pr merge:*)",
+      "Bash(gh api *merge*)",
+      "Bash(git push * main)",
+      "Bash(git push *:main)",
+      "Bash(git push * dev)",
+      "Bash(git push *:dev)"
     ],
     "allow": [
       "Read",
@@ -61,13 +67,21 @@
       "Bash(git ls-files:*)",
       "Bash(git rev-list:*)",
       "Bash(git describe:*)",
-      "Bash(git shortlog:*)"
+      "Bash(git shortlog:*)",
+      "Bash(gh api:*)"
     ],
     "ask": [
       "Edit(src/main/resources/application-prod*)",
       "Edit(src/main/resources/application-dev*)",
       "Write(src/main/resources/application-prod*)",
-      "Write(src/main/resources/application-dev*)"
+      "Write(src/main/resources/application-dev*)",
+      "Bash(gh api *-X *)",
+      "Bash(gh api *--method *)",
+      "Bash(gh api *-f *)",
+      "Bash(gh api *-F *)",
+      "Bash(gh api *--field *)",
+      "Bash(gh api *--raw-field *)",
+      "Bash(gh api *--input *)"
     ]
   }
 }
