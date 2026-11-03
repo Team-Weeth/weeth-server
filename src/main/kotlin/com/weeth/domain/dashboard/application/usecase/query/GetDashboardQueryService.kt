@@ -79,8 +79,11 @@ class GetDashboardQueryService(
         val accessibleBoardIds =
             boardReader
                 .findAllActiveByClubId(clubId)
-                .filter { it.isAccessibleBy(member.memberRole) && it.type != BoardType.NOTICE }
-                .map { it.id }
+                .filter {
+                    it.isAccessibleBy(
+                        member.memberRole,
+                    ) && it.type != BoardType.NOTICE && it.isIncludedInAllFeed
+                }.map { it.id }
 
         val pageable = PageRequest.of(pageNumber, pageSize)
 

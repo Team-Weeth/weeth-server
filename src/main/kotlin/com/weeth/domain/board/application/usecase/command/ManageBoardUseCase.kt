@@ -8,6 +8,7 @@ import com.weeth.domain.board.application.exception.BoardCreateLockTimeoutExcept
 import com.weeth.domain.board.application.exception.BoardLimitExceededException
 import com.weeth.domain.board.application.exception.BoardNotFoundException
 import com.weeth.domain.board.application.exception.BoardNotInClubException
+import com.weeth.domain.board.application.exception.BoardTypeNotCreatableException
 import com.weeth.domain.board.application.exception.DeletedBoardNotReorderableException
 import com.weeth.domain.board.application.exception.DuplicateBoardIdException
 import com.weeth.domain.board.application.exception.DuplicateBoardNameException
@@ -50,8 +51,12 @@ class ManageBoardUseCase(
         // TODO: MVP 제약 — 공지사항은 클럽 생성 시 자동 제공되므로 직접 생성 불가. 다중 NOTICE 지원 시 제거
         if (request.type == BoardType.NOTICE) throw BoardLimitExceededException()
 
+        // FEEDBACK은 운영진이 DB로 직접 제공하는 게시판이라 동아리 관리자가 만들 수 없다.
+        if (request.type == BoardType.FEEDBACK) throw BoardTypeNotCreatableException()
+
         // 상한은 club마다 다를 수 있으므로(요금제 차등) 판정은 Club 엔티티가 한다.
-        if (!club.canAddBoard(boardRepository.countByClubIdAndIsDeletedFalse(clubId))) {
+        val limitedBoardCount = boardRepository.findAllActiveByClubId(clubId).count { it.countsTowardBoardLimit }
+        if (!club.canAddBoard(limitedBoardCount)) {
             throw BoardLimitExceededException()
         }
 

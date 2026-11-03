@@ -315,6 +315,26 @@ class GetPostQueryServiceTest :
                 result.content.size shouldBe 1
             }
 
+            it("FEEDBACK 게시판 글은 전체 게시글 목록에서 제외한다") {
+                val generalBoard = BoardTestFixture.create(id = 1L, name = "일반", type = BoardType.GENERAL)
+                val feedbackBoard =
+                    BoardTestFixture.create(id = 2L, club = generalBoard.club, type = BoardType.FEEDBACK)
+                val member = ClubMemberTestFixture.createActiveMember(club = generalBoard.club)
+                val pageable = PageRequest.of(0, 10)
+
+                every { clubMemberPolicy.getActiveMember(clubId, userId) } returns member
+                every { boardRepository.findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId) } returns
+                    listOf(generalBoard, feedbackBoard)
+                every { postRepository.findAllActiveByBoardIds(any(), any()) } returns
+                    SliceImpl(emptyList(), pageable, false)
+                every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>(), any()) } returns emptyList()
+                every { postLikeRepository.findLikedPostIds(any(), any()) } returns emptySet()
+
+                queryService.findAllPosts(clubId, userId, 0, 10)
+
+                verify(exactly = 1) { postRepository.findAllActiveByBoardIds(listOf(1L), any()) }
+            }
+
             it("접근 가능한 게시판이 없으면 빈 슬라이스를 반환한다") {
                 val board = BoardTestFixture.create(name = "비공개", type = BoardType.GENERAL)
                 board.updateConfig(board.config.copy(isPrivate = true))

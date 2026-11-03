@@ -79,7 +79,7 @@ class GetPostQueryService(
         val accessibleBoardIds =
             boardRepository
                 .findAllByClubIdAndIsDeletedFalseOrderByDisplayOrderAscIdAsc(clubId)
-                .filter { it.isAccessibleBy(member.memberRole) }
+                .filter { it.isAccessibleBy(member.memberRole) && it.isIncludedInAllFeed }
                 .map { it.id }
 
         val pageable = PageRequest.of(pageNumber, pageSize)
