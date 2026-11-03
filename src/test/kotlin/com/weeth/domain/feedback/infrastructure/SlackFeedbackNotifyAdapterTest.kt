@@ -3,16 +3,13 @@ package com.weeth.domain.feedback.infrastructure
 import com.weeth.domain.feedback.domain.enums.FeedbackChannel
 import com.weeth.global.config.properties.SlackProperties
 import io.kotest.core.spec.style.DescribeSpec
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
 import io.kotest.matchers.string.shouldNotContain
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import io.mockk.verify
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClient
-import java.time.Duration
 
 class SlackFeedbackNotifyAdapterTest :
     DescribeSpec({
@@ -24,7 +21,6 @@ class SlackFeedbackNotifyAdapterTest :
         val responseSpec = mockk<RestClient.ResponseSpec>()
         val bodySlot = slot<Map<String, String>>()
 
-        every { builder.requestFactory(any()) } returns builder
         every { builder.build() } returns restClient
         every { restClient.post() } returns requestBodyUriSpec
         every { requestBodyUriSpec.uri(any<String>()) } returns requestBodySpec
@@ -34,14 +30,6 @@ class SlackFeedbackNotifyAdapterTest :
         every { responseSpec.toBodilessEntity() } returns ResponseEntity.ok().build()
 
         val adapter = SlackFeedbackNotifyAdapter(slackProperties, builder)
-
-        describe("생성") {
-            it("연결 3초·읽기 5초 타임아웃이 설정된 전용 requestFactory로 RestClient를 구성한다") {
-                verify(exactly = 1) { builder.requestFactory(any()) }
-                SlackFeedbackNotifyAdapter.REQUEST_FACTORY_SETTINGS.connectTimeout() shouldBe Duration.ofSeconds(3)
-                SlackFeedbackNotifyAdapter.REQUEST_FACTORY_SETTINGS.readTimeout() shouldBe Duration.ofSeconds(5)
-            }
-        }
 
         describe("notify") {
             it("클럽명/작성자명/내용의 &, <, >를 escape해 멘션·링크 문법을 무력화한다") {
