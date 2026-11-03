@@ -8,6 +8,7 @@ import io.kotest.matchers.string.shouldNotContain
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import org.springframework.http.ResponseEntity
 import org.springframework.web.client.RestClient
 
@@ -21,6 +22,7 @@ class SlackFeedbackNotifyAdapterTest :
         val responseSpec = mockk<RestClient.ResponseSpec>()
         val bodySlot = slot<Map<String, String>>()
 
+        every { builder.requestFactory(any()) } returns builder
         every { builder.build() } returns restClient
         every { restClient.post() } returns requestBodyUriSpec
         every { requestBodyUriSpec.uri(any<String>()) } returns requestBodySpec
@@ -30,6 +32,12 @@ class SlackFeedbackNotifyAdapterTest :
         every { responseSpec.toBodilessEntity() } returns ResponseEntity.ok().build()
 
         val adapter = SlackFeedbackNotifyAdapter(slackProperties, builder)
+
+        describe("생성") {
+            it("타임아웃이 설정된 전용 requestFactory로 RestClient를 구성한다") {
+                verify(exactly = 1) { builder.requestFactory(any()) }
+            }
+        }
 
         describe("notify") {
             it("클럽명/작성자명/내용의 &, <, >를 escape해 멘션·링크 문법을 무력화한다") {

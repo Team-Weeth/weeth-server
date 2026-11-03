@@ -4,15 +4,28 @@ import com.weeth.domain.feedback.domain.enums.FeedbackChannel
 import com.weeth.domain.feedback.domain.port.FeedbackNotifyPort
 import com.weeth.global.config.properties.SlackProperties
 import org.slf4j.LoggerFactory
+import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder
+import org.springframework.boot.http.client.ClientHttpRequestFactorySettings
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
+import java.time.Duration
 
 @Component
 class SlackFeedbackNotifyAdapter(
     private val slackProperties: SlackProperties,
     restClientBuilder: RestClient.Builder,
 ) : FeedbackNotifyPort {
-    private val restClient = restClientBuilder.build()
+    // Slack 응답 지연 시 @Async 공용 스레드 풀이 오래 점유되지 않도록 타임아웃을 둔다
+    private val restClient =
+        restClientBuilder
+            .requestFactory(
+                ClientHttpRequestFactoryBuilder.detect().build(
+                    ClientHttpRequestFactorySettings
+                        .defaults()
+                        .withConnectTimeout(CONNECT_TIMEOUT)
+                        .withReadTimeout(READ_TIMEOUT),
+                ),
+            ).build()
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun notify(
@@ -50,4 +63,9 @@ class SlackFeedbackNotifyAdapter(
             .replace("<", "&lt;")
             .replace(">", "&gt;")
             .replace("```", "` ` `")
+
+    companion object {
+        private val CONNECT_TIMEOUT: Duration = Duration.ofSeconds(3)
+        private val READ_TIMEOUT: Duration = Duration.ofSeconds(5)
+    }
 }
