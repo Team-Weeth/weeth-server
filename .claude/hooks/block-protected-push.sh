@@ -38,7 +38,7 @@ is_protected() {
   return 1
 }
 
-# 인자 없는 push / HEAD push의 실제 대상 브랜치: @{push} → 현재 브랜치 순으로 판별
+# 인자 없는 push의 실제 대상 브랜치: @{push} → 현재 브랜치 순으로 판별
 push_target_of() {
   local dir="$1" target
   target=$(git -C "$dir" rev-parse --abbrev-ref --symbolic-full-name '@{push}' 2>/dev/null)
@@ -52,10 +52,11 @@ push_target_of() {
 check_push() {
   local dir="$1"
   shift
-  local positionals=() tok
+  local positionals=() tok tags_only=0
   for tok in "$@"; do
     case "$tok" in
       --all | --mirror) deny "$tok 옵션" ;;
+      --tags) tags_only=1 ;;
       -*) ;;
       *) positionals+=("$tok") ;;
     esac
@@ -63,21 +64,35 @@ check_push() {
 
   # positionals[0]은 remote, 나머지는 refspec
   if [ "${#positionals[@]}" -le 1 ]; then
+    # 태그만 보내는 push는 브랜치 ref를 갱신하지 않는다
+    [ "$tags_only" -eq 1 ] && return
     local target
     target=$(push_target_of "$dir")
     is_protected "$target" && deny "현재 브랜치의 push 대상이 $target"
     return
   fi
 
-  local i refspec dst
+  local i refspec dst b
   for ((i = 1; i < ${#positionals[@]}; i++)); do
     refspec="${positionals[$i]#+}"
+
+    # `:` 는 로컬·원격에 모두 있는 같은 이름 브랜치 전체를 push한다
+    if [ "$refspec" = ":" ]; then
+      for b in $PROTECTED_BRANCHES; do
+        git -C "$dir" show-ref --verify --quiet "refs/heads/$b" && deny "refspec ${positionals[$i]} (로컬 $b 존재)"
+      done
+      continue
+    fi
+
     case "$refspec" in
       *:*) dst="${refspec##*:}" ;;
       *) dst="$refspec" ;;
     esac
+    # `<src>:` 처럼 목적지가 비면 src와 같은 이름으로 push된다
+    [ -z "$dst" ] && dst="${refspec%:}"
+    # `git push <remote> HEAD`는 upstream과 무관하게 현재 브랜치와 같은 이름으로 push된다
     if [ "$dst" = "HEAD" ]; then
-      dst=$(push_target_of "$dir")
+      dst=$(git -C "$dir" branch --show-current 2>/dev/null)
     fi
     is_protected "$dst" && deny "refspec ${positionals[$i]}"
   done
