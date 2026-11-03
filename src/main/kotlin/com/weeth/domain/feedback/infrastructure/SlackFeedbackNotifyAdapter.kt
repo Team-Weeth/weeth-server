@@ -18,14 +18,8 @@ class SlackFeedbackNotifyAdapter(
     // Slack 응답 지연 시 @Async 공용 스레드 풀이 오래 점유되지 않도록 타임아웃을 둔다
     private val restClient =
         restClientBuilder
-            .requestFactory(
-                ClientHttpRequestFactoryBuilder.detect().build(
-                    ClientHttpRequestFactorySettings
-                        .defaults()
-                        .withConnectTimeout(CONNECT_TIMEOUT)
-                        .withReadTimeout(READ_TIMEOUT),
-                ),
-            ).build()
+            .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(REQUEST_FACTORY_SETTINGS))
+            .build()
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun notify(
@@ -36,8 +30,8 @@ class SlackFeedbackNotifyAdapter(
     ) {
         val text =
             "*[서비스 피드백]*\n" +
-                "*동아리:* ${escapeForSlack(clubName)}\n" +
-                "*작성자:* ${escapeForSlack(authorName)}\n" +
+                "*동아리:* ${escapeSingleLine(clubName)}\n" +
+                "*작성자:* ${escapeSingleLine(authorName)}\n" +
                 "*채널:* ${channel.name}\n" +
                 "*내용:*\n```${escapeForSlack(content)}```"
 
@@ -64,8 +58,14 @@ class SlackFeedbackNotifyAdapter(
             .replace(">", "&gt;")
             .replace("```", "` ` `")
 
+    /** 한 줄 필드는 줄바꿈으로 가짜 `*작성자:*` 같은 행을 끼워 넣지 못하도록 공백으로 치환한다. */
+    private fun escapeSingleLine(text: String): String = escapeForSlack(text).replace(Regex("\\R"), " ")
+
     companion object {
-        private val CONNECT_TIMEOUT: Duration = Duration.ofSeconds(3)
-        private val READ_TIMEOUT: Duration = Duration.ofSeconds(5)
+        internal val REQUEST_FACTORY_SETTINGS: ClientHttpRequestFactorySettings =
+            ClientHttpRequestFactorySettings
+                .defaults()
+                .withConnectTimeout(Duration.ofSeconds(3))
+                .withReadTimeout(Duration.ofSeconds(5))
     }
 }
