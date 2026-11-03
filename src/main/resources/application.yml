@@ -15,6 +15,11 @@ spring:
     open-in-view: false
   flyway:
     enabled: false
+  http:
+    client: # RestClient.Builder 공통 설정 — 외부 API 지연이 요청/비동기 스레드를 무기한 점유하지 않도록 한다
+      factory: http-components
+      connect-timeout: 3s
+      read-timeout: 5s
 
 springdoc:
   use-fqn: true
