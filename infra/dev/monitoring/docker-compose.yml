@@ -1,8 +1,16 @@
 name: weeth-dev-monitoring
 
+# 앱(blue/green) 외 컨테이너 공통 Docker 로그 제한 — 제한이 없으면 json 로그가 디스크를 채운다
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
 services:
   alloy:
     image: grafana/alloy:v1.9.0
+    logging: *default-logging
     group_add:
       - "${DOCKER_GID}"
     env_file:
@@ -23,6 +31,7 @@ services:
 
   loki:
     image: grafana/loki:3.4.2
+    logging: *default-logging
     env_file:
       - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
@@ -37,6 +46,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.5.2
+    logging: *default-logging
     env_file:
       - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
