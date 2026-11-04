@@ -105,6 +105,8 @@ services:
       GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-https://${DOMAIN}${MONITORING_PATH}/}
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # 알림 Slack 웹훅(.env.monitoring). 값이 비면 알림 프로비저닝이 실패해 Grafana가 뜨지 않으므로 자리표시 값을 둔다
+      SLACK_ALERT_WEBHOOK_URL: ${SLACK_ALERT_WEBHOOK_URL:-https://hooks.slack.com/services/NOT_CONFIGURED}
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
