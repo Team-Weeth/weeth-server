@@ -1,8 +1,16 @@
 name: weeth-prod-monitoring
 
+# 앱(blue/green) 외 컨테이너 공통 Docker 로그 제한 — 제한이 없으면 json 로그가 디스크를 채운다
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
 services:
   alloy:
     image: grafana/alloy:v1.9.0
+    logging: *default-logging
     group_add:
       - "${DOCKER_GID}"
     env_file:
@@ -23,6 +31,7 @@ services:
 
   loki:
     image: grafana/loki:3.4.2
+    logging: *default-logging
     env_file:
       - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
@@ -37,6 +46,7 @@ services:
 
   redis-exporter:
     image: oliver006/redis_exporter:v1.67.0
+    logging: *default-logging
     environment:
       REDIS_ADDR: redis:6379
       REDIS_PASSWORD: ${REDIS_PASSWORD:-}
@@ -47,6 +57,13 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.53.0
+    logging: *default-logging
+    # 이미지 기본 인자를 대체하므로 config/storage 경로도 함께 지정한다. 기간·용량 중 먼저 닿는 쪽으로 정리된다
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=15d
+      - --storage.tsdb.retention.size=2GB
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus_data:/prometheus
@@ -59,6 +76,7 @@ services:
 
   node-exporter:
     image: prom/node-exporter:v1.9.0
+    logging: *default-logging
     pid: host
     volumes:
       - /proc:/host/proc:ro
@@ -75,6 +93,7 @@ services:
 
   grafana:
     image: grafana/grafana:11.5.2
+    logging: *default-logging
     env_file:
       - ${MONITORING_ENV_FILE:-../.env.monitoring}
     volumes:
