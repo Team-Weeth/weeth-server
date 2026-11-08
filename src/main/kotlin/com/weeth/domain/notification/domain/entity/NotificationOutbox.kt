@@ -71,6 +71,10 @@ class NotificationOutbox private constructor(
     var lastErrorCode: String? = null
         private set
 
+    @Column(nullable = false)
+    var generation: Long = 0
+        private set
+
     fun claim(
         token: String,
         now: LocalDateTime,
@@ -103,7 +107,12 @@ class NotificationOutbox private constructor(
         return true
     }
 
-    fun requeue(now: LocalDateTime) {
+    fun requeue(
+        now: LocalDateTime,
+        generation: Long = this.generation,
+    ) {
+        require(generation >= this.generation)
+        this.generation = generation
         status = NotificationOutboxStatus.PENDING
         nextAttemptAt = now
         claimToken = null

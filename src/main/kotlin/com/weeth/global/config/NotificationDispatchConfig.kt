@@ -32,7 +32,7 @@ class NotificationDispatchConfig {
                 .overrideConfiguration {
                     it
                         .apiCallTimeout(
-                            Duration.ofSeconds(30),
+                            Duration.ofSeconds(NotificationDispatchProperties.SQS_API_CALL_TIMEOUT_SECONDS),
                         ).apiCallAttemptTimeout(Duration.ofSeconds(25))
                 }
         properties.endpoint?.let { builder.endpointOverride(URI.create(it)) }

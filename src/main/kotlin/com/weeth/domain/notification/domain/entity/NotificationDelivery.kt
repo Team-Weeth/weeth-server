@@ -134,6 +134,10 @@ class NotificationDelivery private constructor(
     var lastErrorCode: String? = null
         private set
 
+    @Column(nullable = false)
+    var generation: Long = 0
+        private set
+
     val awaitingDeadLetter: Boolean
         get() =
             status == NotificationDeliveryStatus.FAILED && lastErrorCode == "RETRY_EXHAUSTED" &&
@@ -261,7 +265,11 @@ class NotificationDelivery private constructor(
         return true
     }
 
-    fun markDeadLetter(now: LocalDateTime) {
+    fun markDeadLetter(
+        now: LocalDateTime,
+        generation: Long,
+    ) {
+        if (this.generation != generation) return
         if (status in setOf(NotificationDeliveryStatus.SUCCEEDED, NotificationDeliveryStatus.SKIPPED)) return
         status = NotificationDeliveryStatus.FAILED
         deadLetteredAt = now
@@ -271,6 +279,7 @@ class NotificationDelivery private constructor(
 
     fun requeue(now: LocalDateTime) {
         check(status == NotificationDeliveryStatus.FAILED && (awaitingDeadLetter || deadLetteredAt != null))
+        generation = Math.incrementExact(generation)
         status = NotificationDeliveryStatus.PENDING
         attemptCount = 0
         nextAttemptAt = now

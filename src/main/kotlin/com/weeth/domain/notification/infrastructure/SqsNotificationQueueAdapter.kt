@@ -116,15 +116,23 @@ class SqsNotificationQueueAdapter(
             val version = tree?.get("schemaVersion")
             val id = tree?.get("deliveryId")
             val eventId = tree?.get("eventId")
-            if (version?.isIntegralNumber != true || !version.canConvertToInt() || version.asInt(-1) != 1 ||
+            val generation = tree?.get("generation")
+            if (version?.isIntegralNumber != true || !version.canConvertToInt() || version.asInt(-1) !in 1..2 ||
                 id?.isIntegralNumber != true ||
                 !id.canConvertToLong() || id.asLong() <= 0 ||
                 eventId?.isTextual != true || eventId.asText().isBlank() ||
-                eventId.asText().length > 150
+                eventId.asText().length > 150 ||
+                (version.asInt() == 2 && generation == null) ||
+                (
+                    generation != null && (
+                        generation.isIntegralNumber != true || !generation.canConvertToLong() ||
+                            generation.asLong() < 0 || (version.asInt() == 1 && generation.asLong() != 0L)
+                    )
+                )
             ) {
                 null
             } else {
-                NotificationQueueMessage(id.asLong(), eventId.asText())
+                NotificationQueueMessage(id.asLong(), eventId.asText(), version.asInt(), generation?.asLong() ?: 0)
             }
         } catch (_: Exception) {
             null

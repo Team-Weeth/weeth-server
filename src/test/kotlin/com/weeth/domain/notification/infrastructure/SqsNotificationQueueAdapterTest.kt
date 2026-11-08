@@ -56,7 +56,7 @@ class SqsNotificationQueueAdapterTest :
                                 .fieldNames()
                                 .asSequence()
                                 .toSet() ==
-                                setOf("schemaVersion", "deliveryId", "eventId")
+                                setOf("schemaVersion", "deliveryId", "eventId", "generation")
                         }
                     },
                 )
@@ -99,7 +99,7 @@ class SqsNotificationQueueAdapterTest :
                             }.toTypedArray(),
                     ).build()
             val receipts = adapter.receive(5, 20, 60)
-            receipts[0].message shouldBe NotificationQueueMessage(1, "event")
+            receipts[0].message shouldBe NotificationQueueMessage(1, "event", schemaVersion = 1)
             receipts[1].message shouldBe null
             receipts[2].message shouldBe null
             receipts[3].message shouldBe null
@@ -113,6 +113,27 @@ class SqsNotificationQueueAdapterTest :
                     },
                 )
             }
+        }
+
+        "새 schema는 발송 세대를 보존하고 잘못된 세대 값은 거부한다" {
+            val generations = listOf("7", "-1", "1.5", "\"7\"", "18446744073709551616", "null")
+            every { client.receiveMessage(any<ReceiveMessageRequest>()) } returns
+                ReceiveMessageResponse
+                    .builder()
+                    .messages(
+                        generations.mapIndexed { index, generation ->
+                            Message
+                                .builder()
+                                .messageId("g$index")
+                                .receiptHandle("r$index")
+                                .body(
+                                    """{"schemaVersion":2,"deliveryId":1,"eventId":"event","generation":$generation}""",
+                                ).build()
+                        },
+                    ).build()
+            val receipts = adapter.receive(6, 20, 60)
+            receipts[0].message shouldBe NotificationQueueMessage(1, "event", generation = 7)
+            receipts.drop(1).all { it.message == null } shouldBe true
         }
 
         "후속 배치가 예외로 실패해도 앞서 전송된 배치의 성공은 보존한다" {

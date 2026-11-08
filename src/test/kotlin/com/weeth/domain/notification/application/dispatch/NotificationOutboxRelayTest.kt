@@ -14,7 +14,7 @@ class NotificationOutboxRelayTest :
     DescribeSpec({
         val management = mockk<ManageNotificationOutboxUseCase>()
         val queue = mockk<NotificationQueuePort>()
-        val relay = NotificationOutboxRelay(management, queue)
+        val relay = NotificationOutboxRelay(management, queue, 100)
         val first = NotificationOutboxDispatch(1, 10, "event", "a")
         val second = NotificationOutboxDispatch(2, 20, "event", "b")
         beforeTest {
@@ -26,6 +26,7 @@ class NotificationOutboxRelayTest :
             every { queue.publish(any()) } returns setOf(10L)
             relay.runOnce()
             verify {
+                management.claimBatch(10)
                 management.completePublish(first, true)
                 management.completePublish(second, false)
             }

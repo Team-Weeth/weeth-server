@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component
 class NotificationOutboxRelay(
     private val management: ManageNotificationOutboxUseCase,
     private val queue: NotificationQueuePort,
-    @Value("\${notification.dispatch.relay-batch-size:100}") private val batchSize: Int = 100,
+    @Value("\${notification.dispatch.relay-batch-size:10}") private val batchSize: Int = 10,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -24,11 +24,13 @@ class NotificationOutboxRelay(
     )
     fun runOnce() {
         try {
-            val batch = management.claimBatch(batchSize)
+            val batch = management.claimBatch(batchSize.coerceIn(1, 10))
             if (batch.isEmpty()) return
             val successes =
                 try {
-                    queue.publish(batch.map { NotificationQueueMessage(it.deliveryId, it.eventId) })
+                    queue.publish(
+                        batch.map { NotificationQueueMessage(it.deliveryId, it.eventId, generation = it.generation) },
+                    )
                 } catch (_: Exception) {
                     log.warn("알림 Outbox 게시 실패. batchSize={}", batch.size)
                     emptySet()

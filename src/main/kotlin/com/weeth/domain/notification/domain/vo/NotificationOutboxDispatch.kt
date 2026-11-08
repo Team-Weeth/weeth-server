@@ -5,4 +5,5 @@ data class NotificationOutboxDispatch(
     val deliveryId: Long,
     val eventId: String,
     val claimToken: String,
+    val generation: Long = 0,
 )

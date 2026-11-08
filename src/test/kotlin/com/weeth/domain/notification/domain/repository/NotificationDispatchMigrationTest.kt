@@ -81,6 +81,16 @@ class NotificationDispatchMigrationTest :
                             "INSERT INTO notification_delivery_target (delivery_id, token_id, registered_at, status) VALUES (99999, 20, CURRENT_TIMESTAMP(6), 'PENDING')",
                         )
                     }
+                    ScriptUtils.executeSqlScript(
+                        connection,
+                        ClassPathResource("db/migration/V26__add_notification_dispatch_generation.sql"),
+                    )
+                    listOf("notification_delivery", "notification_outbox").forEach { table ->
+                        statement.executeQuery("SELECT generation FROM $table").use {
+                            it.next() shouldBe true
+                            it.getLong(1) shouldBe 0L
+                        }
+                    }
                 }
             }
         }

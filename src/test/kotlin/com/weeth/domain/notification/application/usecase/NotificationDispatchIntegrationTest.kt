@@ -124,7 +124,8 @@ class NotificationDispatchIntegrationTest(
             return deliveries.findAll().single { it.clubId == club.id }
         }
 
-        fun message(delivery: NotificationDelivery) = NotificationQueueMessage(delivery.id, delivery.eventId)
+        fun message(delivery: NotificationDelivery) =
+            NotificationQueueMessage(delivery.id, delivery.eventId, generation = delivery.generation)
 
         fun retryResult(attempt: com.weeth.domain.notification.domain.vo.NotificationDeliveryAttempt) =
             PushNotificationResult(
@@ -410,6 +411,27 @@ class NotificationDispatchIntegrationTest(
             management.prepare(message(delivery)).action shouldBe NotificationDeliveryAction.ACK
             targets.count() shouldBe 1
             targets.findAll().single().status shouldBe NotificationTargetStatus.SKIPPED
+        }
+
+        "과거 세대 DLQ와 큐 메시지는 재처리 중인 발송의 선점을 해제하지 않는다" {
+            val delivery = job()
+            val original = message(delivery).copy(schemaVersion = 1)
+            val first = requireNotNull(management.prepare(original).attempt)
+            management.complete(first, retryResult(first))
+            advance(20)
+            val second = requireNotNull(management.prepare(original).attempt)
+            management.complete(second, retryResult(second))
+            management.requeueFailedDelivery(delivery.id)
+            val dispatch = outboxManagement.claimBatch(10).single()
+            val current =
+                NotificationQueueMessage(dispatch.deliveryId, dispatch.eventId, generation = dispatch.generation)
+            outboxManagement.completePublish(dispatch, true)
+            val attempt = requireNotNull(management.prepare(current).attempt)
+            management.recordDeadLetter(NotificationQueueReceipt("late-dlq", "receipt", original, 10, true))
+            deliveries.findById(delivery.id).orElseThrow().status shouldBe NotificationDeliveryStatus.PROCESSING
+            management.prepare(original).action shouldBe NotificationDeliveryAction.ACK
+            management.complete(attempt, successResult(attempt)).action shouldBe NotificationDeliveryAction.ACK
+            incidents.findById("late-dlq").orElseThrow().reason shouldBe "STALE_GENERATION"
         }
 
         "재시도 소진·DLQ 감사·명시적 재처리와 장기 미완료 재게시를 추적한다" {

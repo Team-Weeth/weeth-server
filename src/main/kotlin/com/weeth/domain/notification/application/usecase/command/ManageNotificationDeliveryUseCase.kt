@@ -46,8 +46,15 @@ class ManageNotificationDeliveryUseCase(
         val delivery =
             deliveryRepository.findByIdWithLock(message.deliveryId)
                 ?: return NotificationDeliveryPreparation(NotificationDeliveryAction.INVALID)
-        if (delivery.eventId != message.eventId || message.schemaVersion != 1) {
+        if (delivery.eventId != message.eventId || message.schemaVersion !in 1..2 || message.generation < 0 ||
+            (message.schemaVersion == 1 && message.generation != 0L) || message.generation > delivery.generation
+        ) {
             return NotificationDeliveryPreparation(NotificationDeliveryAction.INVALID)
+        }
+        if (message.generation <
+            delivery.generation
+        ) {
+            return NotificationDeliveryPreparation(NotificationDeliveryAction.ACK)
         }
         val decision = delivery.decision(now)
         if (decision.action != NotificationDeliveryAction.READY) return decision
@@ -163,9 +170,12 @@ class ManageNotificationDeliveryUseCase(
                 message == null -> "MALFORMED_MESSAGE"
                 delivery == null -> "UNKNOWN_DELIVERY"
                 delivery.eventId != message.eventId -> "EVENT_ID_MISMATCH"
+                delivery.generation != message.generation -> "STALE_GENERATION"
                 else -> "RECEIVE_LIMIT_EXCEEDED"
             }
-        if (delivery != null && delivery.eventId == message?.eventId) delivery.markDeadLetter(LocalDateTime.now(clock))
+        if (delivery != null && delivery.eventId == message?.eventId) {
+            delivery.markDeadLetter(LocalDateTime.now(clock), message.generation)
+        }
         incidentRepository.save(NotificationQueueIncident.create(receipt, reason))
     }
 
@@ -175,6 +185,6 @@ class ManageNotificationDeliveryUseCase(
         val outbox = checkNotNull(outboxRepository.findByDeliveryIdWithLock(deliveryId)) { "Outbox가 없습니다." }
         val now = LocalDateTime.now(clock)
         delivery.requeue(now)
-        outbox.requeue(now)
+        outbox.requeue(now, delivery.generation)
     }
 }

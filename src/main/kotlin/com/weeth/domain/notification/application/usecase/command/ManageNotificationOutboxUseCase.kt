@@ -21,12 +21,12 @@ class ManageNotificationOutboxUseCase(
     @Value("\${notification.dispatch.lease-seconds:60}") private val leaseSeconds: Long = 60,
 ) {
     @Transactional
-    fun claimBatch(limit: Int = 100): List<NotificationOutboxDispatch> {
+    fun claimBatch(limit: Int = 10): List<NotificationOutboxDispatch> {
         val now = LocalDateTime.now(clock)
-        return repository.findClaimable(now, limit.coerceIn(1, 500)).map { outbox ->
+        return repository.findClaimable(now, limit.coerceIn(1, 10)).map { outbox ->
             val token = UUID.randomUUID().toString()
             outbox.claim(token, now, leaseSeconds)
-            NotificationOutboxDispatch(outbox.id, outbox.deliveryId, outbox.eventId, token)
+            NotificationOutboxDispatch(outbox.id, outbox.deliveryId, outbox.eventId, token, outbox.generation)
         }
     }
 
