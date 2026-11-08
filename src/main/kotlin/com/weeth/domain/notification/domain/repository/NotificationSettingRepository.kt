@@ -8,4 +8,9 @@ interface NotificationSettingRepository : JpaRepository<NotificationSetting, Lon
         userId: Long,
         clubId: Long,
     ): NotificationSetting?
+
+    fun findAllByClubIdAndUserIdIn(
+        clubId: Long,
+        userIds: List<Long>,
+    ): List<NotificationSetting>
 }

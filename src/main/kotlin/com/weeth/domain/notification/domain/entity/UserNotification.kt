@@ -47,6 +47,7 @@ class UserNotification(
     clubId: Long,
     referenceType: NotificationReferenceType,
     referenceId: Long,
+    templateVersion: Int? = null,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -71,6 +72,10 @@ class UserNotification(
 
     @Column(nullable = false, length = MAX_BODY_LENGTH)
     var body: String = normalizeDisplayText(body, "알림 내용", MAX_BODY_LENGTH)
+        private set
+
+    @Column(name = "template_version")
+    var templateVersion: Int? = templateVersion
         private set
 
     @Column(name = "target_path", nullable = false, length = MAX_TARGET_PATH_LENGTH)
@@ -121,6 +126,7 @@ class UserNotification(
             clubId: Long,
             referenceType: NotificationReferenceType,
             referenceId: Long,
+            templateVersion: Int? = null,
         ): UserNotification =
             UserNotification(
                 user = user,
@@ -131,6 +137,7 @@ class UserNotification(
                 clubId = clubId,
                 referenceType = referenceType,
                 referenceId = referenceId,
+                templateVersion = templateVersion,
             )
 
         private fun normalizeRequired(

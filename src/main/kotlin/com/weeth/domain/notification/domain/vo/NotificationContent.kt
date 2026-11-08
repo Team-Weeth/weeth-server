@@ -12,6 +12,7 @@ data class NotificationContent private constructor(
     val referenceType: NotificationReferenceType,
     val referenceId: Long,
     val data: Map<String, String>,
+    val templateVersion: Int? = null,
 ) {
     companion object {
         fun create(
@@ -23,6 +24,7 @@ data class NotificationContent private constructor(
             referenceType: NotificationReferenceType,
             referenceId: Long,
             data: Map<String, String>,
+            templateVersion: Int? = null,
         ): NotificationContent =
             NotificationContent(
                 type = type,
@@ -33,6 +35,7 @@ data class NotificationContent private constructor(
                 referenceType = referenceType,
                 referenceId = referenceId,
                 data = data,
+                templateVersion = templateVersion,
             )
 
         private const val MAX_BODY_LENGTH = 255

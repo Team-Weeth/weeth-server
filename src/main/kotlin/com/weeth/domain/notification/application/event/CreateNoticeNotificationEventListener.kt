@@ -5,7 +5,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.notification.application.usecase.command.CreateNotificationUseCase
 import com.weeth.domain.notification.domain.enums.NotificationReferenceType
 import com.weeth.domain.notification.domain.enums.NotificationType
-import com.weeth.domain.notification.domain.vo.NotificationContent
+import com.weeth.domain.notification.domain.vo.NotificationRequest
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
@@ -27,10 +27,10 @@ class CreateNoticeNotificationEventListener(
         val encodedClubId = TsidBase62Encoder.encode(event.clubId)
         val targetPath = "/clubs/$encodedClubId/boards/${event.boardId}/posts/${event.postId}"
         val content =
-            NotificationContent.create(
+            NotificationRequest(
+                eventId = "NOTICE_CREATED:${event.clubId}:${event.postId}",
                 type = NotificationType.NOTICE_CREATED,
-                title = NOTICE_NOTIFICATION_TITLE,
-                body = event.title,
+                variables = mapOf("noticeTitle" to event.title),
                 targetPath = targetPath,
                 clubId = event.clubId,
                 referenceType = NotificationReferenceType.POST,
@@ -46,9 +46,5 @@ class CreateNoticeNotificationEventListener(
                     ),
             )
         createNotificationUseCase.execute(content, targetUserIds)
-    }
-
-    private companion object {
-        const val NOTICE_NOTIFICATION_TITLE = "새 공지가 등록되었습니다"
     }
 }
