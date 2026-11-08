@@ -14,4 +14,6 @@ enum class NotificationResponseCode(
     NOTIFICATION_UNREAD_COUNT_SUCCESS(11403, HttpStatus.OK, "읽지 않은 알림 개수를 조회했습니다."),
     NOTIFICATION_READ_SUCCESS(11404, HttpStatus.OK, "알림을 읽음 처리했습니다."),
     NOTIFICATION_READ_ALL_SUCCESS(11405, HttpStatus.OK, "모든 알림을 읽음 처리했습니다."),
+    NOTIFICATION_PREFERENCES_FIND_SUCCESS(11406, HttpStatus.OK, "알림 수신 설정을 조회했습니다."),
+    NOTIFICATION_PREFERENCES_UPDATED_SUCCESS(11407, HttpStatus.OK, "알림 수신 설정을 변경했습니다."),
 }
