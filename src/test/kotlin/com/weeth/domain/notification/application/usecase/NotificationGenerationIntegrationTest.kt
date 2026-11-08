@@ -8,6 +8,7 @@ import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.notification.application.event.SendPushNotificationEventListener
 import com.weeth.domain.notification.application.usecase.command.CreateNotificationUseCase
+import com.weeth.domain.notification.application.usecase.command.EnqueueNotificationDeliveryUseCase
 import com.weeth.domain.notification.application.usecase.command.ManageNotificationTokenUseCase
 import com.weeth.domain.notification.domain.entity.NotificationPreference
 import com.weeth.domain.notification.domain.entity.NotificationSetting
@@ -30,6 +31,7 @@ import com.weeth.domain.notification.fixture.NotificationRequestTestFixture
 import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
 import com.weeth.domain.notification.infrastructure.JdbcUserNotificationBulkWriterAdapter
 import com.weeth.domain.user.domain.repository.UserRepository
+import com.weeth.global.config.TimeConfig
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
@@ -50,6 +52,8 @@ import java.time.LocalDateTime
 @Import(
     TestContainersConfig::class,
     CreateNotificationUseCase::class,
+    EnqueueNotificationDeliveryUseCase::class,
+    TimeConfig::class,
     NotificationRecipientPolicy::class,
     NotificationTemplateRenderer::class,
     CodeNotificationTemplateProvider::class,

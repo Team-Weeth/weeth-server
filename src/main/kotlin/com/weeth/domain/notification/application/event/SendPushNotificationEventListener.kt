@@ -6,6 +6,7 @@ import com.weeth.domain.notification.domain.repository.NotificationTokenReader
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
 import org.slf4j.LoggerFactory
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
@@ -13,6 +14,12 @@ import org.springframework.transaction.event.TransactionalEventListener
 import java.time.LocalDateTime
 
 @Component
+@ConditionalOnProperty(
+    prefix = "notification.dispatch",
+    name = ["enabled"],
+    havingValue = "false",
+    matchIfMissing = true,
+)
 class SendPushNotificationEventListener(
     private val notificationTokenReader: NotificationTokenReader,
     private val pushNotificationSenderPort: PushNotificationSenderPort,

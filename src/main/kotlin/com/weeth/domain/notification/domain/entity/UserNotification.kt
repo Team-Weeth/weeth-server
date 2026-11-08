@@ -16,6 +16,7 @@ import jakarta.persistence.Index
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
 import java.time.LocalDateTime
@@ -23,6 +24,12 @@ import java.time.LocalDateTime
 @Entity
 @Table(
     name = "user_notification",
+    uniqueConstraints = [
+        UniqueConstraint(
+            name = "uk_user_notification_event_user",
+            columnNames = ["event_id", "user_id"],
+        ),
+    ],
     indexes = [
         Index(
             name = "idx_user_notification_user_club_created",
@@ -48,6 +55,7 @@ class UserNotification(
     referenceType: NotificationReferenceType,
     referenceId: Long,
     templateVersion: Int? = null,
+    eventId: String? = null,
 ) : BaseEntity() {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -76,6 +84,10 @@ class UserNotification(
 
     @Column(name = "template_version")
     var templateVersion: Int? = templateVersion
+        private set
+
+    @Column(name = "event_id", length = 150)
+    var eventId: String? = eventId
         private set
 
     @Column(name = "target_path", nullable = false, length = MAX_TARGET_PATH_LENGTH)
@@ -127,6 +139,7 @@ class UserNotification(
             referenceType: NotificationReferenceType,
             referenceId: Long,
             templateVersion: Int? = null,
+            eventId: String? = null,
         ): UserNotification =
             UserNotification(
                 user = user,
@@ -138,6 +151,7 @@ class UserNotification(
                 referenceType = referenceType,
                 referenceId = referenceId,
                 templateVersion = templateVersion,
+                eventId = eventId,
             )
 
         private fun normalizeRequired(

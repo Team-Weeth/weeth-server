@@ -87,6 +87,7 @@ dependencies {
     // --- AWS SDK v2 (BOM) ---
     implementation(platform("software.amazon.awssdk:bom:$awsSdkBomVersion"))
     implementation("software.amazon.awssdk:s3")
+    implementation("software.amazon.awssdk:sqs")
 
     // --- Firebase Admin SDK ---
     implementation("com.google.firebase:firebase-admin:9.8.0")

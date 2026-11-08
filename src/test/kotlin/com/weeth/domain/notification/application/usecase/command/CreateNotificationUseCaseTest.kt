@@ -7,6 +7,7 @@ import com.weeth.domain.notification.domain.enums.NotificationChannel
 import com.weeth.domain.notification.domain.enums.NotificationTemplateFailureReason
 import com.weeth.domain.notification.domain.port.NotificationTemplateProvider
 import com.weeth.domain.notification.domain.port.UserNotificationBulkWriter
+import com.weeth.domain.notification.domain.repository.NotificationEventRepository
 import com.weeth.domain.notification.domain.repository.NotificationFailureRepository
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
@@ -31,6 +32,8 @@ class CreateNotificationUseCaseTest :
         val recipients = mockk<NotificationRecipientPolicy>()
         val templates = mockk<NotificationTemplateProvider>()
         val failures = mockk<NotificationFailureRepository>()
+        val enqueue = mockk<EnqueueNotificationDeliveryUseCase>()
+        val events = mockk<NotificationEventRepository>()
         val useCase =
             CreateNotificationUseCase(
                 users,
@@ -39,6 +42,8 @@ class CreateNotificationUseCaseTest :
                 recipients,
                 NotificationTemplateRenderer(templates),
                 failures,
+                enqueue,
+                events,
             )
 
         beforeTest {

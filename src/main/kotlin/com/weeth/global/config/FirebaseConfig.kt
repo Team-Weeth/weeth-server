@@ -18,6 +18,8 @@ class FirebaseConfig {
                 FirebaseOptions
                     .builder()
                     .setCredentials(GoogleCredentials.getApplicationDefault())
+                    .setConnectTimeout(3000)
+                    .setReadTimeout(10000)
                     .build(),
             )
 

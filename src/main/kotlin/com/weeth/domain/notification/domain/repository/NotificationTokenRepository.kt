@@ -1,6 +1,7 @@
 package com.weeth.domain.notification.domain.repository
 
 import com.weeth.domain.notification.domain.entity.NotificationToken
+import com.weeth.domain.notification.domain.vo.NotificationTokenSnapshot
 import com.weeth.domain.notification.domain.vo.PushTarget
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
@@ -12,6 +13,23 @@ interface NotificationTokenRepository :
     JpaRepository<NotificationToken, Long>,
     NotificationTokenReader {
     override fun findByToken(token: String): NotificationToken?
+
+    @Query(
+        "SELECT new com.weeth.domain.notification.domain.vo.NotificationTokenSnapshot(nt.id, nt.token, nt.platform, nt.lastRegisteredAt) FROM NotificationToken nt WHERE nt.user.id = :userId AND nt.isActive = true ORDER BY nt.id",
+    )
+    fun findActiveTokenSnapshotsByUserId(
+        @Param("userId") userId: Long,
+    ): List<NotificationTokenSnapshot>
+
+    @Modifying
+    @Query(
+        "UPDATE NotificationToken nt SET nt.isActive = false WHERE nt.id = :tokenId AND nt.user.id = :userId AND nt.lastRegisteredAt = :registeredAt",
+    )
+    fun deactivateIfUnchanged(
+        @Param("tokenId") tokenId: Long,
+        @Param("userId") userId: Long,
+        @Param("registeredAt") registeredAt: LocalDateTime,
+    ): Int
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(

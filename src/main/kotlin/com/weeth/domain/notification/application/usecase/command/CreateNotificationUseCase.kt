@@ -1,10 +1,12 @@
 package com.weeth.domain.notification.application.usecase.command
 
 import com.weeth.domain.notification.application.event.NotificationCreatedEvent
+import com.weeth.domain.notification.domain.entity.NotificationEvent
 import com.weeth.domain.notification.domain.entity.NotificationFailure
 import com.weeth.domain.notification.domain.entity.UserNotification
 import com.weeth.domain.notification.domain.enums.NotificationChannel
 import com.weeth.domain.notification.domain.port.UserNotificationBulkWriter
+import com.weeth.domain.notification.domain.repository.NotificationEventRepository
 import com.weeth.domain.notification.domain.repository.NotificationFailureRepository
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
@@ -14,6 +16,7 @@ import com.weeth.domain.notification.domain.vo.NotificationRequest
 import com.weeth.domain.notification.domain.vo.RenderedNotification
 import com.weeth.domain.user.domain.repository.UserReader
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -26,6 +29,9 @@ class CreateNotificationUseCase(
     private val recipientPolicy: NotificationRecipientPolicy,
     private val templateRenderer: NotificationTemplateRenderer,
     private val failureRepository: NotificationFailureRepository,
+    private val enqueueDeliveryUseCase: EnqueueNotificationDeliveryUseCase,
+    private val eventRepository: NotificationEventRepository,
+    @Value("\${notification.dispatch.enabled:false}") private val durableEnabled: Boolean = false,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -34,6 +40,10 @@ class CreateNotificationUseCase(
         request: NotificationRequest,
         targetUserIds: List<Long>,
     ) {
+        if (durableEnabled) {
+            val event = NotificationEvent.create(request.eventId, request.clubId)
+            if (eventRepository.claimIfAbsent(event.eventId, event.clubId) != 1) return
+        }
         if (targetUserIds.isEmpty()) return
         val eligibleIds = recipientPolicy.filterEligibleUserIds(request.clubId, request.type.category, targetUserIds)
         if (eligibleIds.isEmpty()) return
@@ -74,6 +84,7 @@ class CreateNotificationUseCase(
                 referenceId = request.referenceId,
                 data = request.data.toMap(),
                 templateVersion = app.templateVersion,
+                eventId = request.eventId.takeIf { durableEnabled },
             )
         val notifications =
             users.map { user ->
@@ -87,16 +98,17 @@ class CreateNotificationUseCase(
                     referenceType = content.referenceType,
                     referenceId = content.referenceId,
                     templateVersion = app.templateVersion,
+                    eventId = content.eventId,
                 )
             }
         userNotificationBulkWriter.saveAll(notifications)
-        eventPublisher.publishEvent(
+        val event =
             NotificationCreatedEvent(
                 content = content,
                 targetUserIds = users.map { it.id },
                 pushMessage = messages.getValue(NotificationChannel.PUSH),
                 eventId = request.eventId,
-            ),
-        )
+            )
+        if (durableEnabled) enqueueDeliveryUseCase.execute(event) else eventPublisher.publishEvent(event)
     }
 }
