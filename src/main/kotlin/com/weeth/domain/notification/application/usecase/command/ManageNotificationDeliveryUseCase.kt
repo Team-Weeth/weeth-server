@@ -10,6 +10,7 @@ import com.weeth.domain.notification.domain.repository.NotificationDeliveryTarge
 import com.weeth.domain.notification.domain.repository.NotificationOutboxRepository
 import com.weeth.domain.notification.domain.repository.NotificationQueueIncidentRepository
 import com.weeth.domain.notification.domain.repository.NotificationTokenRepository
+import com.weeth.domain.notification.domain.service.DuesNotificationPolicy
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationRetryPolicy
 import com.weeth.domain.notification.domain.service.SessionDayReminderPolicy
@@ -42,6 +43,7 @@ class ManageNotificationDeliveryUseCase(
     private val retryPolicy: NotificationRetryPolicy,
     private val clock: Clock,
     private val reminderPolicy: SessionDayReminderPolicy,
+    private val duesPolicy: DuesNotificationPolicy,
     @Value("\${notification.dispatch.lease-seconds:60}") private val leaseSeconds: Long = 60,
 ) {
     @Transactional
@@ -72,6 +74,18 @@ class ManageNotificationDeliveryUseCase(
                 ).isEmpty()
         ) {
             delivery.skip(now, "RECIPIENT_NO_LONGER_ELIGIBLE")
+            return delivery.decision(now)
+        }
+        if (duesPolicy
+                .filterEligibleUserIds(
+                    delivery.type,
+                    delivery.clubId,
+                    delivery.data["referenceId"]?.toLongOrNull(),
+                    listOf(delivery.userId),
+                    delivery.data["accountId"]?.toLongOrNull(),
+                ).isEmpty()
+        ) {
+            delivery.skip(now, "DUES_OBLIGATION_NO_LONGER_VALID")
             return delivery.decision(now)
         }
         val rendered =

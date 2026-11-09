@@ -7,4 +7,5 @@ enum class NotificationType(
     EVENT_CREATED(NotificationCategory.SCHEDULE),
     SESSION_CREATED(NotificationCategory.SCHEDULE),
     SESSION_DAY_REMINDER(NotificationCategory.SCHEDULE),
+    DUES_OBLIGATION_CREATED(NotificationCategory.DUES),
 }

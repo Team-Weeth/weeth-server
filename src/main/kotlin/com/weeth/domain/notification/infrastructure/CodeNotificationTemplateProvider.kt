@@ -12,6 +12,13 @@ class CodeNotificationTemplateProvider : NotificationTemplateProvider {
         NotificationChannel.entries
             .flatMap { channel ->
                 listOf(
+                    (NotificationType.DUES_OBLIGATION_CREATED to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "회비 납부 대상 안내",
+                            bodyTemplate = "{accountName} · 납부 금액 {dueAmount}원",
+                            requiredVariables = setOf("accountName", "dueAmount"),
+                        ),
                     (NotificationType.SESSION_DAY_REMINDER to channel) to
                         NotificationTemplate(
                             version = 1,

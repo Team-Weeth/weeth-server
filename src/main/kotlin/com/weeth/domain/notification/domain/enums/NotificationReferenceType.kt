@@ -5,4 +5,5 @@ enum class NotificationReferenceType {
     EVENT,
     SESSION,
     ACCOUNT_TRANSACTION,
+    ACCOUNT_PAYMENT_TARGET,
 }
