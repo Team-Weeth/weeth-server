@@ -4,22 +4,15 @@ import com.weeth.domain.feedback.domain.enums.FeedbackChannel
 import com.weeth.domain.feedback.domain.port.FeedbackNotifyPort
 import com.weeth.global.config.properties.SlackProperties
 import org.slf4j.LoggerFactory
-import org.springframework.boot.http.client.ClientHttpRequestFactoryBuilder
-import org.springframework.boot.http.client.ClientHttpRequestFactorySettings
 import org.springframework.stereotype.Component
 import org.springframework.web.client.RestClient
-import java.time.Duration
 
 @Component
 class SlackFeedbackNotifyAdapter(
     private val slackProperties: SlackProperties,
     restClientBuilder: RestClient.Builder,
 ) : FeedbackNotifyPort {
-    // Slack 응답 지연 시 @Async 공용 스레드 풀이 오래 점유되지 않도록 타임아웃을 둔다
-    private val restClient =
-        restClientBuilder
-            .requestFactory(ClientHttpRequestFactoryBuilder.detect().build(REQUEST_FACTORY_SETTINGS))
-            .build()
+    private val restClient = restClientBuilder.build()
     private val log = LoggerFactory.getLogger(javaClass)
 
     override fun notify(
@@ -60,12 +53,4 @@ class SlackFeedbackNotifyAdapter(
 
     /** 한 줄 필드는 줄바꿈으로 가짜 `*작성자:*` 같은 행을 끼워 넣지 못하도록 공백으로 치환한다. */
     private fun escapeSingleLine(text: String): String = escapeForSlack(text).replace(Regex("\\R"), " ")
-
-    companion object {
-        internal val REQUEST_FACTORY_SETTINGS: ClientHttpRequestFactorySettings =
-            ClientHttpRequestFactorySettings
-                .defaults()
-                .withConnectTimeout(Duration.ofSeconds(3))
-                .withReadTimeout(Duration.ofSeconds(5))
-    }
 }

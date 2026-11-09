@@ -51,6 +51,9 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-aop")
 
+    // HTTP Client (RestClient 구현체) — firebase-admin 전이 의존성에 기대지 않도록 직접 선언
+    implementation("org.apache.httpcomponents.client5:httpclient5")
+
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
