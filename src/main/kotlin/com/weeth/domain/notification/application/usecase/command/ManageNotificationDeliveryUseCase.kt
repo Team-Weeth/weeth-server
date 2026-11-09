@@ -12,8 +12,10 @@ import com.weeth.domain.notification.domain.repository.NotificationQueueIncident
 import com.weeth.domain.notification.domain.repository.NotificationTokenRepository
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationRetryPolicy
+import com.weeth.domain.notification.domain.service.SessionDayReminderPolicy
 import com.weeth.domain.notification.domain.vo.NotificationAttemptTarget
 import com.weeth.domain.notification.domain.vo.NotificationDeliveryAttempt
+import com.weeth.domain.notification.domain.vo.NotificationDeliveryMessage
 import com.weeth.domain.notification.domain.vo.NotificationDeliveryPreparation
 import com.weeth.domain.notification.domain.vo.NotificationQueueMessage
 import com.weeth.domain.notification.domain.vo.NotificationQueueReceipt
@@ -26,6 +28,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.util.UUID
 
 @Service
@@ -38,6 +41,7 @@ class ManageNotificationDeliveryUseCase(
     private val recipientPolicy: NotificationRecipientPolicy,
     private val retryPolicy: NotificationRetryPolicy,
     private val clock: Clock,
+    private val reminderPolicy: SessionDayReminderPolicy,
     @Value("\${notification.dispatch.lease-seconds:60}") private val leaseSeconds: Long = 60,
 ) {
     @Transactional
@@ -70,6 +74,17 @@ class ManageNotificationDeliveryUseCase(
             delivery.skip(now, "RECIPIENT_NO_LONGER_ELIGIBLE")
             return delivery.decision(now)
         }
+        val rendered =
+            when (val prepared = reminderPolicy.prepareMessage(delivery, now)) {
+                is NotificationDeliveryMessage.Ready -> {
+                    prepared.message
+                }
+
+                is NotificationDeliveryMessage.Skip -> {
+                    delivery.skip(now, prepared.reason)
+                    return delivery.decision(now)
+                }
+            }
         val currentTokens = tokenRepository.findActiveTokenSnapshotsByUserId(delivery.userId).associateBy { it.id }
         val targets =
             if (!delivery.targetsInitialized) {
@@ -114,7 +129,8 @@ class ManageNotificationDeliveryUseCase(
                 claim,
                 delivery.userId,
                 ready,
-                PushNotificationCommand(delivery.title, delivery.body, ready.map { it.target }, delivery.data.toMap()),
+                PushNotificationCommand(rendered.title, rendered.body, ready.map { it.target }, delivery.data.toMap()),
+                expiresAt = delivery.expiresAt?.atZone(ZoneId.of("Asia/Seoul"))?.toInstant(),
             ),
         )
     }

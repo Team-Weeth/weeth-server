@@ -5,6 +5,11 @@ import com.weeth.domain.club.domain.entity.ClubMemberCardinal
 import com.weeth.domain.club.domain.enums.MemberStatus
 
 interface ClubMemberCardinalReader {
+    fun findCardinalNumbersByClubIdAndUserId(
+        clubId: Long,
+        userId: Long,
+    ): List<Int>
+
     fun findAllByClubMember(clubMember: ClubMember): List<ClubMemberCardinal>
 
     fun findAllByClubMembers(clubMembers: List<ClubMember>): List<ClubMemberCardinal>

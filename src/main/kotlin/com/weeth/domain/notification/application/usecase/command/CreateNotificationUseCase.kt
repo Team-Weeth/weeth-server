@@ -85,6 +85,8 @@ class CreateNotificationUseCase(
                 data = request.data.toMap(),
                 templateVersion = app.templateVersion,
                 eventId = request.eventId.takeIf { durableEnabled },
+                sourceSessionIds = request.sourceSessionIds,
+                expiresAt = request.expiresAt,
             )
         val notifications =
             users.map { user ->

@@ -6,6 +6,7 @@ import com.weeth.domain.session.domain.entity.SessionGroup
 import com.weeth.domain.session.domain.enums.SessionStatus
 import jakarta.persistence.LockModeType
 import jakarta.persistence.QueryHint
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
@@ -16,6 +17,48 @@ import java.time.LocalDateTime
 interface SessionRepository :
     JpaRepository<Session, Long>,
     SessionReader {
+    @Query(
+        """SELECT DISTINCT s.club.id FROM Session s WHERE s.start >= :start AND s.start < :end
+        AND s.end > :now AND s.createdAt <= :cutoff
+        AND s.status = com.weeth.domain.session.domain.enums.SessionStatus.OPEN
+        AND s.club.id > :afterClubId ORDER BY s.club.id""",
+    )
+    override fun findDayReminderClubIds(
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+        @Param("now") now: LocalDateTime,
+        @Param("cutoff") cutoff: LocalDateTime,
+        @Param("afterClubId") afterClubId: Long,
+        pageable: Pageable,
+    ): List<Long>
+
+    @Query(
+        """SELECT s FROM Session s WHERE s.club.id = :clubId AND s.start >= :start AND s.start < :end
+        AND s.end > :now AND s.createdAt <= :cutoff
+        AND s.status = com.weeth.domain.session.domain.enums.SessionStatus.OPEN ORDER BY s.start, s.id""",
+    )
+    override fun findDayReminderSessions(
+        @Param("clubId") clubId: Long,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+        @Param("now") now: LocalDateTime,
+        @Param("cutoff") cutoff: LocalDateTime,
+    ): List<Session>
+
+    @Query(
+        """SELECT s FROM Session s WHERE s.club.id = :clubId AND s.id IN :ids
+        AND s.start >= :start AND s.start < :end AND s.end > :now AND s.createdAt <= :cutoff
+        AND s.status = com.weeth.domain.session.domain.enums.SessionStatus.OPEN ORDER BY s.start, s.id""",
+    )
+    override fun findDayReminderSessionsByIds(
+        @Param("clubId") clubId: Long,
+        @Param("ids") ids: Collection<Long>,
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+        @Param("now") now: LocalDateTime,
+        @Param("cutoff") cutoff: LocalDateTime,
+    ): List<Session>
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query("SELECT s FROM Session s WHERE s.id = :id")

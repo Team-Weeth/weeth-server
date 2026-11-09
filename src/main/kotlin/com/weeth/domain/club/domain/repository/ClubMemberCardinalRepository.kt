@@ -10,6 +10,16 @@ import org.springframework.data.repository.query.Param
 interface ClubMemberCardinalRepository :
     JpaRepository<ClubMemberCardinal, Long>,
     ClubMemberCardinalReader {
+    @Query(
+        """SELECT cmc.cardinal.cardinalNumber FROM ClubMemberCardinal cmc
+        WHERE cmc.clubMember.club.id = :clubId AND cmc.clubMember.user.id = :userId
+        AND cmc.clubMember.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE""",
+    )
+    override fun findCardinalNumbersByClubIdAndUserId(
+        @Param("clubId") clubId: Long,
+        @Param("userId") userId: Long,
+    ): List<Int>
+
     override fun findAllByClubMember(clubMember: ClubMember): List<ClubMemberCardinal>
 
     fun existsByClubMember(clubMember: ClubMember): Boolean

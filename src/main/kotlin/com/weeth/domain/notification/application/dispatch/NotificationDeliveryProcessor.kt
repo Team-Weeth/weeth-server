@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
+import java.time.Clock
 import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ScheduledExecutorService
@@ -32,6 +33,7 @@ class NotificationDeliveryProcessor(
     @Value("\${notification.dispatch.send-timeout-millis:20000}") private val timeoutMillis: Long = 20000,
     @Value("\${notification.dispatch.visibility-seconds:60}") private val visibilitySeconds: Int = 60,
     @Value("\${notification.dispatch.heartbeat-millis:10000}") private val heartbeatMillis: Long = 10000,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -85,7 +87,15 @@ class NotificationDeliveryProcessor(
     ): PushNotificationResult {
         val future =
             try {
-                io.submit(Callable { sender.sendMulticast(attempt.command) })
+                io.submit(
+                    Callable {
+                        if (attempt.expiresAt?.isAfter(clock.instant()) == false) {
+                            retryable(attempt, "REMINDER_EXPIRED")
+                        } else {
+                            sender.sendMulticast(attempt.command)
+                        }
+                    },
+                )
             } catch (
                 _: Exception,
             ) {

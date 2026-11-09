@@ -16,9 +16,10 @@ class NotificationTemplateRenderer(
         type: NotificationType,
         channel: NotificationChannel,
         variables: Map<String, String?>,
+        version: Int? = null,
     ): NotificationRenderingResult {
         val template =
-            provider.find(type, channel)
+            provider.find(type, channel, version)
                 ?: return NotificationRenderingResult.Failure(NotificationTemplateFailureReason.TEMPLATE_NOT_FOUND)
         val sources = listOf(template.titleTemplate, template.bodyTemplate)
         val placeholders =

@@ -30,6 +30,8 @@ class EnqueueNotificationDeliveryUseCase(
                         event.pushMessage,
                         event.content.data,
                         now,
+                        sourceSessionIds = event.content.sourceSessionIds,
+                        expiresAt = event.content.expiresAt,
                     )
                 },
             )

@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 data class NotificationResponse(
     @field:Schema(description = "알림 ID", example = "1")
     val id: Long,
-    @field:Schema(description = "알림 유형 (공지·일정·세션 신규 생성)", example = "NOTICE_CREATED")
+    @field:Schema(description = "알림 유형 (공지·일정·세션 신규 생성 및 당일 세션 안내)", example = "NOTICE_CREATED")
     val type: NotificationType,
     @field:Schema(description = "알림 제목", example = "새 공지가 등록되었습니다")
     val title: String,

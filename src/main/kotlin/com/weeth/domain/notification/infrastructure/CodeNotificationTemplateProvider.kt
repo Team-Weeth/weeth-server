@@ -12,6 +12,13 @@ class CodeNotificationTemplateProvider : NotificationTemplateProvider {
         NotificationChannel.entries
             .flatMap { channel ->
                 listOf(
+                    (NotificationType.SESSION_DAY_REMINDER to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "오늘의 세션 안내",
+                            bodyTemplate = "{sessionSummary}",
+                            requiredVariables = setOf("sessionSummary"),
+                        ),
                     (NotificationType.NOTICE_CREATED to channel) to
                         NotificationTemplate(
                             version = 1,
