@@ -11,6 +11,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.session.application.dto.request.SessionCreateRequest
+import com.weeth.domain.session.application.event.SessionCreatedEvent
 import com.weeth.domain.session.application.exception.RecurrenceEndDateBeforeStartException
 import com.weeth.domain.session.application.exception.RecurrenceEndDateExceedsMaxException
 import com.weeth.domain.session.application.exception.RecurrenceEndDateRequiredException
@@ -20,6 +21,7 @@ import com.weeth.domain.session.domain.repository.SessionRepository
 import com.weeth.domain.session.domain.service.RecurringSessionPolicy
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.repository.UserReader
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -35,6 +37,7 @@ class CreateSessionUseCase(
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val recurringSessionPolicy: RecurringSessionPolicy,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional
     fun create(
@@ -69,6 +72,9 @@ class CreateSessionUseCase(
 
         sessionRepository.save(session)
         attendanceRepository.saveAll(members.map { Attendance.create(session, it) })
+        eventPublisher.publishEvent(
+            SessionCreatedEvent(club.id, session.id, null, session.cardinal, session.title, session.start, 1, user.id),
+        )
     }
 
     /**
@@ -106,5 +112,18 @@ class CreateSessionUseCase(
 
         val attendances = sessions.flatMap { session -> members.map { Attendance.create(session, it) } }
         attendanceRepository.saveAll(attendances)
+        val firstSession = sessions.minBy { it.start }
+        eventPublisher.publishEvent(
+            SessionCreatedEvent(
+                club.id,
+                firstSession.id,
+                group.id,
+                firstSession.cardinal,
+                firstSession.title,
+                firstSession.start,
+                sessions.size,
+                user.id,
+            ),
+        )
     }
 }
