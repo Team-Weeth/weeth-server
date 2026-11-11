@@ -37,6 +37,18 @@ weeth:
     domain: ${COOKIE_DOMAIN:}
     same-site: ${COOKIE_SAME_SITE:Lax}
     secure: false
+  # 왁뿌볼: t4g.micro(1GB)에 DB·Redis·모니터링이 함께 떠 있어 한도를 작게 잡는다.
+  # 송신량이 연결 수 × 인원 × 브로드캐스트 횟수에 비례하므로 부하 점검 결과를 보고 조정한다.
+  wax:
+    enabled: ${WAX_ENABLED:true}
+    allowed-origins: ${WAX_ALLOWED_ORIGINS:https://*.v4.weeth.kr,http://localhost:*,http://127.0.0.1:*}
+    max-connections: ${WAX_MAX_CONNECTIONS:40}
+    max-worlds: ${WAX_MAX_WORLDS:3}
+    max-players-per-world: ${WAX_MAX_PLAYERS_PER_WORLD:12}
+    max-connections-per-ip: ${WAX_MAX_CONNECTIONS_PER_IP:4}
+    broadcast-interval-ms: ${WAX_BROADCAST_INTERVAL_MS:100}
+    trust-forwarded-for: true
+    idle-timeout-ms: ${WAX_IDLE_TIMEOUT_MS:300000}
 cloud:
   aws:
     s3:

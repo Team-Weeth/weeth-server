@@ -42,6 +42,14 @@ weeth:
     domain: ${COOKIE_DOMAIN:}
     same-site: ${COOKIE_SAME_SITE:Lax}
     secure: true
+  # 왁뿌볼은 dev 부하 점검 뒤 한도를 정하고 켠다.
+  wax:
+    enabled: ${WAX_ENABLED:false}
+    allowed-origins: ${WAX_ALLOWED_ORIGINS:https://www.weeth.kr,https://weeth.kr}
+    max-connections-per-ip: ${WAX_MAX_CONNECTIONS_PER_IP:4}
+    broadcast-interval-ms: ${WAX_BROADCAST_INTERVAL_MS:100}
+    trust-forwarded-for: true
+    idle-timeout-ms: ${WAX_IDLE_TIMEOUT_MS:300000}
 cloud:
   aws:
     s3:

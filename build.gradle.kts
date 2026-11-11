@@ -45,6 +45,7 @@ dependencies {
 
     // --- Spring Boot ---
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation("org.springframework.boot:spring-boot-starter-security")
@@ -154,4 +155,24 @@ ktlint {
     android.set(false)
     outputToConsole.set(true)
     ignoreFailures.set(false)
+}
+
+// 프로토타입 진입점은 운영 component scan과 bootJar에 포함하지 않는다.
+val prototype by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+configurations[prototype.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+configurations[prototype.runtimeOnlyConfigurationName].extendsFrom(configurations.runtimeOnly.get())
+dependencies {
+    testImplementation(prototype.output)
+}
+tasks.register<JavaExec>("waxPrototype") {
+    group = "application"
+    description = "DB/Redis 없이 왁뿌볼 로컬 서버를 실행한다 (기본 포트 8087)."
+    classpath = prototype.runtimeClasspath
+    mainClass.set("com.weeth.prototype.wax.WaxPrototypeKt")
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) })
+    systemProperty("spring.config.name", "wax-prototype")
+    args("--server.port=${project.findProperty("waxPort") ?: "8087"}", "--server.address=127.0.0.1")
 }
