@@ -337,7 +337,10 @@ class WaxWebSocketHandler(
 
     /** 배포·재시작으로 내려갈 때 클라이언트가 재접속하도록 알린 뒤 닫는다. 두 번 불려도 안전하다. */
     override fun close() {
-        scheduler.shutdownNow()
+        // 인터럽트(shutdownNow)하면 전송 중이던 브로드캐스트가 실패해 연결이 공지 전에 닫힌다.
+        // 진행 중인 tick이 끝나길 기다린 뒤 보내야 동시 전송 버퍼에 걸리지 않고 공지가 바로 나간다.
+        scheduler.shutdown()
+        if (!scheduler.awaitTermination(SHUTDOWN_WAIT_MS, TimeUnit.MILLISECONDS)) scheduler.shutdownNow()
         val sockets =
             synchronized(lock) {
                 connections.values.map { it.socket }.also {
@@ -353,6 +356,7 @@ class WaxWebSocketHandler(
 
     companion object {
         private const val TICK_MS = 50L
+        private const val SHUTDOWN_WAIT_MS = 2000L
         private const val MAX_MESSAGES_PER_SECOND = 60
         private val WORLD_ID = Regex("[a-z0-9]{8}")
         private const val IDLE_NOTICE =
