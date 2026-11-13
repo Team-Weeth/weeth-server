@@ -79,10 +79,17 @@ class WaxWorld(
         require(id !in players) { "이미 입장했어요." }
         require(!isFull) { "교실이 가득 찼어요. 잠시 후 다시 와주세요." }
         // 캐릭터 5종과 이름을 입장할 때마다 무작위로 고른다.
-        val name = "${ADJECTIVES[random.nextInt(ADJECTIVES.size)]} ${NOUNS[random.nextInt(NOUNS.size)]}"
+        val name = pickNickname()
         val character = WaxLayout.STUDENT_CHARACTERS[random.nextInt(WaxLayout.STUDENT_CHARACTERS.size)]
         players[id] = Player(id, name, character, random.nextDouble(-3.0, 3.0), 4.5)
         return WaxWelcome(this.id, id, layout)
+    }
+
+    /** 같은 교실에서 이름이 겹치지 않게 남은 후보에서 고른다. 후보를 다 쓰면 겹침을 허용한다. */
+    private fun pickNickname(): String {
+        val taken = players.values.mapTo(HashSet()) { it.name }
+        val available = NICKNAMES.filter { it !in taken }.ifEmpty { NICKNAMES }
+        return available[random.nextInt(available.size)]
     }
 
     fun leave(id: String) {
@@ -452,8 +459,38 @@ class WaxWorld(
                 WaxProfessorMode.RETURNING to 1.6,
             )
 
-        private val ADJECTIVES = listOf("졸린", "수상한", "조용한", "딴짓하는", "용감한", "눈치 보는", "배고픈", "몰래 웃는")
-        private val NOUNS = listOf("복숭아", "말차", "레몬", "구름", "우유", "감자", "젤리", "쿠키")
+        /** 학교·강의실 콘셉트의 닉네임 후보. */
+        internal val NICKNAMES =
+            listOf(
+                "졸고 있는 새내기",
+                "당당한 지각생",
+                "수상한 복학생",
+                "용감한 청강생",
+                "배고픈 대학원생",
+                "억울한 재수강생",
+                "딴짓하는 장학생",
+                "조용한 수강생",
+                "뻔뻔한 지각생",
+                "은밀한 지각생",
+                "대담한 새내기",
+                "들킬 뻔한 복학생",
+                "긴장한 장학생",
+                "수상한 뒷자리생",
+                "눈치 빠른 신입생",
+                "몰래 노는 과대표",
+                "겁 없는 재수강생",
+                "학점 잃은 새내기",
+                "출석만 하는 복학생",
+                "과제 밀린 복학생",
+                "종강 찾는 대학생",
+                "학식 먹는 지각생",
+                "출튀하는 복학생",
+                "밤샌 대학원생",
+                "학점 줍는 재수강생",
+                "은밀한 복학생",
+                "수상한 새내기",
+                "대담한 지각생",
+            )
 
         private fun round2(value: Double) = (value * 100).roundToLong() / 100.0
     }
