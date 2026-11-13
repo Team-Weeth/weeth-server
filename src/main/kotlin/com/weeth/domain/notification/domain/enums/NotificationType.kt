@@ -1,5 +1,7 @@
 package com.weeth.domain.notification.domain.enums
 
-enum class NotificationType {
-    NOTICE_CREATED,
+enum class NotificationType(
+    val category: NotificationCategory,
+) {
+    NOTICE_CREATED(NotificationCategory.NOTICE),
 }

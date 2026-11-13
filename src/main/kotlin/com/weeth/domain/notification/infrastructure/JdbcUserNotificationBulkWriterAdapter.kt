@@ -34,6 +34,10 @@ class JdbcUserNotificationBulkWriterAdapter(
                         statement.setBoolean(parameterIndex++, notification.isRead)
                         notification.readAt?.let { statement.setObject(parameterIndex++, it) }
                             ?: statement.setNull(parameterIndex++, Types.TIMESTAMP)
+                        notification.templateVersion?.let { statement.setInt(parameterIndex++, it) }
+                            ?: statement.setNull(parameterIndex++, Types.INTEGER)
+                        notification.eventId?.let { statement.setString(parameterIndex++, it) }
+                            ?: statement.setNull(parameterIndex++, Types.VARCHAR)
                     }
                 },
             )
@@ -46,11 +50,11 @@ class JdbcUserNotificationBulkWriterAdapter(
             """
             INSERT INTO user_notification (
                 user_id, type, title, body, target_path,
-                club_id, reference_type, reference_id, is_read, read_at,
+                club_id, reference_type, reference_id, is_read, read_at, template_version, event_id,
                 created_at, modified_at
             ) VALUES
             """
         const val ROW_PLACEHOLDERS =
-            "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6))"
+            "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(6), CURRENT_TIMESTAMP(6))"
     }
 }
