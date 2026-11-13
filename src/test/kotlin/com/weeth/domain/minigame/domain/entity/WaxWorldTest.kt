@@ -6,6 +6,7 @@ import com.weeth.domain.minigame.domain.vo.WaxPlayerStatus
 import com.weeth.domain.minigame.domain.vo.WaxProfessorMode
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldBeIn
 import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.doubles.shouldBeLessThan
 import io.kotest.matchers.ints.shouldBeGreaterThan
@@ -55,6 +56,25 @@ class WaxWorldTest :
                 world.sit(id, room.id, seat)
             }
             return world
+        }
+
+        "입장하면 학교 테마 후보 중 하나를 닉네임으로 받고, 같은 교실에서는 겹치지 않는다" {
+            val world = WaxWorld("names", Random(3), capacity = WaxWorld.NICKNAMES.size)
+            WaxWorld.NICKNAMES.indices.forEach { world.join("p$it") }
+
+            val names = world.publicState(0).players.map { it.name }
+            names.toSet() shouldBe WaxWorld.NICKNAMES.toSet()
+        }
+
+        "후보를 모두 쓴 교실에서도 입장할 수 있다" {
+            val world = WaxWorld("names", Random(3), capacity = WaxWorld.NICKNAMES.size + 1)
+            (0..WaxWorld.NICKNAMES.size).forEach { world.join("p$it") }
+
+            world
+                .publicState(0)
+                .players
+                .last()
+                .name shouldBeIn WaxWorld.NICKNAMES
         }
 
         "복도에서 문을 지나 걸어 들어가면 좌표로 강의실을 판정한다" {
