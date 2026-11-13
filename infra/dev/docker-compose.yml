@@ -1,8 +1,16 @@
 name: weeth-dev
 
+# 앱(blue/green) 외 컨테이너 공통 Docker 로그 제한 — 제한이 없으면 json 로그가 디스크를 채운다
+x-default-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "3"
+
 services:
   caddy:
     image: caddy:2.8
+    logging: *default-logging
     container_name: weeth-dev-caddy
     restart: unless-stopped
     ports:
@@ -21,6 +29,7 @@ services:
 
   mysql:
     image: mysql:8.0
+    logging: *default-logging
     container_name: weeth-dev-mysql
     restart: unless-stopped
     env_file:
@@ -37,6 +46,7 @@ services:
 
   redis:
     image: redis:7.0
+    logging: *default-logging
     container_name: weeth-dev-redis
     restart: unless-stopped
     ports:
