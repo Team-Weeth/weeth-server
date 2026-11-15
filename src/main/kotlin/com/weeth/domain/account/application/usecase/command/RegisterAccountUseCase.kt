@@ -5,6 +5,7 @@ import com.weeth.domain.account.application.dto.request.SaveAccountBasicRequest
 import com.weeth.domain.account.application.dto.request.SaveAccountCarryOverRequest
 import com.weeth.domain.account.application.dto.request.SavePaymentTargetsRequest
 import com.weeth.domain.account.application.dto.response.CreateAccountDraftResponse
+import com.weeth.domain.account.application.event.DuesObligationCreatedEvent
 import com.weeth.domain.account.application.exception.AccountCarryOverAmountMismatchException
 import com.weeth.domain.account.application.exception.AccountExistsException
 import com.weeth.domain.account.application.exception.AccountInvalidDraftStateException
@@ -32,6 +33,7 @@ import com.weeth.domain.club.domain.repository.ClubMemberCardinalReader
 import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.user.domain.repository.UserReader
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
@@ -46,6 +48,7 @@ class RegisterAccountUseCase(
     private val clubMemberCardinalReader: ClubMemberCardinalReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
     private val userReader: UserReader,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional
     fun createDraft(
@@ -207,6 +210,19 @@ class RegisterAccountUseCase(
         settlePreviousAccountBalance(previousAccount, account)
 
         account.markModifiedBy(userId)
+        paymentTargetRepository.findAllByAccountIdOrderByIdAsc(account.id).forEach { target ->
+            val amount = target.outstandingObligation() ?: return@forEach
+            eventPublisher.publishEvent(
+                DuesObligationCreatedEvent(
+                    clubId,
+                    account.id,
+                    target.id,
+                    target.clubMember.user.id,
+                    checkNotNull(account.name),
+                    amount.value,
+                ),
+            )
+        }
     }
 
     /** 직전 활성 기수 장부를 잠금 조회한다. 잔액 검증과 마감에 같은 잠금 인스턴스를 재사용한다. */

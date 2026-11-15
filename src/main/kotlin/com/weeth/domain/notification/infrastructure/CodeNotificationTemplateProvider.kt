@@ -9,15 +9,46 @@ import org.springframework.stereotype.Component
 @Component
 class CodeNotificationTemplateProvider : NotificationTemplateProvider {
     private val templates =
-        NotificationChannel.entries.associate { channel ->
-            (NotificationType.NOTICE_CREATED to channel) to
-                NotificationTemplate(
-                    version = 1,
-                    titleTemplate = "새 공지가 등록되었습니다",
-                    bodyTemplate = "{noticeTitle}",
-                    requiredVariables = setOf("noticeTitle"),
+        NotificationChannel.entries
+            .flatMap { channel ->
+                listOf(
+                    (NotificationType.DUES_OBLIGATION_CREATED to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "회비 납부 대상 안내",
+                            bodyTemplate = "{accountName} · 납부 금액 {dueAmount}원",
+                            requiredVariables = setOf("accountName", "dueAmount"),
+                        ),
+                    (NotificationType.SESSION_DAY_REMINDER to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "오늘의 세션 안내",
+                            bodyTemplate = "{sessionSummary}",
+                            requiredVariables = setOf("sessionSummary"),
+                        ),
+                    (NotificationType.NOTICE_CREATED to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "새 공지가 등록되었습니다",
+                            bodyTemplate = "{noticeTitle}",
+                            requiredVariables = setOf("noticeTitle"),
+                        ),
+                    (NotificationType.EVENT_CREATED to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "새 일정이 등록되었습니다",
+                            bodyTemplate = "{scheduleTitle} · {startAt}",
+                            requiredVariables = setOf("scheduleTitle", "startAt"),
+                        ),
+                    (NotificationType.SESSION_CREATED to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "새 세션이 등록되었습니다",
+                            bodyTemplate = "{scheduleTitle} · {startAt} 시작 · 총 {sessionCount}회",
+                            requiredVariables = setOf("scheduleTitle", "startAt", "sessionCount"),
+                        ),
                 )
-        }
+            }.toMap()
 
     override fun find(
         type: NotificationType,

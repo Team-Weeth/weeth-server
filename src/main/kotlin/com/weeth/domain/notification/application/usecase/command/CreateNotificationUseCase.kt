@@ -5,6 +5,7 @@ import com.weeth.domain.notification.domain.entity.NotificationEvent
 import com.weeth.domain.notification.domain.entity.NotificationFailure
 import com.weeth.domain.notification.domain.entity.UserNotification
 import com.weeth.domain.notification.domain.enums.NotificationChannel
+import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.notification.domain.port.UserNotificationBulkWriter
 import com.weeth.domain.notification.domain.repository.NotificationEventRepository
 import com.weeth.domain.notification.domain.repository.NotificationFailureRepository
@@ -40,7 +41,8 @@ class CreateNotificationUseCase(
         request: NotificationRequest,
         targetUserIds: List<Long>,
     ) {
-        if (durableEnabled) {
+        val deduplicate = durableEnabled || request.type == NotificationType.DUES_OBLIGATION_CREATED
+        if (deduplicate) {
             val event = NotificationEvent.create(request.eventId, request.clubId)
             if (eventRepository.claimIfAbsent(event.eventId, event.clubId) != 1) return
         }
@@ -84,7 +86,9 @@ class CreateNotificationUseCase(
                 referenceId = request.referenceId,
                 data = request.data.toMap(),
                 templateVersion = app.templateVersion,
-                eventId = request.eventId.takeIf { durableEnabled },
+                eventId = request.eventId.takeIf { deduplicate },
+                sourceSessionIds = request.sourceSessionIds,
+                expiresAt = request.expiresAt,
             )
         val notifications =
             users.map { user ->

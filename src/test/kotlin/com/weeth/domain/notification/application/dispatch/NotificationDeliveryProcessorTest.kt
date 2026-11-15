@@ -21,7 +21,10 @@ import io.mockk.every
 import io.mockk.justRun
 import io.mockk.mockk
 import io.mockk.verify
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -80,6 +83,23 @@ class NotificationDeliveryProcessorTest :
                 sender.sendMulticast(any())
                 queue.delete(any())
             }
+        }
+
+        it("준비 후 실제 호출 전에 만료된 작업은 FCM을 호출하지 않는다") {
+            val deadline = Instant.parse("2026-11-10T03:30:00Z")
+            val expired = attempt.copy(expiresAt = deadline)
+            every { management.prepare(any()) } returns
+                NotificationDeliveryPreparation(NotificationDeliveryAction.READY, expired)
+            NotificationDeliveryProcessor(
+                management,
+                queue,
+                sender,
+                io,
+                heartbeat,
+                clock = Clock.fixed(deadline, ZoneOffset.UTC),
+            ).process(receipt)
+            verify(exactly = 0) { sender.sendMulticast(any()) }
+            verify { management.complete(expired, match { it.outcomes.single().errorCode == "REMINDER_EXPIRED" }) }
         }
 
         it("완료 DB 반영이 실패하면 메시지를 삭제하지 않는다") {

@@ -6,6 +6,7 @@ import com.weeth.domain.notification.domain.enums.NotificationReferenceType
 import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.notification.domain.port.PushNotificationSenderPort
 import com.weeth.domain.notification.domain.repository.NotificationTokenReader
+import com.weeth.domain.notification.domain.service.DuesNotificationPolicy
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.vo.NotificationContent
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
@@ -24,7 +25,14 @@ class SendPushNotificationEventListenerTest :
         val sender = mockk<PushNotificationSenderPort>()
         val tokenUseCase = mockk<ManageNotificationTokenUseCase>(relaxed = true)
         val recipients = mockk<NotificationRecipientPolicy>()
-        val listener = SendPushNotificationEventListener(tokenReader, sender, tokenUseCase, recipients)
+        val listener =
+            SendPushNotificationEventListener(
+                tokenReader,
+                sender,
+                tokenUseCase,
+                recipients,
+                DuesNotificationPolicy(mockk()),
+            )
 
         beforeTest {
             clearMocks(tokenReader, sender, tokenUseCase, recipients)

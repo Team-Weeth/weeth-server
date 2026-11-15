@@ -22,6 +22,7 @@ import com.weeth.domain.notification.domain.repository.NotificationPreferenceRep
 import com.weeth.domain.notification.domain.repository.NotificationSettingRepository
 import com.weeth.domain.notification.domain.repository.NotificationTokenRepository
 import com.weeth.domain.notification.domain.repository.UserNotificationRepository
+import com.weeth.domain.notification.domain.service.DuesNotificationPolicy
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
@@ -55,6 +56,7 @@ import java.time.LocalDateTime
     EnqueueNotificationDeliveryUseCase::class,
     TimeConfig::class,
     NotificationRecipientPolicy::class,
+    DuesNotificationPolicy::class,
     NotificationTemplateRenderer::class,
     CodeNotificationTemplateProvider::class,
     JdbcUserNotificationBulkWriterAdapter::class,
@@ -76,6 +78,7 @@ class NotificationGenerationIntegrationTest(
     private val tokens: NotificationTokenRepository,
     private val tokenUseCase: ManageNotificationTokenUseCase,
     private val recipients: NotificationRecipientPolicy,
+    private val duesPolicy: DuesNotificationPolicy,
     private val probe: NotificationEventProbe,
     private val transactionManager: PlatformTransactionManager,
 ) : StringSpec({
@@ -154,7 +157,13 @@ class NotificationGenerationIntegrationTest(
                 TransactionSynchronizationManager.isActualTransactionActive() shouldBe false
                 PushNotificationResult()
             }
-            SendPushNotificationEventListener(tokens, sender, tokenUseCase, recipients).handle(probe.events.single())
+            SendPushNotificationEventListener(
+                tokens,
+                sender,
+                tokenUseCase,
+                recipients,
+                duesPolicy,
+            ).handle(probe.events.single())
             verify(exactly = 1) {
                 sender.sendMulticast(
                     match {

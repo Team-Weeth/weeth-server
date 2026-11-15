@@ -30,9 +30,11 @@ import com.weeth.domain.notification.domain.repository.NotificationQueueIncident
 import com.weeth.domain.notification.domain.repository.NotificationSettingRepository
 import com.weeth.domain.notification.domain.repository.NotificationTokenRepository
 import com.weeth.domain.notification.domain.repository.UserNotificationRepository
+import com.weeth.domain.notification.domain.service.DuesNotificationPolicy
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationRetryPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
+import com.weeth.domain.notification.domain.service.SessionDayReminderPolicy
 import com.weeth.domain.notification.domain.vo.NotificationQueueMessage
 import com.weeth.domain.notification.domain.vo.NotificationQueueReceipt
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
@@ -80,6 +82,8 @@ import java.util.concurrent.TimeUnit
     ManageNotificationDeliveryUseCase::class,
     ManageNotificationOutboxUseCase::class,
     NotificationRetryPolicy::class,
+    SessionDayReminderPolicy::class,
+    DuesNotificationPolicy::class,
     NotificationRecipientPolicy::class,
     NotificationTemplateRenderer::class,
     CodeNotificationTemplateProvider::class,

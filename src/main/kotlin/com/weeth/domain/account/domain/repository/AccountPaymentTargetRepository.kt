@@ -10,7 +10,19 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 
-interface AccountPaymentTargetRepository : JpaRepository<AccountPaymentTarget, Long> {
+interface AccountPaymentTargetRepository :
+    JpaRepository<AccountPaymentTarget, Long>,
+    AccountPaymentTargetReader {
+    @Query(
+        """SELECT t FROM AccountPaymentTarget t
+        JOIN FETCH t.account a JOIN FETCH a.club
+        JOIN FETCH t.clubMember cm JOIN FETCH cm.club JOIN FETCH cm.user
+        WHERE t.id = :id""",
+    )
+    override fun findByIdWithObligationDetails(
+        @Param("id") id: Long,
+    ): AccountPaymentTarget?
+
     fun findAllByAccountId(accountId: Long): List<AccountPaymentTarget>
 
     fun findByAccountIdAndClubMemberId(

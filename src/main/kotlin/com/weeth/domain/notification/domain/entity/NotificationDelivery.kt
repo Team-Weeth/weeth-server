@@ -138,6 +138,15 @@ class NotificationDelivery private constructor(
     var generation: Long = 0
         private set
 
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "source_session_ids", columnDefinition = "json")
+    var sourceSessionIds: List<Long>? = null
+        private set
+
+    @Column(name = "expires_at")
+    var expiresAt: LocalDateTime? = null
+        private set
+
     val awaitingDeadLetter: Boolean
         get() =
             status == NotificationDeliveryStatus.FAILED && lastErrorCode == "RETRY_EXHAUSTED" &&
@@ -164,6 +173,10 @@ class NotificationDelivery private constructor(
                 now,
             ) == true -> {
                 waitUntil(checkNotNull(leaseUntil), now)
+            }
+
+            expiresAt?.isAfter(now) == false -> {
+                NotificationDeliveryPreparation(NotificationDeliveryAction.READY)
             }
 
             status == NotificationDeliveryStatus.RETRY_WAIT && nextAttemptAt.isAfter(now) -> {
@@ -236,11 +249,14 @@ class NotificationDelivery private constructor(
         if (!hasClaim(token, now)) return false
         when {
             targets.any { it.status == NotificationTargetStatus.PENDING } -> {
-                if (attemptCount >= policy.maxAttempts) {
+                if (expiresAt?.isAfter(now) == false) {
+                    skip(now, "REMINDER_EXPIRED")
+                } else if (attemptCount >= policy.maxAttempts) {
                     exhaust(now)
                 } else {
                     status = NotificationDeliveryStatus.RETRY_WAIT
-                    nextAttemptAt = now.plusSeconds(policy.delaySeconds(attemptCount))
+                    val retryAt = now.plusSeconds(policy.delaySeconds(attemptCount))
+                    nextAttemptAt = expiresAt?.let { minOf(retryAt, it) } ?: retryAt
                     lastErrorCode = "RETRYABLE_TARGET_FAILURE"
                     clearClaim()
                 }
@@ -321,6 +337,8 @@ class NotificationDelivery private constructor(
             message: RenderedNotification,
             data: Map<String, String>,
             now: LocalDateTime,
+            sourceSessionIds: List<Long> = emptyList(),
+            expiresAt: LocalDateTime? = null,
         ): NotificationDelivery {
             require(eventId.isNotBlank() && eventId.length <= 150 && userId > 0 && clubId > 0)
             require(
@@ -328,7 +346,14 @@ class NotificationDelivery private constructor(
                     message.body.length <= 255 &&
                     message.templateVersion > 0,
             )
-            return NotificationDelivery(eventId, userId, clubId, type, message, data, now)
+            require(
+                type != NotificationType.SESSION_DAY_REMINDER ||
+                    (sourceSessionIds.isNotEmpty() && sourceSessionIds.all { it > 0 } && expiresAt != null),
+            )
+            return NotificationDelivery(eventId, userId, clubId, type, message, data, now).apply {
+                this.sourceSessionIds = sourceSessionIds.distinct().takeIf { it.isNotEmpty() }
+                this.expiresAt = expiresAt
+            }
         }
     }
 }

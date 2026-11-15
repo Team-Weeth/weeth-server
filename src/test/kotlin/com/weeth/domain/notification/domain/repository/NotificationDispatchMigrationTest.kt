@@ -91,6 +91,22 @@ class NotificationDispatchMigrationTest :
                             it.getLong(1) shouldBe 0L
                         }
                     }
+                    ScriptUtils.executeSqlScript(
+                        connection,
+                        ClassPathResource("db/migration/V27__add_session_day_reminder.sql"),
+                    )
+                    statement.executeQuery("SELECT source_session_ids, expires_at FROM notification_delivery").use {
+                        it.next() shouldBe true
+                        it.getObject(1) shouldBe null
+                        it.getObject(2) shouldBe null
+                    }
+                    val insertRun =
+                        """
+                        INSERT INTO notification_schedule_run (club_id, local_date, job_type, status)
+                        VALUES (1, '2026-11-10', 'SESSION_DAY_REMINDER', 'PENDING')
+                        """.trimIndent()
+                    statement.execute(insertRun)
+                    shouldThrow<SQLException> { statement.execute(insertRun) }
                 }
             }
         }
