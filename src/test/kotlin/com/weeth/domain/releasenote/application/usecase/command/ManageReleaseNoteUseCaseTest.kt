@@ -1,5 +1,6 @@
 package com.weeth.domain.releasenote.application.usecase.command
 
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.releasenote.application.dto.request.CreateReleaseNoteRequest
 import com.weeth.domain.releasenote.application.dto.request.UpdateReleaseNoteRequest
 import com.weeth.domain.releasenote.application.dto.request.UpdateReleaseNoteStatusRequest
@@ -27,7 +28,7 @@ class ManageReleaseNoteUseCaseTest :
     DescribeSpec({
         val releaseNoteRepository = mockk<ReleaseNoteRepository>()
         val platformPermissionValidator = mockk<PlatformPermissionValidator>()
-        val releaseNoteMapper = ReleaseNoteMapper()
+        val releaseNoteMapper = ReleaseNoteMapper(mockk<FileAccessUrlPort>())
         val useCase = ManageReleaseNoteUseCase(releaseNoteRepository, platformPermissionValidator, releaseNoteMapper)
 
         val userId = 10L

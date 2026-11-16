@@ -4,7 +4,7 @@ CREATE TABLE release_notes (
     release_note_id BIGINT NOT NULL AUTO_INCREMENT,
     title VARCHAR(100) NOT NULL,
     content LONGTEXT NOT NULL,
-    thumbnail_url VARCHAR(2048) NULL,
+    thumbnail_storage_key VARCHAR(500) NULL,
     status VARCHAR(20) NOT NULL,
     released_at DATETIME(6) NULL,
     published_at DATETIME(6) NULL,

@@ -1,6 +1,8 @@
 package com.weeth.domain.releasenote.application.dto.request
 
+import com.weeth.domain.file.application.dto.request.FileSaveRequest
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import java.time.LocalDateTime
@@ -17,8 +19,9 @@ data class UpdateReleaseNoteRequest(
     @field:Schema(description = "본문(tiptap HTML)", example = "<h3>개선된 기능 : ...</h3><p>...</p>")
     @field:NotBlank
     val content: String,
-    @field:Schema(description = "카드 썸네일 이미지 URL", example = "https://...", nullable = true)
-    val thumbnailUrl: String? = null,
+    @field:Schema(description = "카드 썸네일 이미지(presigned 업로드 결과)", nullable = true)
+    @field:Valid
+    val thumbnail: FileSaveRequest? = null,
     @field:Schema(description = "서비스에 실제 반영된 날짜(업데이트 일자)", example = "2026-11-02T00:00:00", nullable = true)
     val releasedAt: LocalDateTime? = null,
 )

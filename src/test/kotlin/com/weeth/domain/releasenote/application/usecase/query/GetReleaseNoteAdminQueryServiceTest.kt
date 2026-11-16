@@ -1,5 +1,6 @@
 package com.weeth.domain.releasenote.application.usecase.query
 
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.releasenote.application.exception.NotDeveloperException
 import com.weeth.domain.releasenote.application.mapper.ReleaseNoteMapper
 import com.weeth.domain.releasenote.application.validator.PlatformPermissionValidator
@@ -24,7 +25,11 @@ class GetReleaseNoteAdminQueryServiceTest :
         val releaseNoteRepository = mockk<ReleaseNoteRepository>()
         val platformPermissionValidator = mockk<PlatformPermissionValidator>()
         val service =
-            GetReleaseNoteAdminQueryService(releaseNoteRepository, platformPermissionValidator, ReleaseNoteMapper())
+            GetReleaseNoteAdminQueryService(
+                releaseNoteRepository,
+                platformPermissionValidator,
+                ReleaseNoteMapper(mockk<FileAccessUrlPort>()),
+            )
 
         val userId = 10L
 

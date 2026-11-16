@@ -45,7 +45,7 @@ class ManageReleaseNoteUseCase(
         getOrThrow(releaseNoteId).update(
             title = request.title,
             content = request.content,
-            thumbnailUrl = request.thumbnailUrl,
+            thumbnailStorageKey = request.thumbnail?.storageKey,
             releasedAt = request.releasedAt,
         )
     }

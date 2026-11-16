@@ -1,5 +1,6 @@
 package com.weeth.domain.releasenote.application.usecase.query
 
+import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.releasenote.application.exception.ReleaseNoteNotFoundException
 import com.weeth.domain.releasenote.application.mapper.ReleaseNoteMapper
 import com.weeth.domain.releasenote.domain.enums.ReleaseNoteStatus
@@ -19,7 +20,7 @@ import org.springframework.data.domain.SliceImpl
 class GetReleaseNoteQueryServiceTest :
     DescribeSpec({
         val releaseNoteRepository = mockk<ReleaseNoteRepository>()
-        val service = GetReleaseNoteQueryService(releaseNoteRepository, ReleaseNoteMapper())
+        val service = GetReleaseNoteQueryService(releaseNoteRepository, ReleaseNoteMapper(mockk<FileAccessUrlPort>()))
 
         beforeTest { clearMocks(releaseNoteRepository) }
 

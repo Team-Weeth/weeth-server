@@ -18,7 +18,7 @@ class ReleaseNoteTest :
         ) = ReleaseNote.create(
             title = title,
             content = content,
-            thumbnailUrl = null,
+            thumbnailStorageKey = null,
             releasedAt = null,
             authorId = 1L,
             status = status,
@@ -99,11 +99,16 @@ class ReleaseNoteTest :
             val note = create(status = ReleaseNoteStatus.PUBLISHED)
             val releasedAt = LocalDateTime.of(2026, 12, 1, 0, 0)
 
-            note.update(title = "새 제목", content = "<p>새 본문</p>", thumbnailUrl = "https://img", releasedAt = releasedAt)
+            note.update(
+                title = "새 제목",
+                content = "<p>새 본문</p>",
+                thumbnailStorageKey = "RELEASE_NOTE/2026-11/thumb.png",
+                releasedAt = releasedAt,
+            )
 
             note.title shouldBe "새 제목"
             note.content shouldBe "<p>새 본문</p>"
-            note.thumbnailUrl shouldBe "https://img"
+            note.thumbnailStorageKey shouldBe "RELEASE_NOTE/2026-11/thumb.png"
             note.releasedAt shouldBe releasedAt
             note.status shouldBe ReleaseNoteStatus.PUBLISHED
             note.publishedAt shouldBe now
@@ -112,7 +117,7 @@ class ReleaseNoteTest :
         "update는 제목이 공백뿐이면 예외를 던진다" {
             val note = create()
             shouldThrow<IllegalArgumentException> {
-                note.update(title = "  ", content = "<p>x</p>", thumbnailUrl = null, releasedAt = null)
+                note.update(title = "  ", content = "<p>x</p>", thumbnailStorageKey = null, releasedAt = null)
             }
         }
     })

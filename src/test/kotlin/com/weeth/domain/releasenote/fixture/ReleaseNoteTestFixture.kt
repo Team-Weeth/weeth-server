@@ -12,7 +12,7 @@ object ReleaseNoteTestFixture {
         id: Long = 0L,
         title: String = "게시판 이미지 표시 개선",
         content: String = "<h3>개선된 기능</h3><p>본문 내용입니다.</p>",
-        thumbnailUrl: String? = null,
+        thumbnailStorageKey: String? = null,
         releasedAt: LocalDateTime? = LocalDateTime.of(2026, 11, 2, 0, 0),
         authorId: Long = 1L,
         status: ReleaseNoteStatus = ReleaseNoteStatus.DRAFT,
@@ -22,7 +22,7 @@ object ReleaseNoteTestFixture {
             .create(
                 title = title,
                 content = content,
-                thumbnailUrl = thumbnailUrl,
+                thumbnailStorageKey = thumbnailStorageKey,
                 releasedAt = releasedAt,
                 authorId = authorId,
                 status = status,

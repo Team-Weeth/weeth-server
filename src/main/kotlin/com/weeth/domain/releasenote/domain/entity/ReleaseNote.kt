@@ -29,7 +29,7 @@ import java.time.LocalDateTime
 class ReleaseNote private constructor(
     title: String,
     content: String,
-    thumbnailUrl: String?,
+    thumbnailStorageKey: String?,
     releasedAt: LocalDateTime?,
     authorId: Long,
 ) : BaseEntity() {
@@ -49,8 +49,9 @@ class ReleaseNote private constructor(
     var content: String = content
         private set
 
-    @Column(name = "thumbnail_url", nullable = true, length = 2048)
-    var thumbnailUrl: String? = thumbnailUrl
+    // 전체 URL이 아니라 storageKey(S3 키)를 저장한다. 조회 URL은 FileAccessUrlPort로 변환해 CDN 적용이 가능하게 한다.
+    @Column(name = "thumbnail_storage_key", nullable = true, length = 500)
+    var thumbnailStorageKey: String? = thumbnailStorageKey
         private set
 
     @Enumerated(EnumType.STRING)
@@ -101,12 +102,12 @@ class ReleaseNote private constructor(
     fun update(
         title: String,
         content: String,
-        thumbnailUrl: String?,
+        thumbnailStorageKey: String?,
         releasedAt: LocalDateTime?,
     ) {
         this.title = validatedTitle(title)
         this.content = validatedContent(content)
-        this.thumbnailUrl = thumbnailUrl
+        this.thumbnailStorageKey = thumbnailStorageKey
         this.releasedAt = releasedAt
     }
 
@@ -131,7 +132,7 @@ class ReleaseNote private constructor(
         fun create(
             title: String,
             content: String,
-            thumbnailUrl: String?,
+            thumbnailStorageKey: String?,
             releasedAt: LocalDateTime?,
             authorId: Long,
             status: ReleaseNoteStatus,
@@ -140,7 +141,7 @@ class ReleaseNote private constructor(
             ReleaseNote(
                 title = validatedTitle(title),
                 content = validatedContent(content),
-                thumbnailUrl = thumbnailUrl,
+                thumbnailStorageKey = thumbnailStorageKey,
                 releasedAt = releasedAt,
                 authorId = authorId,
             ).apply {
