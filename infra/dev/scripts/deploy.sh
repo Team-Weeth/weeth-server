@@ -102,5 +102,6 @@ fi
 docker compose --profile "$OLD_COLOR" -f docker-compose.yml stop "app-$OLD_COLOR" || true
 docker compose --profile "$OLD_COLOR" -f docker-compose.yml rm -f "app-$OLD_COLOR" || true
 
-docker image prune -f
+# 태그 없는 이미지뿐 아니라 7일 넘게 쓰지 않은 옛 앱 이미지도 정리한다 (최근 이미지는 롤백용으로 남김)
+docker image prune -af --filter "until=168h"
 echo "[deploy] completed"
