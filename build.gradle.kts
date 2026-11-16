@@ -45,11 +45,15 @@ dependencies {
 
     // --- Spring Boot ---
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-aop")
+
+    // HTTP Client (RestClient 구현체) — firebase-admin 전이 의존성에 기대지 않도록 직접 선언
+    implementation("org.apache.httpcomponents.client5:httpclient5")
 
     // Redis
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
@@ -87,6 +91,9 @@ dependencies {
     // --- AWS SDK v2 (BOM) ---
     implementation(platform("software.amazon.awssdk:bom:$awsSdkBomVersion"))
     implementation("software.amazon.awssdk:s3")
+
+    // --- Firebase Admin SDK ---
+    implementation("com.google.firebase:firebase-admin:9.8.0")
 
     // --- Test (starter-test는 유지하되 mockito는 제외) ---
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
@@ -148,4 +155,24 @@ ktlint {
     android.set(false)
     outputToConsole.set(true)
     ignoreFailures.set(false)
+}
+
+// 프로토타입 진입점은 운영 component scan과 bootJar에 포함하지 않는다.
+val prototype by sourceSets.creating {
+    compileClasspath += sourceSets.main.get().output
+    runtimeClasspath += sourceSets.main.get().output
+}
+configurations[prototype.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+configurations[prototype.runtimeOnlyConfigurationName].extendsFrom(configurations.runtimeOnly.get())
+dependencies {
+    testImplementation(prototype.output)
+}
+tasks.register<JavaExec>("waxPrototype") {
+    group = "application"
+    description = "DB/Redis 없이 왁뿌볼 로컬 서버를 실행한다 (기본 포트 8087)."
+    classpath = prototype.runtimeClasspath
+    mainClass.set("com.weeth.prototype.wax.WaxPrototypeKt")
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) })
+    systemProperty("spring.config.name", "wax-prototype")
+    args("--server.port=${project.findProperty("waxPort") ?: "8087"}", "--server.address=127.0.0.1")
 }

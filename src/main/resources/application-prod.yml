@@ -42,6 +42,20 @@ weeth:
     domain: ${COOKIE_DOMAIN:}
     same-site: ${COOKIE_SAME_SITE:Lax}
     secure: true
+  # FCM 알림 (공지 작성 시 알림 생성·푸시, 알림 API). 출시 전까지 끄고, 켤 때 Firebase 자격증명을 함께 넣는다.
+  notification:
+    enabled: ${NOTIFICATION_ENABLED:false}
+  # 왁뿌볼 한도는 t4g.small 메모리 여유 기준 첫 오픈값(교실 4 × 12명). JVM 메모리·스왑을 보며 env로 올린다.
+  wax:
+    enabled: ${WAX_ENABLED:false}
+    allowed-origins: ${WAX_ALLOWED_ORIGINS:https://www.weeth.kr,https://weeth.kr}
+    max-connections: ${WAX_MAX_CONNECTIONS:60}
+    max-worlds: ${WAX_MAX_WORLDS:4}
+    max-players-per-world: ${WAX_MAX_PLAYERS_PER_WORLD:12}
+    max-connections-per-ip: ${WAX_MAX_CONNECTIONS_PER_IP:4}
+    broadcast-interval-ms: ${WAX_BROADCAST_INTERVAL_MS:100}
+    trust-forwarded-for: true
+    idle-timeout-ms: ${WAX_IDLE_TIMEOUT_MS:300000}
 cloud:
   aws:
     s3:

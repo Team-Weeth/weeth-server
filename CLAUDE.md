@@ -29,7 +29,7 @@ Weeth Server is a community platform backend built with Spring Boot 3.5.10. All 
 presentation → application → domain ← infrastructure
 ```
 
-13 domains (`user`, `attendance`, `session`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`, `cardinal`, `club`, `dashboard`, `university`), each following the package layout in `.claude/rules/architecture.md`.
+15 domains (`user`, `attendance`, `session`, `schedule`, `board`, `comment`, `file`, `penalty`, `account`, `cardinal`, `club`, `dashboard`, `university`, `notification`, `feedback`), each following the package layout in `.claude/rules/architecture.md`.
 
 Core principles (details in the rule files):
 - **Rich Domain Model** — business logic lives in Entities; UseCase = orchestration only

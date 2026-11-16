@@ -286,6 +286,31 @@ interface ClubMemberRepository :
 
     @Query(
         """
+        SELECT cm.user.id
+        FROM ClubMember cm
+        WHERE cm.club.id = :clubId
+        AND cm.memberStatus = com.weeth.domain.club.domain.enums.MemberStatus.ACTIVE
+        AND cm.user.id <> :excludedUserId
+        AND EXISTS (
+            SELECT cmc.id
+            FROM ClubMemberCardinal cmc
+            WHERE cmc.clubMember = cm
+            AND (
+                cmc.cardinal.status = com.weeth.domain.cardinal.domain.enums.CardinalStatus.IN_PROGRESS
+                OR cmc.cardinal.cardinalNumber = :cardinalNumber
+            )
+        )
+        ORDER BY cm.id ASC
+        """,
+    )
+    override fun findActiveUserIdsByClubIdExcludingUserId(
+        @Param("clubId") clubId: Long,
+        @Param("cardinalNumber") cardinalNumber: Int?,
+        @Param("excludedUserId") excludedUserId: Long,
+    ): List<Long>
+
+    @Query(
+        """
         SELECT new com.weeth.domain.club.domain.repository.ClubMemberCount(cm.club.id, COUNT(cm))
         FROM ClubMember cm
         WHERE cm.club.id IN :clubIds
