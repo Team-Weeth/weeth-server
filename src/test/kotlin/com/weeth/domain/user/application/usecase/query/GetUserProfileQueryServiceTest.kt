@@ -9,6 +9,7 @@ import com.weeth.domain.user.application.exception.UserProfileNotFoundException
 import com.weeth.domain.user.application.mapper.UserProfileMapper
 import com.weeth.domain.user.domain.entity.UserProfile
 import com.weeth.domain.user.domain.repository.UserProfileRepository
+import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.domain.user.fixture.UserTestFixture
 import com.weeth.global.common.id.TsidBase62Encoder
 import io.kotest.assertions.throwables.shouldThrow
@@ -25,17 +26,19 @@ class GetUserProfileQueryServiceTest :
     DescribeSpec({
         val userProfileRepository = mockk<UserProfileRepository>()
         val clubMemberReader = mockk<ClubMemberReader>()
+        val userReader = mockk<UserReader>()
         val fileAccessUrlPort = mockk<FileAccessUrlPort>()
         val userProfileMapper = UserProfileMapper(fileAccessUrlPort)
         val queryService =
             GetUserProfileQueryService(
                 userProfileRepository = userProfileRepository,
                 clubMemberReader = clubMemberReader,
+                userReader = userReader,
                 userProfileMapper = userProfileMapper,
             )
 
         beforeTest {
-            clearMocks(userProfileRepository, clubMemberReader, fileAccessUrlPort)
+            clearMocks(userProfileRepository, clubMemberReader, userReader, fileAccessUrlPort)
         }
 
         describe("findAll") {
@@ -53,9 +56,11 @@ class GetUserProfileQueryServiceTest :
                 every {
                     clubMemberReader.findAllByUserIdAndMemberStatusWithClubAndUserProfile(1L, MemberStatus.ACTIVE)
                 } returns listOf(member1, member2)
+                every { userReader.getById(1L) } returns user
 
                 val result = queryService.findAll(userId = 1L)
 
+                result.platformRole shouldBe null
                 result.profiles shouldHaveSize 2
                 result.profiles[0].profileId shouldBe 10L
                 result.profiles[0].name shouldBe "길동"
