@@ -1,6 +1,7 @@
 package com.weeth.domain.user.domain.entity
 
 import com.weeth.domain.user.domain.converter.EmailConverter
+import com.weeth.domain.user.domain.enums.PlatformRole
 import com.weeth.domain.user.domain.enums.Status
 import com.weeth.domain.user.domain.vo.Email
 import com.weeth.global.common.converter.PhoneNumberConverter
@@ -73,6 +74,11 @@ class User(
     var hardDeleteAfter: LocalDateTime? = null
         private set
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "platform_role", nullable = true, length = 20)
+    var platformRole: PlatformRole? = null
+        private set
+
     @Column(nullable = false)
     var termsAgreed: Boolean = false
         private set
@@ -105,6 +111,8 @@ class User(
         leftAt = now
         hardDeleteAfter = now.plusDays(RETENTION_DAYS)
     }
+
+    fun isDeveloper(): Boolean = platformRole == PlatformRole.DEVELOPER
 
     fun isActive(): Boolean = status == Status.ACTIVE
 
