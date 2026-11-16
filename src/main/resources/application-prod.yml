@@ -42,6 +42,9 @@ weeth:
     domain: ${COOKIE_DOMAIN:}
     same-site: ${COOKIE_SAME_SITE:Lax}
     secure: true
+  # FCM 알림 (공지 작성 시 알림 생성·푸시, 알림 API). 출시 전까지 끄고, 켤 때 Firebase 자격증명을 함께 넣는다.
+  notification:
+    enabled: ${NOTIFICATION_ENABLED:false}
   # 왁뿌볼 한도는 t4g.small 메모리 여유 기준 첫 오픈값(교실 4 × 12명). JVM 메모리·스왑을 보며 env로 올린다.
   wax:
     enabled: ${WAX_ENABLED:false}

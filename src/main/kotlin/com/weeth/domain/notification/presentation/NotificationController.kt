@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -30,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @Tag(name = "NOTIFICATION", description = "알림 API")
+@ConditionalOnProperty(prefix = "weeth.notification", name = ["enabled"], havingValue = "true")
 @RestController
 @RequestMapping("/api/v4")
 @ApiErrorCodeExample(NotificationErrorCode::class, ClubErrorCode::class, JwtErrorCode::class)

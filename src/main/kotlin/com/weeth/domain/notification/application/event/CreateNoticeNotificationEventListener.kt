@@ -7,10 +7,12 @@ import com.weeth.domain.notification.domain.enums.NotificationReferenceType
 import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.notification.domain.vo.NotificationContent
 import com.weeth.global.common.id.TsidBase62Encoder
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.stereotype.Component
 import org.springframework.transaction.event.TransactionPhase
 import org.springframework.transaction.event.TransactionalEventListener
 
+@ConditionalOnProperty(prefix = "weeth.notification", name = ["enabled"], havingValue = "true")
 @Component
 class CreateNoticeNotificationEventListener(
     private val clubMemberReader: ClubMemberReader,
