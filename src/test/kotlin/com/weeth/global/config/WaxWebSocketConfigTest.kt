@@ -5,6 +5,8 @@ import com.weeth.domain.minigame.presentation.WaxWebSocketHandler
 import com.weeth.global.config.properties.WaxProperties
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner
 import org.springframework.context.annotation.Bean
@@ -19,6 +21,9 @@ class WaxWebSocketConfigTest :
         class Base {
             @Bean
             fun objectMapper() = jacksonObjectMapper()
+
+            @Bean
+            fun meterRegistry() = SimpleMeterRegistry()
         }
 
         val runner =
@@ -48,6 +53,10 @@ class WaxWebSocketConfigTest :
                             .filterIsInstance<SimpleUrlHandlerMapping>()
                             .flatMap { it.urlMap.keys }
                     mapped.contains("/ws/wax") shouldBe true
+                    val registry = context.getBean(MeterRegistry::class.java)
+                    listOf("wax.connections", "wax.players", "wax.worlds").forEach { name ->
+                        registry.find(name).gauge()?.value() shouldBe 0.0
+                    }
                 }
         }
     })
