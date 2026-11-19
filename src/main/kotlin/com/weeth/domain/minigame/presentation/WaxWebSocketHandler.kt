@@ -6,6 +6,7 @@ import com.weeth.domain.minigame.domain.entity.WaxWorld
 import com.weeth.domain.minigame.domain.port.WaxRankingPort
 import com.weeth.domain.minigame.domain.vo.WaxEmote
 import com.weeth.domain.minigame.domain.vo.WaxNickname
+import com.weeth.domain.minigame.domain.vo.WaxPlayResult
 import com.weeth.domain.minigame.domain.vo.WaxPlayerToken
 import com.weeth.domain.minigame.domain.vo.WaxPrivatePlayer
 import com.weeth.domain.minigame.domain.vo.WaxPublicState
@@ -57,6 +58,9 @@ class WaxWebSocketHandler(
 
         /** 입장 때 받은 기기 토큰의 해시. 없으면 이번 판은 랭킹에 기록하지 않는다. */
         var rankingKey: String? = null
+
+        /** 이번 판에서 랭킹에 이미 넘긴 깬 왁스 수. 이보다 늘었을 때만 다시 넘긴다. */
+        var recordedWaxes = 0
     }
 
     private val lock = Any()
@@ -275,11 +279,14 @@ class WaxWebSocketHandler(
         val now = System.currentTimeMillis()
         val expired = mutableListOf<WebSocketSession>()
         val idle = mutableListOf<WebSocketSession>()
+        val progress = mutableListOf<WaxScore>()
         val frame =
             synchronized(lock) {
                 val delta = (now - previousTick) / 1000.0
                 previousTick = now
                 worlds.values.forEach { it.tick(now, delta) }
+                // 게임 중 랭킹이 보이므로 깰 때마다 바로 반영한다. 동점 순서도 그 개수를 처음 달성한 시각이 된다.
+                connections.values.forEach { connection -> progressOf(connection, now)?.let(progress::add) }
                 connections.values.forEach { connection ->
                     if (now - connection.lastSeen > 30000 ||
                         (connection.world == null && now - connection.joinedAt > properties.joinTimeoutMs)
@@ -303,6 +310,7 @@ class WaxWebSocketHandler(
                 }
             }
         frame?.let { broadcast(it) }
+        progress.forEach(::submit)
         expired.forEach { socket ->
             disconnect(socket.id)
             runCatching { socket.close(CloseStatus.NORMAL) }
@@ -364,14 +372,33 @@ class WaxWebSocketHandler(
         score?.let(::submit)
     }
 
-    /** 월드에서 내보내고, 랭킹에 남길 기록이 있으면 돌려준다. lock 안에서 부른다. */
+    /** 월드에서 내보내고, 아직 랭킹에 넘기지 않은 기록이 있으면 돌려준다. lock 안에서 부른다. */
     private fun scoreOf(
         connection: Connection,
         now: Instant,
     ): WaxScore? {
         val result = connection.world?.leave(connection.playerId) ?: return null
+        return newRecord(connection, result, now)
+    }
+
+    /** 게임 중 깬 왁스가 늘었으면 그 기록을 돌려준다. lock 안에서 부른다. */
+    private fun progressOf(
+        connection: Connection,
+        nowMillis: Long,
+    ): WaxScore? {
+        val result = connection.world?.playResult(connection.playerId) ?: return null
+        if (result.brokenWaxes <= connection.recordedWaxes) return null
+        return newRecord(connection, result, Instant.ofEpochMilli(nowMillis))
+    }
+
+    private fun newRecord(
+        connection: Connection,
+        result: WaxPlayResult,
+        now: Instant,
+    ): WaxScore? {
         val key = connection.rankingKey ?: return null
-        if (result.brokenWaxes <= 0) return null
+        if (result.brokenWaxes <= connection.recordedWaxes) return null
+        connection.recordedWaxes = result.brokenWaxes
         return WaxScore(key, result.name, result.brokenWaxes, now)
     }
 

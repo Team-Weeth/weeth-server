@@ -99,6 +99,9 @@ class WaxWorld(
         return available[random.nextInt(available.size)]
     }
 
+    /** 지금까지의 이번 판 기록. 없는 id면 null. */
+    fun playResult(id: String): WaxPlayResult? = players[id]?.let { WaxPlayResult(it.name, it.bigCracks) }
+
     /** 내보낸 플레이어의 이번 판 기록을 돌려준다. 이미 없는 id면 null. */
     fun leave(id: String): WaxPlayResult? {
         val player = players.remove(id) ?: return null

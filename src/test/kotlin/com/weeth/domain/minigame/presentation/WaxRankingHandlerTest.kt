@@ -165,6 +165,24 @@ class WaxRankingHandlerTest :
             }
         }
 
+        "게임 중 왁스를 깨면 나가기 전에도 그 기록을 바로 넘기고, 같은 개수는 다시 넘기지 않는다" {
+            withHandler { handler ->
+                val client = Client("1")
+                handler.afterConnectionEstablished(client.session)
+                handler.send(client, """{"type":"join","name":"왁뿌볼고수","token":"${token.value}"}""")
+                handler.breakWax(client)
+                val cracks = client.bigCracks()
+                verify(timeout = 2000) { ranking.record(match { it.brokenWaxes == cracks && it.name == "왁뿌볼고수" }) }
+                // 더 깨지 않고 나가면 이미 넘긴 기록이라 다시 넘기지 않는다.
+                handler.send(client, """{"type":"stand"}""")
+                Thread.sleep(200)
+                clearMocks(ranking)
+                handler.afterConnectionClosed(client.session, CloseStatus.NORMAL)
+                Thread.sleep(300)
+                verify(exactly = 0) { ranking.record(match { it.brokenWaxes <= cracks }) }
+            }
+        }
+
         "서버가 내려갈 때도 남아 있던 플레이어의 기록을 넘긴다" {
             val handler = WaxWebSocketHandler(mapper, WaxProperties(), ranking)
             val client = Client("1")
@@ -172,7 +190,7 @@ class WaxRankingHandlerTest :
             handler.send(client, """{"type":"join","token":"${token.value}"}""")
             handler.breakWax(client)
             handler.close()
-            verify(exactly = 1) { ranking.record(match { it.tokenHash == token.hash() && it.brokenWaxes > 0 }) }
+            verify(atLeast = 1) { ranking.record(match { it.tokenHash == token.hash() && it.brokenWaxes > 0 }) }
         }
 
         "토큰이 없거나 형식이 틀리거나 깬 왁스가 없으면 기록하지 않는다" {
