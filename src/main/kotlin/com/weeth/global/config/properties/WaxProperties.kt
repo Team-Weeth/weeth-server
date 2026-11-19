@@ -30,4 +30,6 @@ data class WaxProperties(
      * 열어만 둔 탭이 자리와 송신량(연결당 약 20KB/s)을 계속 차지하지 않게 한다.
      */
     val idleTimeoutMs: Long = 300_000,
+    /** 연결한 뒤 입장(join)하지 않고 버틸 수 있는 시간. 닉네임 결정 모달에서 이름을 고르는 동안 끊기지 않게 넉넉히 둔다. */
+    val joinTimeoutMs: Long = 120_000,
 )

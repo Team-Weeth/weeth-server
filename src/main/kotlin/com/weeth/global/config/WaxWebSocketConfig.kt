@@ -1,6 +1,7 @@
 package com.weeth.global.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.weeth.domain.minigame.domain.port.WaxRankingPort
 import com.weeth.domain.minigame.presentation.WaxWebSocketHandler
 import com.weeth.global.config.properties.WaxProperties
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -20,8 +21,9 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 class WaxWebSocketConfig(
     objectMapper: ObjectMapper,
     private val properties: WaxProperties,
+    ranking: WaxRankingPort,
 ) : WebSocketConfigurer {
-    private val handler = WaxWebSocketHandler(objectMapper, properties)
+    private val handler = WaxWebSocketHandler(objectMapper, properties, ranking)
 
     @Bean(destroyMethod = "close")
     fun waxWebSocketHandler() = handler

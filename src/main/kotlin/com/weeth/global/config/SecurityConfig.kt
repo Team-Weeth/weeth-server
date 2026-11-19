@@ -57,6 +57,8 @@ class SecurityConfig(
                     // 왁뿌볼은 로그인 없는 게스트 게임이다. 접속 제한은 핸들러(origin·IP·인원)가 맡는다.
                     .requestMatchers("/ws/wax")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/v4/minigame/wax/rankings")
+                    .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v4/clubs/*")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v4/university/*")

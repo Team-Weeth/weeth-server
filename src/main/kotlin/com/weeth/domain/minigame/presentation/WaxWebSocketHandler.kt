@@ -3,10 +3,16 @@ package com.weeth.domain.minigame.presentation
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.weeth.domain.minigame.domain.entity.WaxWorld
+import com.weeth.domain.minigame.domain.port.WaxRankingPort
 import com.weeth.domain.minigame.domain.vo.WaxEmote
+import com.weeth.domain.minigame.domain.vo.WaxNickname
+import com.weeth.domain.minigame.domain.vo.WaxPlayResult
+import com.weeth.domain.minigame.domain.vo.WaxPlayerToken
 import com.weeth.domain.minigame.domain.vo.WaxPrivatePlayer
 import com.weeth.domain.minigame.domain.vo.WaxPublicState
+import com.weeth.domain.minigame.domain.vo.WaxScore
 import com.weeth.global.config.properties.WaxProperties
+import org.slf4j.LoggerFactory
 import org.springframework.context.event.ContextClosedEvent
 import org.springframework.context.event.EventListener
 import org.springframework.web.socket.CloseStatus
@@ -14,6 +20,7 @@ import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import org.springframework.web.socket.handler.ConcurrentWebSocketSessionDecorator
 import org.springframework.web.socket.handler.TextWebSocketHandler
+import java.time.Instant
 import java.util.IdentityHashMap
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -29,6 +36,8 @@ class WaxRejection(
 class WaxWebSocketHandler(
     private val mapper: ObjectMapper,
     private val properties: WaxProperties = WaxProperties(),
+    /** null이면 랭킹을 기록하지 않는다(로컬 프로토타입·테스트). */
+    private val ranking: WaxRankingPort? = null,
 ) : TextWebSocketHandler(),
     AutoCloseable {
     private class Connection(
@@ -46,6 +55,12 @@ class WaxWebSocketHandler(
 
         /** 마지막 플레이 입력 시각. heartbeat로는 갱신하지 않는다. */
         var lastActiveAt = joinedAt
+
+        /** 입장 때 받은 기기 토큰의 해시. 없으면 이번 판은 랭킹에 기록하지 않는다. */
+        var rankingKey: String? = null
+
+        /** 이번 판에서 랭킹에 이미 넘긴 깬 왁스 수. 이보다 늘었을 때만 다시 넘긴다. */
+        var recordedWaxes = 0
     }
 
     private val lock = Any()
@@ -58,6 +73,12 @@ class WaxWebSocketHandler(
                 isDaemon =
                     true
             }
+        }
+
+    /** 랭킹 저장(Redis)이 느려져도 tick·메시지 처리 스레드가 기다리지 않게 기록은 따로 처리한다. */
+    private val recorder =
+        Executors.newSingleThreadExecutor { task ->
+            Thread(task, "wax-ranking").apply { isDaemon = true }
         }
     private var previousTick = System.currentTimeMillis()
     private var previousBroadcast = 0L
@@ -94,7 +115,13 @@ class WaxWebSocketHandler(
         if (rejection != null) {
             runCatching { session.sendMessage(TextMessage(mapper.writeValueAsString(errorMessage(rejection)))) }
             session.close(CloseStatus.SERVICE_OVERLOAD)
+            return
         }
+        // 닉네임 결정 모달에 띄울 추천 이름. 그대로 입장하면 join의 name으로 돌아온다.
+        send(
+            session.id,
+            mapper.writeValueAsString(mapOf("type" to "hello", "suggestion" to WaxNickname.random().value)),
+        )
     }
 
     private fun clientIp(session: WebSocketSession): String {
@@ -157,11 +184,15 @@ class WaxWebSocketHandler(
         val type = json.path("type").asText()
         if (type == "join") {
             require(connection.world == null) { "이미 입장했어요." }
+            val name = if (json.has("name")) nickname(json["name"]) else null
             val world = if (json.has("worldId")) invitedWorld(json["worldId"]) else openWorld()
             val playerId = (++nextPlayerId).toString(36)
-            val welcome = world.join(playerId)
+            val welcome = world.join(playerId, name)
             connection.world = world
             connection.playerId = playerId
+            // 토큰이 없거나 형식이 틀려도 게임은 할 수 있게 하고, 랭킹 기록만 건너뛴다.
+            connection.rankingKey =
+                WaxPlayerToken.parseOrNull(json.path("token").takeIf { it.isTextual }?.asText())?.hash()
             return welcome.copy(idleTimeoutMs = properties.idleTimeoutMs)
         }
         val world = requireNotNull(connection.world) { "먼저 입장해주세요." }
@@ -200,6 +231,13 @@ class WaxWebSocketHandler(
             }
         }
         return null
+    }
+
+    /** 클라이언트가 규칙 위반을 구분해 다시 입력받을 수 있게 전용 코드로 거절한다. */
+    private fun nickname(node: JsonNode): WaxNickname {
+        if (!node.isTextual) throw WaxRejection("invalid_name", "닉네임을 다시 입력해주세요.")
+        return runCatching { WaxNickname(node.asText().trim()) }
+            .getOrElse { throw WaxRejection("invalid_name", it.message ?: "닉네임을 다시 입력해주세요.") }
     }
 
     /**
@@ -241,14 +279,17 @@ class WaxWebSocketHandler(
         val now = System.currentTimeMillis()
         val expired = mutableListOf<WebSocketSession>()
         val idle = mutableListOf<WebSocketSession>()
+        val progress = mutableListOf<WaxScore>()
         val frame =
             synchronized(lock) {
                 val delta = (now - previousTick) / 1000.0
                 previousTick = now
                 worlds.values.forEach { it.tick(now, delta) }
+                // 게임 중 랭킹이 보이므로 깰 때마다 바로 반영한다. 동점 순서도 그 개수를 처음 달성한 시각이 된다.
+                connections.values.forEach { connection -> progressOf(connection, now)?.let(progress::add) }
                 connections.values.forEach { connection ->
                     if (now - connection.lastSeen > 30000 ||
-                        (connection.world == null && now - connection.joinedAt > 10000)
+                        (connection.world == null && now - connection.joinedAt > properties.joinTimeoutMs)
                     ) {
                         expired.add(connection.socket)
                     } else if (connection.world != null && now - connection.lastActiveAt > properties.idleTimeoutMs) {
@@ -269,6 +310,7 @@ class WaxWebSocketHandler(
                 }
             }
         frame?.let { broadcast(it) }
+        progress.forEach(::submit)
         expired.forEach { socket ->
             disconnect(socket.id)
             runCatching { socket.close(CloseStatus.NORMAL) }
@@ -322,10 +364,51 @@ class WaxWebSocketHandler(
     }
 
     private fun disconnect(id: String) {
-        synchronized(lock) {
-            val connection = connections.remove(id) ?: return
-            connection.world?.leave(connection.playerId)
-        }
+        val score =
+            synchronized(lock) {
+                val connection = connections.remove(id) ?: return
+                scoreOf(connection, Instant.now())
+            }
+        score?.let(::submit)
+    }
+
+    /** 월드에서 내보내고, 아직 랭킹에 넘기지 않은 기록이 있으면 돌려준다. lock 안에서 부른다. */
+    private fun scoreOf(
+        connection: Connection,
+        now: Instant,
+    ): WaxScore? {
+        val result = connection.world?.leave(connection.playerId) ?: return null
+        return newRecord(connection, result, now)
+    }
+
+    /** 게임 중 깬 왁스가 늘었으면 그 기록을 돌려준다. lock 안에서 부른다. */
+    private fun progressOf(
+        connection: Connection,
+        nowMillis: Long,
+    ): WaxScore? {
+        val result = connection.world?.playResult(connection.playerId) ?: return null
+        if (result.brokenWaxes <= connection.recordedWaxes) return null
+        return newRecord(connection, result, Instant.ofEpochMilli(nowMillis))
+    }
+
+    private fun newRecord(
+        connection: Connection,
+        result: WaxPlayResult,
+        now: Instant,
+    ): WaxScore? {
+        val key = connection.rankingKey ?: return null
+        if (result.brokenWaxes <= connection.recordedWaxes) return null
+        connection.recordedWaxes = result.brokenWaxes
+        return WaxScore(key, result.name, result.brokenWaxes, now)
+    }
+
+    private fun submit(score: WaxScore) {
+        val ranking = ranking ?: return
+        runCatching {
+            recorder.execute {
+                runCatching { ranking.record(score) }.onFailure { log.warn("왁뿌볼 랭킹 기록 실패: {}", it.message) }
+            }
+        }.onFailure { log.warn("왁뿌볼 랭킹 기록을 넘기지 못함: {}", it.message) }
     }
 
     /**
@@ -341,20 +424,28 @@ class WaxWebSocketHandler(
         // 진행 중인 tick이 끝나길 기다린 뒤 보내야 동시 전송 버퍼에 걸리지 않고 공지가 바로 나간다.
         scheduler.shutdown()
         if (!scheduler.awaitTermination(SHUTDOWN_WAIT_MS, TimeUnit.MILLISECONDS)) scheduler.shutdownNow()
-        val sockets =
+        val now = Instant.now()
+        val (sockets, scores) =
             synchronized(lock) {
-                connections.values.map { it.socket }.also {
-                    connections.clear()
-                    worlds.clear()
-                }
+                val sockets = connections.values.map { it.socket }
+                // 배포·재시작으로 끊기는 판의 기록도 남긴다.
+                val scores = connections.values.mapNotNull { scoreOf(it, now) }
+                connections.clear()
+                worlds.clear()
+                sockets to scores
             }
+        scores.forEach(::submit)
+        recorder.shutdown()
         sockets.forEach { socket ->
             runCatching { socket.sendMessage(TextMessage(RESTART_NOTICE)) }
             runCatching { socket.close(CloseStatus.GOING_AWAY) }
         }
+        // 공지를 먼저 보낸 뒤, 남은 랭킹 기록이 Redis에 들어갈 시간을 준다.
+        if (!recorder.awaitTermination(SHUTDOWN_WAIT_MS, TimeUnit.MILLISECONDS)) recorder.shutdownNow()
     }
 
     companion object {
+        private val log = LoggerFactory.getLogger(WaxWebSocketHandler::class.java)
         private const val TICK_MS = 50L
         private const val SHUTDOWN_WAIT_MS = 2000L
         private const val MAX_MESSAGES_PER_SECOND = 60
