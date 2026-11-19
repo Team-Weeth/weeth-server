@@ -3,6 +3,8 @@ package com.weeth.domain.minigame.domain.entity
 import com.weeth.domain.minigame.domain.vo.WaxEjection
 import com.weeth.domain.minigame.domain.vo.WaxEmote
 import com.weeth.domain.minigame.domain.vo.WaxLayout
+import com.weeth.domain.minigame.domain.vo.WaxNickname
+import com.weeth.domain.minigame.domain.vo.WaxPlayResult
 import com.weeth.domain.minigame.domain.vo.WaxPlayerStatus
 import com.weeth.domain.minigame.domain.vo.WaxPoint
 import com.weeth.domain.minigame.domain.vo.WaxPrivatePlayer
@@ -75,11 +77,15 @@ class WaxWorld(
     val size: Int get() = players.size
     val isFull: Boolean get() = players.size >= capacity
 
-    fun join(id: String): WaxWelcome {
+    /** [name]이 없으면 같은 교실에서 겹치지 않는 추천 후보를 고른다. 직접 정한 이름은 겹쳐도 받는다. */
+    fun join(
+        id: String,
+        name: WaxNickname? = null,
+    ): WaxWelcome {
         require(id !in players) { "이미 입장했어요." }
         require(!isFull) { "교실이 가득 찼어요. 잠시 후 다시 와주세요." }
-        // 캐릭터 5종과 이름을 입장할 때마다 무작위로 고른다.
-        val name = pickNickname()
+        // 캐릭터 5종은 입장할 때마다 무작위로 고른다.
+        val name = name?.value ?: pickNickname()
         val character = WaxLayout.STUDENT_CHARACTERS[random.nextInt(WaxLayout.STUDENT_CHARACTERS.size)]
         players[id] = Player(id, name, character, random.nextDouble(-3.0, 3.0), 4.5)
         return WaxWelcome(this.id, id, layout)
@@ -88,16 +94,19 @@ class WaxWorld(
     /** 같은 교실에서 이름이 겹치지 않게 남은 후보에서 고른다. 후보를 다 쓰면 겹침을 허용한다. */
     private fun pickNickname(): String {
         val taken = players.values.mapTo(HashSet()) { it.name }
-        val available = NICKNAMES.filter { it !in taken }.ifEmpty { NICKNAMES }
+        val candidates = WaxNickname.CANDIDATES
+        val available = candidates.filter { it !in taken }.ifEmpty { candidates }
         return available[random.nextInt(available.size)]
     }
 
-    fun leave(id: String) {
-        players.remove(id) ?: return
+    /** 내보낸 플레이어의 이번 판 기록을 돌려준다. 이미 없는 id면 null. */
+    fun leave(id: String): WaxPlayResult? {
+        val player = players.remove(id) ?: return null
         professors.values.forEach { professor ->
             professor.queue.remove(id)
             if (professor.targetId == id) startReturn(professor)
         }
+        return WaxPlayResult(player.name, player.bigCracks)
     }
 
     fun move(
@@ -457,39 +466,6 @@ class WaxWorld(
                 WaxProfessorMode.CHASING to 1.6,
                 WaxProfessorMode.WHACKING to 1.6,
                 WaxProfessorMode.RETURNING to 1.6,
-            )
-
-        /** 학교·강의실 콘셉트의 닉네임 후보. */
-        internal val NICKNAMES =
-            listOf(
-                "졸고 있는 새내기",
-                "당당한 지각생",
-                "수상한 복학생",
-                "용감한 청강생",
-                "배고픈 대학원생",
-                "억울한 재수강생",
-                "딴짓하는 장학생",
-                "조용한 수강생",
-                "뻔뻔한 지각생",
-                "은밀한 지각생",
-                "대담한 새내기",
-                "들킬 뻔한 복학생",
-                "긴장한 장학생",
-                "수상한 뒷자리생",
-                "눈치 빠른 신입생",
-                "몰래 노는 과대표",
-                "겁 없는 재수강생",
-                "학점 잃은 새내기",
-                "출석만 하는 복학생",
-                "과제 밀린 복학생",
-                "종강 찾는 대학생",
-                "학식 먹는 지각생",
-                "출튀하는 복학생",
-                "밤샌 대학원생",
-                "학점 줍는 재수강생",
-                "은밀한 복학생",
-                "수상한 새내기",
-                "대담한 지각생",
             )
 
         private fun round2(value: Double) = (value * 100).roundToLong() / 100.0
