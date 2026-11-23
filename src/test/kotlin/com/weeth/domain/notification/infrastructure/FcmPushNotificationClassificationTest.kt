@@ -71,7 +71,8 @@ class FcmPushNotificationClassificationTest :
             val batch = mockk<BatchResponse>()
             every { batch.responses } returns emptyList()
             every { firebase.sendEachForMulticast(any()) } returns batch
-            adapter.sendMulticast(command).outcomes.size shouldBe 4
-            adapter.sendMulticast(command).outcomes.all { it.errorCode == "FCM_INCOMPLETE_RESPONSE" } shouldBe true
+            val result = adapter.sendMulticast(command)
+            result.outcomes.size shouldBe 4
+            result.outcomes.all { it.errorCode == "FCM_INCOMPLETE_RESPONSE" } shouldBe true
         }
     })

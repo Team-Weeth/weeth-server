@@ -48,68 +48,28 @@ class UniversityCacheIntegrationTest(
         }
 
         describe("getSchools") {
-            context("캐시 미스") {
-                it("UniversityInfoPort를 1번 호출하고 결과를 반환한다") {
-                    every { universityInfoPort.getSchools() } returns schoolData
+            it("캐시 미스 결과를 저장하고 재조회하면 포트 호출 없이 같은 결과를 반환한다") {
+                every { universityInfoPort.getSchools() } returns schoolData
 
-                    val result = getUniversityQueryService.getSchools()
+                val first = getUniversityQueryService.getSchools()
+                val second = getUniversityQueryService.getSchools()
 
-                    result shouldHaveSize 20
-                    verify(exactly = 1) { universityInfoPort.getSchools() }
-                }
-            }
-
-            context("캐시 히트") {
-                it("두 번 호출해도 포트는 1번만 호출된다") {
-                    every { universityInfoPort.getSchools() } returns schoolData
-
-                    getUniversityQueryService.getSchools() // cache miss
-                    getUniversityQueryService.getSchools() // cache hit
-
-                    verify(exactly = 1) { universityInfoPort.getSchools() }
-                }
-
-                it("캐시에서 반환한 결과가 포트 응답과 동일하다") {
-                    every { universityInfoPort.getSchools() } returns schoolData
-
-                    val first = getUniversityQueryService.getSchools()
-                    val second = getUniversityQueryService.getSchools()
-
-                    first shouldBe second
-                }
+                first shouldHaveSize 20
+                second shouldBe first
+                verify(exactly = 1) { universityInfoPort.getSchools() }
             }
         }
 
         describe("getMajors") {
-            context("캐시 미스") {
-                it("UniversityInfoPort를 1번 호출하고 결과를 반환한다") {
-                    every { universityInfoPort.getMajors() } returns majorData
+            it("수동 학과를 포함한 결과를 저장하고 재조회하면 포트 호출 없이 같은 결과를 반환한다") {
+                every { universityInfoPort.getMajors() } returns majorData
 
-                    val result = getUniversityQueryService.getMajors()
+                val first = getUniversityQueryService.getMajors()
+                val second = getUniversityQueryService.getMajors()
 
-                    result shouldHaveSize 21
-                    verify(exactly = 1) { universityInfoPort.getMajors() }
-                }
-            }
-
-            context("캐시 히트") {
-                it("두 번 호출해도 포트는 1번만 호출된다") {
-                    every { universityInfoPort.getMajors() } returns majorData
-
-                    getUniversityQueryService.getMajors() // cache miss
-                    getUniversityQueryService.getMajors() // cache hit
-
-                    verify(exactly = 1) { universityInfoPort.getMajors() }
-                }
-
-                it("캐시에서 반환한 결과가 포트 응답과 동일하다") {
-                    every { universityInfoPort.getMajors() } returns majorData
-
-                    val first = getUniversityQueryService.getMajors()
-                    val second = getUniversityQueryService.getMajors()
-
-                    first shouldBe second
-                }
+                first shouldHaveSize 21
+                second shouldBe first
+                verify(exactly = 1) { universityInfoPort.getMajors() }
             }
         }
     })

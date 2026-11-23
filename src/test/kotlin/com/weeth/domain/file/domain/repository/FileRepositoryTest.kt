@@ -26,27 +26,6 @@ class FileRepositoryTest(
     private val jdbcTemplate: JdbcTemplate,
     private val entityManager: EntityManager,
 ) : DescribeSpec({
-        describe("save") {
-            it("파일 정보를 저장하고 조회한다") {
-                val saved =
-                    fileRepository.save(
-                        createTestFile(
-                            fileName = "notice-image.png",
-                            ownerType = FileOwnerType.POST,
-                            ownerId = 101L,
-                            status = FileStatus.UPLOADED,
-                        ),
-                    )
-
-                val found = fileRepository.findById(saved.id).orElseThrow()
-
-                found.fileName shouldBe "notice-image.png"
-                found.ownerType shouldBe FileOwnerType.POST
-                found.ownerId shouldBe 101L
-                found.status shouldBe FileStatus.UPLOADED
-            }
-        }
-
         describe("findAll/exists") {
             it("기본 단건 owner 조회는 업로드 상태인 파일만 반환한다") {
                 fileRepository.save(createTestFile("target.png", FileOwnerType.COMMENT, 77L, FileStatus.UPLOADED))
@@ -67,6 +46,10 @@ class FileRepositoryTest(
                 val files = fileRepository.findAll(FileOwnerType.POST, listOf(77L, 78L))
 
                 files.map { it.fileName }.sorted() shouldContainExactly listOf("target-1.png", "target-2.png")
+                fileRepository
+                    .findAll(FileOwnerType.POST, listOf(77L, 78L), FileStatus.UPLOADED)
+                    .map { it.fileName }
+                    .sorted() shouldContainExactly listOf("target-1.png", "target-2.png")
             }
 
             it("ownerType + ownerId + status 조건에 맞는 데이터만 조회한다") {
@@ -86,15 +69,6 @@ class FileRepositoryTest(
                 fileRepository.exists(FileOwnerType.POST, 77L, FileStatus.UPLOADED).shouldBeTrue()
                 fileRepository.exists(FileOwnerType.POST, 77L, FileStatus.DELETED).shouldBeTrue()
                 fileRepository.exists(FileOwnerType.POST, 99L, FileStatus.UPLOADED).shouldBeFalse()
-            }
-
-            it("ownerId 목록 조회에서도 업로드 상태인 파일만 반환한다") {
-                fileRepository.save(createTestFile("target-1.png", FileOwnerType.POST, 77L, FileStatus.UPLOADED))
-                fileRepository.save(createTestFile("target-2.png", FileOwnerType.POST, 78L, FileStatus.UPLOADED))
-
-                val files = fileRepository.findAll(FileOwnerType.POST, listOf(77L, 78L), FileStatus.UPLOADED)
-
-                files.map { it.fileName }.sorted() shouldContainExactly listOf("target-1.png", "target-2.png")
             }
         }
 
