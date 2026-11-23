@@ -6,6 +6,7 @@ import com.weeth.domain.minigame.domain.port.WaxRankingPort
 import com.weeth.domain.minigame.domain.vo.WaxLayout
 import com.weeth.domain.minigame.domain.vo.WaxNickname
 import com.weeth.domain.minigame.domain.vo.WaxPlayerToken
+import com.weeth.domain.minigame.domain.vo.WaxScore
 import com.weeth.global.config.properties.WaxProperties
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldBeIn
@@ -19,6 +20,7 @@ import org.springframework.web.socket.CloseStatus
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.math.hypot
 
@@ -162,6 +164,26 @@ class WaxRankingHandlerTest :
                 verify(timeout = 2000) {
                     ranking.record(match { it.tokenHash == token.hash() && it.name == "왁뿌볼고수" && it.brokenWaxes > 0 })
                 }
+            }
+        }
+
+        "랭킹 저장이 잠깐 실패하면 같은 기록을 다시 시도한다" {
+            // 기록(개수)마다 처음 두 번은 실패시킨다. 그사이 더 깨져 다른 개수가 넘어와도 셈이 섞이지 않게 나눠 센다.
+            val attempts = ConcurrentHashMap<Int, Int>()
+            every { ranking.record(any()) } answers {
+                if ((attempts.merge(firstArg<WaxScore>().brokenWaxes, 1, Int::plus) ?: 0) <
+                    3
+                ) {
+                    throw IllegalStateException("redis down")
+                }
+            }
+            withHandler { handler ->
+                val client = Client("1")
+                handler.afterConnectionEstablished(client.session)
+                handler.send(client, """{"type":"join","name":"왁뿌볼고수","token":"${token.value}"}""")
+                handler.breakWax(client)
+                val cracks = client.bigCracks()
+                verify(timeout = 2000, exactly = 3) { ranking.record(match { it.brokenWaxes == cracks }) }
             }
         }
 

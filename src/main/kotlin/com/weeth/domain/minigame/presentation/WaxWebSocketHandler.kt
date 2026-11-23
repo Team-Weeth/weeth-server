@@ -404,11 +404,36 @@ class WaxWebSocketHandler(
 
     private fun submit(score: WaxScore) {
         val ranking = ranking ?: return
-        runCatching {
-            recorder.execute {
-                runCatching { ranking.record(score) }.onFailure { log.warn("왁뿌볼 랭킹 기록 실패: {}", it.message) }
+        runCatching { recorder.execute { record(ranking, score) } }
+            .onFailure { log.warn("왁뿌볼 랭킹 기록을 넘기지 못함: {}", it.message) }
+    }
+
+    /**
+     * 넘긴 개수는 [newRecord]에서 이미 기록한 것으로 표시돼 다시 넘어오지 않으므로, 순간적인 Redis 오류는 여기서 몇 번 더 시도한다.
+     * 랭킹 저장은 더 높은 점수만 남기므로 같은 기록을 다시 보내도 결과가 같다.
+     */
+    private fun record(
+        ranking: WaxRankingPort,
+        score: WaxScore,
+    ) {
+        repeat(RECORD_ATTEMPTS) { attempt ->
+            try {
+                ranking.record(score)
+                return
+            } catch (error: Exception) {
+                if (attempt == RECORD_ATTEMPTS - 1) {
+                    log.warn("왁뿌볼 랭킹 기록 실패: {}", error.message)
+                    return
+                }
             }
-        }.onFailure { log.warn("왁뿌볼 랭킹 기록을 넘기지 못함: {}", it.message) }
+            try {
+                Thread.sleep(RECORD_RETRY_DELAY_MS * (attempt + 1))
+            } catch (_: InterruptedException) {
+                Thread.currentThread().interrupt()
+                log.warn("왁뿌볼 랭킹 기록 재시도 중단")
+                return
+            }
+        }
     }
 
     /**
@@ -448,6 +473,8 @@ class WaxWebSocketHandler(
         private val log = LoggerFactory.getLogger(WaxWebSocketHandler::class.java)
         private const val TICK_MS = 50L
         private const val SHUTDOWN_WAIT_MS = 2000L
+        private const val RECORD_ATTEMPTS = 3
+        private const val RECORD_RETRY_DELAY_MS = 100L
         private const val MAX_MESSAGES_PER_SECOND = 60
         private val WORLD_ID = Regex("[a-z0-9]{8}")
         private const val IDLE_NOTICE =
