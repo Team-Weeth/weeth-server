@@ -4,7 +4,7 @@ import com.weeth.domain.board.application.event.NoticeCreatedEvent
 import com.weeth.domain.club.domain.repository.ClubMemberReader
 import com.weeth.domain.notification.application.usecase.command.CreateNotificationUseCase
 import com.weeth.domain.notification.domain.enums.NotificationReferenceType
-import com.weeth.domain.notification.domain.vo.NotificationContent
+import com.weeth.domain.notification.domain.vo.NotificationRequest
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.mockk.every
@@ -19,7 +19,7 @@ class CreateNoticeNotificationEventListenerTest :
         val listener = CreateNoticeNotificationEventListener(clubMemberReader, createNotificationUseCase)
 
         "공지 이벤트를 공통 알림 내용으로 변환한다" {
-            val contentSlot = slot<NotificationContent>()
+            val contentSlot = slot<NotificationRequest>()
             every {
                 clubMemberReader.findActiveUserIdsByClubIdExcludingUserId(62L, 7, 1L)
             } returns listOf(2L, 3L)
@@ -40,5 +40,7 @@ class CreateNoticeNotificationEventListenerTest :
             contentSlot.captured.referenceId shouldBe 100L
             contentSlot.captured.targetPath shouldBe "/clubs/10/boards/10/posts/100"
             contentSlot.captured.data["clubId"] shouldBe "10"
+            contentSlot.captured.eventId shouldBe "NOTICE_CREATED:62:100"
+            contentSlot.captured.variables shouldBe mapOf("noticeTitle" to "중간고사 기간 공지")
         }
     })
