@@ -1,6 +1,7 @@
 package com.weeth.global.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.weeth.domain.minigame.domain.port.WaxRankingPort
 import com.weeth.domain.minigame.presentation.WaxWebSocketHandler
 import com.weeth.global.config.properties.WaxProperties
 import io.micrometer.core.instrument.MeterRegistry
@@ -22,8 +23,9 @@ class WaxWebSocketConfig(
     objectMapper: ObjectMapper,
     private val properties: WaxProperties,
     meterRegistry: MeterRegistry,
+    ranking: WaxRankingPort,
 ) : WebSocketConfigurer {
-    private val handler = WaxWebSocketHandler(objectMapper, properties, meterRegistry)
+    private val handler = WaxWebSocketHandler(objectMapper, properties, meterRegistry, ranking)
 
     @Bean(destroyMethod = "close")
     fun waxWebSocketHandler() = handler

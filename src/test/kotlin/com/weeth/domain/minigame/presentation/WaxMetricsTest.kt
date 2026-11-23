@@ -98,4 +98,13 @@ class WaxMetricsTest :
                 registry.find("wax.rejections").counters().size shouldBe 0
             }
         }
+
+        "한도와 상관없는 닉네임 거절은 거절 수에 넣지 않는다" {
+            withHandler { handler, registry ->
+                val a = session("1")
+                handler.afterConnectionEstablished(a)
+                handler.handleMessage(a, TextMessage("""{"type":"join","name":"특수!"}"""))
+                registry.find("wax.rejections").counters().size shouldBe 0
+            }
+        }
     })

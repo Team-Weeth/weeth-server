@@ -1,12 +1,14 @@
 package com.weeth.global.config
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.weeth.domain.minigame.domain.port.WaxRankingPort
 import com.weeth.domain.minigame.presentation.WaxWebSocketHandler
 import com.weeth.global.config.properties.WaxProperties
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.micrometer.core.instrument.MeterRegistry
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry
+import io.mockk.mockk
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.test.context.runner.WebApplicationContextRunner
 import org.springframework.context.annotation.Bean
@@ -24,6 +26,9 @@ class WaxWebSocketConfigTest :
 
             @Bean
             fun meterRegistry() = SimpleMeterRegistry()
+
+            @Bean
+            fun waxRankingPort() = mockk<WaxRankingPort>(relaxed = true)
         }
 
         val runner =

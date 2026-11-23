@@ -2,6 +2,8 @@ package com.weeth.domain.minigame.domain.entity
 
 import com.weeth.domain.minigame.domain.vo.WaxEmote
 import com.weeth.domain.minigame.domain.vo.WaxLayout
+import com.weeth.domain.minigame.domain.vo.WaxNickname
+import com.weeth.domain.minigame.domain.vo.WaxPlayResult
 import com.weeth.domain.minigame.domain.vo.WaxPlayerStatus
 import com.weeth.domain.minigame.domain.vo.WaxProfessorMode
 import io.kotest.assertions.throwables.shouldThrow
@@ -59,22 +61,22 @@ class WaxWorldTest :
         }
 
         "입장하면 학교 테마 후보 중 하나를 닉네임으로 받고, 같은 교실에서는 겹치지 않는다" {
-            val world = WaxWorld("names", Random(3), capacity = WaxWorld.NICKNAMES.size)
-            WaxWorld.NICKNAMES.indices.forEach { world.join("p$it") }
+            val world = WaxWorld("names", Random(3), capacity = WaxNickname.CANDIDATES.size)
+            WaxNickname.CANDIDATES.indices.forEach { world.join("p$it") }
 
             val names = world.publicState(0).players.map { it.name }
-            names.toSet() shouldBe WaxWorld.NICKNAMES.toSet()
+            names.toSet() shouldBe WaxNickname.CANDIDATES.toSet()
         }
 
         "후보를 모두 쓴 교실에서도 입장할 수 있다" {
-            val world = WaxWorld("names", Random(3), capacity = WaxWorld.NICKNAMES.size + 1)
-            (0..WaxWorld.NICKNAMES.size).forEach { world.join("p$it") }
+            val world = WaxWorld("names", Random(3), capacity = WaxNickname.CANDIDATES.size + 1)
+            (0..WaxNickname.CANDIDATES.size).forEach { world.join("p$it") }
 
             world
                 .publicState(0)
                 .players
                 .last()
-                .name shouldBeIn WaxWorld.NICKNAMES
+                .name shouldBeIn WaxNickname.CANDIDATES
         }
 
         "복도에서 문을 지나 걸어 들어가면 좌표로 강의실을 판정한다" {
@@ -138,6 +140,32 @@ class WaxWorldTest :
             }
             world.snapshot("soft", 2600).you.bigCracks shouldBeGreaterThan 0
             world.snapshot("soft", 2600).you.layer shouldBeGreaterThan 0
+        }
+
+        "직접 정한 닉네임으로 입장하고, 같은 교실에서 겹쳐도 받는다" {
+            val world = WaxWorld("custom", Random(1))
+            world.join("a", WaxNickname("왁뿌볼고수"))
+            world.join("b", WaxNickname("왁뿌볼고수"))
+            world.publicState(0).players.map { it.name } shouldBe listOf("왁뿌볼고수", "왁뿌볼고수")
+        }
+
+        "나가면 이번 판 이름과 깬 왁스 수를 돌려주고, 없는 id면 null이다" {
+            val soft = room.seats.first { layout.variants[it.variant].hardness >= 46.0 }
+            val world = seatedWorld("soft" to soft.index)
+            for (now in 50L..2600L step 50) {
+                world.press("soft", true, now)
+                world.tick(now, 0.05)
+            }
+            val cracks = world.snapshot("soft", 2600).you.bigCracks
+            cracks shouldBeGreaterThan 0
+            val name =
+                world
+                    .publicState(2600)
+                    .players
+                    .single()
+                    .name
+            world.leave("soft") shouldBe WaxPlayResult(name, cracks)
+            world.leave("soft") shouldBe null
         }
 
         "손을 떼면 소음이 내려가고 입력이 끊기면 자동으로 손을 뗀다" {
