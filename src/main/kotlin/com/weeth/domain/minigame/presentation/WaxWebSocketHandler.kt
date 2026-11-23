@@ -12,6 +12,10 @@ import com.weeth.domain.minigame.domain.vo.WaxPrivatePlayer
 import com.weeth.domain.minigame.domain.vo.WaxPublicState
 import com.weeth.domain.minigame.domain.vo.WaxScore
 import com.weeth.global.config.properties.WaxProperties
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.Gauge
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry
 import org.slf4j.LoggerFactory
 import org.springframework.context.event.ContextClosedEvent
 import org.springframework.context.event.EventListener
@@ -36,6 +40,7 @@ class WaxRejection(
 class WaxWebSocketHandler(
     private val mapper: ObjectMapper,
     private val properties: WaxProperties = WaxProperties(),
+    private val meterRegistry: MeterRegistry = SimpleMeterRegistry(),
     /** null이면 랭킹을 기록하지 않는다(로컬 프로토타입·테스트). */
     private val ranking: WaxRankingPort? = null,
 ) : TextWebSocketHandler(),
@@ -84,7 +89,38 @@ class WaxWebSocketHandler(
     private var previousBroadcast = 0L
 
     init {
+        registerGauges()
         scheduler.scheduleAtFixedRate({ runCatching { tick() } }, TICK_MS, TICK_MS, TimeUnit.MILLISECONDS)
+    }
+
+    /**
+     * 동시 접속 현황 게이지. 스크랩할 때만 lock을 잡고 크기를 읽으므로 tick·메시지 처리 경로에는 비용이 없다.
+     * 사람마다 시계열이 생기지 않도록 세션·IP·월드 id 같은 태그는 붙이지 않는다.
+     */
+    private fun registerGauges() {
+        Gauge
+            .builder("wax.connections") { synchronized(lock) { connections.size } }
+            .description("열린 왁뿌볼 WebSocket 연결 수(입장 전 대기 포함)")
+            .register(meterRegistry)
+        Gauge
+            .builder("wax.players") { synchronized(lock) { worlds.values.sumOf { it.size } } }
+            .description("월드에 입장한 인원")
+            .register(meterRegistry)
+        Gauge
+            .builder("wax.worlds") { synchronized(lock) { worlds.size } }
+            .description("열린 월드 수")
+            .register(meterRegistry)
+    }
+
+    private fun countRejection(rejection: WaxRejection) {
+        // 닉네임 거절(invalid_name)처럼 한도와 상관없는 거절은 세지 않는다. 이 지표는 수용 한도를 정하는 데 쓴다.
+        if (rejection.code !in LIMIT_REJECTION_CODES) return
+        Counter
+            .builder("wax.rejections")
+            .description("한도 때문에 거절한 연결·입장 수")
+            .tag("code", rejection.code)
+            .register(meterRegistry)
+            .increment()
     }
 
     override fun afterConnectionEstablished(session: WebSocketSession) {
@@ -113,6 +149,7 @@ class WaxWebSocketHandler(
                 }
             }
         if (rejection != null) {
+            countRejection(rejection)
             runCatching { session.sendMessage(TextMessage(mapper.writeValueAsString(errorMessage(rejection)))) }
             session.close(CloseStatus.SERVICE_OVERLOAD)
             return
@@ -162,6 +199,7 @@ class WaxWebSocketHandler(
                 }
             if (response != null) send(session.id, mapper.writeValueAsString(response))
         } catch (error: Exception) {
+            if (error is WaxRejection) countRejection(error)
             send(session.id, mapper.writeValueAsString(errorMessage(error)))
         }
     }
@@ -473,6 +511,7 @@ class WaxWebSocketHandler(
         private val log = LoggerFactory.getLogger(WaxWebSocketHandler::class.java)
         private const val TICK_MS = 50L
         private const val SHUTDOWN_WAIT_MS = 2000L
+        private val LIMIT_REJECTION_CODES = setOf("server_full", "too_many_connections", "world_full")
         private const val RECORD_ATTEMPTS = 3
         private const val RECORD_RETRY_DELAY_MS = 100L
         private const val MAX_MESSAGES_PER_SECOND = 60

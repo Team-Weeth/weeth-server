@@ -69,7 +69,7 @@ class WaxRankingHandlerTest :
             properties: WaxProperties = WaxProperties(),
             block: (WaxWebSocketHandler) -> Unit,
         ) {
-            val handler = WaxWebSocketHandler(mapper, properties, ranking)
+            val handler = WaxWebSocketHandler(mapper, properties, ranking = ranking)
             try {
                 block(handler)
             } finally {
@@ -206,7 +206,7 @@ class WaxRankingHandlerTest :
         }
 
         "서버가 내려갈 때도 남아 있던 플레이어의 기록을 넘긴다" {
-            val handler = WaxWebSocketHandler(mapper, WaxProperties(), ranking)
+            val handler = WaxWebSocketHandler(mapper, WaxProperties(), ranking = ranking)
             val client = Client("1")
             handler.afterConnectionEstablished(client.session)
             handler.send(client, """{"type":"join","token":"${token.value}"}""")
