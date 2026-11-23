@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Slice
 
 interface PenaltyReader {
+    fun findByIdWithNotificationDetails(penaltyId: Long): Penalty?
+
     fun countByClubMemberIdAndCardinalId(
         clubMemberId: Long,
         cardinalId: Long,

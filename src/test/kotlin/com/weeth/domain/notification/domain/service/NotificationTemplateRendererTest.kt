@@ -6,8 +6,10 @@ import com.weeth.domain.notification.domain.enums.NotificationType
 import com.weeth.domain.notification.domain.port.NotificationTemplateProvider
 import com.weeth.domain.notification.domain.vo.NotificationRenderingResult
 import com.weeth.domain.notification.domain.vo.NotificationTemplate
+import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldNotContain
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
@@ -17,6 +19,36 @@ class NotificationTemplateRendererTest :
         val provider = mockk<NotificationTemplateProvider>()
         val renderer = NotificationTemplateRenderer(provider)
         beforeTest { clearMocks(provider) }
+
+        "경고 코드 템플릿은 알림함 사유를 필수로 검증하고 PUSH에는 사유를 노출하지 않는다" {
+            val warningRenderer = NotificationTemplateRenderer(CodeNotificationTemplateProvider())
+            listOf(emptyMap(), mapOf("warningReason" to " ")).forEach { variables ->
+                val failure =
+                    warningRenderer.render(
+                        NotificationType.WARNING_ASSIGNED,
+                        NotificationChannel.IN_APP,
+                        variables,
+                    ) as NotificationRenderingResult.Failure
+                failure.reason shouldBe NotificationTemplateFailureReason.MISSING_VARIABLES
+                failure.missingVariables shouldBe setOf("warningReason")
+            }
+            val reason = "정기모임 무단 불참"
+            val withoutReason =
+                warningRenderer.render(
+                    NotificationType.WARNING_ASSIGNED,
+                    NotificationChannel.PUSH,
+                    emptyMap(),
+                ) as NotificationRenderingResult.Success
+            val withReason =
+                warningRenderer.render(
+                    NotificationType.WARNING_ASSIGNED,
+                    NotificationChannel.PUSH,
+                    mapOf("warningReason" to reason),
+                ) as NotificationRenderingResult.Success
+            withReason.message shouldBe withoutReason.message
+            withReason.message.title shouldNotContain reason
+            withReason.message.body shouldNotContain reason
+        }
 
         "유형과 채널별 템플릿을 적용하고 본문을 255자로 축약한다" {
             every { provider.find(NotificationType.NOTICE_CREATED, NotificationChannel.IN_APP, null) } returns

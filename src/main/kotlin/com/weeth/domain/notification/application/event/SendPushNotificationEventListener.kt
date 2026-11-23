@@ -5,6 +5,7 @@ import com.weeth.domain.notification.domain.port.PushNotificationSenderPort
 import com.weeth.domain.notification.domain.repository.NotificationTokenReader
 import com.weeth.domain.notification.domain.service.DuesNotificationPolicy
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
+import com.weeth.domain.notification.domain.service.WarningNotificationPolicy
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -27,6 +28,7 @@ class SendPushNotificationEventListener(
     private val manageNotificationTokenUseCase: ManageNotificationTokenUseCase,
     private val recipientPolicy: NotificationRecipientPolicy,
     private val duesPolicy: DuesNotificationPolicy,
+    private val warningPolicy: WarningNotificationPolicy,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -53,13 +55,20 @@ class SendPushNotificationEventListener(
                 event.content.type.category,
                 event.targetUserIds,
             )
-        val eligibleUserIds =
+        val duesEligibleIds =
             duesPolicy.filterEligibleUserIds(
                 event.content.type,
                 event.content.clubId,
                 event.content.referenceId,
                 candidates,
                 event.content.data["accountId"]?.toLongOrNull(),
+            )
+        val eligibleUserIds =
+            warningPolicy.filterEligibleUserIds(
+                event.content.type,
+                event.content.clubId,
+                event.content.referenceId,
+                duesEligibleIds,
             )
         if (eligibleUserIds.isEmpty()) return
         val targets = notificationTokenReader.findActiveTargetsByUserIds(eligibleUserIds)

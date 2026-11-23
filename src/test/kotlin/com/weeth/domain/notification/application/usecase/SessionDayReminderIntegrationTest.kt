@@ -31,6 +31,7 @@ import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationRetryPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
 import com.weeth.domain.notification.domain.service.SessionDayReminderPolicy
+import com.weeth.domain.notification.domain.service.WarningNotificationPolicy
 import com.weeth.domain.notification.domain.vo.NotificationQueueMessage
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
 import com.weeth.domain.notification.domain.vo.PushTargetOutcome
@@ -72,6 +73,7 @@ import java.util.concurrent.TimeUnit
     NotificationRetryPolicy::class,
     SessionDayReminderPolicy::class,
     DuesNotificationPolicy::class,
+    WarningNotificationPolicy::class,
     NotificationRecipientPolicy::class,
     NotificationTemplateRenderer::class,
     CodeNotificationTemplateProvider::class,

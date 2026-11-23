@@ -45,6 +45,9 @@ class Penalty(
     var penaltyDescription: String = penaltyDescription
         private set
 
+    fun isActiveWarning(): Boolean =
+        penaltyType == PenaltyType.WARNING && clubMember.isActive() && clubMember.user.isActive()
+
     fun update(penaltyDescription: String? = null) {
         penaltyDescription?.let { this.penaltyDescription = it }
     }

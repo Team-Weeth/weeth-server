@@ -11,7 +11,20 @@ class CodeNotificationTemplateProvider : NotificationTemplateProvider {
     private val templates =
         NotificationChannel.entries
             .flatMap { channel ->
+                val inApp = channel == NotificationChannel.IN_APP
                 listOf(
+                    (NotificationType.WARNING_ASSIGNED to channel) to
+                        NotificationTemplate(
+                            version = 1,
+                            titleTemplate = "경고가 부여되었습니다",
+                            bodyTemplate =
+                                if (inApp) {
+                                    "{warningReason}"
+                                } else {
+                                    "자세한 내용은 동아리 경고 내역을 확인해주세요."
+                                },
+                            requiredVariables = if (inApp) setOf("warningReason") else emptySet(),
+                        ),
                     (NotificationType.DUES_OBLIGATION_CREATED to channel) to
                         NotificationTemplate(
                             version = 1,

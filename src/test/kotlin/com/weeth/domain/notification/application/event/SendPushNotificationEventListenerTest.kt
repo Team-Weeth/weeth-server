@@ -8,6 +8,7 @@ import com.weeth.domain.notification.domain.port.PushNotificationSenderPort
 import com.weeth.domain.notification.domain.repository.NotificationTokenReader
 import com.weeth.domain.notification.domain.service.DuesNotificationPolicy
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
+import com.weeth.domain.notification.domain.service.WarningNotificationPolicy
 import com.weeth.domain.notification.domain.vo.NotificationContent
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
@@ -32,6 +33,7 @@ class SendPushNotificationEventListenerTest :
                 tokenUseCase,
                 recipients,
                 DuesNotificationPolicy(mockk()),
+                WarningNotificationPolicy(mockk()),
             )
 
         beforeTest {
