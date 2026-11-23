@@ -61,6 +61,9 @@ class SecurityConfig(
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v4/university/*")
                     .permitAll()
+                    // 릴리즈 노트 공개 조회는 비로그인 포함 전체 허용. 백오피스(/api/v4/admin/release-notes)는 제외되어 로그인 필요.
+                    .requestMatchers(HttpMethod.GET, "/api/v4/release-notes", "/api/v4/release-notes/*")
+                    .permitAll()
                     .requestMatchers(
                         "/v3/api-docs",
                         "/v3/api-docs/**",

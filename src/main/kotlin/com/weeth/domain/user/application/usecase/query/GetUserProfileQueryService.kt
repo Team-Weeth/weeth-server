@@ -8,6 +8,7 @@ import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.application.exception.UserProfileNotFoundException
 import com.weeth.domain.user.application.mapper.UserProfileMapper
 import com.weeth.domain.user.domain.repository.UserProfileRepository
+import com.weeth.domain.user.domain.repository.UserReader
 import com.weeth.global.common.id.TsidBase62Encoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 class GetUserProfileQueryService(
     private val userProfileRepository: UserProfileRepository,
     private val clubMemberReader: ClubMemberReader,
+    private val userReader: UserReader,
     private val userProfileMapper: UserProfileMapper,
 ) {
     fun findAll(userId: Long): UserProfilesResponse {
@@ -30,7 +32,8 @@ class GetUserProfileQueryService(
                         usingClubs = usingClubsByProfileId[profile.id].orEmpty(),
                     )
                 }
-        return userProfileMapper.toListResponse(profiles)
+        val platformRole = userReader.getById(userId).platformRole
+        return userProfileMapper.toListResponse(profiles, platformRole)
     }
 
     fun find(

@@ -9,4 +9,5 @@ enum class FileOwnerType {
     USER_PROFILE_HEADER,
     CLUB_PROFILE,
     CLUB_BACKGROUND,
+    RELEASE_NOTE,
 }

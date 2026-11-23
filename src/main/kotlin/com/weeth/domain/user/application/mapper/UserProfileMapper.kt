@@ -7,6 +7,7 @@ import com.weeth.domain.user.application.dto.response.UserProfileResponse
 import com.weeth.domain.user.application.dto.response.UserProfilesResponse
 import com.weeth.domain.user.domain.entity.User
 import com.weeth.domain.user.domain.entity.UserProfile
+import com.weeth.domain.user.domain.enums.PlatformRole
 import org.springframework.stereotype.Component
 
 @Component
@@ -38,7 +39,10 @@ class UserProfileMapper(
             usingClubs = usingClubs,
         )
 
-    fun toListResponse(profiles: List<UserProfileResponse>): UserProfilesResponse = UserProfilesResponse(profiles)
+    fun toListResponse(
+        profiles: List<UserProfileResponse>,
+        platformRole: PlatformRole? = null,
+    ): UserProfilesResponse = UserProfilesResponse(profiles = profiles, platformRole = platformRole)
 
     private fun resolveImage(storageKey: String?): String? = storageKey?.let(fileAccessUrlPort::resolve)
 }
