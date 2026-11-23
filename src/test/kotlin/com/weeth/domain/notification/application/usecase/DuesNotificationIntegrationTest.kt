@@ -24,7 +24,6 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.notification.application.event.CreateDuesNotificationEventListener
 import com.weeth.domain.notification.application.event.NotificationCreatedEvent
 import com.weeth.domain.notification.application.event.SendPushNotificationEventListener
@@ -60,7 +59,7 @@ import com.weeth.domain.notification.domain.vo.NotificationQueueMessage
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
 import com.weeth.domain.notification.domain.vo.PushTargetOutcome
 import com.weeth.domain.notification.domain.vo.RenderedNotification
-import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMember
+import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMemberWithCardinals
 import com.weeth.domain.notification.fixture.NotificationPreferenceTestFixture
 import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
 import com.weeth.domain.notification.infrastructure.JdbcUserNotificationBulkWriterAdapter
@@ -161,14 +160,13 @@ class DuesNotificationIntegrationTest(
             val roster =
                 listOf("admin", "normal", "paid", "excluded", "category-off", "master-off", "banned", "inactive")
                     .associateWith { kind ->
-                        val member =
-                            members.saveMember(
-                                club,
-                                users,
-                                role = if (kind == "admin") MemberRole.ADMIN else MemberRole.USER,
-                            )
-                        memberCardinals.save(ClubMemberCardinalTestFixture.create(member, cardinal))
-                        member
+                        members.saveMemberWithCardinals(
+                            club,
+                            users,
+                            memberCardinals,
+                            cardinal,
+                            role = if (kind == "admin") MemberRole.ADMIN else MemberRole.USER,
+                        )
                     }
             accountSettings.save(AccountSetting.createDefault(club.id).apply { if (visible) showToMembers() })
             preferences.save(

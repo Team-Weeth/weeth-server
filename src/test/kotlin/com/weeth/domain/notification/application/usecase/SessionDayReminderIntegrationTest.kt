@@ -9,7 +9,6 @@ import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
-import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.notification.application.dispatch.SessionDayReminderScheduler
 import com.weeth.domain.notification.application.usecase.command.CreateNotificationUseCase
 import com.weeth.domain.notification.application.usecase.command.EnqueueNotificationDeliveryUseCase
@@ -35,7 +34,7 @@ import com.weeth.domain.notification.domain.service.SessionDayReminderPolicy
 import com.weeth.domain.notification.domain.vo.NotificationQueueMessage
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
 import com.weeth.domain.notification.domain.vo.PushTargetOutcome
-import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMember
+import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMemberWithCardinals
 import com.weeth.domain.notification.fixture.NotificationPreferenceTestFixture
 import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
 import com.weeth.domain.notification.infrastructure.JdbcUserNotificationBulkWriterAdapter
@@ -118,18 +117,21 @@ class SessionDayReminderIntegrationTest(
 
         fun fixture(): Fixture {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val admin = members.saveMember(club, users, role = MemberRole.ADMIN)
-            val active = members.saveMember(club, users)
-            val author = admin.user
-            val member = active.user
             val firstCardinal = cardinals.save(CardinalTestFixture.createCardinal(club = club, cardinalNumber = 1))
             val secondCardinal = cardinals.save(CardinalTestFixture.createCardinal(club = club, cardinalNumber = 2))
-            memberCardinals.save(ClubMemberCardinalTestFixture.create(admin, firstCardinal))
-            memberCardinals.save(ClubMemberCardinalTestFixture.create(active, firstCardinal))
-            memberCardinals.save(ClubMemberCardinalTestFixture.create(active, secondCardinal))
-            val optedOutMember = members.saveMember(club, users)
+            val admin =
+                members.saveMemberWithCardinals(
+                    club,
+                    users,
+                    memberCardinals,
+                    firstCardinal,
+                    role = MemberRole.ADMIN,
+                )
+            val active = members.saveMemberWithCardinals(club, users, memberCardinals, firstCardinal, secondCardinal)
+            val author = admin.user
+            val member = active.user
+            val optedOutMember = members.saveMemberWithCardinals(club, users, memberCardinals, firstCardinal)
             val optedOut = optedOutMember.user
-            memberCardinals.save(ClubMemberCardinalTestFixture.create(optedOutMember, firstCardinal))
             preferences.save(NotificationPreference.create(optedOut.id, club.id, NotificationCategory.SCHEDULE, false))
             val first =
                 sessions.save(

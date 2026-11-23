@@ -1,13 +1,28 @@
 package com.weeth.domain.notification.fixture
 
+import com.weeth.domain.cardinal.domain.entity.Cardinal
 import com.weeth.domain.club.domain.entity.Club
 import com.weeth.domain.club.domain.entity.ClubMember
 import com.weeth.domain.club.domain.enums.MemberRole
 import com.weeth.domain.club.domain.enums.MemberStatus
+import com.weeth.domain.club.domain.repository.ClubMemberCardinalRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
+import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.user.domain.repository.UserRepository
 
 object NotificationIntegrationTestFixture {
+    fun ClubMemberRepository.saveMemberWithCardinals(
+        club: Club,
+        users: UserRepository,
+        memberCardinals: ClubMemberCardinalRepository,
+        vararg cardinals: Cardinal,
+        role: MemberRole = MemberRole.USER,
+        status: MemberStatus = MemberStatus.ACTIVE,
+    ): ClubMember =
+        saveMember(club, users, role, status).also { member ->
+            cardinals.forEach { memberCardinals.save(ClubMemberCardinalTestFixture.create(member, it)) }
+        }
+
     fun ClubMemberRepository.saveMember(
         club: Club,
         users: UserRepository,

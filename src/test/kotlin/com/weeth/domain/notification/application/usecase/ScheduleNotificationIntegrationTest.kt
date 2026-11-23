@@ -10,7 +10,6 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.notification.application.event.CreateScheduleNotificationEventListener
 import com.weeth.domain.notification.application.usecase.command.CreateNotificationUseCase
 import com.weeth.domain.notification.application.usecase.command.EnqueueNotificationDeliveryUseCase
@@ -25,7 +24,7 @@ import com.weeth.domain.notification.domain.repository.NotificationSettingReposi
 import com.weeth.domain.notification.domain.repository.UserNotificationRepository
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
-import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMember
+import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMemberWithCardinals
 import com.weeth.domain.notification.fixture.NotificationPreferenceTestFixture
 import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
 import com.weeth.domain.notification.infrastructure.JdbcUserNotificationBulkWriterAdapter
@@ -106,30 +105,19 @@ class ScheduleNotificationIntegrationTest(
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
             val first = cardinals.save(CardinalTestFixture.createCardinal(club = club, cardinalNumber = 1))
             val other = cardinals.save(CardinalTestFixture.createCardinalInProgress(club = club, cardinalNumber = 2))
-            val admin = members.saveMember(club, users, role = MemberRole.ADMIN)
+            val admin = members.saveMemberWithCardinals(club, users, memberCardinals, first, role = MemberRole.ADMIN)
             val author = admin.user
-            memberCardinals.save(ClubMemberCardinalTestFixture.create(admin, first))
             var recipientId = 0L
             listOf("eligible", "category-off", "master-off", "other-cardinal", "banned", "inactive").forEach { kind ->
                 val member =
-                    members.saveMember(
+                    members.saveMemberWithCardinals(
                         club,
                         users,
+                        memberCardinals,
+                        if (kind == "other-cardinal") other else first,
                         status = if (kind == "banned") MemberStatus.BANNED else MemberStatus.ACTIVE,
                     )
                 val user = member.user
-                memberCardinals.save(
-                    ClubMemberCardinalTestFixture.create(
-                        member,
-                        if (kind ==
-                            "other-cardinal"
-                        ) {
-                            other
-                        } else {
-                            first
-                        },
-                    ),
-                )
                 when (kind) {
                     "eligible" -> {
                         recipientId = user.id
