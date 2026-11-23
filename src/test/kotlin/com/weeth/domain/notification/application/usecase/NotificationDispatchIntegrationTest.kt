@@ -4,7 +4,6 @@ import com.ninjasquad.springmockk.MockkBean
 import com.weeth.config.TestContainersConfig
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
-import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.notification.application.dispatch.NotificationDeliveryProcessor
 import com.weeth.domain.notification.application.dispatch.NotificationOutboxRelay
 import com.weeth.domain.notification.application.usecase.command.CreateNotificationUseCase
@@ -40,6 +39,7 @@ import com.weeth.domain.notification.domain.vo.NotificationQueueReceipt
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
 import com.weeth.domain.notification.domain.vo.PushTargetOutcome
 import com.weeth.domain.notification.fixture.NotificationEventProbe
+import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMember
 import com.weeth.domain.notification.fixture.NotificationPreferenceTestFixture
 import com.weeth.domain.notification.fixture.NotificationRequestTestFixture
 import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
@@ -119,8 +119,7 @@ class NotificationDispatchIntegrationTest(
 
         fun job(): NotificationDelivery {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val user = users.save(NotificationPreferenceTestFixture.createUser())
-            members.save(ClubMemberTestFixture.createActiveMember(club = club, user = user))
+            val user = members.saveMember(club, users).user
             tokens.save(
                 NotificationToken.create(user, "token-" + user.id, NotificationPlatform.WEB, LocalDateTime.now(clock)),
             )
@@ -174,8 +173,7 @@ class NotificationDispatchIntegrationTest(
 
         "동일 논리 이벤트의 동시 재발행도 알림·Delivery·Outbox를 한 번만 생성한다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val user = users.save(NotificationPreferenceTestFixture.createUser())
-            members.save(ClubMemberTestFixture.createActiveMember(club = club, user = user))
+            val user = members.saveMember(club, users).user
             val executor = Executors.newFixedThreadPool(2)
             val start = CountDownLatch(1)
             try {

@@ -18,6 +18,7 @@ import com.weeth.domain.notification.domain.enums.NotificationCategory
 import com.weeth.domain.notification.domain.repository.NotificationPreferenceRepository
 import com.weeth.domain.notification.domain.repository.NotificationSettingRepository
 import com.weeth.domain.notification.domain.service.NotificationPreferencePolicy
+import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMember
 import com.weeth.domain.notification.fixture.NotificationPreferenceTestFixture
 import com.weeth.domain.user.domain.repository.UserRepository
 import io.kotest.assertions.throwables.shouldThrow
@@ -83,8 +84,7 @@ class NotificationPreferenceIntegrationTest(
 
         "마스터 토글과 기능 비공개는 저장한 선택값을 지우지 않는다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val user = users.save(NotificationPreferenceTestFixture.createUser())
-            members.save(ClubMemberTestFixture.createActiveMember(club = club, user = user))
+            val user = members.saveMember(club, users).user
             val account = accounts.save(AccountSetting.createDefault(club.id).apply { showToMembers() })
             useCase.update(
                 club.id,
@@ -111,8 +111,7 @@ class NotificationPreferenceIntegrationTest(
 
         "일괄 검증 실패와 상위 트랜잭션 롤백은 부분 저장을 남기지 않는다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val user = users.save(NotificationPreferenceTestFixture.createUser())
-            members.save(ClubMemberTestFixture.createActiveMember(club = club, user = user))
+            val user = members.saveMember(club, users).user
             shouldThrow<InvalidNotificationPreferenceException> {
                 useCase.update(
                     club.id,
@@ -145,8 +144,7 @@ class NotificationPreferenceIntegrationTest(
 
         "동시 최초 PATCH가 서로 다른 카테고리를 갱신해도 중복 생성과 선택값 유실이 없다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val user = users.save(NotificationPreferenceTestFixture.createUser())
-            members.save(ClubMemberTestFixture.createActiveMember(club = club, user = user))
+            val user = members.saveMember(club, users).user
             val executor = Executors.newFixedThreadPool(2)
             val ready = CountDownLatch(2)
             val start = CountDownLatch(1)

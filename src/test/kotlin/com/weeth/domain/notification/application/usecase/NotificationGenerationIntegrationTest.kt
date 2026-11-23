@@ -5,7 +5,6 @@ import com.weeth.domain.account.domain.entity.AccountSetting
 import com.weeth.domain.account.domain.repository.AccountSettingRepository
 import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
-import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.notification.application.event.SendPushNotificationEventListener
 import com.weeth.domain.notification.application.usecase.command.CreateNotificationUseCase
 import com.weeth.domain.notification.application.usecase.command.EnqueueNotificationDeliveryUseCase
@@ -27,6 +26,7 @@ import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
 import com.weeth.domain.notification.fixture.NotificationEventProbe
+import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMember
 import com.weeth.domain.notification.fixture.NotificationPreferenceTestFixture
 import com.weeth.domain.notification.fixture.NotificationRequestTestFixture
 import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
@@ -86,8 +86,7 @@ class NotificationGenerationIntegrationTest(
 
         "마스터와 공지 설정을 생성 전에 필터링하고 미설정 사용자만 알림을 저장한다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val targets = (1..3).map { users.save(NotificationPreferenceTestFixture.createUser()) }
-            members.saveAll(targets.map { ClubMemberTestFixture.createActiveMember(club = club, user = it) })
+            val targets = (1..3).map { members.saveMember(club, users).user }
             settings.save(NotificationSetting.create(targets[0].id, club.id).apply { updateMaster(false) })
             preferences.save(NotificationPreference.create(targets[1].id, club.id, NotificationCategory.NOTICE, false))
             create.execute(NotificationRequestTestFixture.createNotice(club.id), targets.map { it.id })
@@ -103,8 +102,7 @@ class NotificationGenerationIntegrationTest(
 
         "렌더링 실패는 원래 트랜잭션을 커밋하고 원문 대신 누락 변수와 채널을 기록한다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val user = users.save(NotificationPreferenceTestFixture.createUser())
-            members.save(ClubMemberTestFixture.createActiveMember(club = club, user = user))
+            val user = members.saveMember(club, users).user
             TransactionTemplate(transactionManager).executeWithoutResult {
                 accounts.save(AccountSetting.createDefault(club.id))
                 create.execute(NotificationRequestTestFixture.createNotice(club.id, title = null), listOf(user.id))
@@ -121,8 +119,7 @@ class NotificationGenerationIntegrationTest(
 
         "롤백된 생성은 알림과 커밋 이후 이벤트를 남기지 않으며 실패 이력도 함께 롤백한다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val user = users.save(NotificationPreferenceTestFixture.createUser())
-            members.save(ClubMemberTestFixture.createActiveMember(club = club, user = user))
+            val user = members.saveMember(club, users).user
             listOf("정상 공지", null).forEach { title ->
                 shouldThrow<IllegalStateException> {
                     TransactionTemplate(transactionManager).executeWithoutResult {
@@ -142,8 +139,7 @@ class NotificationGenerationIntegrationTest(
 
         "생성 후 OFF와 탈퇴를 발송 직전에 반영하고 기존 알림함은 보존한다" {
             val club = clubs.save(NotificationPreferenceTestFixture.createClub())
-            val targets = (1..3).map { users.save(NotificationPreferenceTestFixture.createUser()) }
-            members.saveAll(targets.map { ClubMemberTestFixture.createActiveMember(club = club, user = it) })
+            val targets = (1..3).map { members.saveMember(club, users).user }
             targets.forEach {
                 tokens.save(
                     NotificationToken.create(it, "token-${it.id}", NotificationPlatform.WEB, LocalDateTime.now()),
