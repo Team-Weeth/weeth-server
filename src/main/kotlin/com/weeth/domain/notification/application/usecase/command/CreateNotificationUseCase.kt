@@ -41,7 +41,9 @@ class CreateNotificationUseCase(
         request: NotificationRequest,
         targetUserIds: List<Long>,
     ) {
-        val deduplicate = durableEnabled || request.type == NotificationType.DUES_OBLIGATION_CREATED
+        val deduplicate =
+            durableEnabled ||
+                request.type in setOf(NotificationType.DUES_OBLIGATION_CREATED, NotificationType.WARNING_ASSIGNED)
         if (deduplicate) {
             val event = NotificationEvent.create(request.eventId, request.clubId)
             if (eventRepository.claimIfAbsent(event.eventId, event.clubId) != 1) return

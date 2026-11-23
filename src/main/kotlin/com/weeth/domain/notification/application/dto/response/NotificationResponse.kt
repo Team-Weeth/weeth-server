@@ -8,7 +8,7 @@ import java.time.LocalDateTime
 data class NotificationResponse(
     @field:Schema(description = "알림 ID", example = "1")
     val id: Long,
-    @field:Schema(description = "알림 유형 (공지·일정·세션·회비 납부 의무 안내)", example = "NOTICE_CREATED")
+    @field:Schema(description = "알림 유형 (공지·일정·세션·회비 납부 의무·경고 부여 안내)", example = "NOTICE_CREATED")
     val type: NotificationType,
     @field:Schema(description = "알림 제목", example = "새 공지가 등록되었습니다")
     val title: String,
@@ -18,7 +18,7 @@ data class NotificationResponse(
     val targetPath: String,
     @field:Schema(description = "동아리 ID", example = "1A2b3C")
     val clubId: String,
-    @field:Schema(description = "알림 참조 유형 (POST·EVENT·SESSION·ACCOUNT_PAYMENT_TARGET 등)", example = "POST")
+    @field:Schema(description = "알림 참조 유형 (POST·EVENT·SESSION·ACCOUNT_PAYMENT_TARGET·PENALTY 등)", example = "POST")
     val referenceType: NotificationReferenceType,
     @field:Schema(description = "알림 참조 ID", example = "100")
     val referenceId: Long,

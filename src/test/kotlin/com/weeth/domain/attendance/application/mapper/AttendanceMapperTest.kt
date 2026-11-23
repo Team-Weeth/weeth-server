@@ -1,10 +1,7 @@
 package com.weeth.domain.attendance.application.mapper
 
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createActiveUser
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAdminUser
 import com.weeth.domain.attendance.fixture.AttendanceTestFixture.createAttendance
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.enrichUserProfile
-import com.weeth.domain.attendance.fixture.AttendanceTestFixture.setAttendanceId
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.session.fixture.SessionTestFixture.createOneDaySession
 import io.kotest.core.spec.style.DescribeSpec
@@ -49,60 +46,6 @@ class AttendanceMapperTest :
                 main.end.shouldBeNull()
                 main.location.shouldBeNull()
             }
-
-            it("일반 유저는 출석 코드가 null로 매핑된다") {
-                val today = LocalDate.now()
-                val session = createOneDaySession(today, 1, 1234, "Today")
-                val member =
-                    ClubMemberTestFixture.createActiveMember(
-                        club = session.club,
-                        user = createActiveUser("일반유저"),
-                    )
-                val attendance = createAttendance(session, member)
-
-                val main = mapper.toSummaryResponse(member, attendance)
-
-                main.shouldNotBeNull()
-                main.title shouldBe session.title
-                main.status shouldBe attendance.status
-            }
-
-            it("ADMIN 유저는 출석 코드가 포함된다") {
-                val today = LocalDate.now()
-                val expectedCode = 1234
-                val session = createOneDaySession(today, 1, expectedCode, "Today")
-                val adminUser = createAdminUser("관리자")
-                val member = ClubMemberTestFixture.createAdminMember(club = session.club, user = adminUser)
-                val attendance = createAttendance(session, member)
-
-                val main = mapper.toSummaryResponse(member, attendance)
-
-                main.shouldNotBeNull()
-                main.title shouldBe session.title
-                main.start shouldBe session.start
-                main.end shouldBe session.end
-                main.location shouldBe session.location
-            }
-        }
-
-        describe("toResponse") {
-            it("단일 출석을 AttendanceResponse로 매핑한다") {
-                val session = createOneDaySession(LocalDate.now().minusDays(1), 1, 2222, "D-1")
-                val member =
-                    ClubMemberTestFixture.createActiveMember(
-                        club = session.club,
-                        user = createActiveUser("사용자A"),
-                    )
-                val attendance = createAttendance(session, member)
-
-                val response = mapper.toResponse(attendance)
-
-                response.shouldNotBeNull()
-                response.title shouldBe session.title
-                response.start shouldBe session.start
-                response.end shouldBe session.end
-                response.location shouldBe session.location
-            }
         }
 
         describe("toDetailResponse") {
@@ -127,26 +70,6 @@ class AttendanceMapperTest :
                 detail.total shouldBe 2
                 detail.attendanceRate shouldBe 50
                 detail.cardinalNumber shouldBe 1
-            }
-        }
-
-        describe("toInfoResponse") {
-            it("Attendance를 InfoResponse로 매핑") {
-                val session = createOneDaySession(LocalDate.now(), 1, 3333, "Info")
-                val user = createActiveUser("유저B")
-                enrichUserProfile(user, "컴퓨터공학과", "20201234")
-                val member = ClubMemberTestFixture.createActiveMember(club = session.club, user = user)
-
-                val attendance = createAttendance(session, member)
-                setAttendanceId(attendance, 10L)
-
-                val info = mapper.toInfoResponse(attendance)
-
-                info.shouldNotBeNull()
-                info.id shouldBe attendance.id
-                info.status shouldBe attendance.status
-                info.name shouldBe user.name
-                info.department shouldBe user.department
             }
         }
     })

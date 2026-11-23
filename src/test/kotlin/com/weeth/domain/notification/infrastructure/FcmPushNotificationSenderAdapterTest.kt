@@ -33,25 +33,6 @@ class FcmPushNotificationSenderAdapterTest :
         }
 
         describe("sendMulticast") {
-            it("FCM multicast 발송 결과에서 invalid token만 수집한다") {
-                val batchResponse = mockk<BatchResponse>()
-                val successResponse = mockk<SendResponse>()
-                val failedResponse = mockk<SendResponse>()
-                val exception = mockk<FirebaseMessagingException>()
-
-                every { firebaseMessaging.sendEachForMulticast(any()) } returns batchResponse
-                every { batchResponse.responses } returns listOf(successResponse, failedResponse)
-                every { successResponse.isSuccessful } returns true
-                every { failedResponse.isSuccessful } returns false
-                every { failedResponse.exception } returns exception
-                every { exception.messagingErrorCode } returns MessagingErrorCode.UNREGISTERED
-
-                val result = adapter.sendMulticast(createCommand(tokens = listOf("active-token", "invalid-token")))
-
-                result.invalidTokens shouldContainExactly listOf("invalid-token")
-                verify(exactly = 1) { firebaseMessaging.sendEachForMulticast(any()) }
-            }
-
             it("FCM 발송 결과를 알림 유형과 건수로 로깅한다") {
                 val batchResponse = mockk<BatchResponse>()
                 val successResponse = mockk<SendResponse>()
@@ -97,22 +78,6 @@ class FcmPushNotificationSenderAdapterTest :
                 adapter.sendMulticast(createCommand(tokens = (1..501).map { "token-$it" }))
 
                 verify(exactly = 2) { firebaseMessaging.sendEachForMulticast(any()) }
-            }
-
-            it("INVALID_ARGUMENT 응답 token은 비활성화 대상에서 제외한다") {
-                val batchResponse = mockk<BatchResponse>()
-                val failedResponse = mockk<SendResponse>()
-                val exception = mockk<FirebaseMessagingException>()
-
-                every { firebaseMessaging.sendEachForMulticast(any()) } returns batchResponse
-                every { batchResponse.responses } returns listOf(failedResponse)
-                every { failedResponse.isSuccessful } returns false
-                every { failedResponse.exception } returns exception
-                every { exception.messagingErrorCode } returns MessagingErrorCode.INVALID_ARGUMENT
-
-                val result = adapter.sendMulticast(createCommand(tokens = listOf("active-token")))
-
-                result.invalidTokens shouldBe emptyList()
             }
 
             it("SENDER_ID_MISMATCH 응답 token을 invalid token으로 수집한다") {

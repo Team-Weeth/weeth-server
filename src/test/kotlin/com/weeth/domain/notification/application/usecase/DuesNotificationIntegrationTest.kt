@@ -24,7 +24,6 @@ import com.weeth.domain.club.domain.repository.ClubMemberRepository
 import com.weeth.domain.club.domain.repository.ClubRepository
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
-import com.weeth.domain.club.fixture.ClubMemberCardinalTestFixture
 import com.weeth.domain.notification.application.event.CreateDuesNotificationEventListener
 import com.weeth.domain.notification.application.event.NotificationCreatedEvent
 import com.weeth.domain.notification.application.event.SendPushNotificationEventListener
@@ -55,12 +54,13 @@ import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.service.NotificationRetryPolicy
 import com.weeth.domain.notification.domain.service.NotificationTemplateRenderer
 import com.weeth.domain.notification.domain.service.SessionDayReminderPolicy
+import com.weeth.domain.notification.domain.service.WarningNotificationPolicy
 import com.weeth.domain.notification.domain.vo.NotificationContent
 import com.weeth.domain.notification.domain.vo.NotificationQueueMessage
 import com.weeth.domain.notification.domain.vo.PushNotificationResult
 import com.weeth.domain.notification.domain.vo.PushTargetOutcome
 import com.weeth.domain.notification.domain.vo.RenderedNotification
-import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMember
+import com.weeth.domain.notification.fixture.NotificationIntegrationTestFixture.saveMemberWithCardinals
 import com.weeth.domain.notification.fixture.NotificationPreferenceTestFixture
 import com.weeth.domain.notification.infrastructure.CodeNotificationTemplateProvider
 import com.weeth.domain.notification.infrastructure.JdbcUserNotificationBulkWriterAdapter
@@ -94,6 +94,7 @@ import java.time.ZoneId
     ClubMemberPolicy::class,
     CreateDuesNotificationEventListener::class,
     DuesNotificationPolicy::class,
+    WarningNotificationPolicy::class,
     CreateNotificationUseCase::class,
     EnqueueNotificationDeliveryUseCase::class,
     ManageNotificationDeliveryUseCase::class,
@@ -125,6 +126,7 @@ class DuesNotificationIntegrationTest(
     private val tokens: NotificationTokenRepository,
     private val recipients: NotificationRecipientPolicy,
     private val duesPolicy: DuesNotificationPolicy,
+    private val warningPolicy: WarningNotificationPolicy,
     private val tokenUseCase: ManageNotificationTokenUseCase,
     private val publisher: ApplicationEventPublisher,
     private val bulkWriter: UserNotificationBulkWriter,
@@ -161,14 +163,13 @@ class DuesNotificationIntegrationTest(
             val roster =
                 listOf("admin", "normal", "paid", "excluded", "category-off", "master-off", "banned", "inactive")
                     .associateWith { kind ->
-                        val member =
-                            members.saveMember(
-                                club,
-                                users,
-                                role = if (kind == "admin") MemberRole.ADMIN else MemberRole.USER,
-                            )
-                        memberCardinals.save(ClubMemberCardinalTestFixture.create(member, cardinal))
-                        member
+                        members.saveMemberWithCardinals(
+                            club,
+                            users,
+                            memberCardinals,
+                            cardinal,
+                            role = if (kind == "admin") MemberRole.ADMIN else MemberRole.USER,
+                        )
                     }
             accountSettings.save(AccountSetting.createDefault(club.id).apply { if (visible) showToMembers() })
             preferences.save(
@@ -358,7 +359,14 @@ class DuesNotificationIntegrationTest(
                     event(f).paymentTargetId,
                     delivery.data,
                 )
-            SendPushNotificationEventListener(tokens, sender, tokenUseCase, recipients, duesPolicy).handle(
+            SendPushNotificationEventListener(
+                tokens,
+                sender,
+                tokenUseCase,
+                recipients,
+                duesPolicy,
+                warningPolicy,
+            ).handle(
                 NotificationCreatedEvent(
                     content,
                     listOf(normal.id),

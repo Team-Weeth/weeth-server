@@ -6,11 +6,13 @@ import com.weeth.domain.club.domain.service.ClubMemberCardinalPolicy
 import com.weeth.domain.club.domain.service.ClubMemberPolicy
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
+import com.weeth.domain.penalty.application.event.WarningAssignedEvent
 import com.weeth.domain.penalty.application.exception.PenaltyNotFoundException
 import com.weeth.domain.penalty.application.exception.WarningNotEnabledException
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
 import com.weeth.domain.penalty.domain.enums.PenaltyType
 import com.weeth.domain.penalty.domain.repository.PenaltyRepository
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -23,6 +25,7 @@ class SavePenaltyUseCase(
     private val clubMemberCardinalPolicy: ClubMemberCardinalPolicy,
     private val clubReader: ClubReader,
     private val mapper: PenaltyMapper,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional
     fun save(
@@ -42,8 +45,7 @@ class SavePenaltyUseCase(
             val clubMember = clubMemberPolicy.getActiveMember(clubId, targetUserId)
             val cardinal = clubMemberCardinalPolicy.getCurrentCardinal(clubMember)
 
-            val penalty = mapper.toEntity(request, clubMember, cardinal)
-            penaltyRepository.save(penalty)
+            val penalty = penaltyRepository.save(mapper.toEntity(request, clubMember, cardinal))
 
             val lockedMember =
                 clubMemberRepository.findByIdWithLock(clubMember.id)
@@ -58,6 +60,9 @@ class SavePenaltyUseCase(
                     repeat(convertedCount) {
                         penaltyRepository.save(mapper.toAutoConvertedPenalty(lockedMember, cardinal))
                     }
+                    eventPublisher.publishEvent(
+                        WarningAssignedEvent(clubId, penalty.id, clubMember.user.id, penalty.penaltyDescription),
+                    )
                 }
             }
         }

@@ -15,6 +15,15 @@ import org.springframework.data.repository.query.Param
 interface PenaltyRepository :
     JpaRepository<Penalty, Long>,
     PenaltyReader {
+    @Query(
+        """SELECT p FROM Penalty p
+        JOIN FETCH p.clubMember cm JOIN FETCH cm.club JOIN FETCH cm.user
+        WHERE p.id = :penaltyId""",
+    )
+    override fun findByIdWithNotificationDetails(
+        @Param("penaltyId") penaltyId: Long,
+    ): Penalty?
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @QueryHints(QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000"))
     @Query("SELECT p FROM Penalty p WHERE p.id = :penaltyId")

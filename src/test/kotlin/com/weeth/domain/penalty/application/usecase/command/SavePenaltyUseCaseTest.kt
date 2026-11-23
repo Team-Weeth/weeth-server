@@ -11,6 +11,7 @@ import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.file.domain.port.FileAccessUrlPort
 import com.weeth.domain.penalty.application.dto.request.SavePenaltyRequest
+import com.weeth.domain.penalty.application.event.WarningAssignedEvent
 import com.weeth.domain.penalty.application.exception.WarningNotEnabledException
 import com.weeth.domain.penalty.application.mapper.PenaltyMapper
 import com.weeth.domain.penalty.domain.entity.Penalty
@@ -23,6 +24,7 @@ import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.test.util.ReflectionTestUtils
 
 class SavePenaltyUseCaseTest :
@@ -34,6 +36,7 @@ class SavePenaltyUseCaseTest :
         val clubMemberCardinalPolicy = mockk<ClubMemberCardinalPolicy>()
         val clubReader = mockk<ClubReader>()
         val mapper = PenaltyMapper(mockk<FileAccessUrlPort>())
+        val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
         val useCase =
             SavePenaltyUseCase(
                 penaltyRepository = penaltyRepository,
@@ -43,6 +46,7 @@ class SavePenaltyUseCaseTest :
                 clubMemberCardinalPolicy = clubMemberCardinalPolicy,
                 clubReader = clubReader,
                 mapper = mapper,
+                eventPublisher = eventPublisher,
             )
 
         beforeTest {
@@ -53,6 +57,7 @@ class SavePenaltyUseCaseTest :
                 clubPermissionPolicy,
                 clubMemberCardinalPolicy,
                 clubReader,
+                eventPublisher,
             )
             every { clubPermissionPolicy.requireAdmin(any(), any()) } returns ClubMemberTestFixture.createAdminMember()
             every { penaltyRepository.save(any()) } answers { firstArg() }
@@ -106,6 +111,7 @@ class SavePenaltyUseCaseTest :
                 clubMember.penaltyCount shouldBe 1
                 clubMember.warningCount shouldBe 0
                 verify(exactly = 1) { penaltyRepository.save(any()) }
+                verify(exactly = 0) { eventPublisher.publishEvent(any<WarningAssignedEvent>()) }
             }
 
             it("WARNING이 threshold 미만이면 경고 1건만 저장되고 자동 전환 페널티는 생성되지 않는다") {
@@ -153,6 +159,7 @@ class SavePenaltyUseCaseTest :
                 val autoConverted = savedSlot.last()
                 autoConverted.penaltyType shouldBe PenaltyType.PENALTY
                 autoConverted.penaltyDescription shouldBe "누적경고 ${threshold}회"
+                verify(exactly = 1) { eventPublisher.publishEvent(any<WarningAssignedEvent>()) }
             }
         }
     })
