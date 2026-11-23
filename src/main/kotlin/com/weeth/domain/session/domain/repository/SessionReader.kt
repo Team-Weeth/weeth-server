@@ -2,9 +2,36 @@ package com.weeth.domain.session.domain.repository
 
 import com.weeth.domain.session.domain.entity.Session
 import com.weeth.domain.session.domain.enums.SessionStatus
+import org.springframework.data.domain.Pageable
 import java.time.LocalDateTime
 
 interface SessionReader {
+    fun findDayReminderClubIds(
+        start: LocalDateTime,
+        end: LocalDateTime,
+        now: LocalDateTime,
+        cutoff: LocalDateTime,
+        afterClubId: Long,
+        pageable: Pageable,
+    ): List<Long>
+
+    fun findDayReminderSessions(
+        clubId: Long,
+        start: LocalDateTime,
+        end: LocalDateTime,
+        now: LocalDateTime,
+        cutoff: LocalDateTime,
+    ): List<Session>
+
+    fun findDayReminderSessionsByIds(
+        clubId: Long,
+        ids: Collection<Long>,
+        start: LocalDateTime,
+        end: LocalDateTime,
+        now: LocalDateTime,
+        cutoff: LocalDateTime,
+    ): List<Session>
+
     fun getById(sessionId: Long): Session
 
     fun findByDateRange(

@@ -1,6 +1,7 @@
 package com.weeth.domain.account.domain.entity
 
 import com.weeth.domain.account.domain.enums.AccountPaymentStatus
+import com.weeth.domain.account.domain.enums.AccountStatus
 import com.weeth.domain.account.domain.enums.AccountTargetStatus
 import com.weeth.domain.account.domain.vo.Money
 import com.weeth.domain.club.domain.entity.ClubMember
@@ -91,6 +92,16 @@ class AccountPaymentTarget(
         if (targetStatus == AccountTargetStatus.TARGETED) {
             require(dueAmount.value > 0) { "납부 대상 금액은 0보다 커야 합니다: ${dueAmount.value}" }
         }
+    }
+
+    fun outstandingObligation(): Money? {
+        if (account.status != AccountStatus.ACTIVE || targetStatus != AccountTargetStatus.TARGETED ||
+            paymentStatus != AccountPaymentStatus.UNPAID || dueAmount <= paidAmount ||
+            !clubMember.isActive() || !clubMember.user.isActive() || clubMember.club.id != account.club.id
+        ) {
+            return null
+        }
+        return Money.of(dueAmount - paidAmount)
     }
 
     fun target(dueAmount: Money) {

@@ -13,6 +13,7 @@ import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.club.fixture.ClubMemberTestFixture
 import com.weeth.domain.club.fixture.ClubTestFixture
 import com.weeth.domain.session.application.dto.request.SessionCreateRequest
+import com.weeth.domain.session.application.event.SessionCreatedEvent
 import com.weeth.domain.session.application.exception.RecurrenceEndDateBeforeStartException
 import com.weeth.domain.session.application.exception.RecurrenceEndDateExceedsMaxException
 import com.weeth.domain.session.application.exception.RecurrenceEndDateRequiredException
@@ -36,6 +37,7 @@ import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.springframework.context.ApplicationEventPublisher
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -51,6 +53,7 @@ class CreateSessionUseCaseTest :
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val recurringSessionPolicy = RecurringSessionPolicy()
         val sessionMapper = SessionMapper(recurringSessionPolicy)
+        val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
 
         val useCase =
             CreateSessionUseCase(
@@ -64,6 +67,7 @@ class CreateSessionUseCaseTest :
                 clubMemberCardinalReader = clubMemberCardinalReader,
                 clubPermissionPolicy = clubPermissionPolicy,
                 recurringSessionPolicy = recurringSessionPolicy,
+                eventPublisher = eventPublisher,
             )
 
         val clubId = 1L
@@ -82,6 +86,7 @@ class CreateSessionUseCaseTest :
                 clubReader,
                 clubMemberCardinalReader,
                 clubPermissionPolicy,
+                eventPublisher,
             )
             every { clubReader.getClubById(clubId) } returns club
             every { userReader.getById(userId) } returns user
@@ -112,6 +117,14 @@ class CreateSessionUseCaseTest :
                     useCase.create(clubId, request, userId)
 
                     verify(exactly = 1) { sessionRepository.save(any()) }
+                    verify(exactly = 1) {
+                        eventPublisher.publishEvent(
+                            match<SessionCreatedEvent> {
+                                it.sessionGroupId == null &&
+                                    it.sessionCount == 1
+                            },
+                        )
+                    }
                     verify(exactly = 0) { sessionGroupRepository.save(any()) }
                     verify(exactly = 0) { sessionRepository.saveAll(any<List<Session>>()) }
                 }
@@ -138,6 +151,14 @@ class CreateSessionUseCaseTest :
 
                     verify(exactly = 1) { sessionGroupRepository.save(any()) }
                     sessionsSlot.captured.size shouldBe 4
+                    verify(exactly = 1) {
+                        eventPublisher.publishEvent(
+                            match<SessionCreatedEvent> {
+                                it.sessionGroupId != null &&
+                                    it.sessionCount == 4
+                            },
+                        )
+                    }
                 }
 
                 it("멤버가 있으면 세션 수 × 멤버 수 만큼 출석 레코드가 생성된다") {

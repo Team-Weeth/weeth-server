@@ -2,6 +2,7 @@ package com.weeth.domain.notification.domain.vo
 
 import com.weeth.domain.notification.domain.enums.NotificationReferenceType
 import com.weeth.domain.notification.domain.enums.NotificationType
+import java.time.LocalDateTime
 
 data class NotificationContent private constructor(
     val type: NotificationType,
@@ -14,6 +15,8 @@ data class NotificationContent private constructor(
     val data: Map<String, String>,
     val templateVersion: Int? = null,
     val eventId: String? = null,
+    val sourceSessionIds: List<Long> = emptyList(),
+    val expiresAt: LocalDateTime? = null,
 ) {
     companion object {
         fun create(
@@ -27,6 +30,8 @@ data class NotificationContent private constructor(
             data: Map<String, String>,
             templateVersion: Int? = null,
             eventId: String? = null,
+            sourceSessionIds: List<Long> = emptyList(),
+            expiresAt: LocalDateTime? = null,
         ): NotificationContent =
             NotificationContent(
                 type = type,
@@ -39,6 +44,8 @@ data class NotificationContent private constructor(
                 data = data,
                 templateVersion = templateVersion,
                 eventId = eventId,
+                sourceSessionIds = sourceSessionIds.toList(),
+                expiresAt = expiresAt,
             )
 
         private const val MAX_BODY_LENGTH = 255

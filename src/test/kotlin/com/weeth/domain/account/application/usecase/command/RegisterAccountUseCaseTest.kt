@@ -46,6 +46,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import org.springframework.context.ApplicationEventPublisher
 import java.time.LocalDateTime
 
 class RegisterAccountUseCaseTest :
@@ -58,6 +59,7 @@ class RegisterAccountUseCaseTest :
         val clubMemberCardinalReader = mockk<ClubMemberCardinalReader>()
         val clubPermissionPolicy = mockk<ClubPermissionPolicy>(relaxed = true)
         val userReader = mockk<UserReader>()
+        val eventPublisher = mockk<ApplicationEventPublisher>(relaxed = true)
         val useCase =
             RegisterAccountUseCase(
                 accountRepository = accountRepository,
@@ -68,6 +70,7 @@ class RegisterAccountUseCaseTest :
                 clubMemberCardinalReader = clubMemberCardinalReader,
                 clubPermissionPolicy = clubPermissionPolicy,
                 userReader = userReader,
+                eventPublisher = eventPublisher,
             )
 
         val clubId = 1L
@@ -85,6 +88,7 @@ class RegisterAccountUseCaseTest :
                 clubMemberCardinalReader,
                 clubPermissionPolicy,
                 userReader,
+                eventPublisher,
             )
             every { clubReader.getClubById(clubId) } returns club
         }

@@ -6,10 +6,12 @@ import com.weeth.domain.club.domain.repository.ClubReader
 import com.weeth.domain.club.domain.service.ClubPermissionPolicy
 import com.weeth.domain.schedule.application.dto.request.ScheduleSaveRequest
 import com.weeth.domain.schedule.application.dto.request.ScheduleUpdateRequest
+import com.weeth.domain.schedule.application.event.EventCreatedEvent
 import com.weeth.domain.schedule.application.exception.EventNotFoundException
 import com.weeth.domain.schedule.application.mapper.EventMapper
 import com.weeth.domain.schedule.domain.repository.EventRepository
 import com.weeth.domain.user.domain.repository.UserReader
+import org.springframework.context.ApplicationEventPublisher
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -22,6 +24,7 @@ class ManageEventUseCase(
     private val eventMapper: EventMapper,
     private val clubReader: ClubReader,
     private val clubPermissionPolicy: ClubPermissionPolicy,
+    private val eventPublisher: ApplicationEventPublisher,
 ) {
     @Transactional
     fun create(
@@ -34,7 +37,10 @@ class ManageEventUseCase(
         val user = userReader.getById(userId)
         cardinalReader.findByClubIdAndCardinalNumber(clubId, request.cardinal)
             ?: throw CardinalNotFoundException()
-        eventRepository.save(eventMapper.toEntity(club, request, user))
+        val event = eventRepository.save(eventMapper.toEntity(club, request, user))
+        eventPublisher.publishEvent(
+            EventCreatedEvent(club.id, event.id, event.cardinal, event.title, event.start, user.id),
+        )
     }
 
     @Transactional

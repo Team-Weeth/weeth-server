@@ -3,6 +3,7 @@ package com.weeth.domain.notification.application.event
 import com.weeth.domain.notification.application.usecase.command.ManageNotificationTokenUseCase
 import com.weeth.domain.notification.domain.port.PushNotificationSenderPort
 import com.weeth.domain.notification.domain.repository.NotificationTokenReader
+import com.weeth.domain.notification.domain.service.DuesNotificationPolicy
 import com.weeth.domain.notification.domain.service.NotificationRecipientPolicy
 import com.weeth.domain.notification.domain.vo.PushNotificationCommand
 import org.slf4j.LoggerFactory
@@ -25,6 +26,7 @@ class SendPushNotificationEventListener(
     private val pushNotificationSenderPort: PushNotificationSenderPort,
     private val manageNotificationTokenUseCase: ManageNotificationTokenUseCase,
     private val recipientPolicy: NotificationRecipientPolicy,
+    private val duesPolicy: DuesNotificationPolicy,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
 
@@ -45,11 +47,19 @@ class SendPushNotificationEventListener(
     }
 
     private fun send(event: NotificationCreatedEvent) {
-        val eligibleUserIds =
+        val candidates =
             recipientPolicy.filterEligibleUserIds(
                 event.content.clubId,
                 event.content.type.category,
                 event.targetUserIds,
+            )
+        val eligibleUserIds =
+            duesPolicy.filterEligibleUserIds(
+                event.content.type,
+                event.content.clubId,
+                event.content.referenceId,
+                candidates,
+                event.content.data["accountId"]?.toLongOrNull(),
             )
         if (eligibleUserIds.isEmpty()) return
         val targets = notificationTokenReader.findActiveTargetsByUserIds(eligibleUserIds)
