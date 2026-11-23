@@ -75,20 +75,24 @@ data class WaxRankingBucket(
     val id: String get() = "${period.name.lowercase()}:$startDate"
 
     /**
-     * 깬 왁스 수를 앞자리에, 기간 종료까지 남은 초를 뒷자리에 넣어 한 숫자로 정렬한다.
+     * 깬 왁스 수를 앞자리에, 기간 종료까지 남은 밀리초를 뒷자리에 넣어 한 숫자로 정렬한다.
      * 같은 개수면 먼저 기록한 쪽(남은 시간이 더 긴 쪽)이 높은 점수가 되어 위에 온다.
+     * 초 단위면 같은 초 안의 동점은 Redis가 멤버(토큰 해시) 사전순으로 정해 먼저 기록한 사람이 밀릴 수 있다.
      */
     fun scoreOf(
         brokenWaxes: Int,
         recordedAt: Instant,
     ): Double {
-        val remaining = Duration.between(recordedAt, endsAt).seconds.coerceIn(0, TIE_BREAK_SCALE - 1)
+        val remaining = Duration.between(recordedAt, endsAt).toMillis().coerceIn(0, TIE_BREAK_SCALE - 1)
         return brokenWaxes.toDouble() * TIE_BREAK_SCALE + remaining
     }
 
     companion object {
-        /** 주간 기간의 초(604,800)보다 커야 깬 왁스 수 자리와 겹치지 않는다. */
-        const val TIE_BREAK_SCALE = 1_000_000L
+        /**
+         * 주간 기간의 밀리초(604,800,000)보다 커야 깬 왁스 수 자리와 겹치지 않는다.
+         * double은 2^53까지 정수를 정확히 담으므로 깬 왁스 수 약 900만 개까지 점수가 뭉개지지 않는다.
+         */
+        const val TIE_BREAK_SCALE = 1_000_000_000L
 
         fun brokenWaxesOf(score: Double): Int = (score / TIE_BREAK_SCALE).toInt()
     }

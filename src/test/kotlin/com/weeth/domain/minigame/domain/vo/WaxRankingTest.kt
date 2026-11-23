@@ -55,4 +55,12 @@ class WaxRankingTest :
             WaxRankingBucket.brokenWaxesOf(late) shouldBe 5
             WaxRankingBucket.brokenWaxesOf(more) shouldBe 6
         }
+
+        "같은 초 안에서도 먼저 기록한 쪽이 높은 점수가 된다" {
+            val bucket = WaxRankingPeriod.DAILY.bucketOf(at("2026-11-18T12:00:00"))
+            val first = bucket.scoreOf(5, at("2026-11-18T12:00:00.100"))
+            val second = bucket.scoreOf(5, at("2026-11-18T12:00:00.200"))
+            first shouldBeGreaterThan second
+            WaxRankingBucket.brokenWaxesOf(first) shouldBe 5
+        }
     })
