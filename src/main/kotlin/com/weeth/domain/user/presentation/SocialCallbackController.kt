@@ -16,6 +16,11 @@ import org.springframework.web.util.UriComponentsBuilder
 
 /**
  * Apple Sign in with Apple의 form_post 콜백을 처리하는 컨트롤러.
+ *
+ * 콜백에서 받은 code와 state를 프론트 리다이렉트에 포워딩한다.
+ * 앱(Capacitor)에서는 SFSafariViewController 쿠키 저장소가 WKWebView와 격리되므로,
+ * 프론트가 code를 받아 POST /api/v4/users/social/apple을 직접 호출하여
+ * 자체 쿠키 저장소에 토큰을 저장할 수 있다.
  */
 @Hidden
 @RestController
@@ -32,34 +37,27 @@ class SocialCallbackController(
         consumes = [MediaType.APPLICATION_FORM_URLENCODED_VALUE],
     )
     fun handleCallback(
+        @RequestParam("code", required = false) code: String?,
         @RequestParam("id_token", required = false) idToken: String?,
         @RequestParam("user", required = false) userJson: String?,
         @RequestParam("state", required = false) state: String?,
         @RequestParam("error", required = false) error: String?,
     ): ResponseEntity<Void> {
         if (error != null || idToken.isNullOrBlank()) {
-            val errorBuilder =
-                UriComponentsBuilder
-                    .fromUriString(frontendRedirectUri)
-                    .queryParam("error", error ?: "unknown")
-            if (!state.isNullOrBlank()) {
-                errorBuilder.queryParam("state", state)
-            }
-            return redirect(errorBuilder.toUriString())
+            return redirect(buildRedirectUri(state) { queryParam("error", error ?: "unknown") })
         }
 
         return try {
             val response = socialLoginUseCase.socialLoginByAppleCallback(idToken, userJson)
 
-            val redirectBuilder =
-                UriComponentsBuilder
-                    .fromUriString(frontendRedirectUri)
-                    .queryParam("registered", response.registered)
-                    .queryParam("name", response.name)
-            if (!state.isNullOrBlank()) {
-                redirectBuilder.queryParam("state", state)
-            }
-            val redirectUri = redirectBuilder.toUriString()
+            val redirectUri =
+                buildRedirectUri(state) {
+                    queryParam("registered", response.registered)
+                    queryParam("name", response.name)
+                    if (!code.isNullOrBlank()) {
+                        queryParam("code", code)
+                    }
+                }
 
             ResponseEntity
                 .status(HttpStatus.FOUND)
@@ -73,16 +71,19 @@ class SocialCallbackController(
                 ).build()
         } catch (e: Exception) {
             log.error("Apple 콜백 처리 중 오류 발생", e)
-            val failBuilder =
-                UriComponentsBuilder
-                    .fromUriString(frontendRedirectUri)
-                    .queryParam("error", "login_failed")
-            if (!state.isNullOrBlank()) {
-                failBuilder.queryParam("state", state)
-            }
-            redirect(failBuilder.toUriString())
+            redirect(buildRedirectUri(state) { queryParam("error", "login_failed") })
         }
     }
+
+    private fun buildRedirectUri(
+        state: String? = null,
+        block: UriComponentsBuilder.() -> Unit,
+    ): String =
+        UriComponentsBuilder
+            .fromUriString(frontendRedirectUri)
+            .apply(block)
+            .apply { if (!state.isNullOrBlank()) queryParam("state", state) }
+            .toUriString()
 
     private fun redirect(uri: String): ResponseEntity<Void> =
         ResponseEntity
