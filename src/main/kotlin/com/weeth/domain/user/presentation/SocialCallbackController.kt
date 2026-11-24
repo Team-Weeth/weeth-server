@@ -34,26 +34,32 @@ class SocialCallbackController(
     fun handleCallback(
         @RequestParam("id_token", required = false) idToken: String?,
         @RequestParam("user", required = false) userJson: String?,
+        @RequestParam("state", required = false) state: String?,
         @RequestParam("error", required = false) error: String?,
     ): ResponseEntity<Void> {
         if (error != null || idToken.isNullOrBlank()) {
-            return redirect(
+            val errorBuilder =
                 UriComponentsBuilder
                     .fromUriString(frontendRedirectUri)
                     .queryParam("error", error ?: "unknown")
-                    .toUriString(),
-            )
+            if (!state.isNullOrBlank()) {
+                errorBuilder.queryParam("state", state)
+            }
+            return redirect(errorBuilder.toUriString())
         }
 
         return try {
             val response = socialLoginUseCase.socialLoginByAppleCallback(idToken, userJson)
 
-            val redirectUri =
+            val redirectBuilder =
                 UriComponentsBuilder
                     .fromUriString(frontendRedirectUri)
                     .queryParam("registered", response.registered)
                     .queryParam("name", response.name)
-                    .toUriString()
+            if (!state.isNullOrBlank()) {
+                redirectBuilder.queryParam("state", state)
+            }
+            val redirectUri = redirectBuilder.toUriString()
 
             ResponseEntity
                 .status(HttpStatus.FOUND)
@@ -67,12 +73,14 @@ class SocialCallbackController(
                 ).build()
         } catch (e: Exception) {
             log.error("Apple 콜백 처리 중 오류 발생", e)
-            redirect(
+            val failBuilder =
                 UriComponentsBuilder
                     .fromUriString(frontendRedirectUri)
                     .queryParam("error", "login_failed")
-                    .toUriString(),
-            )
+            if (!state.isNullOrBlank()) {
+                failBuilder.queryParam("state", state)
+            }
+            redirect(failBuilder.toUriString())
         }
     }
 
