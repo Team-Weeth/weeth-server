@@ -76,6 +76,12 @@ class Board(
     val isAdminOnly: Boolean
         get() = config.writePermission.isAdminOrLead()
 
+    val countsTowardBoardLimit: Boolean
+        get() = type.countsTowardBoardLimit
+
+    val isIncludedInAllFeed: Boolean
+        get() = type.includedInAllFeed
+
     fun isAccessibleBy(memberRole: MemberRole): Boolean = memberRole.isAdminOrLead() || !config.isPrivate
 
     fun canWriteBy(memberRole: MemberRole): Boolean =

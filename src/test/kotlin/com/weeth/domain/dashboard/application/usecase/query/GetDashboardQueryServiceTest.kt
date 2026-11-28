@@ -35,6 +35,7 @@ import io.kotest.matchers.shouldNotBe
 import io.mockk.clearMocks
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.SliceImpl
 import java.time.LocalDateTime
@@ -259,6 +260,37 @@ class GetDashboardQueryServiceTest :
                     val result = queryService.getRecentPosts(clubId, userId, 0, 10)
 
                     result.content.size shouldBe 1
+                }
+            }
+
+            context("FEEDBACK 게시판이 있는 경우") {
+                it("제보 게시판 글은 최근 글에 포함되지 않는다") {
+                    val generalBoard = BoardTestFixture.create(id = 10L, type = BoardType.GENERAL)
+                    val feedbackBoard = BoardTestFixture.create(id = 12L, type = BoardType.FEEDBACK)
+                    val post = PostTestFixture.create(board = generalBoard, clubMember = memberWithUser)
+                    val slice = SliceImpl(listOf(post), PageRequest.of(0, 10), false)
+
+                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns memberWithUser
+                    every { boardReader.findAllActiveByClubId(clubId) } returns listOf(generalBoard, feedbackBoard)
+                    every { postReader.findRecentByBoardIds(any(), any()) } returns slice
+                    every { fileReader.findAll(FileOwnerType.POST, any<List<Long>>()) } returns emptyList()
+                    every { postLikeReader.findLikedPostIds(listOf(post.id), userId) } returns emptySet()
+
+                    queryService.getRecentPosts(clubId, userId, 0, 10)
+
+                    verify(exactly = 1) { postReader.findRecentByBoardIds(listOf(generalBoard.id), any()) }
+                }
+
+                it("FEEDBACK 게시판만 있으면 게시글을 조회하지 않고 빈 Slice를 반환한다") {
+                    val feedbackBoard = BoardTestFixture.create(id = 12L, type = BoardType.FEEDBACK)
+
+                    every { clubMemberReader.findByClubIdAndUserId(clubId, userId) } returns memberWithUser
+                    every { boardReader.findAllActiveByClubId(clubId) } returns listOf(feedbackBoard)
+
+                    val result = queryService.getRecentPosts(clubId, userId, 0, 10)
+
+                    result.content.isEmpty() shouldBe true
+                    verify(exactly = 0) { postReader.findRecentByBoardIds(any(), any()) }
                 }
             }
 
